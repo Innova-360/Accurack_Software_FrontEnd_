@@ -55,7 +55,7 @@ export const loginUser = createAsyncThunk(
 ```typescript
 // In src/services/api.ts
 const apiClient = axios.create({
-  baseURL: 'http://localhost:3000/api',  // ← Adds base URL
+  baseURL: 'http://localhost:3000/api/v1',  // ← Adds base URL
   withCredentials: true,                  // ← Includes cookies
 });
 
