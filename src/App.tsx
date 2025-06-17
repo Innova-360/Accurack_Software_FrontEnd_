@@ -1,12 +1,20 @@
+import { Provider } from 'react-redux';
+import { store } from './store';
 import { BrowserRouter } from 'react-router-dom';
 import AppRoutes from './routes';
 
-function App() {
+const App = () => {
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <Provider store={store}>
+      <BrowserRouter>
+        <AppRoutes />
+        <div>
+          <h1>Accurack Software Frontend</h1>
+        </div>
+      </BrowserRouter>
+    </Provider>
   );
-}
+};
+
 
 export default App;
