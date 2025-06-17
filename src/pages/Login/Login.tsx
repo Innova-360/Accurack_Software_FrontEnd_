@@ -1,7 +1,38 @@
 import { useState } from "react";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import React Icons
+import { useAppDispatch } from "../../store/hooks";
+import { loginUser } from "../../store/slices/authSlice";
 
 const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+
+  const dispatch = useAppDispatch();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    try {
+      const resultAction = await dispatch(
+        loginUser({ email: formData.email, password: formData.password })
+      );
+      if (loginUser.fulfilled.match(resultAction)) {
+        console.log("Login successful", resultAction.payload);
+      } else {
+        console.error("Login failed", resultAction.payload);
+        alert(resultAction.payload || "Login failed");
+      }
+    } catch (error) {
+      console.error("Error during login", error);
+      alert("An error occurred during login. Please try again.");
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#f5f6fa]">
@@ -57,12 +88,15 @@ const Login = () => {
           Login First to Your Account
         </h2>
         <div className="w-full max-w-md bg-white rounded-xl shadow-md p-5 sm:p-8 mx-3 text-xs sm:text-sm mb-6 sm:mb-8">
-          <form className="space-y-2 sm:space-y-3">
+          <form className="space-y-2 sm:space-y-3" onSubmit={handleSubmit}>
             <label className="block text-left text-[#181c1f] font-medium mb-1">
               Email
             </label>
             <input
               type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
               placeholder="youname@gmail.com"
               className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm placeholder:text-left flex items-center justify-center"
             />
@@ -71,31 +105,22 @@ const Login = () => {
             </label>
             <div className="relative">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"} // Toggle input type
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
                 placeholder="Password"
                 className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm placeholder:text-left flex items-center justify-center pr-10"
               />
-              {/* Eye icon placeholder */}
-              <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="w-5 h-5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12s-3.75 6.75-9.75 6.75S2.25 12 2.25 12z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"
-                  />
-                </svg>
+              <span
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
+                onClick={() => setShowPassword(!showPassword)} // Toggle visibility on click
+              >
+                {showPassword ? (
+                  <FaEyeSlash className="w-5 h-5" />
+                ) : (
+                  <FaEye className="w-5 h-5" />
+                )}
               </span>
             </div>
             <div className="flex items-center justify-between text-xs mt-1">
@@ -127,8 +152,10 @@ const Login = () => {
           </form>
           {/* Social login section as per reference */}
           <div className="flex flex-col items-center mt-5">
-            <span className="text-gray-500 text-xs mb-3">Continue With</span>
-            <div className="flex gap-3">
+            <div className="flex items-center gap-3">
+              <span className="text-black text-sm font-semibold">
+                Continue With
+              </span>
               <span className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 cursor-pointer">
                 <img
                   src="https://www.svgrepo.com/show/475656/google-color.svg"
@@ -137,8 +164,7 @@ const Login = () => {
                 />
               </span>
               <span className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 cursor-pointer">
-                {/* New Apple SVG logo */}
-                <img src="/apple.png" alt="Apple Fell on Newton" />
+                <img src="/apple.png" alt="Apple" className="h-6 w-6" />
               </span>
             </div>
           </div>

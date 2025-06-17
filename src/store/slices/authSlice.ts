@@ -1,5 +1,9 @@
-import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import apiClient from '../../services/api';
+import {
+  createSlice,
+  createAsyncThunk,
+  type PayloadAction,
+} from "@reduxjs/toolkit";
+import apiClient from "../../services/api";
 
 export interface User {
   id: string;
@@ -25,45 +29,63 @@ const initialState: AuthState = {
 
 // Simple async thunks using apiClient directly
 export const loginUser = createAsyncThunk(
-  'auth/login',
-  async (credentials: { email: string; password: string }, { rejectWithValue }) => {
+  "/auth/login",
+  async (
+    credentials: { email: string; password: string },
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await apiClient.post('/auth/login', credentials);
+      const response = await apiClient.post("/auth/login", credentials);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Login failed');
+      return rejectWithValue(error.response?.data?.message || "Login failed");
     }
   }
 );
 
 export const registerUser = createAsyncThunk(
-  'auth/register',
-  async (userData: { name: string; email: string; password: string }, { rejectWithValue }) => {
+  "/auth/signup/super-admin",
+  async (
+    userData: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      password: string;
+    },
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await apiClient.post('/auth/register', userData);
+      const response = await apiClient.post("/auth/signup/super-admin", {
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        password: userData.password,
+      });
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Registration failed');
+      return rejectWithValue(
+        error.response?.data?.message || "Registration failed"
+      );
     }
   }
 );
 
 export const logoutUser = createAsyncThunk(
-  'auth/logout',
+  "auth/logout",
   async (_, { rejectWithValue }) => {
     try {
-      await apiClient.post('/auth/logout');
-      localStorage.removeItem('authToken');
+      await apiClient.post("/auth/logout");
+      localStorage.removeItem("authToken");
       return null;
     } catch (error: any) {
-      localStorage.removeItem('authToken');
-      return rejectWithValue(error.response?.data?.message || 'Logout failed');
+      localStorage.removeItem("authToken");
+      return rejectWithValue(error.response?.data?.message || "Logout failed");
     }
   }
 );
 
 export const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     setUser: (state, action: PayloadAction<User>) => {
@@ -72,7 +94,7 @@ export const authSlice = createSlice({
     },
     setToken: (state, action: PayloadAction<string>) => {
       state.token = action.payload;
-      localStorage.setItem('authToken', action.payload);
+      localStorage.setItem("authToken", action.payload);
     },
     clearError: (state) => {
       state.error = null;
@@ -82,7 +104,7 @@ export const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       state.error = null;
-      localStorage.removeItem('authToken');
+      localStorage.removeItem("authToken");
     },
   },
   extraReducers: (builder) => {
@@ -97,7 +119,7 @@ export const authSlice = createSlice({
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
-        localStorage.setItem('authToken', action.payload.token);
+        localStorage.setItem("authToken", action.payload.token);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -113,7 +135,7 @@ export const authSlice = createSlice({
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
-        localStorage.setItem('authToken', action.payload.token);
+        localStorage.setItem("authToken", action.payload.token);
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;

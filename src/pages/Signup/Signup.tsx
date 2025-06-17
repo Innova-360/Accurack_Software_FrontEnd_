@@ -1,5 +1,8 @@
 import { useState } from "react";
-import axios from "axios";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import React Icons
+import { useAppDispatch } from "../../store/hooks";
+import { registerUser } from "../../store/slices/authSlice";
+import { useNavigate } from "react-router-dom";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +12,11 @@ const Signup = () => {
     password: "",
     confirmPassword: "",
   });
+  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State to toggle confirm password visibility
+
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -17,23 +25,40 @@ const Signup = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Validate form fields
+    if (!formData.firstName.trim()) {
+      alert("First Name is required");
+      return;
+    }
+    if (!formData.lastName.trim()) {
+      alert("Last Name is required");
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords do not match");
       return;
     }
+
     try {
-      const response = await axios.post(
-        "http://localhost:4000/api/v1/auth/signup/super-admin",
-        {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
+      const resultAction = await dispatch(
+        registerUser({
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
           email: formData.email,
           password: formData.password,
-        }
+        })
       );
-      console.log("Signup successful", response.data);
+      if (registerUser.fulfilled.match(resultAction)) {
+        console.log("Signup successful", resultAction.payload);
+        navigate("/otp");
+      } else {
+        console.error("Signup failed", resultAction.payload);
+        alert(resultAction.payload || "Signup failed");
+      }
     } catch (error) {
       console.error("Error during signup", error);
+      alert("An error occurred during signup. Please try again.");
     }
   };
 
@@ -110,22 +135,48 @@ const Signup = () => {
               onChange={handleChange}
               className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
             />
-            <input
-              type="password"
-              name="password"
-              placeholder="Create Password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
-            />
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm Password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"} // Toggle input type
+                name="password"
+                placeholder="Create Password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center pr-10"
+              />
+              <span
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
+                onClick={() => setShowPassword(!showPassword)} // Toggle visibility on click
+              >
+                {showPassword ? (
+                  <FaEyeSlash className="w-5 h-5" />
+                ) : (
+                  <FaEye className="w-5 h-5" />
+                )}{" "}
+                {/* Use React Icons */}
+              </span>
+            </div>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? "text" : "password"} // Toggle input type
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center pr-10"
+              />
+              <span
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)} // Toggle visibility on click
+              >
+                {showConfirmPassword ? (
+                  <FaEyeSlash className="w-5 h-5" />
+                ) : (
+                  <FaEye className="w-5 h-5" />
+                )}{" "}
+                {/* Use React Icons */}
+              </span>
+            </div>
             <button
               type="submit"
               className="w-full bg-[#0b5c5a] text-white py-2 rounded-md font-medium hover:bg-[#084c4a] transition"
@@ -133,6 +184,24 @@ const Signup = () => {
               Sign Up
             </button>
           </form>
+          {/* Social signup section */}
+          <div className="flex flex-col items-center mt-5">
+            <div className="flex items-center gap-3">
+              <span className="text-black text-sm font-semibold">
+                Continue With
+              </span>
+              <span className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 cursor-pointer">
+                <img
+                  src="https://www.svgrepo.com/show/475656/google-color.svg"
+                  alt="Google"
+                  className="h-6 w-6"
+                />
+              </span>
+              <span className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 cursor-pointer">
+                <img src="/apple.png" alt="Apple" className="h-6 w-6" />
+              </span>
+            </div>
+          </div>
         </div>
         {/* Lower Text Section for mobile */}
         <p className="text-xs text-gray-400 mt-6 sm:mt-8 text-center">

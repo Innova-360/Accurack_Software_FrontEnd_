@@ -5,7 +5,7 @@ import Cards from "../components/Cards.tsx"
 function Home() {
   return (
     <div>
-        <Header />
+        
         <Topbar />
         <Cards />
     </div>
