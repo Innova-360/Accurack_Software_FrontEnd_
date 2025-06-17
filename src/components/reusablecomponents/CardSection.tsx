@@ -20,10 +20,10 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
 <br />
       <div className="flex flex-wrap gap-4">
         {cards.map((card, idx) => (          <div
-            key={idx}
-            onClick={() => {
+            key={idx}            onClick={() => {
               if (card.title === 'Add Store') navigate('/Form');
               if (card.title === 'View\nExpenses') navigate('/expenses');
+              if (card.title === 'Sales\nDashboard') navigate('/sales');
             }}
             className="bg-white rounded-xl shadow-lg border-2 border-[#f5f4f4] shadow-[#D1D1D1] hover:shadow-xl transition duration-300 cursor-pointer
                        flex flex-row lg:flex-col items-center lg:items-center

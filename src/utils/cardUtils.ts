@@ -39,13 +39,13 @@ export const filterCardsBySearch = (
 };
 
 export const getAllCards = (): CardSection[] => {
-  return [
-    {
+  return [    {
       sectionTitle: 'Liabilities',
       cards: [
         { title: 'Add Store' },
         { title: 'Total Inventory\nCount' },
         { title: 'View\nExpenses' },
+        { title: 'Sales\nDashboard' },
         { title: 'Report\nBuilder' },
         { title: 'Settings' },
       ]
