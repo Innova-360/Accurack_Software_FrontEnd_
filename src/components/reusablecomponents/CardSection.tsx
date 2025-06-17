@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface CardItem {
   title: string;
-  icon?: string; // optional override, default: /icon.png
+  icon?: string; 
 }
 
 interface CardSectionProps {
@@ -19,14 +19,15 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
       <hr className="mb-4 border-[#e6e0e0]" />
 <br />
       <div className="flex flex-wrap gap-4">
-        {cards.map((card, idx) => (
-          <div
-            key={idx}
-            onClick={card.title === 'Add Store' ? () => navigate('/Form') : undefined}
-            className="bg-white rounded-xl shadow-lg border-2 border-[#f5f4f4] shadow-[#D1D1D1] hover:shadow-xl transition duration-300
+        {cards.map((card, idx) => (          <div
+            key={idx}            onClick={() => {
+              if (card.title === 'Add Store') navigate('/Form');
+              if (card.title === 'View\nExpenses') navigate('/expenses');
+              if (card.title === 'Sales\nDashboard') navigate('/sales');
+            }}
+            className="bg-white rounded-xl shadow-lg border-2 border-[#f5f4f4] shadow-[#D1D1D1] hover:shadow-xl transition duration-300 cursor-pointer
                        flex flex-row lg:flex-col items-center lg:items-center
                        text-left lg:text-center px-4 py-4 lg:py-6 w-full sm:w-[300px] lg:w-[185px] h-auto lg:h-[175px] lg:flex lg:justify-center lg:align-center"
-            style={card.title === 'Expenses' ? { cursor: 'pointer' } : {}}
           >
             {/* Icon */}
             <div className="border border-dashed border-[#C0C0C0] rounded-lg p-2 w-14 h-14 flex items-center justify-center mb-0 lg:mb-2 mr-4 lg:mr-0">

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { FaChevronLeft, FaChevronRight, FaSearch, FaRegSun } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaSearch, FaRegSun, FaTimes } from 'react-icons/fa';
 import dayjs from 'dayjs';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { useDebounceSearch } from '../hooks/useDebounceSearch';
 
 const TopBar: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(new Date('2025-05-12'));
   const [showCalendar, setShowCalendar] = useState(false);
+  const { searchTerm, updateSearchTerm } = useDebounceSearch(300);
 
   const handlePrev = () => setSelectedDate(prev => dayjs(prev).subtract(1, 'day').toDate());
   const handleNext = () => setSelectedDate(prev => dayjs(prev).add(1, 'day').toDate());
@@ -64,16 +66,25 @@ const TopBar: React.FC = () => {
   <div className="flex items-center mr-60">
     <FaRegSun className="text-yellow-400 mr-2" />
     <span >Hello, Michael Doe</span>
-  </div>
-
-  {/* Search Box */}
-  <div className="flex items-center bg-gray-100 px-3 py-[6px] rounded-md w-full sm:w-64">
+  </div>  {/* Search Box */}
+  <div className="flex items-center bg-gray-100 px-3 py-[6px] rounded-md w-full sm:w-64 relative">
     <FaSearch className="text-gray-400 mr-2" />
     <input
       type="text"
-      placeholder="Search..."
-      className="bg-transparent outline-none text-sm w-full"
+      placeholder="Search cards..."
+      value={searchTerm}
+      onChange={(e) => updateSearchTerm(e.target.value)}
+      className="bg-transparent outline-none text-sm w-full pr-6"
     />
+    {searchTerm && (
+      <button
+        onClick={() => updateSearchTerm('')}
+        className="absolute right-2 text-gray-400 hover:text-gray-600 transition-colors"
+        title="Clear search"
+      >
+        <FaTimes className="text-xs" />
+      </button>
+    )}
   </div>
 </div>
 

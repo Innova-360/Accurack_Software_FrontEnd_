@@ -1,9 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaTh, FaChartPie, FaClock, FaBars } from 'react-icons/fa';
 import { FiHelpCircle } from 'react-icons/fi';
 import { MdCampaign } from 'react-icons/md';
 
 const Navbar: React.FC = () => {
+  const [currentTime, setCurrentTime] = useState('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      setCurrentTime(timeString);
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
   return (
     
     <div className="w-full bg-[#03414CF0] text-white text-sm font-medium px-0 py-0">
@@ -40,12 +58,10 @@ const Navbar: React.FC = () => {
               Last Updated On: <strong>20/03/2025</strong>
             </span>
           </div>
-        </div>
-
-        {/* Time */}
+        </div>        {/* Time */}
         <div className="flex items-center px-4 h-full space-x-1">
           <FaClock className="text-base" />
-          <span>9:29 PM</span>
+          <span>{currentTime}</span>
         </div>
 
         {/* Help */}

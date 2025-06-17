@@ -22,6 +22,11 @@ export const selectSidebarOpen = (state: RootState) => state.ui.sidebarOpen;
 export const selectUILoading = (state: RootState) => state.ui.loading;
 export const selectNotifications = (state: RootState) => state.ui.notifications;
 
+// Search selectors
+export const selectSearch = (state: RootState) => state.search;
+export const selectSearchTerm = (state: RootState) => state.search.searchTerm;
+export const selectDebouncedSearchTerm = (state: RootState) => state.search.debouncedSearchTerm;
+
 // Memoized selectors
 export const selectUserDisplayName = createSelector(
   [selectUser],
