@@ -1,19 +1,20 @@
-
 import { Provider } from 'react-redux';
 import { store } from './store';
-import ReduxExample from './components/ReduxExample';
-import AuthExample from './components/AuthExample';
+import { BrowserRouter } from 'react-router-dom';
+import AppRoutes from './routes';
 
 const App = () => {
   return (
     <Provider store={store}>
-      <div>
-        <h1>Accurack Software Frontend</h1>
-        <AuthExample />
-        <ReduxExample />
-      </div>
+      <BrowserRouter>
+        <AppRoutes />
+        <div>
+          <h1>Accurack Software Frontend</h1>
+        </div>
+      </BrowserRouter>
     </Provider>
   );
 };
+
 
 export default App;

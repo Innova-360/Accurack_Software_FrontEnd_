@@ -4,19 +4,11 @@ interface UIState {
   theme: 'light' | 'dark';
   sidebarOpen: boolean;
   loading: boolean;
-  notifications: Notification[];
-  modal: {
-    isOpen: boolean;
-    type: string | null;
-    data: any;
-  };
-}
-
-interface Notification {
-  id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
-  message: string;
-  timestamp: number;
+  notifications: Array<{
+    id: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+  }>;
 }
 
 const initialState: UIState = {
@@ -24,11 +16,6 @@ const initialState: UIState = {
   sidebarOpen: false,
   loading: false,
   notifications: [],
-  modal: {
-    isOpen: false,
-    type: null,
-    data: null,
-  },
 };
 
 export const uiSlice = createSlice({
@@ -50,11 +37,10 @@ export const uiSlice = createSlice({
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
-    addNotification: (state, action: PayloadAction<Omit<Notification, 'id' | 'timestamp'>>) => {
-      const notification: Notification = {
+    addNotification: (state, action: PayloadAction<{ type: 'success' | 'error' | 'warning' | 'info'; message: string }>) => {
+      const notification = {
         ...action.payload,
         id: Date.now().toString(),
-        timestamp: Date.now(),
       };
       state.notifications.push(notification);
     },
@@ -65,16 +51,6 @@ export const uiSlice = createSlice({
     },
     clearNotifications: (state) => {
       state.notifications = [];
-    },
-    openModal: (state, action: PayloadAction<{ type: string; data?: any }>) => {
-      state.modal.isOpen = true;
-      state.modal.type = action.payload.type;
-      state.modal.data = action.payload.data || null;
-    },
-    closeModal: (state) => {
-      state.modal.isOpen = false;
-      state.modal.type = null;
-      state.modal.data = null;
     },
   },
 });
@@ -88,8 +64,6 @@ export const {
   addNotification,
   removeNotification,
   clearNotifications,
-  openModal,
-  closeModal,
 } = uiSlice.actions;
 
 export default uiSlice.reducer;
