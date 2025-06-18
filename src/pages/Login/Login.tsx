@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import React Icons
 import { useAppDispatch } from "../../store/hooks";
 import { loginUser } from "../../store/slices/authSlice";
 
 const Login = () => {
-  const navigate = useNavigate();
   const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
@@ -22,11 +20,10 @@ const Login = () => {
 
     try {
       const resultAction = await dispatch(
-        loginUser({ email: formData.email, password: formData.password })      );
+        loginUser({ email: formData.email, password: formData.password })
+      );
       if (loginUser.fulfilled.match(resultAction)) {
         console.log("Login successful", resultAction.payload);
-        // Navigate to stores page after successful login
-        navigate('/stores');
       } else {
         console.error("Login failed", resultAction.payload);
         alert(resultAction.payload || "Login failed");
