@@ -32,7 +32,11 @@ const Inventory: React.FC = () => {
 
   // Use custom hooks for data processing
   const inventoryStats = useInventoryStats(products);
-  const filteredProducts = useFilteredProducts(products, searchTerm, sortConfig);
+  const filteredProducts = useFilteredProducts(
+    products,
+    searchTerm,
+    sortConfig
+  );
   const groupedProducts = useGroupedProducts(filteredProducts, groupBy);
   const lowStockProducts = useLowStockProducts(products);
 

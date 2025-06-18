@@ -3,6 +3,7 @@ import {
   createAsyncThunk,
   type PayloadAction,
 } from "@reduxjs/toolkit";
+import axios from "axios";
 import apiClient from "../../services/api";
 
 export interface User {
@@ -84,6 +85,99 @@ export const logoutUser = createAsyncThunk(
   }
 );
 
+export const googleAuth = createAsyncThunk(
+  "/auth/google",
+  async (_, { rejectWithValue }) => {
+    try {
+      // For Google OAuth, we need to redirect to the auth URL
+      // Instead of making an API call, we construct the redirect URL
+      const baseUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:4000/api/v1";
+      const redirectUrl = `${baseUrl}/auth/google`;
+
+      // Redirect to Google OAuth
+      window.location.href = redirectUrl;
+
+      // Return a success response since we're redirecting
+      return { redirectUrl, message: "Redirecting to Google OAuth..." };
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Google authentication failed");
+    }
+  }
+);
+
+export const googleAuthCallback = createAsyncThunk(
+  "/auth/google/callback",
+  async (
+    callbackData: { code?: string; state?: string; [key: string]: any },
+    { rejectWithValue }
+  ) => {
+    try {
+      // Create a one-time axios instance without credentials for the callback
+      const baseUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:4000/api/v1";
+      const response = await axios.post(
+        `${baseUrl}/auth/google/callback`,
+        callbackData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          withCredentials: false, // Don't send credentials for this request
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Google authentication callback failed"
+      );
+    }
+  }
+);
+
+export const verifyOtp = createAsyncThunk(
+  "/auth/verify-otp",
+  async (otpData: { email: string; otp: string }, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.post("/auth/verify-otp", otpData);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "OTP verification failed"
+      );
+    }
+  }
+);
+
+export const resendOtp = createAsyncThunk(
+  "/auth/resend-otp",
+  async (emailData: { email: string }, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.post("/auth/resend-otp", emailData);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to resend OTP"
+      );
+    }
+  }
+);
+
+export const sendOtp = createAsyncThunk(
+  "/auth/send-otp",
+  async (emailData: { email: string }, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.post("/auth/send-otp", emailData);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to send OTP"
+      );
+    }
+  }
+);
+
 export const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -158,6 +252,81 @@ export const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
+      })
+      // Google Auth
+      .addCase(googleAuth.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(googleAuth.fulfilled, (state) => {
+        state.loading = false;
+        // Google auth typically returns a redirect URL or similar
+        // Handle based on your API response structure
+      })
+      .addCase(googleAuth.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Google Auth Callback
+      .addCase(googleAuthCallback.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(googleAuthCallback.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.isAuthenticated = true;
+        localStorage.setItem("authToken", action.payload.token);
+      })
+      .addCase(googleAuthCallback.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Verify OTP
+      .addCase(verifyOtp.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyOtp.fulfilled, (state, action) => {
+        state.loading = false;
+        // Handle OTP verification success - this might complete registration
+        if (action.payload.user && action.payload.token) {
+          state.user = action.payload.user;
+          state.token = action.payload.token;
+          state.isAuthenticated = true;
+          localStorage.setItem("authToken", action.payload.token);
+        }
+      })
+      .addCase(verifyOtp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Resend OTP
+      .addCase(resendOtp.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resendOtp.fulfilled, (state) => {
+        state.loading = false;
+        // OTP resent successfully - no additional state changes needed
+      })
+      .addCase(resendOtp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Send OTP
+      .addCase(sendOtp.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(sendOtp.fulfilled, (state) => {
+        state.loading = false;
+        // OTP sent successfully - no additional state changes needed
+      })
+      .addCase(sendOtp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });

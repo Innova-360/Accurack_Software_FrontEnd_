@@ -1,8 +1,25 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { verifyOtp, resendOtp } from "../../store/slices/authSlice";
+import { useNavigate } from "react-router-dom";
 
 const OtpPage = () => {
   const [otp, setOtp] = useState(["", "", "", ""]);
+  const [userEmail, setUserEmail] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const inputs = [useRef(null), useRef(null), useRef(null), useRef(null)];
+
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { loading, error } = useAppSelector((state) => state.auth);
+
+  // Get user email from localStorage on component mount
+  useEffect(() => {
+    const email = localStorage.getItem("userEmail");
+    if (email) {
+      setUserEmail(email);
+    }
+  }, []);
 
   // Handle OTP input change
   const handleChange = (
@@ -26,6 +43,80 @@ const OtpPage = () => {
   ) => {
     if (e.key === "Backspace" && !otp[idx] && idx > 0) {
       (inputs[idx - 1].current as any)?.focus();
+    }
+  };
+  // Handle OTP verification
+  const handleVerifyOtp = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // Clear any success messages
+    setSuccessMessage("");
+
+    // Check if all OTP fields are filled
+    const otpString = otp.join("");
+    if (otpString.length !== 4) {
+      alert("Please enter the complete 4-digit OTP");
+      return;
+    }
+
+    // Check if email is available
+    if (!userEmail) {
+      alert("Email not found. Please try signing up again.");
+      return;
+    }
+
+    try {
+      const resultAction = await dispatch(
+        verifyOtp({
+          email: userEmail,
+          otp: otpString,
+        })
+      );
+
+      if (verifyOtp.fulfilled.match(resultAction)) {
+        console.log("OTP verification successful", resultAction.payload);
+        // Navigate to dashboard or home page after successful verification
+        navigate("/");
+      } else {
+        console.error("OTP verification failed", resultAction.payload);
+        alert(resultAction.payload || "OTP verification failed");
+      }
+    } catch (error) {
+      console.error("Error during OTP verification", error);
+      alert("An error occurred during OTP verification. Please try again.");
+    }
+  };
+
+  // Handle resend OTP
+  const handleResendOtp = async () => {
+    if (!userEmail) {
+      alert("Email not found. Please try signing up again.");
+      return;
+    }
+
+    try {
+      const resultAction = await dispatch(
+        resendOtp({
+          email: userEmail,
+        })
+      );
+
+      if (resendOtp.fulfilled.match(resultAction)) {
+        console.log("OTP resent successfully", resultAction.payload);
+        setSuccessMessage("OTP has been resent to your email");
+        // Clear current OTP inputs
+        setOtp(["", "", "", ""]);
+        // Focus on first input
+        (inputs[0].current as any)?.focus();
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccessMessage(""), 3000);
+      } else {
+        console.error("Failed to resend OTP", resultAction.payload);
+        alert(resultAction.payload || "Failed to resend OTP");
+      }
+    } catch (error) {
+      console.error("Error during OTP resend", error);
+      alert("An error occurred while resending OTP. Please try again.");
     }
   };
 
@@ -99,15 +190,30 @@ const OtpPage = () => {
           </div>
           <h2 className="text-lg sm:text-xl font-bold text-[#181c1f] mb-2 text-center">
             Please check your email.
-          </h2>
+          </h2>{" "}
           <p className="text-gray-500 text-center text-sm mb-5">
             We've sent a code to{" "}
             <span className="font-semibold text-[#0b5c5a]">
-              olivia@untitledui.com
+              {userEmail || "your email"}
             </span>
-          </p>
+          </p>{" "}
+          {/* Error message */}
+          {error && (
+            <div className="text-red-500 text-sm text-center mb-3 bg-red-50 p-2 rounded">
+              {error}
+            </div>
+          )}
+          {/* Success message */}
+          {successMessage && (
+            <div className="text-green-500 text-sm text-center mb-3 bg-green-50 p-2 rounded">
+              {successMessage}
+            </div>
+          )}
           {/* OTP Inputs */}
-          <form className="flex flex-col items-center w-full">
+          <form
+            className="flex flex-col items-center w-full"
+            onSubmit={handleVerifyOtp}
+          >
             <div className="flex justify-center gap-3 mb-4 w-full">
               {otp.map((digit, idx) => (
                 <input
@@ -123,15 +229,17 @@ const OtpPage = () => {
                   autoFocus={idx === 0}
                 />
               ))}
-            </div>
+            </div>{" "}
             <div className="text-xs text-gray-500 mb-5">
               Didn't get a code?{" "}
-              <a
-                href="#"
-                className="text-[#0b5c5a] font-semibold hover:underline"
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={loading}
+                className="text-[#0b5c5a] font-semibold hover:underline disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border-none p-0"
               >
-                Click to resend.
-              </a>
+                {loading ? "Sending..." : "Click to resend."}
+              </button>
             </div>
             <div className="flex w-full gap-3 mt-2">
               <button
@@ -139,12 +247,13 @@ const OtpPage = () => {
                 className="flex-1 border border-gray-200 rounded-lg py-2 font-semibold text-gray-700 hover:bg-gray-100 transition"
               >
                 Cancel
-              </button>
+              </button>{" "}
               <button
                 type="submit"
-                className="flex-1 bg-[#0b5c5a] text-white py-2 rounded-lg font-semibold hover:bg-[#094543] transition"
+                disabled={loading}
+                className="flex-1 bg-[#0b5c5a] text-white py-2 rounded-lg font-semibold hover:bg-[#094543] transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Verify
+                {loading ? "Verifying..." : "Verify"}
               </button>
             </div>
           </form>

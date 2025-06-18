@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import React Icons
 import { useAppDispatch } from "../../store/hooks";
-import { registerUser } from "../../store/slices/authSlice";
+import {
+  registerUser,
+  googleAuth,
+  sendOtp,
+} from "../../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 
 const Signup = () => {
@@ -51,7 +55,29 @@ const Signup = () => {
       );
       if (registerUser.fulfilled.match(resultAction)) {
         console.log("Signup successful", resultAction.payload);
-        navigate("/otp");
+        // Save email to localStorage
+        localStorage.setItem("userEmail", formData.email);
+
+        // Send OTP to user's email
+        try {
+          const otpResult = await dispatch(sendOtp({ email: formData.email }));
+          if (sendOtp.fulfilled.match(otpResult)) {
+            console.log("OTP sent successfully");
+            navigate("/otp");
+          } else {
+            console.error("Failed to send OTP", otpResult.payload);
+            alert(
+              "Account created but failed to send OTP. Please try resending from the OTP page."
+            );
+            navigate("/otp");
+          }
+        } catch (otpError) {
+          console.error("Error sending OTP", otpError);
+          alert(
+            "Account created but failed to send OTP. Please try resending from the OTP page."
+          );
+          navigate("/otp");
+        }
       } else {
         console.error("Signup failed", resultAction.payload);
         alert(resultAction.payload || "Signup failed");
@@ -59,6 +85,17 @@ const Signup = () => {
     } catch (error) {
       console.error("Error during signup", error);
       alert("An error occurred during signup. Please try again.");
+    }
+  };
+  const handleGoogleAuth = async () => {
+    try {
+      // Dispatch the Google auth action which will redirect to Google
+      await dispatch(googleAuth());
+    } catch (error) {
+      console.error("Error during Google authentication", error);
+      alert(
+        "An error occurred during Google authentication. Please try again."
+      );
     }
   };
 
@@ -189,8 +226,11 @@ const Signup = () => {
             <div className="flex items-center gap-3">
               <span className="text-black text-sm font-semibold">
                 Continue With
-              </span>
-              <span className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 cursor-pointer">
+              </span>{" "}
+              <span
+                className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 cursor-pointer hover:bg-gray-200 transition-colors"
+                onClick={handleGoogleAuth}
+              >
                 <img
                   src="https://www.svgrepo.com/show/475656/google-color.svg"
                   alt="Google"

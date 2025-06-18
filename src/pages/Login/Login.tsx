@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import React Icons
 import { useAppDispatch } from "../../store/hooks";
-import { loginUser } from "../../store/slices/authSlice";
+import { loginUser, googleAuth } from "../../store/slices/authSlice";
 
 const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
@@ -31,6 +31,17 @@ const Login = () => {
     } catch (error) {
       console.error("Error during login", error);
       alert("An error occurred during login. Please try again.");
+    }
+  };
+  const handleGoogleAuth = async () => {
+    try {
+      // Dispatch the Google auth action which will redirect to Google
+      await dispatch(googleAuth());
+    } catch (error) {
+      console.error("Error during Google authentication", error);
+      alert(
+        "An error occurred during Google authentication. Please try again."
+      );
     }
   };
 
@@ -155,8 +166,11 @@ const Login = () => {
             <div className="flex items-center gap-3">
               <span className="text-black text-sm font-semibold">
                 Continue With
-              </span>
-              <span className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 cursor-pointer">
+              </span>{" "}
+              <span
+                className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 cursor-pointer hover:bg-gray-200 transition-colors"
+                onClick={handleGoogleAuth}
+              >
                 <img
                   src="https://www.svgrepo.com/show/475656/google-color.svg"
                   alt="Google"
