@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FaEdit, FaTimes } from 'react-icons/fa';
 import type { Transaction } from '../../services/salesService';
+import { SpecialButton } from '../buttons';
 
 interface EditTransactionModalProps {
   isOpen: boolean;
@@ -175,21 +176,19 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
                 required
               />
             </div>
-            
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                type="button"
+              <div className="flex justify-end space-x-3 mt-6">
+              <SpecialButton
+                variant="modal-cancel"
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
               >
                 Cancel
-              </button>
-              <button
+              </SpecialButton>
+              <SpecialButton
+                variant="modal-confirm"
                 type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-[#03414C] hover:bg-[#025a6b] rounded-md transition-colors"
               >
                 Save Changes
-              </button>
+              </SpecialButton>
             </div>
           </form>
         </div>

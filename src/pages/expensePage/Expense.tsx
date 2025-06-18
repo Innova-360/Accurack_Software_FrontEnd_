@@ -11,6 +11,7 @@ import {
   FaEdit
 } from 'react-icons/fa';
 import Header from '../../components/Header';
+import { SpecialButton, SidebarButton, IconButton } from '../../components/buttons';
 
 interface ExpenseItem {
   id: number;
@@ -55,44 +56,107 @@ const expenseCategories: ExpenseCategory[] = [
 const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
 
 const ExpensePage: React.FC = () => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('Marketing');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All Expenses');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [categories, setCategories] = useState<ExpenseCategory[]>(expenseCategories);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
   const [isAddRowModalOpen, setIsAddRowModalOpen] = useState(false);
+  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ExpenseItem | null>(null);
   const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', quantity: 0, price: 0 });
-  const [addForm, setAddForm] = useState({ name: '', quantity: 1, price: 0 });
+  const [editForm, setEditForm] = useState({ name: '', quantity: 0, price: 0, category: '' });
+  const [addForm, setAddForm] = useState({ name: '', quantity: 1, price: 0, category: 'Marketing' });
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-
   const currentCategory = categories.find(cat => cat.name === selectedCategory);
-  const total = currentCategory?.items.reduce((sum, item) => sum + item.price * item.quantity, 0) ?? 0;
-
+  const allExpenses = selectedCategory === 'All Expenses' 
+    ? categories.flatMap(cat => cat.items.map(item => ({ ...item, category: cat.name })))
+    : currentCategory?.items || [];
+  
+  const total = selectedCategory === 'All Expenses'
+    ? categories.reduce((sum, cat) => sum + cat.items.reduce((catSum, item) => catSum + item.price * item.quantity, 0), 0)
+    : currentCategory?.items.reduce((sum, item) => sum + item.price * item.quantity, 0) ?? 0;
   // Edit functionality
   const handleEdit = (item: ExpenseItem) => {
     setEditingItem(item);
-    setEditForm({ name: item.name, quantity: item.quantity, price: item.price });
+    
+    // Find the category of the item
+    let itemCategory = '';
+    if (selectedCategory === 'All Expenses') {
+      const foundCategory = categories.find(cat => 
+        cat.items.some(catItem => catItem.id === item.id)
+      );
+      itemCategory = foundCategory?.name || 'Marketing';
+    } else {
+      itemCategory = selectedCategory;
+    }
+    
+    setEditForm({ 
+      name: item.name, 
+      quantity: item.quantity, 
+      price: item.price, 
+      category: itemCategory 
+    });
     setIsEditModalOpen(true);
-  };
-
-  const handleEditSubmit = () => {
+  };  const handleEditSubmit = () => {
     if (editingItem) {
-      setCategories(prev => prev.map(category => 
-        category.name === selectedCategory 
-          ? {
-              ...category,
-              items: category.items.map(item => 
-                item.id === editingItem.id 
-                  ? { ...item, name: editForm.name, quantity: editForm.quantity, price: editForm.price }
-                  : item
-              )
+      if (selectedCategory === 'All Expenses') {
+        // Find the original category and remove item
+        const originalCategory = categories.find(cat => 
+          cat.items.some(item => item.id === editingItem.id)
+        );
+        
+        if (originalCategory?.name === editForm.category) {
+          // Same category, just update the item
+          setCategories(prev => prev.map(category => ({
+            ...category,
+            items: category.items.map(item => 
+              item.id === editingItem.id 
+                ? { ...item, name: editForm.name, quantity: editForm.quantity, price: editForm.price }
+                : item
+            )
+          })));
+        } else {
+          // Different category, remove from old and add to new
+          setCategories(prev => prev.map(category => {
+            if (category.name === originalCategory?.name) {
+              // Remove from original category
+              return {
+                ...category,
+                items: category.items.filter(item => item.id !== editingItem.id)
+              };
+            } else if (category.name === editForm.category) {
+              // Add to new category
+              return {
+                ...category,
+                items: [...category.items, {
+                  ...editingItem,
+                  name: editForm.name,
+                  quantity: editForm.quantity,
+                  price: editForm.price
+                }]
+              };
             }
-          : category
-      ));
+            return category;
+          }));
+        }
+      } else {
+        // Update item in current category only
+        setCategories(prev => prev.map(category => 
+          category.name === selectedCategory 
+            ? {
+                ...category,
+                items: category.items.map(item => 
+                  item.id === editingItem.id 
+                    ? { ...item, name: editForm.name, quantity: editForm.quantity, price: editForm.price }
+                    : item
+                )
+              }
+            : category
+        ));
+      }
       setIsEditModalOpen(false);
       setEditingItem(null);
     }
@@ -102,39 +166,56 @@ const ExpensePage: React.FC = () => {
     setDeletingItemId(itemId);
     setIsDeleteModalOpen(true);
   };
-
   const confirmDeleteItem = () => {
     if (deletingItemId) {
-      setCategories(prev => prev.map(category => 
-        category.name === selectedCategory 
-          ? { ...category, items: category.items.filter(item => item.id !== deletingItemId) }
-          : category
-      ));
+      if (selectedCategory === 'All Expenses') {
+        // Delete from any category that contains this item
+        setCategories(prev => prev.map(category => 
+          ({ ...category, items: category.items.filter(item => item.id !== deletingItemId) })
+        ));
+      } else {
+        // Delete from current category only
+        setCategories(prev => prev.map(category => 
+          category.name === selectedCategory 
+            ? { ...category, items: category.items.filter(item => item.id !== deletingItemId) }
+            : category
+        ));
+      }
       setIsDeleteModalOpen(false);
       setDeletingItemId(null);
     }
   };
-
-  // Delete all items in current category
+  // Delete all items in current category or all categories
   const handleDeleteAll = () => {
     setIsDeleteAllModalOpen(true);
   };
 
   const confirmDeleteAll = () => {
-    setCategories(prev => prev.map(category => 
-      category.name === selectedCategory 
-        ? { ...category, items: [] }
-        : category
-    ));
+    if (selectedCategory === 'All Expenses') {
+      // Delete all items from all categories
+      setCategories(prev => prev.map(category => 
+        ({ ...category, items: [] })
+      ));
+    } else {
+      // Delete all items from current category
+      setCategories(prev => prev.map(category => 
+        category.name === selectedCategory 
+          ? { ...category, items: [] }
+          : category
+      ));
+    }
     setIsDeleteAllModalOpen(false);
   };
-
   // Add new row
   const handleAddRow = () => {
-    setAddForm({ name: '', quantity: 1, price: 0 });
+    setAddForm({ 
+      name: '', 
+      quantity: 1, 
+      price: 0, 
+      category: selectedCategory === 'All Expenses' ? 'Marketing' : selectedCategory 
+    });
     setIsAddRowModalOpen(true);
   };
-
   const handleAddSubmit = () => {
     if (addForm.name.trim() === '') {
       alert('Please enter an item name');
@@ -149,40 +230,101 @@ const ExpensePage: React.FC = () => {
       price: addForm.price
     };
     
+    // Determine target category
+    const targetCategory = selectedCategory === 'All Expenses' ? addForm.category : selectedCategory;
+    
     setCategories(prev => prev.map(category => 
-      category.name === selectedCategory 
+      category.name === targetCategory 
         ? { ...category, items: [...category.items, newItem] }
         : category
-    ));
-    setIsAddRowModalOpen(false);
+    ));    setIsAddRowModalOpen(false);
+  };
+
+  // Add new category
+  const handleAddCategory = () => {
+    setNewCategoryName('');
+    setIsAddCategoryModalOpen(true);
+  };
+
+  const handleAddCategorySubmit = () => {
+    if (newCategoryName.trim() === '') {
+      alert('Please enter a category name');
+      return;
+    }
+
+    // Check if category already exists
+    if (categories.some(cat => cat.name.toLowerCase() === newCategoryName.trim().toLowerCase())) {
+      alert('A category with this name already exists');
+      return;
+    }
+
+    const newCategory: ExpenseCategory = {
+      name: newCategoryName.trim(),
+      items: []
+    };
+
+    setCategories(prev => [...prev, newCategory]);
+    setSelectedCategory(newCategoryName.trim());
+    setIsAddCategoryModalOpen(false);
+    setNewCategoryName('');
   };
 
   // Export CSV
   const handleExportCSV = () => {
-    if (!currentCategory || currentCategory.items.length === 0) {
-      alert('No data to export');
-      return;
+    if (selectedCategory === 'All Expenses') {
+      // Export all expenses
+      if (allExpenses.length === 0) {
+        alert('No data to export');
+        return;
+      }
+
+      const csvContent = [
+        ['#', 'Items', 'Category', 'Quantity', 'Unit Price', 'Total'],
+        ...allExpenses.map((item, index) => [
+          index + 1,
+          item.name,
+          (item as any).category,
+          item.quantity,
+          item.price,
+          item.quantity * item.price
+        ]),
+        ['', '', '', '', 'Total:', total]
+      ].map(row => row.join(',')).join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'all_expenses.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } else {
+      // Export single category
+      if (!currentCategory || currentCategory.items.length === 0) {
+        alert('No data to export');
+        return;
+      }
+
+      const csvContent = [
+        ['#', 'Items', 'Quantity', 'Unit Price', 'Total'],
+        ...currentCategory.items.map((item, index) => [
+          index + 1,
+          item.name,
+          item.quantity,
+          item.price,
+          item.quantity * item.price
+        ]),
+        ['', '', '', 'Total:', total]
+      ].map(row => row.join(',')).join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${selectedCategory}_expenses.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
     }
-
-    const csvContent = [
-      ['#', 'Items', 'Quantity', 'Unit Price', 'Total'],
-      ...currentCategory.items.map((item, index) => [
-        index + 1,
-        item.name,
-        item.quantity,
-        item.price,
-        item.quantity * item.price
-      ]),
-      ['', '', '', 'Total:', total]
-    ].map(row => row.join(',')).join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${selectedCategory}_expenses.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
   };
 
   return (
@@ -215,30 +357,42 @@ const ExpensePage: React.FC = () => {
             >
               <FaTimes size={16} />
             </button>
-          </div>
-
-          {/* Categories */}
-          <div className="p-2">
-            {categories.map((category) => (
-              <button
+          </div>          {/* Categories */}
+          <div className="p-2">            {/* All Expenses Option */}
+            <SidebarButton
+              onClick={() => {
+                setSelectedCategory('All Expenses');
+                setIsSidebarOpen(false);
+              }}
+              active={selectedCategory === 'All Expenses'}
+              icon={selectedCategory === 'All Expenses' ? <FaChevronDown size={12} /> : <FaChevronRight size={12} />}
+            >
+              All Expenses
+            </SidebarButton>
+            
+            {/* Category Separator */}
+            <div className="border-t border-gray-200 my-2"></div>            {categories.map((category) => (
+              <SidebarButton
                 key={category.name}
                 onClick={() => {
                   setSelectedCategory(category.name);
                   setIsSidebarOpen(false);
                 }}
-                className={`
-                  flex items-center justify-between w-full px-3 py-2 mb-1 text-left rounded-md
-                  hover:bg-gray-100 transition-colors
-                  ${selectedCategory === category.name ? 'bg-[#03414C] text-white' : 'text-gray-700'}
-                `}
+                active={selectedCategory === category.name}
+                icon={selectedCategory === category.name ? <FaChevronDown size={12} /> : <FaChevronRight size={12} />}
               >
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-current rounded-full mr-2 opacity-60"></div>
-                  <span className="text-sm">{category.name}</span>
-                </div>
-                {selectedCategory === category.name ? <FaChevronDown size={12} /> : <FaChevronRight size={12} />}
-              </button>
-            ))}
+                {category.name}
+              </SidebarButton>
+            ))}            {/* Add New Category Button */}
+            <div className="border-t border-gray-200 my-2"></div>
+            <SpecialButton
+              variant="sidebar-add"
+              onClick={handleAddCategory}
+              icon={<FaPlus size={10} />}
+              className="text-teal-600 font-medium"
+            >
+              Add New Category
+            </SpecialButton>
           </div>
         </aside>
 
@@ -253,38 +407,41 @@ const ExpensePage: React.FC = () => {
                   className="lg:hidden mr-3 p-1 text-gray-600 hover:text-gray-800"
                 >
                   <FaBars size={16} />
-                </button>
-                <nav className="text-sm text-gray-600">
+                </button>                <nav className="text-sm text-gray-600">
                   <span className="hover:text-[#03414C] cursor-pointer">Back to Expenses</span>
                   <span className="mx-2">›</span>
-                  <span className="font-medium text-[#03414C]">{selectedCategory} Supplies</span>
+                  <span className="font-medium text-[#03414C]">
+                    {selectedCategory === 'All Expenses' ? 'All Expenses' : `${selectedCategory} Supplies`}
+                  </span>
                 </nav>
               </div>              <div className="flex flex-wrap gap-2">
-                <button 
+                <SpecialButton
+                  variant="expense-export"
                   onClick={handleExportCSV}
-                  className="flex items-center px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md border transition-colors min-w-[100px] justify-center"
+                  icon={<FaFileExport size={12} />}
                 >
-                  <FaFileExport size={12} className="mr-2" />
                   Export CSV
-                </button>
-                <button 
+                </SpecialButton>
+                <SpecialButton
+                  variant="expense-delete"
                   onClick={handleDeleteAll}
-                  className="flex items-center px-4 py-2 text-sm bg-red-100 hover:bg-red-200 text-red-600 rounded-md border transition-colors min-w-[100px] justify-center"
+                  icon={<FaTrash size={12} />}
                 >
-                  <FaTrash size={12} className="mr-2" />
                   Delete All
-                </button>
-                <button className="flex items-center px-4 py-2 text-sm bg-[#03414C] hover:bg-[#025a6b] text-white rounded-md transition-colors min-w-[100px] justify-center">
-                  <FaSave size={12} className="mr-2" />
-                  Save
-                </button>
-                <button 
-                  onClick={handleAddRow}
-                  className="flex items-center px-4 py-2 text-sm bg-teal-600 hover:bg-teal-700 text-white rounded-md transition-colors min-w-[100px] justify-center"
+                </SpecialButton>
+                <SpecialButton
+                  variant="expense-save"
+                  icon={<FaSave size={12} />}
                 >
-                  <FaPlus size={12} className="mr-2" />
-                  Add a Row
-                </button>
+                  Save
+                </SpecialButton>
+                <SpecialButton
+                  variant="expense-add"
+                  onClick={handleAddRow}
+                  icon={<FaPlus size={12} />}
+                >
+                  Add new Expense
+                </SpecialButton>
               </div>
             </div>
           </div>
@@ -297,20 +454,18 @@ const ExpensePage: React.FC = () => {
                 <h2 className="text-lg font-semibold text-gray-800">Expenses Data</h2>
               </div>              {/* Add Row button */}
               <div className="px-4 py-2 border-b border-gray-200 flex justify-end">
-                <button 
+                <SpecialButton
+                  variant="expense-add"
                   onClick={handleAddRow}
-                  className="text-sm text-teal-600 hover:text-teal-700 flex items-center"
+                  icon={<FaPlus size={10} />}
+                  className="text-sm"
                 >
-                  <FaPlus size={10} className="mr-1" />
-                  Add Row
-                </button>
-              </div>
-
-              {/* Table */}
-              {currentCategory && currentCategory.items.length > 0 ? (
+                  Add Expense
+                </SpecialButton>
+              </div>{/* Table */}
+              {(selectedCategory === 'All Expenses' ? allExpenses.length > 0 : currentCategory && currentCategory.items.length > 0) ? (
                 <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
+                  <table className="w-full">                    <thead className="bg-gray-50">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           #
@@ -318,6 +473,11 @@ const ExpensePage: React.FC = () => {
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Items
                         </th>
+                        {selectedCategory === 'All Expenses' && (
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Category
+                          </th>
+                        )}
                         <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Quantity
                         </th>
@@ -331,9 +491,8 @@ const ExpensePage: React.FC = () => {
                           Actions
                         </th>
                       </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {currentCategory.items.map((item, index) => (
+                    </thead>                    <tbody className="bg-white divide-y divide-gray-200">
+                      {(selectedCategory === 'All Expenses' ? allExpenses : currentCategory?.items || []).map((item, index) => (
                         <tr key={item.id} className="hover:bg-gray-50">
                           <td className="px-4 py-3 text-sm text-gray-500 text-center">
                             {index + 1}
@@ -341,6 +500,12 @@ const ExpensePage: React.FC = () => {
                           <td className="px-4 py-3 text-sm font-medium text-gray-900">
                             {item.name}
                           </td>
+                          {selectedCategory === 'All Expenses' && (
+                            <td className="px-4 py-3 text-sm text-gray-600">                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {(item as any).category || 'Unknown'}
+                              </span>
+                            </td>
+                          )}
                           <td className="px-4 py-3 text-sm text-gray-900 text-center">
                             {item.quantity}
                           </td>
@@ -353,28 +518,29 @@ const ExpensePage: React.FC = () => {
                             {formatCurrency(item.quantity * item.price)}
                           </td>                          <td className="px-4 py-3 text-center">
                             <div className="flex justify-center space-x-2">
-                              <button 
+                              <IconButton
+                                icon={<FaEdit size={14} />}
                                 onClick={() => handleEdit(item)}
-                                className="text-gray-500 hover:text-blue-600"
+                                variant="secondary"
+                                size="sm"
                                 title="Edit"
-                              >
-                                <FaEdit size={14} />
-                              </button>
-                              <button 
+                                className="text-gray-500 hover:text-blue-600"
+                              />
+                              <IconButton
+                                icon={<FaTrash size={14} />}
                                 onClick={() => handleDeleteItem(item.id)}
-                                className="text-gray-500 hover:text-red-600"
+                                variant="danger"
+                                size="sm"
                                 title="Delete"
-                              >
-                                <FaTrash size={14} />
-                              </button>
+                                className="text-gray-500 hover:text-red-600"
+                              />
                             </div>
                           </td>
                         </tr>
                       ))}
-                      
-                      {/* Total Row */}
+                        {/* Total Row */}
                       <tr className="bg-gray-50 font-bold">
-                        <td className="px-4 py-3 text-sm text-gray-900 text-center" colSpan={4}>
+                        <td className="px-4 py-3 text-sm text-gray-900 text-center" colSpan={selectedCategory === 'All Expenses' ? 5 : 4}>
                           Total
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-900 text-right">
@@ -397,12 +563,12 @@ const ExpensePage: React.FC = () => {
                   </h3>
                   <p className="text-gray-500 mb-4">
                     Start by adding your first expense to {selectedCategory}
-                  </p>                  <button 
+                  </p>                  <SpecialButton
+                    variant="expense-add"
                     onClick={handleAddRow}
-                    className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md transition-colors"
                   >
                     Add First Expense
-                  </button>
+                  </SpecialButton>
                 </div>
               )}
             </div>          </div>
@@ -418,8 +584,7 @@ const ExpensePage: React.FC = () => {
                 </div>
                 <h3 className="text-lg font-semibold text-[#03414C]">Edit Expense</h3>
               </div>
-              
-              <div className="space-y-4">
+                <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Item Name
@@ -432,6 +597,25 @@ const ExpensePage: React.FC = () => {
                     placeholder="Enter item name"
                   />
                 </div>
+                
+                {selectedCategory === 'All Expenses' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Category *
+                    </label>
+                    <select
+                      value={editForm.category}
+                      onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-[#03414C]"
+                    >
+                      {categories.map(category => (
+                        <option key={category.name} value={category.name}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -462,20 +646,19 @@ const ExpensePage: React.FC = () => {
                   />
                 </div>
               </div>
-              
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
+                <div className="flex justify-end space-x-3 mt-6">
+                <SpecialButton
+                  variant="modal-cancel"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
                 >
                   Cancel
-                </button>
-                <button
+                </SpecialButton>
+                <SpecialButton
+                  variant="modal-confirm"
                   onClick={handleEditSubmit}
-                  className="px-4 py-2 text-sm font-medium text-white bg-[#03414C] hover:bg-[#025a6b] rounded-md transition-colors"
                 >
                   Save Changes
-                </button>
+                </SpecialButton>
               </div>
             </div>
           </div>
@@ -495,20 +678,19 @@ const ExpensePage: React.FC = () => {
               <p className="text-gray-600 mb-6">
                 Are you sure you want to delete this expense? This action cannot be undone.
               </p>
-              
-              <div className="flex justify-end space-x-3">
-                <button
+                <div className="flex justify-end space-x-3">
+                <SpecialButton
+                  variant="modal-cancel"
                   onClick={() => setIsDeleteModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
                 >
                   Cancel
-                </button>
-                <button
+                </SpecialButton>
+                <SpecialButton
+                  variant="modal-delete"
                   onClick={confirmDeleteItem}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-md transition-colors"
                 >
                   Delete
-                </button>
+                </SpecialButton>
               </div>
             </div>
           </div>
@@ -529,20 +711,19 @@ const ExpensePage: React.FC = () => {
                 Are you sure you want to delete all expenses in <strong>{selectedCategory}</strong>? 
                 This action cannot be undone and will remove all {currentCategory?.items.length || 0} items.
               </p>
-              
-              <div className="flex justify-end space-x-3">
-                <button
+                <div className="flex justify-end space-x-3">
+                <SpecialButton
+                  variant="modal-cancel"
                   onClick={() => setIsDeleteAllModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
                 >
                   Cancel
-                </button>
-                <button
+                </SpecialButton>
+                <SpecialButton
+                  variant="modal-delete"
                   onClick={confirmDeleteAll}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-md transition-colors"
                 >
                   Delete All
-                </button>
+                </SpecialButton>
               </div>
             </div>
           </div>
@@ -558,8 +739,7 @@ const ExpensePage: React.FC = () => {
                 </div>
                 <h3 className="text-lg font-semibold text-teal-600">Add New Expense</h3>
               </div>
-              
-              <div className="space-y-4">
+                <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Item Name *
@@ -572,6 +752,25 @@ const ExpensePage: React.FC = () => {
                     placeholder="Enter item name"
                   />
                 </div>
+                
+                {selectedCategory === 'All Expenses' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Category *
+                    </label>
+                    <select
+                      value={addForm.category}
+                      onChange={(e) => setAddForm({ ...addForm, category: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    >
+                      {categories.map(category => (
+                        <option key={category.name} value={category.name}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -602,20 +801,71 @@ const ExpensePage: React.FC = () => {
                   />
                 </div>
               </div>
-              
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
+                <div className="flex justify-end space-x-3 mt-6">
+                <SpecialButton
+                  variant="modal-cancel"
                   onClick={() => setIsAddRowModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
                 >
                   Cancel
-                </button>
-                <button
+                </SpecialButton>
+                <SpecialButton
+                  variant="modal-add"
                   onClick={handleAddSubmit}
-                  className="px-4 py-2 text-sm font-medium text-white bg-teal-500 hover:bg-teal-600 rounded-md transition-colors"
                 >
                   Add Expense
-                </button>
+                </SpecialButton>
+              </div>
+            </div>          </div>
+        </div>
+      )}
+
+      {/* Add Category Modal */}
+      {isAddCategoryModalOpen && (
+        <div className="fixed inset-0 backdrop-blur-[1px] z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md border-2 border-teal-500">
+            <div className="p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center mr-3">
+                  <FaPlus className="text-white" size={16} />
+                </div>
+                <h3 className="text-lg font-semibold text-teal-600">Add New Category</h3>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    placeholder="Enter category name (e.g., Equipment, Software, Travel)"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleAddCategorySubmit();
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Category names should be unique and descriptive
+                  </p>
+                </div>
+              </div>
+                <div className="flex justify-end space-x-3 mt-6">
+                <SpecialButton
+                  variant="modal-cancel"
+                  onClick={() => setIsAddCategoryModalOpen(false)}
+                >
+                  Cancel
+                </SpecialButton>
+                <SpecialButton
+                  variant="modal-add"
+                  onClick={handleAddCategorySubmit}
+                >
+                  Add Category
+                </SpecialButton>
               </div>
             </div>
           </div>

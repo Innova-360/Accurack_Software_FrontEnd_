@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaPlus, FaFileAlt, FaChartLine } from 'react-icons/fa';
+import { Button } from '../buttons';
 
 interface SalesHeaderProps {
   onNewSale?: () => void;
@@ -16,29 +17,28 @@ const SalesHeader: React.FC<SalesHeaderProps> = ({
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
       <div>
         <h1 className="text-2xl font-bold text-[#03414C] mb-2">Sales Management</h1>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <button 
+      </div>      <div className="flex flex-wrap gap-2">
+        <Button 
           onClick={onNewSale}
-          className="flex items-center px-4 py-2 bg-[#03414C] text-white rounded-md hover:bg-[#025a6b] transition-colors"
+          variant="primary"
+          icon={<FaPlus size={14} />}
         >
-          <FaPlus size={14} className="mr-2" />
           New Sale
-        </button>
-        <button 
+        </Button>
+        <Button 
           onClick={onSalesReport}
-          className="flex items-center px-4 py-2 bg-[#03414C] text-white rounded-md hover:bg-[#025a6b] transition-colors"
+          variant="primary"
+          icon={<FaFileAlt size={14} />}
         >
-          <FaFileAlt size={14} className="mr-2" />
           Sales Report
-        </button>
-        <button 
+        </Button>
+        <Button 
           onClick={onAnalytics}
-          className="flex items-center px-4 py-2 bg-[#03414C] text-white rounded-md hover:bg-[#025a6b] transition-colors"
+          variant="primary"
+          icon={<FaChartLine size={14} />}
         >
-          <FaChartLine size={14} className="mr-2" />
           Analytics
-        </button>
+        </Button>
       </div>
     </div>
   );
