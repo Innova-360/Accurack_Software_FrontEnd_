@@ -4,7 +4,7 @@ import { useAppDispatch } from "../../store/hooks";
 import {
   registerUser,
   googleAuth,
-  sendOtp,
+  verifyOtp,
 } from "../../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 
@@ -57,27 +57,8 @@ const Signup = () => {
         console.log("Signup successful", resultAction.payload);
         // Save email to localStorage
         localStorage.setItem("userEmail", formData.email);
-
-        // Send OTP to user's email
-        try {
-          const otpResult = await dispatch(sendOtp({ email: formData.email }));
-          if (sendOtp.fulfilled.match(otpResult)) {
-            console.log("OTP sent successfully");
-            navigate("/otp");
-          } else {
-            console.error("Failed to send OTP", otpResult.payload);
-            alert(
-              "Account created but failed to send OTP. Please try resending from the OTP page."
-            );
-            navigate("/otp");
-          }
-        } catch (otpError) {
-          console.error("Error sending OTP", otpError);
-          alert(
-            "Account created but failed to send OTP. Please try resending from the OTP page."
-          );
-          navigate("/otp");
-        }
+        // Redirect to OTP page - OTP will be sent from there
+        navigate("/otp");
       } else {
         console.error("Signup failed", resultAction.payload);
         alert(resultAction.payload || "Signup failed");

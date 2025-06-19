@@ -47,9 +47,10 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="table-auto w-full min-w-max bg-white">
+          {" "}
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200">
+              <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300">
                 <input
                   type="checkbox"
                   checked={
@@ -61,7 +62,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                 />
               </th>
               <th
-                className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200 cursor-pointer hover:bg-gray-100"
+                className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100"
                 onClick={() => onSort("name")}
               >
                 <div className="flex items-center justify-between">
@@ -70,7 +71,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                 </div>
               </th>
               <th
-                className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200 cursor-pointer hover:bg-gray-100"
+                className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100"
                 onClick={() => onSort("quantity")}
               >
                 <div className="flex items-center justify-between">
@@ -79,7 +80,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                 </div>
               </th>
               <th
-                className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200 cursor-pointer hover:bg-gray-100"
+                className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100"
                 onClick={() => onSort("plu")}
               >
                 <div className="flex items-center justify-between">
@@ -88,7 +89,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                 </div>
               </th>
               <th
-                className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200 cursor-pointer hover:bg-gray-100"
+                className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100"
                 onClick={() => onSort("sku")}
               >
                 <div className="flex items-center justify-between">
@@ -96,11 +97,11 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                   {getSortIcon("sku")}
                 </div>
               </th>
-              <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200">
+              <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300">
                 Description
               </th>
               <th
-                className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200 cursor-pointer hover:bg-gray-100"
+                className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100"
                 onClick={() => onSort("price")}
               >
                 <div className="flex items-center justify-between">
@@ -109,7 +110,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                 </div>
               </th>
               <th
-                className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200 cursor-pointer hover:bg-gray-100"
+                className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100"
                 onClick={() => onSort("supplier")}
               >
                 <div className="flex items-center justify-between">
@@ -118,7 +119,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                 </div>
               </th>
               <th
-                className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200 cursor-pointer hover:bg-gray-100"
+                className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100"
                 onClick={() => onSort("category")}
               >
                 <div className="flex items-center justify-between">
@@ -127,7 +128,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                 </div>
               </th>
               <th
-                className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200 cursor-pointer hover:bg-gray-100"
+                className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100"
                 onClick={() => onSort("itemsPerUnit")}
               >
                 <div className="flex items-center justify-between">
@@ -138,10 +139,11 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
             </tr>
           </thead>
           <tbody>
+            {" "}
             {products.length > 0 ? (
               products.map((product, index) => (
                 <tr key={index} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm border-b border-b-gray-200">
+                  <td className="px-4 py-3 text-sm border-b border-gray-300">
                     <input
                       type="checkbox"
                       checked={selectedItems.includes(startIndex + index)}
@@ -149,7 +151,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                       className="rounded"
                     />
                   </td>
-                  <td className="px-4 py-3 text-sm border-b border-b-gray-200">
+                  <td className="px-4 py-3 text-sm border-b border-gray-300">
                     <div className="flex items-center gap-2">
                       {product.name}
                       {product.quantity < 10 && (
@@ -167,7 +169,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm border-b border-b-gray-200">
+                  <td className="px-4 py-3 text-sm border-b border-gray-300">
                     <span
                       className={
                         product.quantity < 10 ? "text-red-600 font-bold" : ""
@@ -176,25 +178,25 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                       {product.quantity}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-blue-600 border-b border-b-gray-200">
+                  <td className="px-4 py-3 text-sm text-blue-600 border-b border-gray-300">
                     {product.plu}
                   </td>
-                  <td className="px-4 py-3 text-sm text-blue-600 border-b border-b-gray-200">
+                  <td className="px-4 py-3 text-sm text-blue-600 border-b border-gray-300">
                     {product.sku}
                   </td>
-                  <td className="px-4 py-3 text-sm border-b border-b-gray-200">
+                  <td className="px-4 py-3 text-sm border-b border-gray-300">
                     {product.description}
                   </td>
-                  <td className="px-4 py-3 text-sm border-b border-b-gray-200">
+                  <td className="px-4 py-3 text-sm border-b border-gray-300">
                     {product.price}
                   </td>
-                  <td className="px-4 py-3 text-sm border-b border-b-gray-200">
+                  <td className="px-4 py-3 text-sm border-b border-gray-300">
                     {product.supplier}
                   </td>
-                  <td className="px-4 py-3 text-sm border-b border-b-gray-200">
+                  <td className="px-4 py-3 text-sm border-b border-gray-300">
                     {product.category}
                   </td>
-                  <td className="px-4 py-3 text-sm border-b border-b-gray-200">
+                  <td className="px-4 py-3 text-sm border-b border-gray-300">
                     {product.itemsPerUnit}
                   </td>
                 </tr>
@@ -203,7 +205,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
               <tr>
                 <td
                   colSpan={10}
-                  className="px-4 py-8 text-center text-gray-500 border-b border-b-gray-200"
+                  className="px-4 py-8 text-center text-gray-500 border-b border-gray-300"
                 >
                   No products found matching your search criteria.
                 </td>

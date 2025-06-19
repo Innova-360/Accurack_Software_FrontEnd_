@@ -55,40 +55,40 @@ const GroupedTableView: React.FC<GroupedTableViewProps> = ({
                   <tr className="text-left">
                     <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200">
                       <input type="checkbox" className="rounded" />
-                    </th>
-                    <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200">
+                    </th>{" "}
+                    <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300">
                       Product Name
                     </th>
-                    <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200">
+                    <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300">
                       Quantity
                     </th>
-                    <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200">
+                    <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300">
                       PLU
                     </th>
-                    <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200">
+                    <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300">
                       SKU
                     </th>
-                    <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200">
+                    <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300">
                       Description
                     </th>
-                    <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200">
+                    <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300">
                       Price
                     </th>
-                    <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200">
+                    <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300">
                       Supplier
                     </th>
-                    <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200">
+                    <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-gray-300">
                       Items/Unit
                     </th>
                   </tr>
-                </thead>
+                </thead>{" "}
                 <tbody>
                   {categoryProducts.map((product, index) => (
                     <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm border-b">
+                      <td className="px-4 py-3 text-sm border-b border-gray-300">
                         <input type="checkbox" className="rounded" />
                       </td>
-                      <td className="px-4 py-3 text-sm border-b">
+                      <td className="px-4 py-3 text-sm border-b border-gray-300">
                         <div className="flex items-center gap-2">
                           {product.name}
                           {product.quantity < 10 && (
@@ -106,7 +106,7 @@ const GroupedTableView: React.FC<GroupedTableViewProps> = ({
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm border-b">
+                      <td className="px-4 py-3 text-sm border-b border-gray-300">
                         <span
                           className={
                             product.quantity < 10
@@ -117,22 +117,22 @@ const GroupedTableView: React.FC<GroupedTableViewProps> = ({
                           {product.quantity}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-blue-600 border-b">
+                      <td className="px-4 py-3 text-sm text-blue-600 border-b border-gray-300">
                         {product.plu}
                       </td>
-                      <td className="px-4 py-3 text-sm text-blue-600 border-b">
+                      <td className="px-4 py-3 text-sm text-blue-600 border-b border-gray-300">
                         {product.sku}
                       </td>
-                      <td className="px-4 py-3 text-sm border-b">
+                      <td className="px-4 py-3 text-sm border-b border-gray-300">
                         {product.description}
                       </td>
-                      <td className="px-4 py-3 text-sm border-b">
+                      <td className="px-4 py-3 text-sm border-b border-gray-300">
                         {product.price}
                       </td>
-                      <td className="px-4 py-3 text-sm border-b">
+                      <td className="px-4 py-3 text-sm border-b border-gray-300">
                         {product.supplier}
                       </td>
-                      <td className="px-4 py-3 text-sm border-b">
+                      <td className="px-4 py-3 text-sm border-b border-gray-300">
                         {product.itemsPerUnit}
                       </td>
                     </tr>

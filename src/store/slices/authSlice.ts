@@ -136,6 +136,7 @@ export const googleAuthCallback = createAsyncThunk(
   }
 );
 
+
 export const verifyOtp = createAsyncThunk(
   "/auth/verify-otp",
   async (otpData: { email: string; otp: string }, { rejectWithValue }) => {
@@ -144,35 +145,7 @@ export const verifyOtp = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || "OTP verification failed"
-      );
-    }
-  }
-);
-
-export const resendOtp = createAsyncThunk(
-  "/auth/resend-otp",
-  async (emailData: { email: string }, { rejectWithValue }) => {
-    try {
-      const response = await apiClient.post("/auth/resend-otp", emailData);
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to resend OTP"
-      );
-    }
-  }
-);
-
-export const sendOtp = createAsyncThunk(
-  "/auth/send-otp",
-  async (emailData: { email: string }, { rejectWithValue }) => {
-    try {
-      const response = await apiClient.post("/auth/send-otp", emailData);
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to send OTP"
+        error.response?.data?.message || "OTP operation failed"
       );
     }
   }
@@ -299,32 +272,6 @@ export const authSlice = createSlice({
         }
       })
       .addCase(verifyOtp.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      // Resend OTP
-      .addCase(resendOtp.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(resendOtp.fulfilled, (state) => {
-        state.loading = false;
-        // OTP resent successfully - no additional state changes needed
-      })
-      .addCase(resendOtp.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      // Send OTP
-      .addCase(sendOtp.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(sendOtp.fulfilled, (state) => {
-        state.loading = false;
-        // OTP sent successfully - no additional state changes needed
-      })
-      .addCase(sendOtp.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

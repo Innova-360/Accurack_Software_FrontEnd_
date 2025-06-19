@@ -1,25 +1,64 @@
 import { useState, useRef, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { verifyOtp, resendOtp } from "../../store/slices/authSlice";
+import { verifyOtp } from "../../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 
 const OtpPage = () => {
-  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [userEmail, setUserEmail] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const inputs = [useRef(null), useRef(null), useRef(null), useRef(null)];
+  const [initialOtpSent, setInitialOtpSent] = useState(false);
+  const inputs = [
+    useRef(null),
+    useRef(null),
+    useRef(null),
+    useRef(null),
+    useRef(null),
+    useRef(null),
+  ];
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { loading, error } = useAppSelector((state) => state.auth);
 
-  // Get user email from localStorage on component mount
+  // Get user email from localStorage and send initial OTP
   useEffect(() => {
     const email = localStorage.getItem("userEmail");
     if (email) {
       setUserEmail(email);
+      // Send initial OTP when component mounts
+      sendInitialOtp(email);
     }
   }, []);
+  // Send initial OTP when user lands on OTP page
+  const sendInitialOtp = async (email: string) => {
+    try {
+      const resultAction = await dispatch(
+        verifyOtp({
+          email: email,
+          otp: "", // Send empty OTP to trigger OTP sending
+        })
+      );
+
+      if (verifyOtp.fulfilled.match(resultAction)) {
+        console.log("Initial OTP sent successfully", resultAction.payload);
+        setSuccessMessage("OTP has been sent to your email");
+        setInitialOtpSent(true);
+        // Focus on first input
+        setTimeout(() => {
+          (inputs[0].current as any)?.focus();
+        }, 100);
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccessMessage(""), 3000);
+      } else {
+        console.error("Failed to send initial OTP", resultAction.payload);
+        alert(resultAction.payload || "Failed to send OTP");
+      }
+    } catch (error) {
+      console.error("Error sending initial OTP", error);
+      alert("An error occurred while sending OTP. Please try again.");
+    }
+  };
 
   // Handle OTP input change
   const handleChange = (
@@ -31,7 +70,7 @@ const OtpPage = () => {
     const newOtp = [...otp];
     newOtp[idx] = val;
     setOtp(newOtp);
-    if (val && idx < 3) {
+    if (val && idx < 5) {
       (inputs[idx + 1].current as any)?.focus();
     }
   };
@@ -50,12 +89,10 @@ const OtpPage = () => {
     e.preventDefault();
 
     // Clear any success messages
-    setSuccessMessage("");
-
-    // Check if all OTP fields are filled
+    setSuccessMessage(""); // Check if all OTP fields are filled
     const otpString = otp.join("");
-    if (otpString.length !== 4) {
-      alert("Please enter the complete 4-digit OTP");
+    if (otpString.length !== 6) {
+      alert("Please enter the complete 6-digit OTP");
       return;
     }
 
@@ -76,7 +113,7 @@ const OtpPage = () => {
       if (verifyOtp.fulfilled.match(resultAction)) {
         console.log("OTP verification successful", resultAction.payload);
         // Navigate to dashboard or home page after successful verification
-        navigate("/");
+        navigate("/login");
       } else {
         console.error("OTP verification failed", resultAction.payload);
         alert(resultAction.payload || "OTP verification failed");
@@ -84,39 +121,6 @@ const OtpPage = () => {
     } catch (error) {
       console.error("Error during OTP verification", error);
       alert("An error occurred during OTP verification. Please try again.");
-    }
-  };
-
-  // Handle resend OTP
-  const handleResendOtp = async () => {
-    if (!userEmail) {
-      alert("Email not found. Please try signing up again.");
-      return;
-    }
-
-    try {
-      const resultAction = await dispatch(
-        resendOtp({
-          email: userEmail,
-        })
-      );
-
-      if (resendOtp.fulfilled.match(resultAction)) {
-        console.log("OTP resent successfully", resultAction.payload);
-        setSuccessMessage("OTP has been resent to your email");
-        // Clear current OTP inputs
-        setOtp(["", "", "", ""]);
-        // Focus on first input
-        (inputs[0].current as any)?.focus();
-        // Clear success message after 3 seconds
-        setTimeout(() => setSuccessMessage(""), 3000);
-      } else {
-        console.error("Failed to resend OTP", resultAction.payload);
-        alert(resultAction.payload || "Failed to resend OTP");
-      }
-    } catch (error) {
-      console.error("Error during OTP resend", error);
-      alert("An error occurred while resending OTP. Please try again.");
     }
   };
 
@@ -190,13 +194,19 @@ const OtpPage = () => {
           </div>
           <h2 className="text-lg sm:text-xl font-bold text-[#181c1f] mb-2 text-center">
             Please check your email.
-          </h2>{" "}
+          </h2>
           <p className="text-gray-500 text-center text-sm mb-5">
-            We've sent a code to{" "}
+            {initialOtpSent ? `We've sent a code to ` : `Sending code to `}
             <span className="font-semibold text-[#0b5c5a]">
               {userEmail || "your email"}
             </span>
-          </p>{" "}
+          </p>
+          {/* Loading message for initial OTP sending */}
+          {!initialOtpSent && loading && (
+            <div className="text-blue-500 text-sm text-center mb-3 bg-blue-50 p-2 rounded">
+              Sending OTP to your email...
+            </div>
+          )}
           {/* Error message */}
           {error && (
             <div className="text-red-500 text-sm text-center mb-3 bg-red-50 p-2 rounded">
@@ -214,7 +224,8 @@ const OtpPage = () => {
             className="flex flex-col items-center w-full"
             onSubmit={handleVerifyOtp}
           >
-            <div className="flex justify-center gap-3 mb-4 w-full">
+            {" "}
+            <div className="flex justify-center gap-2 mb-4 w-full">
               {otp.map((digit, idx) => (
                 <input
                   key={idx}
@@ -225,21 +236,13 @@ const OtpPage = () => {
                   value={digit}
                   onChange={(e) => handleChange(e, idx)}
                   onKeyDown={(e) => handleKeyDown(e, idx)}
-                  className="w-12 h-12 sm:w-14 sm:h-14 text-center border border-gray-200 rounded-lg text-xl font-bold focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] bg-[#f5f6fa]"
+                  className="w-10 h-10 sm:w-12 sm:h-12 text-center border border-gray-200 rounded-lg text-lg font-bold focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] bg-[#f5f6fa]"
                   autoFocus={idx === 0}
                 />
               ))}
             </div>{" "}
             <div className="text-xs text-gray-500 mb-5">
-              Didn't get a code?{" "}
-              <button
-                type="button"
-                onClick={handleResendOtp}
-                disabled={loading}
-                className="text-[#0b5c5a] font-semibold hover:underline disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border-none p-0"
-              >
-                {loading ? "Sending..." : "Click to resend."}
-              </button>
+              Code expires in 10 minutes
             </div>
             <div className="flex w-full gap-3 mt-2">
               <button
