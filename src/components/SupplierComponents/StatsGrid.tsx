@@ -1,0 +1,75 @@
+import React from 'react';
+import type { Supplier, Product } from './types';
+
+const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
+
+interface StatsGridProps {
+  viewMode: 'suppliers' | 'products';
+  suppliers: Supplier[];
+  selectedSupplier?: Supplier | null;
+  currentSupplierProducts?: Product[];
+}
+
+const StatsGrid: React.FC<StatsGridProps> = ({
+  viewMode,
+  suppliers,
+  selectedSupplier,
+  currentSupplierProducts = []
+}) => {
+  if (viewMode === 'suppliers') {
+    const totalSuppliers = suppliers.length;
+    const activeSuppliers = suppliers.filter(s => s.status === 'Active').length;
+    const totalValue = suppliers.reduce((sum, supplier) => sum + supplier.totalValue, 0);
+    const totalProducts = suppliers.reduce((sum, supplier) => sum + supplier.productsSupplied, 0);    return (
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="text-2xl font-bold text-gray-900">{totalSuppliers}</div>
+          <div className="text-sm text-gray-600">Total Suppliers</div>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="text-2xl font-bold text-green-600">{activeSuppliers}</div>
+          <div className="text-sm text-gray-600">Active Suppliers</div>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="text-2xl font-bold text-blue-600">{totalProducts}</div>
+          <div className="text-sm text-gray-600">Total Products</div>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="text-2xl font-bold text-teal-600">{formatCurrency(totalValue)}</div>
+          <div className="text-sm text-gray-600">Total Value</div>
+        </div>
+      </div>
+    );
+  }
+  if (viewMode === 'products' && selectedSupplier) {    return (
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="text-2xl font-bold text-gray-900">{currentSupplierProducts.length}</div>
+          <div className="text-sm text-gray-600">Products Available</div>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="text-2xl font-bold text-green-600">
+            {currentSupplierProducts.filter(p => p.stock > 0).length}
+          </div>
+          <div className="text-sm text-gray-600">In Stock</div>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="text-2xl font-bold text-blue-600">
+            {currentSupplierProducts.reduce((sum, p) => sum + p.stock, 0)}
+          </div>
+          <div className="text-sm text-gray-600">Total Stock</div>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="text-2xl font-bold text-teal-600">
+            {formatCurrency(currentSupplierProducts.reduce((sum, p) => sum + (p.price * p.stock), 0))}
+          </div>
+          <div className="text-sm text-gray-600">Total Inventory Value</div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
+
+export default StatsGrid;

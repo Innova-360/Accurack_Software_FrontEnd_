@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Header from "../../components/Header";
 import InventoryStats from "../../components/InventoryComponents/InventoryStats";
 import InventoryControls from "../../components/InventoryComponents/InventoryControls";

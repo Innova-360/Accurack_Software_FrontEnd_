@@ -36,19 +36,19 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     );
   };
 
-  const getPaymentBadge = (payment: Transaction['payment']) => {
-    const paymentStyles = {
-      'Cash': 'bg-green-50 text-green-700',
-      'Card': 'bg-blue-50 text-blue-700',
-      'Digital': 'bg-purple-50 text-purple-700'
-    };
+  // const getPaymentBadge = (payment: Transaction['payment']) => {
+  //   const paymentStyles = {
+  //     'Cash': 'bg-green-50 text-green-700',
+  //     'Card': 'bg-blue-50 text-blue-700',
+  //     'Digital': 'bg-purple-50 text-purple-700'
+  //   };
     
-    return (
-      <span className={`px-2 py-1 text-xs font-medium rounded ${paymentStyles[payment]}`}>
-        {payment}
-      </span>
-    );
-  };
+  //   return (
+  //     <span className={`px-2 py-1 text-xs font-medium rounded ${paymentStyles[payment]}`}>
+  //       {payment}
+  //     </span>
+  //   );
+  // };
 
   return (
     <div className="overflow-x-auto">
@@ -108,7 +108,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                 </div>
               </td>
               <td className="px-4 py-3 text-center">
-                {getPaymentBadge(transaction.payment)}
               </td>
               <td className="px-4 py-3 text-center">
                 {getStatusBadge(transaction.status)}

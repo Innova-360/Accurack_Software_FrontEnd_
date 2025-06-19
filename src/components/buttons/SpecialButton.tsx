@@ -10,7 +10,7 @@ interface SpecialButtonProps {
   variant: 'expense-export' | 'expense-delete' | 'expense-save' | 'expense-add' | 
            'inventory-primary' | 'modal-cancel' | 'modal-confirm' | 'modal-delete' | 
            'modal-add' | 'sidebar-add' | 'action-edit' | 'action-delete' | 'action-view' | 
-           'action-print' | 'pagination';
+           'action-print' | 'pagination' | "secondary" | "primary";
   icon?: React.ReactNode;
   iconPosition?: 'left' | 'right';
   fullWidth?: boolean;

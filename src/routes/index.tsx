@@ -9,6 +9,8 @@ import StoreForm from "../components/StoreForm";
 import ExpensePage from "../pages/expensePage/Expense";
 import SalesPage from "../pages/salesPage/Sales";
 import GoogleAuthCallback from "../components/GoogleAuthCallback";
+import Supplier from "../pages/Supplier/Supplier"
+import StoresPage from "../pages/Stores/Stores"
 
 const AppRoutes = () => {
   return (
@@ -16,6 +18,9 @@ const AppRoutes = () => {
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
       <Route path="/otp" element={<OtpPage />} />
+      <Route path="/stores" element={<StoresPage />} />
+      <Route path="/store/create" element={<StoreForm />} />
+      <Route path="/store/edit/:id" element={<StoreForm />} />
       <Route path="/inventory" element={<Inventory />} />
       <Route path="/" element={<Home />} />
       <Route path="/term" element={<Terms />} />
@@ -23,6 +28,7 @@ const AppRoutes = () => {
       <Route path="/expenses" element={<ExpensePage />} />
       <Route path="/sales" element={<SalesPage />} />
       <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
+      <Route path="/supplier" element={<Supplier />} />
     </Routes>
   );
 };

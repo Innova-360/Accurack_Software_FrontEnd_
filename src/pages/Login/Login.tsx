@@ -1,15 +1,15 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import React Icons
 import { useAppDispatch } from "../../store/hooks";
 import { loginUser, googleAuth } from "../../store/slices/authSlice";
-import { useNavigate } from "react-router-dom";
 
 const Login = () => {
+  const navigate = useNavigate();
   const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
 
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -19,12 +19,11 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();    try {
       const resultAction = await dispatch(
-        loginUser({ email: formData.email, password: formData.password })
-      );
+        loginUser({ email: formData.email, password: formData.password })      );
       if (loginUser.fulfilled.match(resultAction)) {
         console.log("Login successful", resultAction.payload);
-        // Navigate to store page after successful login
-        navigate("/store");
+        // Navigate to stores page after successful login
+        navigate('/stores');
       } else {
         console.error("Login failed", resultAction.payload);
         alert(resultAction.payload || "Login failed");

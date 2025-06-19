@@ -8,6 +8,7 @@ import Pagination from '../../components/SalesComponents/Pagination';
 import EditTransactionModal from '../../components/SalesComponents/EditTransactionModal';
 import ViewTransactionModal from '../../components/SalesComponents/ViewTransactionModal';
 import DeleteConfirmModal from '../../components/SalesComponents/DeleteConfirmModal';
+import NewSaleModal from '../../components/SalesComponents/NewSaleModal';
 import type { Transaction } from '../../services/salesService';
 import { useSalesData } from '../../hooks/useSalesData';
 
@@ -18,6 +19,7 @@ const SalesPage: React.FC = () => {
         stats,
         loading,
         error,
+        createTransaction,
         updateTransaction,
         deleteTransaction,
         printTransaction
@@ -35,6 +37,7 @@ const SalesPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isNewSaleModalOpen, setIsNewSaleModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   // Filter transactions based on active tab and filters
@@ -69,7 +72,17 @@ const SalesPage: React.FC = () => {
 
     // Action handlers
     const handleNewSale = () => {
-        alert('New Sale functionality will be implemented');
+        setIsNewSaleModalOpen(true);
+    };
+
+    const handleCreateSale = async (newTransaction: Omit<Transaction, 'id'>) => {
+        try {
+            await createTransaction(newTransaction);
+            setIsNewSaleModalOpen(false);
+        } catch (error) {
+            console.error('Failed to create transaction:', error);
+            // Handle error (show toast, etc.)
+        }
     };
 
     const handleSalesReport = () => {
@@ -262,6 +275,12 @@ const SalesPage: React.FC = () => {
             </div>
 
             {/* Modals */}
+            <NewSaleModal
+                isOpen={isNewSaleModalOpen}
+                onClose={() => setIsNewSaleModalOpen(false)}
+                onCreate={handleCreateSale}
+            />
+
             <ViewTransactionModal
                 isOpen={isViewModalOpen}
                 transaction={selectedTransaction}
