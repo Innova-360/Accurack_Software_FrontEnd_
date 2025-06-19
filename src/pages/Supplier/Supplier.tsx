@@ -5,7 +5,7 @@ import {  AddSupplierModal,  EditSupplierModal, DeleteSupplierModal, ViewSupplie
   type Supplier,
   type Product
 } from '../../components/SupplierComponents';
-
+import Header from '../../components/Header';
 // Sample suppliers data
 const initialSuppliers: Supplier[] = [
   {
@@ -262,6 +262,8 @@ const SupplierPage: React.FC = () => {
       console.error('Error exporting data:', error);
     }
   };  return (
+    <>
+    <Header/>
     <div className="min-h-screen bg-gray-100 flex">
       {/* Sidebar */}
       <SupplierSidebar
@@ -430,6 +432,7 @@ const SupplierPage: React.FC = () => {
         products={products}
       />
     </div>
+    </>
   );
 };
 

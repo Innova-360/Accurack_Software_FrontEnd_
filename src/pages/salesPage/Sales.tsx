@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-// import Header from '../../components/Header';
+import Header from '../../components/Header';
 import SalesHeader from '../../components/SalesComponents/SalesHeader';
 import StatsGrid from '../../components/SalesComponents/StatsGrid';
 import FilterBar from '../../components/SalesComponents/FilterBar';
@@ -149,7 +149,7 @@ const SalesPage: React.FC = () => {
     };
     return (
         <>
-            {/* <Header /> */}
+            <Header />
             <div className="min-h-screen bg-gray-50 p-4">
                 <div className="max-w-7xl mx-auto">
                     {/* Error Display */}
