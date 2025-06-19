@@ -9,8 +9,8 @@ import StoreForm from "../components/StoreForm";
 import ExpensePage from "../pages/expensePage/Expense";
 import SalesPage from "../pages/salesPage/Sales";
 import GoogleAuthCallback from "../components/GoogleAuthCallback";
-import Supplier from "../pages/Supplier/Supplier"
-import StoresPage from "../pages/Stores/Stores"
+import Supplier from "../pages/Supplier/Supplier";
+import StoresPage from "../pages/Stores/Stores";
 
 const AppRoutes = () => {
   return (
@@ -21,6 +21,11 @@ const AppRoutes = () => {
       <Route path="/stores" element={<StoresPage />} />
       <Route path="/store/create" element={<StoreForm />} />
       <Route path="/store/edit/:id" element={<StoreForm />} />
+      <Route path="/store/:id" element={<Home />} />
+      <Route path="/store/:id/inventory" element={<Inventory />} />
+      <Route path="/store/:id/sales" element={<SalesPage />} />
+      <Route path="/store/:id/expenses" element={<ExpensePage />} />
+      <Route path="/store/:id/supplier" element={<Supplier />} />
       <Route path="/inventory" element={<Inventory />} />
       <Route path="/" element={<Home />} />
       <Route path="/term" element={<Terms />} />

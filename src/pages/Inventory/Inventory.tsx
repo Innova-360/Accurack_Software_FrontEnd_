@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useStoreFromUrl } from "../../hooks/useStoreFromUrl";
 import Header from "../../components/Header";
 import InventoryStats from "../../components/InventoryComponents/InventoryStats";
 import InventoryControls from "../../components/InventoryComponents/InventoryControls";
@@ -22,6 +23,8 @@ import {
 } from "../../hooks/useInventory";
 
 const Inventory: React.FC = () => {
+  useStoreFromUrl(); // Handle store selection from URL
+
   // State for main inventory pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);

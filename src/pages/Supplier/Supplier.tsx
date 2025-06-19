@@ -281,7 +281,7 @@ const SupplierPage: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Top Navigation */}
-        <div className="bg-white border-b border-gray-200 px-4 md:px-6 py-4 shadow-sm">
+        <div className="bg-white  border-b border-gray-200 px-4 md:px-6 py-4 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               {/* Mobile menu button */}
@@ -313,15 +313,15 @@ const SupplierPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <SpecialButton variant="expense-export" onClick={handleExport}>
                 <FaFileExport size={14} />
-                <span className="hidden sm:inline ml-2">Export</span>
+                <span className="sm:inline ml-2">Export</span>
               </SpecialButton>
               <SpecialButton variant="expense-delete" onClick={handleDeleteAll}>
                 <FaTrash size={14} />
-                <span className="hidden sm:inline ml-2">Delete All</span>
+                <span className="sm:inline ml-2">Delete All</span>
               </SpecialButton>
               <SpecialButton variant="expense-add" onClick={() => setIsAddSupplierModalOpen(true)}>
                 <FaPlus size={14} />
-                <span className="hidden sm:inline ml-2">Add New</span>
+                <span className="sm:inline ml-2">Add New</span>
               </SpecialButton>
             </div>
           </div>

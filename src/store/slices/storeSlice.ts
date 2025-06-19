@@ -1,6 +1,10 @@
-import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import type { Store, StoreFormData, StoreState } from '../../types/store';
-import apiClient from '../../services/api';
+import {
+  createSlice,
+  createAsyncThunk,
+  type PayloadAction,
+} from "@reduxjs/toolkit";
+import type { Store, StoreFormData, StoreState } from "../../types/store";
+import apiClient from "../../services/api";
 
 const initialState: StoreState = {
   stores: [],
@@ -11,76 +15,93 @@ const initialState: StoreState = {
 
 // Async thunks for API calls
 export const fetchStores = createAsyncThunk(
-  'stores/fetchStores',
+  "stores/fetchStores",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await apiClient.get('/stores');
-      return response.data;
+      const response = await apiClient.get("/store/list");
+      console.log("Fetched stores:", response); // Debug log
+      return response.data.data.data; // Extract stores from response
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch stores');
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch stores"
+      );
     }
   }
 );
 
 export const createStore = createAsyncThunk(
-  'stores/createStore',
-  async (storeData: StoreFormData, { rejectWithValue }) => {
+  "stores/createStore",
+  async (storeData: StoreFormData, { rejectWithValue, dispatch }) => {
     try {
-      const response = await apiClient.post('/stores', storeData);
-      return response.data;
+      await apiClient.post("/store/create", storeData);
+
+      // After successful creation, refetch the stores list
+      // This ensures we have the most up-to-date data from the server
+      await dispatch(fetchStores());
+
+      return { success: true, message: "Store created successfully" };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to create store');
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to create store"
+      );
     }
   }
 );
 
 export const updateStore = createAsyncThunk(
-  'stores/updateStore',
-  async ({ id, storeData }: { id: string; storeData: StoreFormData }, { rejectWithValue }) => {
+  "stores/updateStore",
+  async (
+    { id, storeData }: { id: string; storeData: StoreFormData },
+    { rejectWithValue }
+  ) => {
     try {
       const response = await apiClient.put(`/stores/${id}`, storeData);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update store');
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to update store"
+      );
     }
   }
 );
 
 export const deleteStore = createAsyncThunk(
-  'stores/deleteStore',
+  "stores/deleteStore",
   async (storeId: string, { rejectWithValue }) => {
     try {
       await apiClient.delete(`/stores/${storeId}`);
       return storeId;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to delete store');
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to delete store"
+      );
     }
   }
 );
 
 export const storeSlice = createSlice({
-  name: 'stores',
+  name: "stores",
   initialState,
   reducers: {
     setCurrentStore: (state, action: PayloadAction<Store>) => {
       state.currentStore = action.payload;
-      localStorage.setItem('selectedStore', JSON.stringify(action.payload));
+      localStorage.setItem("selectedStore", JSON.stringify(action.payload));
     },
     clearCurrentStore: (state) => {
       state.currentStore = null;
-      localStorage.removeItem('selectedStore');
+      localStorage.removeItem("selectedStore");
     },
     clearError: (state) => {
       state.error = null;
     },
     loadCurrentStoreFromStorage: (state) => {
-      const storedStore = localStorage.getItem('selectedStore');
+      const storedStore = localStorage.getItem("selectedStore");
       if (storedStore) {
         try {
           state.currentStore = JSON.parse(storedStore);
         } catch (error) {
-          console.error('Failed to parse stored store:', error);
-          localStorage.removeItem('selectedStore');
+          console.error("Failed to parse stored store:", error);
+          localStorage.removeItem("selectedStore");
         }
       }
     },
@@ -105,9 +126,10 @@ export const storeSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(createStore.fulfilled, (state, action) => {
+      .addCase(createStore.fulfilled, (state) => {
         state.loading = false;
-        state.stores.push(action.payload);
+        // Store creation was successful, the stores list will be updated by the fetchStores call
+        // No need to manually push to the array since we're refetching from server
       })
       .addCase(createStore.rejected, (state, action) => {
         state.loading = false;
@@ -120,14 +142,16 @@ export const storeSlice = createSlice({
       })
       .addCase(updateStore.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.stores.findIndex(store => store.id === action.payload.id);
+        const index = state.stores.findIndex(
+          (store) => store.id === action.payload.id
+        );
         if (index !== -1) {
           state.stores[index] = action.payload;
         }
         // Update current store if it's the one being updated
         if (state.currentStore?.id === action.payload.id) {
           state.currentStore = action.payload;
-          localStorage.setItem('selectedStore', JSON.stringify(action.payload));
+          localStorage.setItem("selectedStore", JSON.stringify(action.payload));
         }
       })
       .addCase(updateStore.rejected, (state, action) => {
@@ -141,11 +165,13 @@ export const storeSlice = createSlice({
       })
       .addCase(deleteStore.fulfilled, (state, action) => {
         state.loading = false;
-        state.stores = state.stores.filter(store => store.id !== action.payload);
+        state.stores = state.stores.filter(
+          (store) => store.id !== action.payload
+        );
         // Clear current store if it's the one being deleted
         if (state.currentStore?.id === action.payload) {
           state.currentStore = null;
-          localStorage.removeItem('selectedStore');
+          localStorage.removeItem("selectedStore");
         }
       })
       .addCase(deleteStore.rejected, (state, action) => {
@@ -155,6 +181,11 @@ export const storeSlice = createSlice({
   },
 });
 
-export const { setCurrentStore, clearCurrentStore, clearError, loadCurrentStoreFromStorage } = storeSlice.actions;
+export const {
+  setCurrentStore,
+  clearCurrentStore,
+  clearError,
+  loadCurrentStoreFromStorage,
+} = storeSlice.actions;
 
 export default storeSlice.reducer;

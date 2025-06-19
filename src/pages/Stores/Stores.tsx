@@ -1,22 +1,48 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaStore, FaPlus, FaCog, FaMapMarkerAlt, FaPhone, FaEnvelope, FaEdit, FaTrash } from 'react-icons/fa';
-import { SpecialButton, IconButton } from '../../components/buttons';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchStores, deleteStore, setCurrentStore } from '../../store/slices/storeSlice';
-import type { Store } from '../../types/store';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  FaStore,
+  FaPlus,
+  FaCog,
+  FaMapMarkerAlt,
+  FaPhone,
+  FaEnvelope,
+  FaEdit,
+  FaTrash,
+} from "react-icons/fa";
+import { SpecialButton, IconButton } from "../../components/buttons";
+import { CreateStoreModal } from "../../components/modals";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import {
+  fetchStores,
+  deleteStore,
+  setCurrentStore,
+  createStore,
+} from "../../store/slices/storeSlice";
+import type { Store, StoreFormData } from "../../types/store";
 
 const StoresPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { stores, loading, error } = useAppSelector((state) => state.stores);
+  const storeState = useAppSelector((state) => state.stores);
+  const {
+    stores = [],
+    loading,
+    error,
+  } = storeState || { stores: [], loading: false, error: null };
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+
+  // Debug logging
+  console.log("Store state:", storeState);
+  console.log("Stores array:", stores);
 
   useEffect(() => {
     dispatch(fetchStores());
   }, [dispatch]);
 
   const handleCreateStore = () => {
-    navigate('/store/create');
+    setIsCreateModalOpen(true);
   };
 
   const handleEditStore = (store: Store) => {
@@ -24,21 +50,47 @@ const StoresPage: React.FC = () => {
   };
 
   const handleDeleteStore = async (storeId: string) => {
-    if (window.confirm('Are you sure you want to delete this store? This action cannot be undone.')) {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this store? This action cannot be undone."
+      )
+    ) {
       await dispatch(deleteStore(storeId));
     }
   };
-
   const handleSelectStore = (store: Store) => {
     dispatch(setCurrentStore(store));
-    // Navigate to home page
-    navigate('/');
+    // Navigate to store-specific dashboard
+    navigate(`/store/${store.id}`);
+  };
+  const handleCreateStoreSubmit = async (storeData: StoreFormData) => {
+    try {
+      setIsCreating(true);
+      await dispatch(createStore(storeData)).unwrap();
+      setIsCreateModalOpen(false);
+      // Show success message - you can replace this with a proper toast notification
+      alert("Store created successfully!");
+    } catch (error: any) {
+      console.error("Failed to create store:", error);
+      // Show error message - you can replace this with a proper toast notification
+      alert(`Failed to create store: ${error || "Unknown error"}`);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const formatCurrency = (currencyCode: string) => {
     const currencies: { [key: string]: string } = {
-      'USD': '$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'CNY': '¥', 
-      'INR': '₹', 'AUD': 'A$', 'CAD': 'C$', 'CHF': 'CHF', 'SEK': 'kr'
+      USD: "$",
+      EUR: "€",
+      GBP: "£",
+      JPY: "¥",
+      CNY: "¥",
+      INR: "₹",
+      AUD: "A$",
+      CAD: "C$",
+      CHF: "CHF",
+      SEK: "kr",
     };
     return currencies[currencyCode] || currencyCode;
   };
@@ -52,10 +104,15 @@ const StoresPage: React.FC = () => {
             <div className="flex items-center">
               <FaStore className="text-teal-600 text-2xl mr-3" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Your Stores</h1>
-                <p className="text-sm text-gray-600">Manage your store locations and settings</p>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Your Stores
+                </h1>
+                <p className="text-sm text-gray-600">
+                  Manage your store locations and settings
+                </p>
               </div>
-            </div>            <SpecialButton
+            </div>{" "}
+            <SpecialButton
               variant="inventory-primary"
               onClick={handleCreateStore}
               icon={<FaPlus />}
@@ -64,7 +121,8 @@ const StoresPage: React.FC = () => {
             </SpecialButton>
           </div>
         </div>
-      </div>      {/* Content */}
+      </div>{" "}
+      {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (
           /* Loading State */
@@ -76,7 +134,9 @@ const StoresPage: React.FC = () => {
           /* Error State */
           <div className="text-center py-16">
             <div className="text-red-500 text-6xl mb-4">⚠️</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Something went wrong</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Something went wrong
+            </h3>
             <p className="text-gray-600 mb-6">{error}</p>
             <SpecialButton
               variant="inventory-primary"
@@ -85,20 +145,25 @@ const StoresPage: React.FC = () => {
               Try Again
             </SpecialButton>
           </div>
-        ) : stores.length === 0 ? (
+        ) : !stores || stores.length === 0 ? (
           /* Empty State */
           <div className="text-center py-16">
             <FaStore className="mx-auto text-6xl text-gray-300 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No stores yet</h3>
-            <p className="text-gray-600 mb-6">Create your first store to get started with managing your business</p>            <SpecialButton
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              No stores yet
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Create your first store to get started with managing your business
+            </p>{" "}
+            <SpecialButton
               variant="inventory-primary"
               onClick={handleCreateStore}
               icon={<FaPlus />}
             >
               Create Your First Store
-            </SpecialButton>
+            </SpecialButton>{" "}
           </div>
-        ) : (
+        ) : stores && stores.length > 0 ? (
           /* Stores Grid */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {stores.map((store) => (
@@ -112,11 +177,13 @@ const StoresPage: React.FC = () => {
                     <div className="flex items-center">
                       <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mr-3">
                         <FaStore className="text-teal-600 text-xl" />
-                      </div>
+                      </div>{" "}
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{store.name}</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {store.name}
+                        </h3>
                         <p className="text-sm text-gray-500">
-                          {formatCurrency(store.currency)} • {store.taxMode}
+                          {formatCurrency(store.currency)} • {store.role}
                         </p>
                       </div>
                     </div>
@@ -137,7 +204,6 @@ const StoresPage: React.FC = () => {
                       />
                     </div>
                   </div>
-
                   {/* Store Details */}
                   <div className="space-y-3 mb-6">
                     <div className="flex items-start text-sm text-gray-600">
@@ -153,33 +219,44 @@ const StoresPage: React.FC = () => {
                       <span>{store.email}</span>
                     </div>
                   </div>
-
                   {/* Store Settings */}
                   <div className="border-t pt-4 mb-6">
                     <div className="flex items-center text-sm text-gray-600 mb-2">
                       <FaCog className="text-gray-400 mr-2" />
                       <span className="font-medium">Settings</span>
-                    </div>
+                    </div>{" "}
                     <div className="text-xs text-gray-500 space-y-1">
-                      <div>Timezone: {store.timezone}</div>
-                      <div>Currency: {store.currency}</div>
-                      <div>Tax Mode: {store.taxMode}</div>
+                      <div>Timezone: {store?.settings?.timezone}</div>
+                      <div>Currency: {store?.settings?.currency}</div>
                     </div>
                   </div>
-
-                  {/* Action Button */}                  <SpecialButton
+                  {/* Action Button */}{" "}
+                  <SpecialButton
                     variant="inventory-primary"
                     onClick={() => handleSelectStore(store)}
                     fullWidth
                   >
+                    {" "}
                     Enter Store
                   </SpecialButton>
                 </div>
               </div>
             ))}
           </div>
+        ) : (
+          /* Fallback - should not happen with proper null checks above */
+          <div className="text-center py-16">
+            <p className="text-gray-600">No stores available</p>
+          </div>
         )}
       </div>
+      {/* Create Store Modal */}{" "}
+      <CreateStoreModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSave={handleCreateStoreSubmit}
+        loading={isCreating}
+      />
     </div>
   );
 };
