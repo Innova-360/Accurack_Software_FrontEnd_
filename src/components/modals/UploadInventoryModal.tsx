@@ -108,39 +108,52 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
     }
     onClose();
   };
-
   const handleDownloadTemplate = () => {
-    // Create a sample Excel template
+    // Create a sample Excel template matching inventory structure
     const templateData = [
       [
         "Product Name",
+        "PLU",
         "SKU",
         "Category",
         "Quantity",
         "Price",
+        "Items Per Unit",
         "Supplier",
-        "Min Stock Level",
         "Description",
       ],
       [
-        "Sample Product 1",
-        "SKU001",
-        "Electronics",
-        "100",
-        "25.99",
-        "Supplier A",
-        "10",
-        "Sample description",
+        "Premium Coffee Beans",
+        "PLU001",
+        "SKU-CF-001",
+        "BEVERAGES",
+        "150",
+        "$24.99",
+        "1",
+        "Coffee Co.",
+        "High-quality arabica coffee beans sourced from premium farms",
       ],
       [
-        "Sample Product 2",
-        "SKU002",
-        "Clothing",
-        "50",
-        "15.99",
-        "Supplier B",
-        "5",
-        "Sample description",
+        "Organic Milk",
+        "PLU002",
+        "SKU-ML-002",
+        "DAIRY",
+        "75",
+        "$5.49",
+        "1",
+        "Dairy Farm Inc.",
+        "Fresh organic whole milk, 1 gallon",
+      ],
+      [
+        "Artisan Bread",
+        "PLU003",
+        "SKU-BR-003",
+        "BAKERY",
+        "25",
+        "$7.99",
+        "1",
+        "Local Bakery",
+        "Freshly baked sourdough bread",
       ],
     ];
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useStoreFromUrl } from "../../hooks/useStoreFromUrl";
 import Header from "../../components/Header";
 import InventoryStats from "../../components/InventoryComponents/InventoryStats";
@@ -9,11 +10,9 @@ import GroupedTableView from "../../components/InventoryComponents/GroupedTableV
 import Pagination from "../../components/InventoryComponents/Pagination";
 import LowStockSection from "../../components/InventoryComponents/LowStockSection";
 import {
-  AddInventoryModal,
-  AddProductModal,
+  AddInventoryOptionsModal,
   UploadInventoryModal,
 } from "../../components/modals";
-import type { ProductFormData } from "../../components/modals";
 import { products } from "../../data/inventoryData";
 import {
   useInventoryStats,
@@ -23,6 +22,7 @@ import {
 } from "../../hooks/useInventory";
 
 const Inventory: React.FC = () => {
+  const navigate = useNavigate();
   useStoreFromUrl(); // Handle store selection from URL
 
   // State for main inventory pagination
@@ -40,7 +40,6 @@ const Inventory: React.FC = () => {
   // State for low stock pagination
   const [lowStockCurrentPage, setLowStockCurrentPage] = useState(1);
   const [lowStockRowsPerPage, setLowStockRowsPerPage] = useState(5);
-
   const [isPageChanging, setIsPageChanging] = useState(false);
   const [isLowStockPageChanging, setIsLowStockPageChanging] = useState(false);
   const [mobileViewType, setMobileViewType] = useState<"cards" | "table">(
@@ -49,7 +48,6 @@ const Inventory: React.FC = () => {
 
   // Modal states
   const [isAddInventoryModalOpen, setIsAddInventoryModalOpen] = useState(false);
-  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [isUploadInventoryModalOpen, setIsUploadInventoryModalOpen] =
     useState(false);
 
@@ -179,41 +177,47 @@ const Inventory: React.FC = () => {
     } else {
       setSelectedItems(selectedItems.filter((id) => id !== actualIndex));
     }
-  };
-
-  // Modal handlers
+  }; // Modal handlers
   const handleAddInventoryClick = () => {
     setIsAddInventoryModalOpen(true);
   };
 
-  const handleAddProductClick = () => {
-    setIsAddInventoryModalOpen(false);
-    setIsAddProductModalOpen(true);
-  };
-
-  const handleUploadInventoryClick = () => {
+  const handleUploadInventory = () => {
     setIsAddInventoryModalOpen(false);
     setIsUploadInventoryModalOpen(true);
   };
 
-  const handleScanInventoryClick = () => {
+  const handleCreateInventory = () => {
     setIsAddInventoryModalOpen(false);
-    // Will be implemented later
-    alert("Scan inventory feature coming soon!");
+    // Navigate to create inventory page
+    const currentPath = window.location.pathname;
+    if (currentPath.includes("/store/")) {
+      // Extract store ID from path
+      const storeId = currentPath.split("/store/")[1].split("/")[0];
+      navigate(`/store/${storeId}/inventory/create`);
+    } else {
+      navigate("/inventory/create");
+    }
   };
 
-  const handleAddProductSave = (productData: ProductFormData) => {
-    // Handle saving the new product
-    console.log("New product:", productData);
-    // Here you would typically send the data to your API
-    alert("Product added successfully!");
+  const handleScanInventory = () => {
+    setIsAddInventoryModalOpen(false);
+    // TODO: Implement scan inventory functionality
+    console.log("Scan inventory clicked - functionality coming soon");
   };
 
-  const handleUploadInventoryFile = (file: File) => {
-    // Handle file upload
+  const handleFileUpload = async (file: File) => {
+    // TODO: Implement file upload logic
     console.log("Uploading file:", file.name);
-    // Here you would typically send the file to your API
-    alert("File uploaded successfully!");
+
+    // Simulate upload process
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // Close modal after successful upload
+    setIsUploadInventoryModalOpen(false);
+
+    // You can add success notification here
+    alert("Inventory uploaded successfully!");
   };
 
   return (
@@ -372,24 +376,18 @@ const Inventory: React.FC = () => {
       </div>
 
       {/* Modals */}
-      <AddInventoryModal
+      <AddInventoryOptionsModal
         isOpen={isAddInventoryModalOpen}
         onClose={() => setIsAddInventoryModalOpen(false)}
-        onAddProduct={handleAddProductClick}
-        onUploadInventory={handleUploadInventoryClick}
-        onScanInventory={handleScanInventoryClick}
-      />
-
-      <AddProductModal
-        isOpen={isAddProductModalOpen}
-        onClose={() => setIsAddProductModalOpen(false)}
-        onSave={handleAddProductSave}
+        onUploadInventory={handleUploadInventory}
+        onCreateInventory={handleCreateInventory}
+        onScanInventory={handleScanInventory}
       />
 
       <UploadInventoryModal
         isOpen={isUploadInventoryModalOpen}
         onClose={() => setIsUploadInventoryModalOpen(false)}
-        onUpload={handleUploadInventoryFile}
+        onUpload={handleFileUpload}
       />
     </>
   );

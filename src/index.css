@@ -184,7 +184,121 @@
   transition: all 0.3s ease;
 }
 
-/* .number-counter.animating {
-  color: #0f4d57;
-  font-weight: 900;
-} */
+/* Form validation and interaction animations */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes successPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    background-color: rgb(34, 197, 94);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+    background-color: rgb(34, 197, 94);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    background-color: rgb(34, 197, 94);
+  }
+}
+
+@keyframes progressFill {
+  from {
+    width: 0%;
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes glowPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(15, 77, 87, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(15, 77, 87, 0.4),
+      0 0 30px rgba(15, 77, 87, 0.2);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.6s ease-in-out;
+}
+
+.animate-success-pulse {
+  animation: successPulse 2s ease-in-out;
+}
+
+.animate-progress-fill {
+  animation: progressFill 1s ease-out;
+}
+
+.animate-glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+/* Enhanced form input styles */
+.form-input-enhanced {
+  transition: all 0.2s ease;
+  transform: scale(1);
+}
+
+.form-input-enhanced:focus {
+  transform: scale(1.02);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.form-input-enhanced:hover {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Milestone progress animations */
+.milestone-complete {
+  animation: successPulse 1s ease-out;
+}
+
+.milestone-active {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+/* Enhanced button hover effects */
+.btn-enhanced {
+  transition: all 0.3s ease;
+  transform: scale(1);
+}
+
+.btn-enhanced:hover {
+  transform: scale(1.05);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-enhanced:active {
+  transform: scale(0.95);
+}
