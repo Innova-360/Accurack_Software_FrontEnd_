@@ -1,7 +1,7 @@
 import React from 'react';
-import { FaEye, FaTimes, FaEnvelope, FaPhone, FaMapMarkerAlt, FaBox, FaDollarSign, FaCalendarAlt, FaTag } from 'react-icons/fa';
+import { FaEye, FaTimes, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaTag } from 'react-icons/fa';
 import { SpecialButton } from '../buttons';
-import type { Supplier } from './AddSupplierModal';
+import type { Supplier } from './types';
 
 interface ViewSupplierModalProps {
   isOpen: boolean;
@@ -13,16 +13,7 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
   isOpen,
   onClose,
   supplier
-}) => {
-  if (!isOpen || !supplier) return null;
-
-  const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
-
-  const getStatusColor = (status: string) => {
-    return status === 'Active' 
-      ? 'bg-green-100 text-green-800 border-green-200' 
-      : 'bg-red-100 text-red-800 border-red-200';
-  };
+}) => {  if (!isOpen || !supplier) return null;
 
   return (
     <div className="fixed inset-0 bg-transparent backdrop-blur-[1px] bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -62,29 +53,25 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
                   <p className="text-sm text-gray-600">Supplier Name</p>
                   <p className="font-semibold text-gray-900">{supplier.name}</p>
                 </div>
-              </div>
-
-              {/* Status */}
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#03414C] bg-opacity-10 rounded-lg">
-                  <div className={`w-3 h-3 rounded-full ${supplier.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600">Status</p>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(supplier.status)}`}>
-                    {supplier.status}
-                  </span>
-                </div>
-              </div>
-
-              {/* Category */}
+              </div>              {/* Supplier ID */}
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-[#03414C] bg-opacity-10 rounded-lg">
                   <FaTag className="text-[#03414C]" size={14} />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-gray-600">Category</p>
-                  <p className="font-semibold text-gray-900">{supplier.category}</p>
+                  <p className="text-sm text-gray-600">Supplier ID</p>
+                  <p className="font-semibold text-gray-900">{supplier.supplier_id}</p>
+                </div>
+              </div>
+
+              {/* Store ID */}
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-[#03414C] bg-opacity-10 rounded-lg">
+                  <FaTag className="text-[#03414C]" size={14} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-600">Store ID</p>
+                  <p className="font-semibold text-gray-900">{supplier.storeId}</p>
                 </div>
               </div>
             </div>
@@ -128,67 +115,48 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Business Information */}
+          </div>          {/* Business Information */}
           <div className="bg-green-50 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Business Information</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Additional Information</h3>
             
-            <div className="grid grid-cols-2 gap-4">
-              {/* Products Supplied */}
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <FaBox className="text-green-600" size={14} />
+            <div className="grid grid-cols-1 gap-4">
+              {/* Created Date */}
+              {supplier.createdAt && (
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <FaCalendarAlt className="text-green-600" size={14} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-600">Created Date</p>
+                    <p className="font-semibold text-gray-900">{new Date(supplier.createdAt).toLocaleDateString()}</p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600">Products</p>
-                  <p className="font-semibold text-gray-900">{supplier.productsSupplied}</p>
-                </div>
-              </div>
+              )}
 
-              {/* Total Value */}
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <FaDollarSign className="text-green-600" size={14} />
+              {/* Updated Date */}
+              {supplier.updatedAt && (
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <FaCalendarAlt className="text-green-600" size={14} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-600">Last Updated</p>
+                    <p className="font-semibold text-gray-900">{new Date(supplier.updatedAt).toLocaleDateString()}</p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600">Total Value</p>
-                  <p className="font-semibold text-gray-900">{formatCurrency(supplier.totalValue)}</p>
-                </div>
-              </div>
+              )}
             </div>
-
-            {/* Joined Date */}
-            <div className="flex items-center gap-3 mt-4">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <FaCalendarAlt className="text-green-600" size={14} />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-600">Joined Date</p>
-                <p className="font-semibold text-gray-900">{supplier.joinedDate}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Summary Stats */}
+          </div>          {/* Summary Stats */}
           <div className="bg-[#03414C] bg-opacity-5 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-[#03414C] mb-4">Quick Stats</h3>
+            <h3 className="text-lg font-semibold text-[#03414C] mb-4">Supplier Summary</h3>
             
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <p className="text-2xl font-bold text-[#03414C]">{supplier.productsSupplied}</p>
-                <p className="text-xs text-gray-600">Products</p>
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#03414C] bg-opacity-10 mb-3">
+                <FaEye className="text-[#03414C]" size={24} />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-[#03414C]">{formatCurrency(supplier.totalValue)}</p>
-                <p className="text-xs text-gray-600">Total Value</p>
-              </div>
-              <div>
-                <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${supplier.status === 'Active' ? 'bg-green-100' : 'bg-red-100'}`}>
-                  <div className={`w-3 h-3 rounded-full ${supplier.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`} />
-                </div>
-                <p className="text-xs text-gray-600 mt-1">Status</p>
-              </div>
+              <p className="text-lg font-semibold text-[#03414C]">{supplier.name}</p>
+              <p className="text-sm text-gray-600">Supplier ID: {supplier.supplier_id}</p>
+              <p className="text-sm text-gray-600 mt-1">Store ID: {supplier.storeId}</p>
             </div>
           </div>
 

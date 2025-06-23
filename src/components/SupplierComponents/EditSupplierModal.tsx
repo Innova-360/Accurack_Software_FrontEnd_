@@ -4,6 +4,7 @@ import { SpecialButton } from '../buttons';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { updateSupplier } from '../../store/slices/supplierSlice';
 import type { Supplier, SupplierFormData } from '../../types/supplier';
+import useRequireStore from '../../hooks/useRequireStore';
 
 interface EditSupplierModalProps {
   isOpen: boolean;
@@ -17,7 +18,7 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
   supplier
 }) => {
   const dispatch = useAppDispatch();
-  const { currentStore } = useAppSelector((state) => state.stores);
+  const currentStore = useRequireStore();
   const { loading } = useAppSelector((state) => state.suppliers);
   const [formData, setFormData] = useState<SupplierFormData>({
     supplier_id: '',
@@ -27,8 +28,26 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
     address: '',
     storeId: currentStore?.id || ''
   });
-
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Helper function to get the valid ID for API operations
+  const getValidSupplierId = (supplier: Supplier): string | null => {
+    // Prefer numeric/UUID id if available
+    if (supplier.id && supplier.id.trim() && !supplier.id.includes(' ') && supplier.id.length <= 50) {
+      return supplier.id;
+    }
+    
+    // Check if supplier_id is valid (should be numeric or UUID, not sample text)
+    if (supplier.supplier_id && 
+        supplier.supplier_id.trim() && 
+        !supplier.supplier_id.includes(' ') && 
+        supplier.supplier_id.length <= 50 &&
+        /^[a-zA-Z0-9_-]+$/.test(supplier.supplier_id)) {
+      return supplier.supplier_id;
+    }
+    
+    return null;
+  };
 
   // Update form data when supplier changes
   useEffect(() => {
@@ -85,25 +104,50 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  };  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm() || !supplier) {
       return;
+    }    if (!currentStore?.id) {
+      console.error('No current store found');
+      setErrors({ 
+        general: 'No store selected. Please select a store first.' 
+      });
+      return;
+    }
+
+    const validId = getValidSupplierId(supplier);
+    
+    if (!validId) {
+      setErrors({ 
+        general: 'Cannot edit this supplier: This appears to be sample/dummy data that cannot be modified. Please add real suppliers to manage them.' 
+      });
+      console.log('Invalid supplier ID:', supplier.supplier_id);
+      return;
     }
 
     try {
+      console.log('Updating supplier with valid ID:', validId, 'with data:', formData);
+      
       await dispatch(updateSupplier({
-        id: supplier.supplier_id,
-        supplierData: formData
+        id: validId,
+        supplierData: {
+          ...formData,
+          storeId: currentStore.id
+        }
       })).unwrap();
       
+      console.log('Supplier updated successfully');
       setErrors({});
       onClose();
     } catch (error) {
       console.error('Error updating supplier:', error);
+      // Show error to user
+      const errorMessage = typeof error === 'string' ? error : 'Failed to update supplier. Please try again.';
+      setErrors({ 
+        general: errorMessage
+      });
     }
   };
   const handleClose = () => {
@@ -145,6 +189,13 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
           </button>
         </div>        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* General Error Display */}
+          {errors.general && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-red-600 text-sm">{errors.general}</p>
+            </div>
+          )}
+
           {/* Supplier Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

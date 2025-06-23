@@ -16,7 +16,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({
   selectedSupplier,
   currentSupplierProducts = []
 }) => {  if (viewMode === 'suppliers') {
-    const totalSuppliers = suppliers.length;
+    const totalSuppliers = suppliers?.length;
     // Since we don't have status field anymore, all suppliers are considered active
     const activeSuppliers = totalSuppliers;
     // Since we don't have totalValue and productsSupplied fields, we'll show 0 or remove these stats

@@ -72,9 +72,18 @@ const SpecialButton: React.FC<SpecialButtonProps> = ({
     baseClasses,
     className
   ].filter(Boolean).join(' ');
-
-  const handleClick = () => {
-    if (!disabled && onClick) {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (disabled) {
+      e.preventDefault();
+      return;
+    }
+    
+    // For submit buttons, let the form handle submission
+    if (type === 'submit' && !onClick) {
+      return; // Don't prevent default, let form submit
+    }
+    
+    if (onClick) {
       onClick();
     }
   };

@@ -35,28 +35,24 @@ const SupplierPage: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [isViewProductsModalOpen, setIsViewProductsModalOpen] = useState(false);
-  // Fetch suppliers when component mounts or store changes
+  const [isViewProductsModalOpen, setIsViewProductsModalOpen] = useState(false);  // Fetch suppliers when component mounts or store changes
   useEffect(() => {
-    if (currentStore?.id) {
-      console.log('Fetching suppliers for store:', currentStore.id); // Debug log
-      console.log('Current store object:', currentStore); // Debug log
-      dispatch(fetchSuppliers(currentStore.id));
-    } else {
-      console.log('No current store, clearing suppliers'); // Debug log
-      console.log('Current store state:', currentStore); // Debug log
-      dispatch(clearSuppliers());
-    }
+    const fetchData = async () => {
+      if (currentStore?.id) {
+        try {
+          // Using unwrap() for cleaner promise handling
+          await dispatch(fetchSuppliers(currentStore.id)).unwrap();
+        } catch (error) {
+          console.error('Failed to fetch suppliers:', error);
+        }
+      } else {
+        dispatch(clearSuppliers());
+      }
+    };
+
+    fetchData();
   }, [dispatch, currentStore?.id]);
-  // Debug log when suppliers change
-  useEffect(() => {
-    console.log('Suppliers updated in component:', suppliers);
-    console.log('Number of suppliers:', suppliers.length);
-    console.log('Loading state:', loading);
-    console.log('Error state:', error);
-  }, [suppliers, loading, error]);
-  
-  // Handle supplier selection from sidebar
+// Handle supplier selection from sidebar
   const handleSupplierSelect = (supplier: Supplier) => {
     setSelectedSupplier(supplier);
     setViewMode('products');
@@ -136,8 +132,7 @@ const SupplierPage: React.FC = () => {
   return (
     <>
     <Header/>
-    <div className="min-h-screen bg-gray-100 flex">
-      {/* Sidebar */}
+    <div className="min-h-screen bg-gray-100 flex">      {/* Sidebar */}
       <SupplierSidebar
         suppliers={suppliers}
         selectedSupplier={selectedSupplier}
@@ -291,7 +286,7 @@ const SupplierPage: React.FC = () => {
         onClose={() => setIsDeleteAllModalOpen(false)}
         supplier={null}
         isDeleteAll={true}
-        supplierCount={suppliers.length}
+        supplierCount={suppliers?.length}
       />
 
       <ViewSupplierModal

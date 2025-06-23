@@ -22,20 +22,35 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
   onAddSupplier
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  const totalPages = Math.ceil(suppliers.length / itemsPerPage);
+  const itemsPerPage = 10;  const totalPages = Math.ceil(suppliers?.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentSuppliers = suppliers.slice(startIndex, endIndex);
+  const currentSuppliers = suppliers?.slice(startIndex, endIndex);
+
+  // Helper function to check if supplier can be edited/deleted
+  const isValidSupplier = (supplier: Supplier): boolean => {
+    // Prefer numeric/UUID id if available
+    if (supplier.id && supplier.id.trim() && !supplier.id.includes(' ') && supplier.id.length <= 50) {
+      return true;
+    }
+    
+    // Check if supplier_id is valid (should be numeric or UUID, not sample text)
+    if (supplier.supplier_id && 
+        supplier.supplier_id.trim() && 
+        !supplier.supplier_id.includes(' ') && 
+        supplier.supplier_id.length <= 50 &&
+        /^[a-zA-Z0-9_-]+$/.test(supplier.supplier_id)) {
+      return true;
+    }
+    
+    return false;
+  };
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  // Debug logging
-  console.log('SupplierTable - suppliers prop:', suppliers);
-  console.log('SupplierTable - suppliers length:', suppliers.length);
-
-  if (suppliers.length === 0) {
+  if (suppliers?.length === 0) {
     return (
       <div className="text-center py-16 bg-white">
         <div className="p-6 bg-teal-600 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
@@ -68,17 +83,22 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
 
         {/* Table Content */}
         <div className="divide-y divide-gray-200">
-          {currentSuppliers.map((supplier, index) => (            <div
+          {currentSuppliers?.map((supplier, index) => (            <div
               key={supplier.supplier_id}
               className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150 group"
             >
               <div className="grid grid-cols-12 gap-4 items-center">
                 <div className="col-span-1 text-sm font-medium text-gray-900">
                   {startIndex + index + 1}
-                </div>
-
-                <div className="col-span-3">
-                  <div className="font-medium text-gray-900">{supplier.name}</div>
+                </div>                <div className="col-span-3">
+                  <div className="flex items-center gap-2">
+                    <div className="font-medium text-gray-900">{supplier.name}</div>
+                    {!isValidSupplier(supplier) && (
+                      <span className="px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-full">
+                        Sample Data
+                      </span>
+                    )}
+                  </div>
                   <div className="text-sm text-gray-500">ID: {supplier.supplier_id}</div>
                 </div>
 
@@ -99,9 +119,7 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
                 <div className="col-span-2 text-sm font-medium text-gray-900">
                   {/* TODO: Show product count when products API is integrated */}
                   <span className="text-gray-400">N/A</span>
-                </div>
-
-                <div className="col-span-2 flex items-center gap-1 lg:mr-9">
+                </div>                <div className="col-span-2 flex items-center gap-1 lg:mr-9">
                   <IconButton
                     icon={<FaEye />}
                     variant="info"
@@ -111,14 +129,16 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
                   <IconButton
                     icon={<FaEdit />}
                     variant="primary"
-                    onClick={() => onEditSupplier(supplier)}
-                    title="Edit Supplier"
+                    onClick={() => isValidSupplier(supplier) ? onEditSupplier(supplier) : null}
+                    title={isValidSupplier(supplier) ? "Edit Supplier" : "Cannot edit sample data"}
+                    disabled={!isValidSupplier(supplier)}
                   />
                   <IconButton
                     icon={<FaTrash />}
                     variant="danger"
-                    onClick={() => onDeleteSupplier(supplier)}
-                    title="Delete Supplier"
+                    onClick={() => isValidSupplier(supplier) ? onDeleteSupplier(supplier) : null}
+                    title={isValidSupplier(supplier) ? "Delete Supplier" : "Cannot delete sample data"}
+                    disabled={!isValidSupplier(supplier)}
                   />
                   <IconButton
                     icon={<FaBox />}
@@ -136,10 +156,10 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
         <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
           <div className="flex justify-between items-center">
             <div className="text-sm text-gray-600">
-              Showing {currentSuppliers.length} out of {suppliers.length} suppliers
+              Showing {currentSuppliers?.length} out of {suppliers?.length} suppliers
             </div>            <div className="text-right">
               <div className="text-lg font-semibold text-gray-900">
-                {suppliers.length} suppliers
+                {suppliers?.length} suppliers
               </div>
               <div className="text-sm text-gray-500">
                 Total suppliers in system
@@ -155,7 +175,7 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
               currentPage={currentPage}
               totalPages={totalPages}
               itemsPerPage={itemsPerPage}
-              totalItems={suppliers.length}
+              totalItems={suppliers?.length}
               onPageChange={handlePageChange}
             />
           </div>

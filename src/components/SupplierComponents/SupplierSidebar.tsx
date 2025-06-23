@@ -27,13 +27,13 @@ const SupplierSidebar: React.FC<SupplierSidebarProps> = ({
   onSetViewMode
 }) => {
   // Group suppliers by category
-  const suppliersByCategory = suppliers.reduce((acc, supplier) => {
-    if (!acc[supplier.category]) {
-      acc[supplier.category] = [];
-    }
-    acc[supplier.category].push(supplier);
-    return acc;
-  }, {} as Record<string, Supplier[]>);
+  // const suppliersByCategory = suppliers.reduce((acc, supplier) => {
+  //   if (!acc[supplier?.category]) {
+  //     acc[supplier.category] = [];
+  //   }
+  //   acc[supplier.category].push(supplier);
+  //   return acc;
+  // }, {} as Record<string, Supplier[]>);
 
   return (
     <>
@@ -76,34 +76,27 @@ const SupplierSidebar: React.FC<SupplierSidebarProps> = ({
           >
             All Suppliers
           </SidebarButton>
-          
-          {/* Category Separator */}
+            {/* Category Separator */}
           <div className="border-t border-gray-200 my-2"></div>
-          
-          {/* Suppliers by Category */}
-          {Object.entries(suppliersByCategory).map(([category, categorySuppliers]) => (
-            <div key={category}>
-              {/* Category Header */}
-              <div className="flex items-center gap-2 text-gray-600 text-sm px-3 py-1 mb-1">
-                <FaChevronRight size={10} />
-                <span>{category}</span>
+            {/* All Suppliers List */}
+          <div className="space-y-1">
+            {suppliers.map((supplier) => (
+              <div key={supplier.supplier_id} className="group">                <SidebarButton
+                  onClick={() => onSupplierSelect(supplier)}
+                  active={selectedSupplier?.supplier_id === supplier.supplier_id}
+                  icon={selectedSupplier?.supplier_id === supplier.supplier_id ? <FaChevronDown size={12} /> : <FaChevronRight size={12} />}
+                >
+                  {supplier.name}
+                </SidebarButton>
               </div>
-              
-              {/* Suppliers in Category */}
-              <div className="ml-4 space-y-1 mb-2">
-                {categorySuppliers.map((supplier) => (
-                  <SidebarButton
-                    key={supplier.id}
-                    onClick={() => onSupplierSelect(supplier)}
-                    active={selectedSupplier?.id === supplier.id}
-                    icon={selectedSupplier?.id === supplier.id ? <FaChevronDown size={12} /> : <FaChevronRight size={12} />}
-                  >
-                    {supplier.name}
-                  </SidebarButton>
-                ))}
+            ))}
+            
+            {suppliers.length === 0 && (
+              <div className="text-gray-500 text-sm p-3 text-center">
+                No suppliers found. Click "Add New Supplier" to get started.
               </div>
-            </div>
-          ))}
+            )}
+          </div>
 
           {/* Products View (when supplier selected) */}
           {selectedSupplier && (

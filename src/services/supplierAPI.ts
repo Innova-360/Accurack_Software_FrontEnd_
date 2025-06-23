@@ -43,11 +43,10 @@ export const supplierAPI = {
       throw error;
     }
   },
-
-  // GET /api/suppliers/:id
+  // GET /api/supplier/:id
   getSupplierById: async (id: string): Promise<{ success: boolean; data: { supplier: Supplier } }> => {
     try {
-      const response = await apiClient.get(`/suppliers/${id}`);
+      const response = await apiClient.get(`/supplier/${id}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching supplier:', error);
@@ -55,10 +54,10 @@ export const supplierAPI = {
     }
   },
 
-  // POST /api/suppliers
+  // POST /api/supplier/create
   createSupplier: async (supplierData: Omit<Supplier, 'id'>): Promise<{ success: boolean; data: { supplier: Supplier } }> => {
     try {
-      const response = await apiClient.post('/suppliers', supplierData);
+      const response = await apiClient.post('/supplier/create', supplierData);
       return response.data;
     } catch (error) {
       console.error('Error creating supplier:', error);
@@ -66,24 +65,48 @@ export const supplierAPI = {
     }
   },
 
-  // PUT /api/suppliers/:id
+  // PUT /api/supplier/:id
   updateSupplier: async (id: string, supplierData: Partial<Supplier>): Promise<{ success: boolean; data: { supplier: Supplier } }> => {
     try {
-      const response = await apiClient.put(`/suppliers/${id}`, supplierData);
+      const response = await apiClient.put(`/supplier/${id}`, supplierData);
       return response.data;
     } catch (error) {
       console.error('Error updating supplier:', error);
       throw error;
     }
   },
-
-  // DELETE /api/suppliers/:id
+  // DELETE /api/supplier/:id
   deleteSupplier: async (id: string): Promise<{ success: boolean; message: string }> => {
     try {
-      const response = await apiClient.delete(`/suppliers/${id}`);
+      const response = await apiClient.delete(`/supplier/${id}`);
       return response.data;
     } catch (error) {
       console.error('Error deleting supplier:', error);
+      throw error;
+    }
+  },
+
+  // DELETE ALL suppliers for a store
+  deleteAllSuppliers: async (storeId: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      // Get all suppliers first
+      const suppliersResponse = await supplierAPI.getSuppliers(storeId);
+      const suppliers = suppliersResponse.data.suppliers;
+      
+      if (suppliers.length === 0) {
+        return { success: true, message: "No suppliers to delete" };
+      }
+      
+      // Delete each supplier individually
+      const deletePromises = suppliers.map(supplier => 
+        supplierAPI.deleteSupplier(supplier.id)
+      );
+      
+      await Promise.all(deletePromises);
+      
+      return { success: true, message: `Successfully deleted ${suppliers.length} suppliers` };
+    } catch (error) {
+      console.error('Error deleting all suppliers:', error);
       throw error;
     }
   }

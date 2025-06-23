@@ -1,4 +1,5 @@
 export interface Supplier {
+  id?: string; // Optional numeric/UUID ID from backend
   supplier_id: string;
   name: string;
   email: string;

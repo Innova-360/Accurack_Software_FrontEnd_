@@ -2,8 +2,9 @@ import React from 'react';
 import { FaTrash, FaTimes } from 'react-icons/fa';
 import { SpecialButton } from '../buttons';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { deleteSupplier } from '../../store/slices/supplierSlice';
+import { deleteSupplier, deleteAllSuppliers } from '../../store/slices/supplierSlice';
 import type { Supplier } from '../../types/supplier';
+import useRequireStore from '../../hooks/useRequireStore';
 
 interface DeleteSupplierModalProps {
   isOpen: boolean;
@@ -21,30 +22,85 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
   supplierCount = 0
 }) => {
   const dispatch = useAppDispatch();
-  const { currentStore } = useAppSelector((state) => state.stores);
+  const currentStore = useRequireStore();
   const { loading } = useAppSelector((state) => state.suppliers);
 
   if (!isOpen) return null;
-  if (!isDeleteAll && !supplier) return null;
-
-  const handleDelete = async () => {
-    if (!currentStore) return;
+  if (!isDeleteAll && !supplier) return null;  // Helper function to get the valid ID for API operations
+  const getValidSupplierId = (supplier: Supplier): string | null => {
+    // Prefer numeric/UUID id if available
+    if (supplier.id && supplier.id.trim() && !supplier.id.includes(' ') && supplier.id.length <= 50) {
+      return supplier.id;
+    }
     
-    try {
+    // Check if supplier_id is valid (should be numeric or UUID, not sample text)
+    if (supplier.supplier_id && 
+        supplier.supplier_id.trim() && 
+        !supplier.supplier_id.includes(' ') && 
+        supplier.supplier_id.length <= 50 &&
+        /^[a-zA-Z0-9_-]+$/.test(supplier.supplier_id)) {
+      return supplier.supplier_id;
+    }
+    
+    return null;
+  };
+
+  const handleDelete = async () => {    if (!currentStore?.id) {
+      console.error('No current store found');
+      return;
+    }
+      try {
       if (isDeleteAll) {
-        // TODO: Implement bulk delete API endpoint when available
-        console.log('Bulk delete not implemented yet');
+        console.log('Deleting all suppliers for store:', currentStore.id);
+        
+        // Show additional confirmation for delete all
+        const confirmDelete = window.confirm(
+          `Are you absolutely sure you want to delete ALL ${supplierCount} suppliers? This action cannot be undone.`
+        );
+        
+        if (!confirmDelete) {
+          return;
+        }
+        
+        await dispatch(deleteAllSuppliers(currentStore.id)).unwrap();
+        console.log('All suppliers deleted successfully');
+        alert('All suppliers have been deleted successfully!');
         onClose();
       } else if (supplier) {
+        const validId = getValidSupplierId(supplier);
+        
+        if (!validId) {
+          alert('Cannot delete this supplier: This appears to be sample/dummy data that cannot be modified. Please add real suppliers to manage them.');
+          console.log('Invalid supplier ID:', supplier.supplier_id);
+          return;
+        }
+        
+        console.log('Deleting supplier with valid ID:', validId, 'for store:', currentStore.id);
+        
         await dispatch(deleteSupplier({
-          id: supplier.supplier_id,
+          id: validId,
           storeId: currentStore.id
         })).unwrap();
-        
+        console.log('Supplier deleted successfully');
         onClose();
       }
     } catch (error) {
       console.error('Error deleting supplier:', error);
+      
+      // Show user-friendly error message
+      let errorMessage = 'Failed to delete supplier. Please try again.';
+      
+      if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage = error.message as string;
+      }
+      
+      if (isDeleteAll) {
+        errorMessage = `Failed to delete all suppliers: ${errorMessage}`;
+      }
+      
+      alert(errorMessage);
     }
   };
 
