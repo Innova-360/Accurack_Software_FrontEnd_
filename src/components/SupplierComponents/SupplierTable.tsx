@@ -4,12 +4,8 @@ import { SpecialButton, IconButton } from '../buttons';
 import type { Supplier } from './types';
 import Pagination from './Pagination';
 
-const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
-
 interface SupplierTableProps {
   suppliers: Supplier[];
-  totalValue: number;
-  totalProducts: number;
   onViewSupplier: (supplier: Supplier) => void;
   onEditSupplier: (supplier: Supplier) => void;
   onDeleteSupplier: (supplier: Supplier) => void;
@@ -19,8 +15,6 @@ interface SupplierTableProps {
 
 const SupplierTable: React.FC<SupplierTableProps> = ({
   suppliers,
-  totalValue,
-  totalProducts,
   onViewSupplier,
   onEditSupplier,
   onDeleteSupplier,
@@ -33,11 +27,16 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentSuppliers = suppliers.slice(startIndex, endIndex);
-
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-  };  if (suppliers.length === 0) {
-       return (
+  };
+
+  // Debug logging
+  console.log('SupplierTable - suppliers prop:', suppliers);
+  console.log('SupplierTable - suppliers length:', suppliers.length);
+
+  if (suppliers.length === 0) {
+    return (
       <div className="text-center py-16 bg-white">
         <div className="p-6 bg-teal-600 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
           <FaBars className="text-white" size={28} />
@@ -55,24 +54,22 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
 
   return (
     <div className="bg-white overflow-x-auto">
-      <div className="min-w-[1000px]">
-        {/* Table Header */}
+      <div className="min-w-[1000px]">        {/* Table Header */}
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
           <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-600 uppercase tracking-wider">
             <div className="col-span-1">#</div>
             <div className="col-span-3">SUPPLIER</div>
             <div className="col-span-2">CONTACT</div>
+            <div className="col-span-2">ADDRESS</div>
             <div className="col-span-2">PRODUCTS</div>
-            <div className="col-span-2">TOTAL VALUE</div>
             <div className="col-span-2">ACTIONS</div>
           </div>
         </div>
 
         {/* Table Content */}
         <div className="divide-y divide-gray-200">
-          {currentSuppliers.map((supplier, index) => (
-            <div
-              key={supplier.id}
+          {currentSuppliers.map((supplier, index) => (            <div
+              key={supplier.supplier_id}
               className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150 group"
             >
               <div className="grid grid-cols-12 gap-4 items-center">
@@ -82,7 +79,7 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
 
                 <div className="col-span-3">
                   <div className="font-medium text-gray-900">{supplier.name}</div>
-                  <div className="text-sm text-gray-500">Joined: {supplier.joinedDate}</div>
+                  <div className="text-sm text-gray-500">ID: {supplier.supplier_id}</div>
                 </div>
 
                 <div className="col-span-2">
@@ -90,13 +87,18 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
                   <div className="text-sm text-gray-500">{supplier.phone}</div>
                 </div>
 
-                <div className="col-span-2 flex items-center gap-2 lg:ml-5">
-                  <FaBox className="text-gray-400" size={12} />
-                  <span className="text-sm font-medium text-gray-900">{supplier.productsSupplied}</span>
+                <div className="col-span-2">
+                  <div className="text-sm text-gray-900">{supplier.address}</div>
+                  {supplier.createdAt && (
+                    <div className="text-sm text-gray-500">
+                      Created: {new Date(supplier.createdAt).toLocaleDateString()}
+                    </div>
+                  )}
                 </div>
 
                 <div className="col-span-2 text-sm font-medium text-gray-900">
-                  {formatCurrency(supplier.totalValue)}
+                  {/* TODO: Show product count when products API is integrated */}
+                  <span className="text-gray-400">N/A</span>
                 </div>
 
                 <div className="col-span-2 flex items-center gap-1 lg:mr-9">
@@ -135,13 +137,12 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
           <div className="flex justify-between items-center">
             <div className="text-sm text-gray-600">
               Showing {currentSuppliers.length} out of {suppliers.length} suppliers
-            </div>
-            <div className="text-right">
+            </div>            <div className="text-right">
               <div className="text-lg font-semibold text-gray-900">
-                Total: {formatCurrency(totalValue)}
+                {suppliers.length} suppliers
               </div>
               <div className="text-sm text-gray-500">
-                {suppliers.length} suppliers • {totalProducts} products
+                Total suppliers in system
               </div>
             </div>
           </div>

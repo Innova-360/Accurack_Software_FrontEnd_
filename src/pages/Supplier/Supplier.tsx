@@ -1,114 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaPlus, FaFileExport, FaTrash, FaBars } from 'react-icons/fa';
 import { SpecialButton } from '../../components/buttons';
-import {  AddSupplierModal,  EditSupplierModal, DeleteSupplierModal, ViewSupplierModal,ViewProductsModal,SupplierSidebar,SupplierTable,ProductsTable,StatsGrid,
-  type Supplier,
-  type Product
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchSuppliers, clearSuppliers } from '../../store/slices/supplierSlice';
+import {  
+  AddSupplierModal,  
+  EditSupplierModal, 
+  DeleteSupplierModal, 
+  ViewSupplierModal,
+  ViewProductsModal,
+  SupplierSidebar,
+  SupplierTable,
+  ProductsTable,
+  StatsGrid
 } from '../../components/SupplierComponents';
+import type { Supplier } from '../../types/supplier';
 import Header from '../../components/Header';
-// Sample suppliers data
-const initialSuppliers: Supplier[] = [
-  {
-    id: 1,
-    name: 'TechCorp Electronics',
-    email: 'contact@techcorp.com',
-    phone: '+1-555-0101',
-    address: '123 Tech Street, Silicon Valley, CA 94105',
-    category: '',
-    status: 'Active',
-    productsSupplied: 45,
-    totalValue: 125000.00,
-    joinedDate: '2023-01-15'
-  },
-  {
-    id: 2,
-    name: 'Fashion Forward Ltd',
-    email: 'orders@fashionforward.com',
-    phone: '+1-555-0202',
-    address: '456 Fashion Ave, New York, NY 10001',
-    category: '',
-    status: 'Active',
-    productsSupplied: 78,
-    totalValue: 89500.50,
-    joinedDate: '2023-02-20'
-  },
-  {
-    id: 3,
-    name: 'Fresh Foods Co',
-    email: 'supply@freshfoods.com',
-    phone: '+1-555-0303',
-    address: '789 Market Road, Chicago, IL 60601',
-    category: '',
-    status: 'Active',
-    productsSupplied: 120,
-    totalValue: 65000.75,
-    joinedDate: '2023-03-10'
-  },
-  {
-    id: 4,
-    name: 'Office Pro Supplies',
-    email: 'sales@officepro.com',
-    phone: '+1-555-0404',
-    address: '321 Business Blvd, Dallas, TX 75201',
-    category: '',
-    status: 'Inactive',
-    productsSupplied: 32,
-    totalValue: 15000.25,
-    joinedDate: '2023-04-05'
-  },
-  {
-    id: 5,
-    name: 'MedSupply Global',
-    email: 'info@medsupply.com',
-    phone: '+1-555-0505',
-    address: '654 Medical Center Dr, Boston, MA 02101',
-    category: '',
-    status: 'Active',
-    productsSupplied: 95,
-    totalValue: 156000.80,
-    joinedDate: '2023-05-12'
-  },
-  {
-    id: 6,
-    name: 'Steel & Iron Works',
-    email: 'orders@steelworks.com',
-    phone: '+1-555-0606',
-    address: '987 Industrial Ave, Pittsburgh, PA 15201',
-    category: '',
-    status: 'Active',
-    productsSupplied: 65,
-    totalValue: 245000.00,
-    joinedDate: '2023-06-08'
-  }
-];
-
-// Sample products data
-const initialProducts: Product[] = [
-  // TechCorp Electronics products
-  { id: 1, name: 'Laptop Pro 15"', sku: 'TECH-LP-001', category: 'Computers', price: 1299.99, stock: 25, description: 'High-performance laptop for professionals', supplierId: 1 },
-  { id: 2, name: 'Wireless Mouse', sku: 'TECH-WM-002', category: 'Accessories', price: 29.99, stock: 150, description: 'Ergonomic wireless mouse', supplierId: 1 },
-  { id: 3, name: 'USB-C Hub', sku: 'TECH-HB-003', category: 'Accessories', price: 89.99, stock: 75, description: '7-in-1 USB-C connectivity hub', supplierId: 1 },
-  
-  // Fashion Forward Ltd products
-  { id: 4, name: 'Business Shirt - White', sku: 'FASH-BS-001', category: 'Formal Wear', price: 45.00, stock: 200, description: 'Professional white cotton shirt', supplierId: 2 },
-  { id: 5, name: 'Denim Jeans - Blue', sku: 'FASH-DJ-002', category: 'Casual Wear', price: 75.00, stock: 120, description: 'Classic blue denim jeans', supplierId: 2 },
-  { id: 6, name: 'Summer Dress', sku: 'FASH-SD-003', category: 'Casual Wear', price: 95.00, stock: 80, description: 'Light summer dress for women', supplierId: 2 },
-  
-  // Fresh Foods Co products
-  { id: 7, name: 'Organic Apples', sku: 'FOOD-OA-001', category: 'Fruits', price: 4.99, stock: 500, description: 'Fresh organic apples - 1 lb bag', supplierId: 3 },
-  { id: 8, name: 'Whole Grain Bread', sku: 'FOOD-WB-002', category: 'Bakery', price: 3.49, stock: 200, description: 'Healthy whole grain bread loaf', supplierId: 3 },
-  { id: 9, name: 'Greek Yogurt', sku: 'FOOD-GY-003', category: 'Dairy', price: 5.99, stock: 150, description: 'Creamy Greek yogurt - 32oz container', supplierId: 3 },
-  
-  // Office Pro Supplies products
-  { id: 10, name: 'Copy Paper A4', sku: 'OFF-CP-001', category: 'Paper', price: 8.99, stock: 100, description: 'Premium A4 copy paper - 500 sheets', supplierId: 4 },
-  { id: 11, name: 'Ball Point Pens', sku: 'OFF-BP-002', category: 'Writing', price: 12.99, stock: 50, description: 'Blue ink ball point pens - pack of 10', supplierId: 4 },
-];
+import useRequireStore from '../../hooks/useRequireStore';
 
 const SupplierPage: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const currentStore = useRequireStore();
+  
+  // Get suppliers from Redux store
+  const { suppliers, loading, error } = useAppSelector((state) => state.suppliers);
+  
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
-  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [viewMode, setViewMode] = useState<'suppliers' | 'products'>('suppliers');
   
   // Modal states
@@ -118,63 +36,41 @@ const SupplierPage: React.FC = () => {
   const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isViewProductsModalOpen, setIsViewProductsModalOpen] = useState(false);
+  // Fetch suppliers when component mounts or store changes
+  useEffect(() => {
+    if (currentStore?.id) {
+      console.log('Fetching suppliers for store:', currentStore.id); // Debug log
+      console.log('Current store object:', currentStore); // Debug log
+      dispatch(fetchSuppliers(currentStore.id));
+    } else {
+      console.log('No current store, clearing suppliers'); // Debug log
+      console.log('Current store state:', currentStore); // Debug log
+      dispatch(clearSuppliers());
+    }
+  }, [dispatch, currentStore?.id]);
+  // Debug log when suppliers change
+  useEffect(() => {
+    console.log('Suppliers updated in component:', suppliers);
+    console.log('Number of suppliers:', suppliers.length);
+    console.log('Loading state:', loading);
+    console.log('Error state:', error);
+  }, [suppliers, loading, error]);
   
   // Handle supplier selection from sidebar
   const handleSupplierSelect = (supplier: Supplier) => {
     setSelectedSupplier(supplier);
     setViewMode('products');
   };
-
   // Handle back to suppliers view
   const handleBackToSuppliers = () => {
     setSelectedSupplier(null);
     setViewMode('suppliers');
   };
   
-  // Get products for selected supplier
-  const getSupplierProducts = () => {
-    if (!selectedSupplier) return [];
-    return products.filter(product => product.supplierId === selectedSupplier.id);
-  };
-
-  // Calculate totals based on current view
-  const totalValue = suppliers.reduce((sum, supplier) => sum + supplier.totalValue, 0);
-  const totalProducts = suppliers.reduce((sum, supplier) => sum + supplier.productsSupplied, 0);
-  
-  // Get current supplier products if viewing products
-  const currentSupplierProducts = getSupplierProducts();
-
-  // Add new supplier
-  const handleAddSupplier = (newSupplierData: Omit<Supplier, 'id'>) => {
-    try {
-      const newId = Math.max(...suppliers.map(s => s.id), 0) + 1;
-      const newSupplier: Supplier = {
-        ...newSupplierData,
-        id: newId
-      };
-      setSuppliers(prev => [...prev, newSupplier]);
-      setIsAddSupplierModalOpen(false);
-    } catch (error) {
-      console.error('Error adding supplier:', error);
-    }
-  };
-
   // Edit supplier
   const handleEditSupplier = (supplier: Supplier) => {
     setSelectedSupplier(supplier);
     setIsEditModalOpen(true);
-  };
-
-  const handleUpdateSupplier = (updatedSupplier: Supplier) => {
-    try {
-      setSuppliers(prev => prev.map(supplier => 
-        supplier.id === updatedSupplier.id ? updatedSupplier : supplier
-      ));
-      setIsEditModalOpen(false);
-      setSelectedSupplier(null);
-    } catch (error) {
-      console.error('Error updating supplier:', error);
-    }
   };
 
   // Delete supplier
@@ -183,40 +79,9 @@ const SupplierPage: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDeleteSupplier = () => {
-    try {
-      if (selectedSupplier) {
-        setSuppliers(prev => prev.filter(supplier => supplier.id !== selectedSupplier.id));
-        // Also remove associated products
-        setProducts(prev => prev.filter(product => product.supplierId !== selectedSupplier.id));
-        
-        // If we're currently viewing this supplier's products, go back to suppliers view
-        if (viewMode === 'products' && selectedSupplier) {
-          setViewMode('suppliers');
-        }
-      }
-      setIsDeleteModalOpen(false);
-      setSelectedSupplier(null);
-    } catch (error) {
-      console.error('Error deleting supplier:', error);
-    }
-  };
-
-  // Delete all suppliers
+  // Delete all suppliers - TODO: Implement API endpoint for bulk delete
   const handleDeleteAll = () => {
     setIsDeleteAllModalOpen(true);
-  };
-
-  const confirmDeleteAll = () => {
-    try {
-      setSuppliers([]);
-      setProducts([]);
-      setSelectedSupplier(null);
-      setViewMode('suppliers');
-      setIsDeleteAllModalOpen(false);
-    } catch (error) {
-      console.error('Error deleting all suppliers:', error);
-    }
   };
 
   // View supplier
@@ -230,25 +95,30 @@ const SupplierPage: React.FC = () => {
     setSelectedSupplier(supplier);
     setIsViewProductsModalOpen(true);
   };
-
   // Export functionality
   const handleExport = () => {
     try {
       const dataToExport = suppliers.map(supplier => ({
-        Name: supplier.name,
-        Email: supplier.email,
-        Phone: supplier.phone,
-        Address: supplier.address,
-        Category: supplier.category,
-        Status: supplier.status,
-        'Products Supplied': supplier.productsSupplied,
-        'Total Value': supplier.totalValue,
-        'Joined Date': supplier.joinedDate
+        'Supplier ID': supplier.supplier_id,
+        'Name': supplier.name,
+        'Email': supplier.email,
+        'Phone': supplier.phone,
+        'Address': supplier.address,
+        'Store ID': supplier.storeId,
+        'Created At': supplier.createdAt ? new Date(supplier.createdAt).toLocaleDateString() : '',
+        'Updated At': supplier.updatedAt ? new Date(supplier.updatedAt).toLocaleDateString() : ''
       }));
 
+      if (dataToExport.length === 0) {
+        alert('No suppliers to export');
+        return;
+      }
+
       const csvContent = [
-        Object.keys(dataToExport[0] || {}).join(','),
-        ...dataToExport.map(row => Object.values(row).join(','))
+        Object.keys(dataToExport[0]).join(','),
+        ...dataToExport.map(row => Object.values(row).map(value => 
+          typeof value === 'string' && value.includes(',') ? `"${value}"` : value
+        ).join(','))
       ].join('\n');
 
       const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -260,8 +130,10 @@ const SupplierPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error exporting data:', error);
-    }
-  };  return (
+      alert('Error exporting data. Please try again.');
+    }  };
+
+  return (
     <>
     <Header/>
     <div className="min-h-screen bg-gray-100 flex">
@@ -309,8 +181,7 @@ const SupplierPage: React.FC = () => {
                   ← Back to Suppliers
                 </button>
               )}
-            </div>            
-            <div className="flex items-center gap-2">
+            </div>              <div className="flex items-center gap-2">
               <SpecialButton variant="expense-export" onClick={handleExport}>
                 <FaFileExport size={14} />
                 <span className="sm:inline ml-2">Export</span>
@@ -318,8 +189,7 @@ const SupplierPage: React.FC = () => {
               <SpecialButton variant="expense-delete" onClick={handleDeleteAll}>
                 <FaTrash size={14} />
                 <span className="sm:inline ml-2">Delete All</span>
-              </SpecialButton>
-              <SpecialButton variant="expense-add" onClick={() => setIsAddSupplierModalOpen(true)}>
+              </SpecialButton>              <SpecialButton variant="expense-add" onClick={() => setIsAddSupplierModalOpen(true)}>
                 <FaPlus size={14} />
                 <span className="sm:inline ml-2">Add New</span>
               </SpecialButton>
@@ -343,45 +213,59 @@ const SupplierPage: React.FC = () => {
                   ? `Manage products from ${selectedSupplier.name}`
                   : 'Manage your suppliers and their information'
                 }
-              </p>
-              
-              {/* Stats Grid */}
+              </p>              {/* Stats Grid */}
               <StatsGrid 
                 viewMode={viewMode}
                 suppliers={suppliers}
                 selectedSupplier={selectedSupplier}
-                currentSupplierProducts={currentSupplierProducts}
+                currentSupplierProducts={[]} // TODO: Integrate with products API when available
               />
-            </div>
+            </div>            {/* Loading and Error States */}
+            {loading && (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+                <span className="ml-2 text-gray-600">Loading suppliers...</span>
+              </div>
+            )}
+
+            {error && (
+              <div className="mx-6 mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-600">Error: {error}</p>
+                <button 
+                  onClick={() => currentStore?.id && dispatch(fetchSuppliers(currentStore.id))}
+                  className="mt-2 text-sm text-red-700 hover:text-red-900 underline"
+                >
+                  Try Again
+                </button>
+              </div>            )}
 
             {/* Content based on view mode */}
-            {viewMode === 'suppliers' ? (
-              <SupplierTable
-                suppliers={suppliers}
-                totalValue={totalValue}
-                totalProducts={totalProducts}
-                onViewSupplier={handleViewSupplier}
-                onEditSupplier={handleEditSupplier}
-                onDeleteSupplier={handleDeleteSupplier}
-                onViewProducts={handleViewProducts}
-                onAddSupplier={() => setIsAddSupplierModalOpen(true)}
-              />
-            ) : selectedSupplier && (
-              <ProductsTable
-                products={currentSupplierProducts}
-                supplier={selectedSupplier}
-                onBackToSuppliers={handleBackToSuppliers}
-              />
+            {!loading && !error && (
+              <>
+                {viewMode === 'suppliers' ? (
+                  <SupplierTable
+                    suppliers={suppliers}
+                    onViewSupplier={handleViewSupplier}
+                    onEditSupplier={handleEditSupplier}
+                    onDeleteSupplier={handleDeleteSupplier}
+                    onViewProducts={handleViewProducts}
+                    onAddSupplier={() => setIsAddSupplierModalOpen(true)}
+                  />
+                ) : selectedSupplier && (
+                  <ProductsTable
+                    products={[]} // TODO: Integrate with products API when available
+                    supplier={selectedSupplier}
+                    onBackToSuppliers={handleBackToSuppliers}
+                  />
+                )}
+              </>
             )}
           </div>
         </div>
-      </div>
-
-      {/* Modals */}
+      </div>      {/* Modals */}
       <AddSupplierModal
         isOpen={isAddSupplierModalOpen}
         onClose={() => setIsAddSupplierModalOpen(false)}
-        onAdd={handleAddSupplier}
       />
 
       <EditSupplierModal
@@ -390,7 +274,6 @@ const SupplierPage: React.FC = () => {
           setIsEditModalOpen(false);
           setSelectedSupplier(null);
         }}
-        onEdit={handleUpdateSupplier}
         supplier={selectedSupplier}
       />
 
@@ -400,14 +283,12 @@ const SupplierPage: React.FC = () => {
           setIsDeleteModalOpen(false);
           setSelectedSupplier(null);
         }}
-        onDelete={confirmDeleteSupplier}
         supplier={selectedSupplier}
       />
 
       <DeleteSupplierModal
         isOpen={isDeleteAllModalOpen}
         onClose={() => setIsDeleteAllModalOpen(false)}
-        onDelete={confirmDeleteAll}
         supplier={null}
         isDeleteAll={true}
         supplierCount={suppliers.length}
@@ -429,7 +310,7 @@ const SupplierPage: React.FC = () => {
           setSelectedSupplier(null);
         }}
         supplier={selectedSupplier}
-        products={products}
+        products={[]} // TODO: Integrate with products API when available
       />
     </div>
     </>

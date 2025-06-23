@@ -1,44 +1,32 @@
 import React, { useState } from 'react';
 import { FaPlus, FaTimes } from 'react-icons/fa';
 import { SpecialButton } from '../buttons';
-
-export interface Supplier {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  category: string;
-  status: 'Active' | 'Inactive';
-  productsSupplied: number;
-  totalValue: number;
-  joinedDate: string;
-}
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { createSupplier } from '../../store/slices/supplierSlice';
+import type { SupplierFormData } from '../../types/supplier';
 
 interface AddSupplierModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (supplier: Omit<Supplier, 'id'>) => void;
 }
 
 const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
   isOpen,
-  onClose,
-  onAdd
-}) => {  const [formData, setFormData] = useState({
+  onClose
+}) => {
+  const dispatch = useAppDispatch();
+  const { currentStore } = useAppSelector((state) => state.stores);
+  const { loading } = useAppSelector((state) => state.suppliers);  const [formData, setFormData] = useState<SupplierFormData>({
+    supplier_id: '',
     name: '',
     email: '',
     phone: '',
     address: '',
-    category: 'Electronics',
-    status: 'Active' as 'Active' | 'Inactive',
-    productsSupplied: 0,
-    totalValue: 0
+    storeId: currentStore?.id || ''
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = (field: keyof (SupplierFormData), value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -55,6 +43,10 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
+
+    if (!formData.supplier_id.trim()) {
+      newErrors.supplier_id = 'Supplier ID is required';
+    }
 
     if (!formData.name.trim()) {
       newErrors.name = 'Supplier name is required';
@@ -74,54 +66,50 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
       newErrors.address = 'Address is required';
     }
 
-    if (formData.productsSupplied < 0) {
-      newErrors.productsSupplied = 'Products supplied cannot be negative';
-    }
-
-    if (formData.totalValue < 0) {
-      newErrors.totalValue = 'Total value cannot be negative';
+    if (!formData.storeId) {
+      newErrors.storeId = 'Store ID is required';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
       return;
+    }    try {
+      await dispatch(createSupplier({
+        supplier_id: formData.supplier_id,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        storeId: currentStore?.id || formData.storeId
+      })).unwrap();// Reset form and close modal
+      setFormData({
+        supplier_id: '',
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        storeId: currentStore?.id || ''
+      });
+      setErrors({});
+      onClose();
+    } catch (error) {
+      console.error('Error creating supplier:', error);
     }
-
-    const newSupplier: Omit<Supplier, 'id'> = {
-      ...formData,
-      joinedDate: new Date().toLocaleDateString()
-    };
-
-    onAdd(newSupplier);
-      // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      address: '',
-      category: 'Electronics',
-      status: 'Active',
-      productsSupplied: 0,
-      totalValue: 0
-    });
-    setErrors({});
   };
   const handleClose = () => {
     setFormData({
+      supplier_id: '',
       name: '',
       email: '',
       phone: '',
       address: '',
-      category: 'Electronics',
-      status: 'Active',
-      productsSupplied: 0,
-      totalValue: 0
+      storeId: currentStore?.id || ''
     });
     setErrors({});
     onClose();
@@ -134,7 +122,8 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">            <div className="p-2 bg-gray-800 rounded-lg">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gray-800 rounded-lg">
               <FaPlus className="text-white" size={18} />
             </div>
             <div>
@@ -148,10 +137,28 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
           >
             <FaTimes className="text-gray-400" size={18} />
           </button>
-        </div>
-
-        {/* Form */}
+        </div>        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Supplier ID */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Supplier ID *
+            </label>
+            <input
+              type="text"
+              value={formData.supplier_id}
+              onChange={(e) => handleInputChange('supplier_id', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
+                errors.supplier_id ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="Enter supplier ID (e.g., SUP001)"
+              disabled={loading}
+            />
+            {errors.supplier_id && (
+              <p className="mt-1 text-sm text-red-600">{errors.supplier_id}</p>
+            )}
+          </div>
+
           {/* Supplier Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -164,7 +171,8 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
                 errors.name ? 'border-red-500' : 'border-gray-300'
               }`}
-              placeholder="Enter supplier name"
+              placeholder="Enter supplier name (e.g., ABC Suppliers Ltd)"
+              disabled={loading}
             />
             {errors.name && (
               <p className="mt-1 text-sm text-red-600">{errors.name}</p>
@@ -183,7 +191,8 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
                 errors.email ? 'border-red-500' : 'border-gray-300'
               }`}
-              placeholder="Enter email address"
+              placeholder="Enter email address (e.g., supplier@example.com)"
+              disabled={loading}
             />
             {errors.email && (
               <p className="mt-1 text-sm text-red-600">{errors.email}</p>
@@ -202,7 +211,8 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
                 errors.phone ? 'border-red-500' : 'border-gray-300'
               }`}
-              placeholder="Enter phone number"
+              placeholder="Enter phone number (e.g., +1-555-123-4567)"
+              disabled={loading}
             />
             {errors.phone && (
               <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
@@ -220,88 +230,17 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
                 errors.address ? 'border-red-500' : 'border-gray-300'
               }`}
-              placeholder="Enter supplier address"
+              placeholder="Enter supplier address (e.g., 123 Main St, City, State 12345)"
               rows={3}
+              disabled={loading}
             />
             {errors.address && (
               <p className="mt-1 text-sm text-red-600">{errors.address}</p>
             )}
           </div>
 
-          {/* Category */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Category
-            </label>
-            <select
-              value={formData.category}
-              onChange={(e) => handleInputChange('category', e.target.value)}              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-            >
-              <option value="Electronics">Electronics</option>
-              <option value="Clothing & Apparel">Clothing & Apparel</option>
-              <option value="Food & Beverages">Food & Beverages</option>
-              <option value="Office Supplies">Office Supplies</option>
-              <option value="Healthcare Products">Healthcare Products</option>
-              <option value="Raw Materials">Raw Materials</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-
-          {/* Status */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status
-            </label>
-            <select
-              value={formData.status}
-              onChange={(e) => handleInputChange('status', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-            >
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
-
-          {/* Products Supplied */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Products Supplied
-            </label>
-            <input
-              type="number"
-              value={formData.productsSupplied}
-              onChange={(e) => handleInputChange('productsSupplied', parseInt(e.target.value) || 0)}
-              min="0"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
-                errors.productsSupplied ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="Number of products supplied"
-            />
-            {errors.productsSupplied && (
-              <p className="mt-1 text-sm text-red-600">{errors.productsSupplied}</p>
-            )}
-          </div>
-
-          {/* Total Value */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Total Business Value ($)
-            </label>
-            <input
-              type="number"
-              value={formData.totalValue}
-              onChange={(e) => handleInputChange('totalValue', parseFloat(e.target.value) || 0)}
-              min="0"
-              step="0.01"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
-                errors.totalValue ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="Total business value"
-            />
-            {errors.totalValue && (
-              <p className="mt-1 text-sm text-red-600">{errors.totalValue}</p>
-            )}
-          </div>
+          {/* Store Information */}
+       
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
@@ -309,17 +248,17 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               variant="modal-cancel"
               type="button"
               onClick={handleClose}
+              disabled={loading}
             >
               Cancel
-            </SpecialButton>
-            <SpecialButton
+            </SpecialButton>            <SpecialButton
               variant="modal-confirm"
               type="submit"
+              disabled={loading}
             >
-              Add Supplier
+              {loading ? 'Adding...' : 'Add Supplier'}
             </SpecialButton>
-          </div>
-        </form>
+          </div>        </form>
       </div>
     </div>
   );

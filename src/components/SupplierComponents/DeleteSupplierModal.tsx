@@ -1,12 +1,13 @@
 import React from 'react';
 import { FaTrash, FaTimes } from 'react-icons/fa';
 import { SpecialButton } from '../buttons';
-import type { Supplier } from './AddSupplierModal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { deleteSupplier } from '../../store/slices/supplierSlice';
+import type { Supplier } from '../../types/supplier';
 
 interface DeleteSupplierModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onDelete: () => void;
   supplier: Supplier | null;
   isDeleteAll?: boolean;
   supplierCount?: number;
@@ -15,16 +16,36 @@ interface DeleteSupplierModalProps {
 const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
   isOpen,
   onClose,
-  onDelete,
   supplier,
   isDeleteAll = false,
   supplierCount = 0
 }) => {
-  if (!isOpen) return null;
+  const dispatch = useAppDispatch();
+  const { currentStore } = useAppSelector((state) => state.stores);
+  const { loading } = useAppSelector((state) => state.suppliers);
 
-  const handleDelete = () => {
-    onDelete();
-    onClose();
+  if (!isOpen) return null;
+  if (!isDeleteAll && !supplier) return null;
+
+  const handleDelete = async () => {
+    if (!currentStore) return;
+    
+    try {
+      if (isDeleteAll) {
+        // TODO: Implement bulk delete API endpoint when available
+        console.log('Bulk delete not implemented yet');
+        onClose();
+      } else if (supplier) {
+        await dispatch(deleteSupplier({
+          id: supplier.supplier_id,
+          storeId: currentStore.id
+        })).unwrap();
+        
+        onClose();
+      }
+    } catch (error) {
+      console.error('Error deleting supplier:', error);
+    }
   };
 
   return (
@@ -82,16 +103,18 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
                   This will permanently remove all their information including contact details, 
                   business relationship, and product associations.
                 </p>
-                
-                {supplier && (
+                  {supplier && (
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
                     <h4 className="font-medium text-gray-900 mb-2">Supplier Details:</h4>
                     <div className="text-sm text-gray-600 space-y-1">
+                      <p><span className="font-medium">ID:</span> {supplier.supplier_id}</p>
                       <p><span className="font-medium">Name:</span> {supplier.name}</p>
                       <p><span className="font-medium">Email:</span> {supplier.email}</p>
-                      <p><span className="font-medium">Category:</span> {supplier.category}</p>
-                      <p><span className="font-medium">Products Supplied:</span> {supplier.productsSupplied}</p>
-                      <p><span className="font-medium">Total Value:</span> ${supplier.totalValue.toFixed(2)}</p>
+                      <p><span className="font-medium">Phone:</span> {supplier.phone}</p>
+                      <p><span className="font-medium">Address:</span> {supplier.address}</p>
+                      {supplier.createdAt && (
+                        <p><span className="font-medium">Created:</span> {new Date(supplier.createdAt).toLocaleDateString()}</p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -116,13 +139,16 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
               fullWidth
             >
               Cancel
-            </SpecialButton>
-            <SpecialButton
+            </SpecialButton>            <SpecialButton
               variant="modal-delete"
               onClick={handleDelete}
               fullWidth
+              disabled={loading}
             >
-              {isDeleteAll ? 'Delete All Suppliers' : 'Delete Supplier'}
+              {loading 
+                ? (isDeleteAll ? 'Deleting All...' : 'Deleting...') 
+                : (isDeleteAll ? 'Delete All Suppliers' : 'Delete Supplier')
+              }
             </SpecialButton>
           </div>
         </div>

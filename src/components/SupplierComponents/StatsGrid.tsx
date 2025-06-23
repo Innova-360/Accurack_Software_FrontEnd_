@@ -15,12 +15,15 @@ const StatsGrid: React.FC<StatsGridProps> = ({
   suppliers,
   selectedSupplier,
   currentSupplierProducts = []
-}) => {
-  if (viewMode === 'suppliers') {
+}) => {  if (viewMode === 'suppliers') {
     const totalSuppliers = suppliers.length;
-    const activeSuppliers = suppliers.filter(s => s.status === 'Active').length;
-    const totalValue = suppliers.reduce((sum, supplier) => sum + supplier.totalValue, 0);
-    const totalProducts = suppliers.reduce((sum, supplier) => sum + supplier.productsSupplied, 0);    return (
+    // Since we don't have status field anymore, all suppliers are considered active
+    const activeSuppliers = totalSuppliers;
+    // Since we don't have totalValue and productsSupplied fields, we'll show 0 or remove these stats
+    const totalValue = 0; // TODO: Calculate from actual products when available
+    const totalProducts = 0; // TODO: Calculate from actual products when available
+
+    return (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
         <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
           <div className="text-2xl font-bold text-gray-900">{totalSuppliers}</div>
@@ -41,7 +44,8 @@ const StatsGrid: React.FC<StatsGridProps> = ({
       </div>
     );
   }
-  if (viewMode === 'products' && selectedSupplier) {    return (
+
+  if (viewMode === 'products' && selectedSupplier) {return (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
         <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
           <div className="text-2xl font-bold text-gray-900">{currentSupplierProducts.length}</div>

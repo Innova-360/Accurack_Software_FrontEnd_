@@ -1,14 +1,21 @@
 export interface Supplier {
-  id: number;
+  supplier_id: string;
   name: string;
   email: string;
   phone: string;
   address: string;
-  category: string;
-  status: 'Active' | 'Inactive';
-  productsSupplied: number;
-  totalValue: number;
-  joinedDate: string;
+  storeId: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface SupplierFormData {
+  supplier_id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  storeId: string;
 }
 
 export interface Product {
@@ -19,5 +26,5 @@ export interface Product {
   price: number;
   stock: number;
   description: string;
-  supplierId: number;
+  supplierId: string; // Changed from number to string to match supplier_id
 }
