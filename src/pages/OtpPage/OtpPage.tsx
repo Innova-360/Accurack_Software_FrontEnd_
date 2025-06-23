@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { verifyOtp } from "../../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
@@ -39,7 +40,6 @@ const OtpPage = () => {
           otp: "", // Send empty OTP to trigger OTP sending
         })
       );
-
       if (verifyOtp.fulfilled.match(resultAction)) {
         console.log("Initial OTP sent successfully", resultAction.payload);
         setSuccessMessage("OTP has been sent to your email");
@@ -52,11 +52,15 @@ const OtpPage = () => {
         setTimeout(() => setSuccessMessage(""), 3000);
       } else {
         console.error("Failed to send initial OTP", resultAction.payload);
-        alert(resultAction.payload || "Failed to send OTP");
+        toast.error(
+          typeof resultAction.payload === "string"
+            ? resultAction.payload
+            : "Failed to send OTP"
+        );
       }
     } catch (error) {
       console.error("Error sending initial OTP", error);
-      alert("An error occurred while sending OTP. Please try again.");
+      toast.error("An error occurred while sending OTP. Please try again.");
     }
   };
 
@@ -86,19 +90,17 @@ const OtpPage = () => {
   };
   // Handle OTP verification
   const handleVerifyOtp = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    // Clear any success messages
+    e.preventDefault(); // Clear any success messages
     setSuccessMessage(""); // Check if all OTP fields are filled
     const otpString = otp.join("");
     if (otpString.length !== 6) {
-      alert("Please enter the complete 6-digit OTP");
+      toast.error("Please enter the complete 6-digit OTP");
       return;
     }
 
     // Check if email is available
     if (!userEmail) {
-      alert("Email not found. Please try signing up again.");
+      toast.error("Email not found. Please try signing up again.");
       return;
     }
 
@@ -116,11 +118,17 @@ const OtpPage = () => {
         navigate("/login");
       } else {
         console.error("OTP verification failed", resultAction.payload);
-        alert(resultAction.payload || "OTP verification failed");
+        toast.error(
+          typeof resultAction.payload === "string"
+            ? resultAction.payload
+            : "OTP verification failed"
+        );
       }
     } catch (error) {
       console.error("Error during OTP verification", error);
-      alert("An error occurred during OTP verification. Please try again.");
+      toast.error(
+        "An error occurred during OTP verification. Please try again."
+      );
     }
   };
 

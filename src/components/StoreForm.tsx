@@ -1,52 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { FaStore, FaCog } from 'react-icons/fa';
-import { SpecialButton } from './buttons';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { createStore, updateStore } from '../store/slices/storeSlice';
-import type { StoreFormData } from '../types/store';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import toast from "react-hot-toast";
+import { FaStore, FaCog } from "react-icons/fa";
+import { SpecialButton } from "./buttons";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { createStore, updateStore } from "../store/slices/storeSlice";
+import type { StoreFormData } from "../types/store";
 
 const TIMEZONES = [
-  { value: 'UTC', label: 'UTC - Coordinated Universal Time' },
-  { value: 'America/New_York', label: 'EST - Eastern Standard Time' },
-  { value: 'America/Chicago', label: 'CST - Central Standard Time' },
-  { value: 'America/Denver', label: 'MST - Mountain Standard Time' },
-  { value: 'America/Los_Angeles', label: 'PST - Pacific Standard Time' },
-  { value: 'Europe/London', label: 'GMT - Greenwich Mean Time' },
-  { value: 'Europe/Paris', label: 'CET - Central European Time' },
-  { value: 'Asia/Tokyo', label: 'JST - Japan Standard Time' },
-  { value: 'Asia/Shanghai', label: 'CST - China Standard Time' },
-  { value: 'Asia/Kolkata', label: 'IST - India Standard Time' },
-  { value: 'Australia/Sydney', label: 'AEST - Australian Eastern Standard Time' },
+  { value: "UTC", label: "UTC - Coordinated Universal Time" },
+  { value: "America/New_York", label: "EST - Eastern Standard Time" },
+  { value: "America/Chicago", label: "CST - Central Standard Time" },
+  { value: "America/Denver", label: "MST - Mountain Standard Time" },
+  { value: "America/Los_Angeles", label: "PST - Pacific Standard Time" },
+  { value: "Europe/London", label: "GMT - Greenwich Mean Time" },
+  { value: "Europe/Paris", label: "CET - Central European Time" },
+  { value: "Asia/Tokyo", label: "JST - Japan Standard Time" },
+  { value: "Asia/Shanghai", label: "CST - China Standard Time" },
+  { value: "Asia/Kolkata", label: "IST - India Standard Time" },
+  {
+    value: "Australia/Sydney",
+    label: "AEST - Australian Eastern Standard Time",
+  },
 ];
 
 const CURRENCIES = [
-  { value: 'USD', label: 'USD - US Dollar', symbol: '$' },
-  { value: 'EUR', label: 'EUR - Euro', symbol: '€' },
-  { value: 'GBP', label: 'GBP - British Pound', symbol: '£' },
-  { value: 'JPY', label: 'JPY - Japanese Yen', symbol: '¥' },
-  { value: 'CNY', label: 'CNY - Chinese Yuan', symbol: '¥' },
-  { value: 'INR', label: 'INR - Indian Rupee', symbol: '₹' },
-  { value: 'AUD', label: 'AUD - Australian Dollar', symbol: 'A$' },
-  { value: 'CAD', label: 'CAD - Canadian Dollar', symbol: 'C$' },
-  { value: 'CHF', label: 'CHF - Swiss Franc', symbol: 'CHF' },
-  { value: 'SEK', label: 'SEK - Swedish Krona', symbol: 'kr' },
+  { value: "USD", label: "USD - US Dollar", symbol: "$" },
+  { value: "EUR", label: "EUR - Euro", symbol: "€" },
+  { value: "GBP", label: "GBP - British Pound", symbol: "£" },
+  { value: "JPY", label: "JPY - Japanese Yen", symbol: "¥" },
+  { value: "CNY", label: "CNY - Chinese Yuan", symbol: "¥" },
+  { value: "INR", label: "INR - Indian Rupee", symbol: "₹" },
+  { value: "AUD", label: "AUD - Australian Dollar", symbol: "A$" },
+  { value: "CAD", label: "CAD - Canadian Dollar", symbol: "C$" },
+  { value: "CHF", label: "CHF - Swiss Franc", symbol: "CHF" },
+  { value: "SEK", label: "SEK - Swedish Krona", symbol: "kr" },
 ];
 
 const StoreForm: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { id } = useParams<{ id: string }>();  const { stores, loading: storeLoading } = useAppSelector((state) => state.stores);
+  const { id } = useParams<{ id: string }>();
+  const { stores, loading: storeLoading } = useAppSelector(
+    (state) => state.stores
+  );
   const isEditing = !!id;
 
   const [formData, setFormData] = useState<StoreFormData>({
-    name: '',
-    address: '',
-    phone: '',
-    email: '',
-    timezone: 'America/New_York',
-    currency: 'USD',
-    taxMode: 'exclusive'
+    name: "",
+    address: "",
+    phone: "",
+    email: "",
+    timezone: "America/New_York",
+    currency: "USD",
+    taxMode: "exclusive",
   });
 
   const [errors, setErrors] = useState<Partial<StoreFormData>>({});
@@ -54,7 +61,7 @@ const StoreForm: React.FC = () => {
   useEffect(() => {
     if (isEditing && id) {
       // Find store data for editing
-      const store = stores.find(s => s.id === id);
+      const store = stores.find((s) => s.id === id);
       if (store) {
         setFormData({
           name: store.name,
@@ -63,30 +70,32 @@ const StoreForm: React.FC = () => {
           email: store.email,
           timezone: store.timezone,
           currency: store.currency,
-          taxMode: store.taxMode
+          taxMode: store.taxMode,
         });
       }
     }
   }, [isEditing, id, stores]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
     // Clear error when user starts typing
     if (errors[name as keyof StoreFormData]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }));
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
   const validateForm = (): boolean => {
     const newErrors: Partial<StoreFormData> = {};
 
-    if (!formData.name.trim()) newErrors.name = 'Store name is required';
-    if (!formData.address.trim()) newErrors.address = 'Address is required';
-    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.name.trim()) newErrors.name = "Store name is required";
+    if (!formData.address.trim()) newErrors.address = "Address is required";
+    if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = "Please enter a valid email address";
     }
 
     setErrors(newErrors);
@@ -94,7 +103,7 @@ const StoreForm: React.FC = () => {
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     try {
@@ -103,19 +112,23 @@ const StoreForm: React.FC = () => {
       } else {
         await dispatch(createStore(formData)).unwrap();
       }
-      
-      console.log(isEditing ? 'Store updated successfully' : 'Store created successfully');
-      
+
+      console.log(
+        isEditing ? "Store updated successfully" : "Store created successfully"
+      );
+
       // Navigate to stores page after successful submission
-      navigate('/stores');
+      navigate("/stores");
     } catch (error) {
-      console.error('Error saving store:', error);
-      alert('An error occurred while saving the store. Please try again.');
+      console.error("Error saving store:", error);
+      toast.error(
+        "An error occurred while saving the store. Please try again."
+      );
     }
   };
 
   const handleCancel = () => {
-    navigate('/stores');
+    navigate("/stores");
   };
 
   return (
@@ -129,19 +142,23 @@ const StoreForm: React.FC = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-[#03414C]">
-                {isEditing ? 'Edit Store' : 'Create Your Store'}
+                {isEditing ? "Edit Store" : "Create Your Store"}
               </h1>
               <p className="text-gray-600 text-sm">
-                {isEditing ? 'Update your store information and settings' : 'Set up your store with basic information and preferences'}
-              </p>
+                {isEditing
+                  ? "Update your store information and settings"
+                  : "Set up your store with basic information and preferences"}
+              </p>  
             </div>
           </div>
 
           <form onSubmit={handleSubmit}>
             {/* Store Information Section */}
             <div className="border-b border-gray-200 pb-8 mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Store Information</h2>
-              
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                Store Information
+              </h2>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -154,10 +171,12 @@ const StoreForm: React.FC = () => {
                     onChange={handleInputChange}
                     placeholder="Enter your store name"
                     className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
-                      errors.name ? 'border-red-500' : 'border-gray-300'
+                      errors.name ? "border-red-500" : "border-gray-300"
                     }`}
                   />
-                  {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                  {errors.name && (
+                    <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                  )}
                 </div>
 
                 <div>
@@ -171,10 +190,12 @@ const StoreForm: React.FC = () => {
                     onChange={handleInputChange}
                     placeholder="store@example.com"
                     className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
-                      errors.email ? 'border-red-500' : 'border-gray-300'
+                      errors.email ? "border-red-500" : "border-gray-300"
                     }`}
                   />
-                  {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                  {errors.email && (
+                    <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                  )}
                 </div>
 
                 <div>
@@ -188,10 +209,12 @@ const StoreForm: React.FC = () => {
                     onChange={handleInputChange}
                     placeholder="+1 (555) 123-4567"
                     className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
-                      errors.phone ? 'border-red-500' : 'border-gray-300'
+                      errors.phone ? "border-red-500" : "border-gray-300"
                     }`}
                   />
-                  {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+                  {errors.phone && (
+                    <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                  )}
                 </div>
 
                 <div className="md:col-span-2">
@@ -205,10 +228,14 @@ const StoreForm: React.FC = () => {
                     onChange={handleInputChange}
                     placeholder="123 Main St, City, State 12345"
                     className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
-                      errors.address ? 'border-red-500' : 'border-gray-300'
+                      errors.address ? "border-red-500" : "border-gray-300"
                     }`}
                   />
-                  {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
+                  {errors.address && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.address}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -217,9 +244,11 @@ const StoreForm: React.FC = () => {
             <div className="mb-8">
               <div className="flex items-center mb-6">
                 <FaCog className="text-gray-500 mr-2" />
-                <h2 className="text-lg font-semibold text-gray-900">Store Settings</h2>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Store Settings
+                </h2>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -267,15 +296,21 @@ const StoreForm: React.FC = () => {
                     onChange={handleInputChange}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                   >
-                    <option value="inclusive">Inclusive - Tax included in price</option>
-                    <option value="exclusive">Exclusive - Tax added to price</option>
+                    <option value="inclusive">
+                      Inclusive - Tax included in price
+                    </option>
+                    <option value="exclusive">
+                      Exclusive - Tax added to price
+                    </option>
                   </select>
                 </div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">              <SpecialButton
+            <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+              {" "}
+              <SpecialButton
                 type="button"
                 variant="modal-cancel"
                 onClick={handleCancel}
@@ -288,7 +323,11 @@ const StoreForm: React.FC = () => {
                 variant="modal-add"
                 disabled={storeLoading}
               >
-                {storeLoading ? 'Saving...' : (isEditing ? 'Update Store' : 'Create Store')}
+                {storeLoading
+                  ? "Saving..."
+                  : isEditing
+                    ? "Update Store"
+                    : "Create Store"}
               </SpecialButton>
             </div>
           </form>

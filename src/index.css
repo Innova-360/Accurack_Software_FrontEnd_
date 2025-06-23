@@ -286,19 +286,63 @@
   animation: glowPulse 2s ease-in-out infinite;
 }
 
-/* Enhanced button hover effects */
-.btn-enhanced {
-  transition: all 0.3s ease;
-  transform: scale(1);
+/* Enhanced animation utilities */
+.animation-duration-1000 {
+  animation-duration: 1000ms;
 }
 
-.btn-enhanced:hover {
-  transform: scale(1.05);
-  box-shadow:
-    0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+.animation-duration-2000 {
+  animation-duration: 2000ms;
 }
 
-.btn-enhanced:active {
-  transform: scale(0.95);
+/* Milestone step animations */
+@keyframes milestoneComplete {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 10px 25px -3px rgba(15, 77, 87, 0.3);
+  }
+  100% {
+    transform: scale(1.05);
+    box-shadow: 0 10px 25px -3px rgba(15, 77, 87, 0.2);
+  }
+}
+
+@keyframes progressGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(15, 77, 87, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(15, 77, 87, 0.6),
+      0 0 30px rgba(15, 77, 87, 0.4);
+  }
+}
+
+.animate-milestone-complete {
+  animation: milestoneComplete 0.6s ease-out;
+}
+
+.animate-progress-glow {
+  animation: progressGlow 2s ease-in-out infinite;
+}
+
+/* Create inventory specific animations */
+@keyframes formSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-form-slide-in {
+  animation: formSlideIn 0.5s ease-out;
 }

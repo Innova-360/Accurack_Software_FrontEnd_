@@ -57,7 +57,6 @@ const AddInventoryOptionsModal: React.FC<AddInventoryOptionsModalProps> = ({
               </div>
             </div>
           </button>
-
           {/* Create Inventory Option */}
           <button
             onClick={onCreateInventory}
@@ -76,22 +75,20 @@ const AddInventoryOptionsModal: React.FC<AddInventoryOptionsModalProps> = ({
                 </p>
               </div>
             </div>
-          </button>
-
+          </button>{" "}
           {/* Scan Inventory Option */}
           <button
             onClick={onScanInventory}
-            className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#0f4d57] hover:bg-[#0f4d57]/5 transition-all duration-200 group opacity-50 cursor-not-allowed"
-            disabled
+            className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#0f4d57] hover:bg-[#0f4d57]/5 transition-all duration-200 group"
           >
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <FaBarcode className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-[#0f4d57] group-hover:text-white transition-colors">
+                <FaBarcode className="w-6 h-6 text-purple-600 group-hover:text-white" />
               </div>
               <div className="flex-1 text-left">
                 <h3 className="font-semibold text-gray-900">Scan Inventory</h3>
                 <p className="text-sm text-gray-500">
-                  Coming soon - Scan barcodes to add products
+                  Scan barcodes to add products quickly
                 </p>
               </div>
             </div>

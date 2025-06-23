@@ -20,7 +20,7 @@ export const fetchStores = createAsyncThunk(
     try {
       const response = await apiClient.get("/store/list");
       console.log("Fetched stores:", response); // Debug log
-      return response.data.data.data; // Extract stores from response
+      return response.data.data; // Extract stores from response
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch stores"

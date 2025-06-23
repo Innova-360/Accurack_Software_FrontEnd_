@@ -185,4 +185,6 @@ VITE_API_URL=http://localhost:4000/api/v1  # Backend API URL
 6. Should this be responsive/mobile-friendly?
 7. Does this need to integrate with the backend API?
 
-Remember: Always plan, analyze, and confirm and ask me before making any changes to ensure the integrity of the inventory management system.
+Remember: Always plan, analyze, then confirm and ask me before making any changes to ensure the integrity of the inventory management system.
+You have access to whole codebase but change only neccessary files. And don't remove any spaces, extra lines, even if they are unneccessary.
+don't remove any big amount of code, just comment it and write your own beneath it.

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ProductFormData } from "../../components/InventoryComponents/CreateInventory/types";
 import {
@@ -7,17 +7,80 @@ import {
 } from "../../components/InventoryComponents/CreateInventory/utils";
 import ProductBasicInfo from "../../components/InventoryComponents/CreateInventory/ProductBasicInfo";
 import PackConfiguration from "../../components/InventoryComponents/CreateInventory/PackConfiguration";
-import DiscountConfiguration from "../../components/InventoryComponents/CreateInventory/DiscountConfiguration";
 import AttributesConfiguration from "../../components/InventoryComponents/CreateInventory/AttributesConfiguration";
 import VariationsConfiguration from "../../components/InventoryComponents/CreateInventory/VariationsConfiguration";
+import { v4 as uuidv4 } from "uuid"; // npm install uuid
+import { useLocation } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { createProduct } from "../../store/slices/productsSlice";
+import { useAppSelector } from "../../store/hooks";
+import { selectCurrentStore } from "../../store/selectors";
+import useSuppliers from "../../hooks/useSuppliers";
 
 const CreateInventory: React.FC = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const location = useLocation();
+  const getStoreIdFromUrl = () => {
+    const match = location.pathname.match(/store\/([a-f0-9-]+)\//i);
+    return match ? match[1] : "";
+  };
+
+  const currentStore = useAppSelector(selectCurrentStore);
+  const storeId = currentStore?.id || getStoreIdFromUrl();
+  useSuppliers(storeId);
+
+  const buildApiPayload = () => {
+    return {
+      name: formData.productName,
+      category: formData.category,
+      ean: formData.ean,
+      pluUpc: formData.pluUpc,
+      supplierId: uuidv4(),
+      sku: formData.customSku,
+      singleItemCostPrice: parseFloat(formData.itemCost) || 0,
+      itemQuantity: parseInt(formData.quantity) || 0,
+      msrpPrice: parseFloat(formData.msrpPrice) || 0,
+      singleItemSellingPrice: parseFloat(formData.itemSellingCost) || 0,
+      discountAmount: 0, // Map from form if needed
+      percentDiscount: 0, // Map from form if needed
+      clientId: uuidv4(),
+      storeId: storeId,
+      hasVariants: !!formData.variations?.length,
+      packs: (formData.packDiscounts || []).map((pack: any) => ({
+        minimumSellingQuantity: pack.minSellingQuantity,
+        totalPacksQuantity: pack.totalPacksQuantity,
+        orderedPacksPrice: pack.orderedPacksPrice,
+        discountAmount: pack.discountAmount,
+        percentDiscount: pack.percentDiscount,
+      })),
+      variants: (formData.variations || []).map((variant: any) => ({
+        name: variant.name,
+        price: variant.price,
+        sku: variant.sku || variant.customSku,
+        msrpPrice:
+          variant.msrpPrice !== undefined
+            ? parseFloat(variant.msrpPrice)
+            : undefined,
+        discountAmount: variant.discountAmount,
+        percentDiscount: variant.percentDiscount,
+        packs: (variant.packs || variant.packDiscounts || []).map(
+          (pack: any) => ({
+            minimumSellingQuantity: pack.minSellingQuantity,
+            totalPacksQuantity: pack.totalPacksQuantity,
+            orderedPacksPrice: pack.orderedPacksPrice,
+            discountAmount: pack.discountAmount,
+            percentDiscount: pack.percentDiscount,
+          })
+        ),
+      })),
+    };
+  };
 
   // Form state management
   const [showVariations, setShowVariations] = useState(false);
-
+  const [hasVariants, setHasVariants] = useState(false);
   // Main form data
   const [formData, setFormData] = useState<ProductFormData>({
     productName: "",
@@ -27,10 +90,12 @@ const CreateInventory: React.FC = () => {
     customSku: "",
     ean: "",
     pluUpc: "",
+    individualItemQuantity: "1",
     itemCost: "",
     itemSellingCost: "",
     minSellingQuantity: "1",
     minOrderValue: "",
+    msrpPrice: "",
     orderValueDiscountType: "",
     orderValueDiscountValue: "",
     quantity: "",
@@ -64,6 +129,22 @@ const CreateInventory: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const payload = buildApiPayload();
+    console.log("API Payload:", payload);
+
+    dispatch(createProduct(payload) as any).then((result: any) => {
+      if (!result.error) {
+        // navigate("/inventory");
+        console.log("What to do?");
+      }
+    });
+
+    // Example POST request (uncomment and adjust as needed)
+    // fetch("/products/create", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify(payload),
+    // }).then(() => navigate("/inventory"));
 
     const inventoryData = {
       ...formData,
@@ -87,29 +168,62 @@ const CreateInventory: React.FC = () => {
 
   const handleBack = () => {
     setShowVariations(false);
-  };
-
-  // Calculate progress percentage (removed sku from calculation)
+  }; // Calculate progress percentage based on whether variants are enabled
   const calculateProgress = () => {
-    const requiredFields = [
-      formData.productName,
-      formData.category,
-      formData.price,
-      formData.vendor,
-      formData.itemCost,
-      formData.itemSellingCost,
-      formData.minSellingQuantity,
-      formData.minOrderValue,
-      formData.quantity,
-    ];
+    if (hasVariants) {
+      // For variants mode, only require basic product info and attributes
+      const requiredFields = [
+        formData.productName,
+        formData.category,
+        formData.price,
+      ];
 
-    const filledFields = requiredFields.filter(
-      (field) => field && field.toString().trim() !== ""
-    ).length;
-    return Math.round((filledFields / requiredFields.length) * 100);
+      const filledFields = requiredFields.filter(
+        (field) => field && field.toString().trim() !== ""
+      ).length;
+
+      // Also check if attributes are properly configured
+      const hasValidAttributes =
+        formData.hasAttributes &&
+        formData.attributes.length > 0 &&
+        formData.attributes.every((attr) => attr.options.length >= 2);
+
+      const attributeScore = hasValidAttributes ? 1 : 0;
+
+      return Math.round(
+        ((filledFields + attributeScore) / (requiredFields.length + 1)) * 100
+      );
+    } else {
+      // For regular mode, require all fields as before
+      const requiredFields = [
+        formData.productName,
+        formData.category,
+        formData.price,
+        formData.vendor,
+        formData.pluUpc,
+        formData.individualItemQuantity,
+        formData.itemCost,
+        formData.itemSellingCost,
+        formData.minSellingQuantity,
+        formData.minOrderValue,
+        formData.quantity,
+      ];
+
+      const filledFields = requiredFields.filter(
+        (field) => field && field.toString().trim() !== ""
+      ).length;
+      return Math.round((filledFields / requiredFields.length) * 100);
+    }
   };
 
   const progress = calculateProgress();
+
+  useEffect(() => {
+    if (location.state && location.state.scannedPLU) {
+      setFormData((prev) => ({ ...prev, pluUpc: location.state.scannedPLU }));
+    }
+    // eslint-disable-next-line
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
@@ -125,7 +239,6 @@ const CreateInventory: React.FC = () => {
           style={{ animationDelay: "4s" }}
         ></div>
       </div>
-
       {/* Enhanced Header with Milestone Progress */}
       <div className="relative z-10 bg-white/80 backdrop-blur-sm shadow-xl border-b border-gray-200/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -163,12 +276,11 @@ const CreateInventory: React.FC = () => {
                     : "Add a new product to your inventory with detailed information"}
                 </p>
               </div>
-            </div>
-
+            </div>{" "}
             {/* Enhanced Milestone Progress Indicator */}
             <div className="flex items-center space-x-8">
               {!showVariations && (
-                <div className="flex items-center space-x-4 bg-white/70 rounded-xl p-4 shadow-lg border border-gray-200/50">
+                <div className="flex items-center space-x-4">
                   <div className="text-right">
                     <div className="text-sm font-semibold text-gray-700">
                       Completion
@@ -230,41 +342,55 @@ const CreateInventory: React.FC = () => {
                     )}
                   </div>
                 </div>
-              )}
-
-              {/* Step Indicator */}
+              )}{" "}
+              {/* Enhanced Step Indicator with Animation */}
               <div className="flex items-center space-x-6">
                 <div
-                  className={`flex items-center space-x-3 px-4 py-2 rounded-full transition-all duration-500 ${
+                  className={`flex items-center space-x-3 px-4 py-2 rounded-full transition-all duration-500 transform ${
                     !showVariations
-                      ? "bg-[#0f4d57] text-white shadow-lg transform scale-105"
-                      : "bg-green-100 text-green-700 border border-green-200"
+                      ? "bg-[#0f4d57] text-white shadow-lg scale-105 shadow-[#0f4d57]/20"
+                      : "bg-green-100 text-green-700 border border-green-200 shadow-green-100/50 shadow-md"
                   }`}
                 >
                   <div
                     className={`w-3 h-3 rounded-full transition-all duration-300 ${
                       !showVariations
                         ? "bg-white animate-pulse"
-                        : "bg-green-500"
+                        : "bg-green-500 animate-ping animation-duration-1000"
                     }`}
                   ></div>
                   <span className="text-sm font-semibold">Product Details</span>
                   {!showVariations && (
                     <div className="w-2 h-2 bg-white/50 rounded-full animate-bounce"></div>
                   )}
+                  {showVariations && (
+                    <svg
+                      className="w-4 h-4 text-green-600 animate-pulse"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  )}
                 </div>
 
-                {/* Connection Line */}
+                {/* Enhanced Connection Line with Animation */}
                 <div
-                  className={`w-8 h-0.5 transition-all duration-500 ${
-                    showVariations ? "bg-[#0f4d57]" : "bg-gray-300"
+                  className={`w-8 h-0.5 transition-all duration-500 transform ${
+                    showVariations
+                      ? "bg-gradient-to-r from-[#0f4d57] to-green-500 shadow-md"
+                      : "bg-gray-300"
                   }`}
                 ></div>
 
                 <div
-                  className={`flex items-center space-x-3 px-4 py-2 rounded-full transition-all duration-500 ${
+                  className={`flex items-center space-x-3 px-4 py-2 rounded-full transition-all duration-500 transform ${
                     showVariations
-                      ? "bg-[#0f4d57] text-white shadow-lg transform scale-105"
+                      ? "bg-[#0f4d57] text-white shadow-lg scale-105 shadow-[#0f4d57]/20"
                       : "bg-gray-100 text-gray-500 border border-gray-200"
                   }`}
                 >
@@ -282,10 +408,101 @@ const CreateInventory: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
-
+      </div>{" "}
       {/* Animated Form Container */}
       <div className="relative z-10">
+        {/* Product Variants Toggle Section */}
+        {!showVariations && (
+          <div className="max-w-6xl mx-auto px-6 pt-6">
+            <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-gray-200/50 mb-6 animate-slideUp">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+                    <svg
+                      className="w-6 h-6 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Product Variants
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {hasVariants
+                        ? "Create multiple variations of this product with different attributes"
+                        : "Enable this to create product variations (e.g., different sizes, colors, etc.)"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <span
+                    className={`text-sm font-medium transition-colors duration-200 ${!hasVariants ? "text-gray-900" : "text-gray-500"}`}
+                  >
+                    Simple Product
+                  </span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={hasVariants}
+                      onChange={(e) => {
+                        setHasVariants(e.target.checked);
+                        // Reset form when toggling to ensure clean state
+                        if (e.target.checked) {
+                          // Enable attributes when variants are enabled
+                          handleFormDataChange("hasAttributes", true);
+                        }
+                      }}
+                      className="sr-only peer"
+                    />
+                    <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-blue-500 peer-checked:to-indigo-600 shadow-lg"></div>
+                  </label>
+                  <span
+                    className={`text-sm font-medium transition-colors duration-200 ${hasVariants ? "text-gray-900" : "text-gray-500"}`}
+                  >
+                    With Variants
+                  </span>
+                </div>
+              </div>
+
+              {hasVariants && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200 animate-fadeIn">
+                  <div className="flex items-start space-x-3">
+                    <svg
+                      className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <div className="text-sm text-blue-800">
+                      <p className="font-medium mb-1">Variant Mode Enabled</p>
+                      <p className="text-blue-700">
+                        You'll need to configure attributes first, then create
+                        specific variations with their individual details
+                        (vendor, SKU, pricing, etc.) in the next step.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="max-w-6xl mx-auto p-6">
           <div
             className={`transition-all duration-500 ease-in-out transform ${
@@ -296,6 +513,7 @@ const CreateInventory: React.FC = () => {
           >
             {!showVariations ? (
               <div className="space-y-8">
+                {" "}
                 {/* Product Basic Information */}
                 <div className="transform transition-all duration-300 hover:scale-[1.01] animate-slideUp">
                   <ProductBasicInfo
@@ -304,13 +522,15 @@ const CreateInventory: React.FC = () => {
                     fileInputRef={
                       fileInputRef as React.RefObject<HTMLInputElement>
                     }
-                    showOptionalFields={showOptionalFields}
+                    showOptionalFields={
+                      hasVariants ? false : showOptionalFields
+                    }
+                    isVariantMode={hasVariants}
                   />
-                </div>
-
-                {/* Configuration Sections - Only show if optional fields are visible */}
-                {showOptionalFields && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                </div>{" "}
+                {/* Configuration Sections - Only show if optional fields are visible and not in variant mode */}
+                {!hasVariants && showOptionalFields && (
+                  <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
                     {/* Pack Configuration */}
                     <div
                       className="transform transition-all duration-300 hover:scale-[1.01] animate-slideUp"
@@ -325,45 +545,31 @@ const CreateInventory: React.FC = () => {
                         onPackDiscountsChange={(discounts) =>
                           handleFormDataChange("packDiscounts", discounts)
                         }
-                      />
-                    </div>
-
-                    {/* Discount Configuration */}
-                    <div
-                      className="transform transition-all duration-300 hover:scale-[1.01] animate-slideUp"
-                      style={{ animationDelay: "200ms" }}
-                    >
-                      <DiscountConfiguration
-                        hasDiscountSettings={formData.hasDiscountSettings}
-                        onToggle={(value) =>
-                          handleFormDataChange("hasDiscountSettings", value)
-                        }
-                        discountTiers={formData.discountTiers}
-                        onDiscountTiersChange={(tiers) =>
-                          handleFormDataChange("discountTiers", tiers)
-                        }
-                      />
+                      />{" "}
                     </div>
                   </div>
                 )}
-
-                {/* Attributes Configuration */}
+                {/* Attributes Configuration - Always show but with different behavior in variant mode */}
                 <div
                   className="transform transition-all duration-300 hover:scale-[1.01] animate-slideUp"
-                  style={{ animationDelay: "300ms" }}
+                  style={{ animationDelay: hasVariants ? "100ms" : "300ms" }}
                 >
                   <AttributesConfiguration
-                    hasAttributes={formData.hasAttributes}
+                    hasAttributes={hasVariants ? true : formData.hasAttributes}
                     onToggle={(value) =>
-                      handleFormDataChange("hasAttributes", value)
+                      hasVariants
+                        ? null
+                        : handleFormDataChange("hasAttributes", value)
                     }
                     attributes={formData.attributes}
                     onAttributesChange={(attributes) =>
                       handleFormDataChange("attributes", attributes)
                     }
+                    /* Pass these props only if the component supports them */
+                    /* If you need this functionality, you should update the AttributesConfiguration component interface */
+                    /* to include these props or use a different approach to achieve the same behavior */
                   />
                 </div>
-
                 {/* Enhanced Action Buttons */}
                 <div
                   className="flex items-center justify-between pt-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-gray-200/50 animate-slideUp"
@@ -388,8 +594,7 @@ const CreateInventory: React.FC = () => {
                       />
                     </svg>
                     <span>Cancel</span>
-                  </button>
-
+                  </button>{" "}
                   <div className="flex items-center space-x-4">
                     {progress < 100 && (
                       <div className="flex items-center space-x-2 text-amber-600 bg-amber-50 px-4 py-2 rounded-lg border border-amber-200 animate-pulse">
@@ -405,12 +610,42 @@ const CreateInventory: React.FC = () => {
                           />
                         </svg>
                         <span className="text-sm font-medium">
-                          Please complete all required fields
+                          {hasVariants
+                            ? "Please complete basic info and configure attributes with at least 2 options each"
+                            : "Please complete all required fields"}
                         </span>
                       </div>
                     )}
 
-                    {hasMultipleAttributeOptions ? (
+                    {hasVariants ? (
+                      // For variant mode, always show Next button
+                      <button
+                        type="button"
+                        onClick={handleNext}
+                        disabled={progress < 100}
+                        className={`px-8 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg flex items-center space-x-2 ${
+                          progress >= 100
+                            ? "bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md"
+                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        }`}
+                      >
+                        <span>Next: Configure Variations</span>
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </button>
+                    ) : hasMultipleAttributeOptions ? (
+                      // For non-variant mode with attributes
                       <button
                         type="button"
                         onClick={handleNext}
@@ -437,6 +672,7 @@ const CreateInventory: React.FC = () => {
                         </svg>
                       </button>
                     ) : (
+                      // For simple product mode
                       <button
                         type="submit"
                         disabled={progress < 100}

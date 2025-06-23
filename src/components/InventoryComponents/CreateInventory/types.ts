@@ -25,14 +25,26 @@ export interface Attribute {
 
 export interface Variation {
   id: string;
-  attributeCombination: Record<string, string>;
+  attributeCombination: { [attributeName: string]: string };
+  name: string;
+  category?: string;
+  customCategory?: string;
+  brandName?: string;
+  ean: string;
+  individualItemQuantity: number;
+  itemCost: number;
+  itemSellingCost: number;
+  minSellingQuantity: number;
+  msrpPrice: number;
+  minOrderValue: number;
+  orderValueDiscount: number;
+  description: string;
   quantity: number;
   price: number;
   plu: string;
   discount: number;
   vendor: string;
   customSku: string;
-  description: string;
   imageFile: File | null;
   imagePreview: string;
   hasPackSettings: boolean;
@@ -44,15 +56,19 @@ export interface Variation {
 export interface ProductFormData {
   productName: string;
   category: string;
+  customCategory?: string;
+  brandName?: string;
   price: string;
   vendor: string;
   customSku: string;
   ean: string;
   pluUpc: string;
+  individualItemQuantity: string;
   itemCost: string;
   itemSellingCost: string;
   minSellingQuantity: string;
   minOrderValue: string;
+  msrpPrice: string,
   orderValueDiscountType: "percentage" | "fixed" | "";
   orderValueDiscountValue: string;
   quantity: string;
@@ -67,3 +83,5 @@ export interface ProductFormData {
   attributes: Attribute[];
   variations: Variation[];
 }
+
+

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import React Icons
+import toast from "react-hot-toast";
 import { useAppDispatch } from "../../store/hooks";
 import {
   registerUser,
@@ -28,19 +29,17 @@ const Signup = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    // Validate form fields
+    e.preventDefault(); // Validate form fields
     if (!formData.firstName.trim()) {
-      alert("First Name is required");
+      toast.error("First Name is required");
       return;
     }
     if (!formData.lastName.trim()) {
-      alert("Last Name is required");
+      toast.error("Last Name is required");
       return;
     }
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
 
@@ -61,11 +60,15 @@ const Signup = () => {
         navigate("/otp");
       } else {
         console.error("Signup failed", resultAction.payload);
-        alert(resultAction.payload || "Signup failed");
+        toast.error(
+          typeof resultAction.payload === "string"
+            ? resultAction.payload
+            : "Signup failed"
+        );
       }
     } catch (error) {
       console.error("Error during signup", error);
-      alert("An error occurred during signup. Please try again.");
+      toast.error("An error occurred during signup. Please try again.");
     }
   };
   const handleGoogleAuth = async () => {
@@ -74,7 +77,7 @@ const Signup = () => {
       await dispatch(googleAuth());
     } catch (error) {
       console.error("Error during Google authentication", error);
-      alert(
+      toast.error(
         "An error occurred during Google authentication. Please try again."
       );
     }

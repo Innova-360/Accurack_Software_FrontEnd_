@@ -78,7 +78,6 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({
               </div>
             </div>
           </button>
-
           {/* Upload Inventory Option */}
           <button
             onClick={onUploadInventory}
@@ -107,18 +106,16 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({
                 </p>
               </div>
             </div>
-          </button>
-
+          </button>{" "}
           {/* Scan Inventory Option */}
           <button
             onClick={onScanInventory}
-            className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-gray-400 transition-all duration-300 group cursor-not-allowed opacity-50"
-            disabled
+            className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#0f4d57] hover:bg-[#0f4d57] hover:text-white transition-all duration-300 group"
           >
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gray-400 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-blue-600 group-hover:bg-white rounded-lg flex items-center justify-center">
                 <svg
-                  className="w-6 h-6 text-white"
+                  className="w-6 h-6 text-white group-hover:text-blue-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -132,11 +129,9 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({
                 </svg>
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-lg text-gray-500">
-                  Scan Inventory
-                </h3>
-                <p className="text-gray-400 text-sm">
-                  Scan barcodes to add products (Coming Soon)
+                <h3 className="font-semibold text-lg">Scan Inventory</h3>
+                <p className="text-gray-600 group-hover:text-gray-200 text-sm">
+                  Scan barcodes to add products quickly
                 </p>
               </div>
             </div>

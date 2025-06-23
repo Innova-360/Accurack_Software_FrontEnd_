@@ -17,13 +17,23 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
     const newVariation: Variation = {
       id: generateId(),
       attributeCombination: {},
+      name: "",
+      brandName: "",
+      ean: "",
+      individualItemQuantity: 1,
+      itemCost: 0,
+      itemSellingCost: 0,
+      minSellingQuantity: 1,
+      msrpPrice: 0,
+      minOrderValue: 0,
+      orderValueDiscount: 0,
+      description: "",
       quantity: 0,
       price: 0,
       plu: "",
       discount: 0,
       vendor: "",
       customSku: "",
-      description: "",
       imageFile: null,
       imagePreview: "",
       hasPackSettings: false,
@@ -301,58 +311,208 @@ const VariationCard: React.FC<VariationCardProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Quantity *
-          </label>
-          <input
-            type="number"
-            value={variation.quantity}
-            onChange={(e) =>
-              onUpdate(variation.id, "quantity", parseInt(e.target.value) || 0)
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Price *
-          </label>
-          <input
-            type="number"
-            step="0.01"
-            value={variation.price}
-            onChange={(e) =>
-              onUpdate(variation.id, "price", parseFloat(e.target.value) || 0)
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            PLU *
+            Variant Name
           </label>
           <input
             type="text"
-            value={variation.plu}
-            onChange={(e) => onUpdate(variation.id, "plu", e.target.value)}
+            value={variation.name}
+            onChange={(e) => onUpdate(variation.id, "name", e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            placeholder="e.g. Dark Roast"
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Discount
+            Category
+          </label>
+          <input
+            type="text"
+            value={variation.category || ""}
+            onChange={(e) => onUpdate(variation.id, "category", e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            placeholder="Category"
+            list={`category-list-${variation.id}`}
+          />
+          {/* Optionally, you can provide a datalist for suggestions */}
+          <datalist id={`category-list-${variation.id}`}>
+            <option value="Beverages" />
+            <option value="Snacks" />
+            <option value="Dairy" />
+            <option value="Produce" />
+            {/* Add more default categories as needed */}
+          </datalist>
+          <span className="text-xs text-gray-500">
+            Type to add a custom category.
+          </span>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Brand Name (Optional)
+          </label>
+          <input
+            type="text"
+            value={variation.brandName || ""}
+            onChange={(e) =>
+              onUpdate(variation.id, "brandName", e.target.value)
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            placeholder="Brand Name"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            EAN (Optional)
+          </label>
+          <input
+            type="text"
+            value={variation.ean || ""}
+            onChange={(e) => onUpdate(variation.id, "ean", e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            placeholder="EAN"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Individual Item Quantity *
+          </label>
+          <input
+            type="number"
+            value={variation.individualItemQuantity || 1}
+            onChange={(e) =>
+              onUpdate(
+                variation.id,
+                "individualItemQuantity",
+                parseInt(e.target.value) || 1
+              )
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            placeholder="Individual Item Quantity"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Individual Item Cost *
           </label>
           <input
             type="number"
             step="0.01"
-            value={variation.discount}
+            value={variation.itemCost || 0}
             onChange={(e) =>
               onUpdate(
                 variation.id,
-                "discount",
+                "itemCost",
                 parseFloat(e.target.value) || 0
               )
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            placeholder="Individual Item Cost"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Individual Item Selling Price *
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            value={variation.itemSellingCost || 0}
+            onChange={(e) =>
+              onUpdate(
+                variation.id,
+                "itemSellingCost",
+                parseFloat(e.target.value) || 0
+              )
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            placeholder="Individual Item Selling Price"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Minimum Selling Quantity *
+          </label>
+          <input
+            type="number"
+            value={variation.minSellingQuantity || 1}
+            onChange={(e) =>
+              onUpdate(
+                variation.id,
+                "minSellingQuantity",
+                parseInt(e.target.value) || 1
+              )
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            placeholder="Minimum Selling Quantity"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            MSRP Price
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            value={variation.msrpPrice || 0}
+            onChange={(e) =>
+              onUpdate(
+                variation.id,
+                "msrpPrice",
+                parseFloat(e.target.value) || 0
+              )
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            placeholder="MSRP Price"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Minimum Order Value *
+          </label>
+          <input
+            type="number"
+            value={variation.minOrderValue || 0}
+            onChange={(e) =>
+              onUpdate(
+                variation.id,
+                "minOrderValue",
+                parseFloat(e.target.value) || 0
+              )
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            placeholder="Minimum Order Value"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Order Value Discount (Optional)
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            value={variation.orderValueDiscount || 0}
+            onChange={(e) =>
+              onUpdate(
+                variation.id,
+                "orderValueDiscount",
+                parseFloat(e.target.value) || 0
+              )
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            placeholder="Order Value Discount"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Description
+          </label>
+          <input
+            type="text"
+            value={variation.description || ""}
+            onChange={(e) =>
+              onUpdate(variation.id, "description", e.target.value)
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            placeholder="Description"
           />
         </div>
       </div>

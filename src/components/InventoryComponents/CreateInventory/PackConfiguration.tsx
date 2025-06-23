@@ -43,7 +43,7 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
     );
   };
   return (
-    <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 hover:shadow-xl transition-all duration-300">
+    <div className="w-full bg-white rounded-xl shadow-lg p-8 border border-gray-200 hover:shadow-xl transition-all duration-300">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-blue-100 rounded-lg">
@@ -63,7 +63,7 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
           </div>
           <div>
             <h3 className="text-xl font-bold text-gray-900">
-              Pack Configuration
+              Pack Of Configuration
             </h3>
             <p className="text-gray-600 text-sm">
               Set up bulk purchase discounts
@@ -124,11 +124,11 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
           {packDiscounts.map((discount) => (
             <div
               key={discount.id}
-              className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200 hover:shadow-md transition-all duration-200"
+              className="flex flex-col md:flex-row gap-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200 hover:shadow-md transition-all duration-200"
             >
-              <div className="space-y-1">
+              <div className="space-y-1 w-full md:w-1/4">
                 <label className="block text-xs font-medium text-gray-700">
-                  Quantity
+                  Pack Of Quantity
                 </label>
                 <input
                   type="number"
@@ -144,7 +144,7 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 w-full md:w-1/4">
                 <label className="block text-xs font-medium text-gray-700">
                   Type
                 </label>
@@ -163,7 +163,7 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
                   <option value="fixed">Fixed Amount</option>
                 </select>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 w-full md:w-1/4">
                 <label className="block text-xs font-medium text-gray-700">
                   {discount.discountType === "percentage"
                     ? "Percentage %"
@@ -186,7 +186,7 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
-              <div className="flex items-end">
+              <div className="flex items-end w-full md:w-1/4">
                 <button
                   type="button"
                   onClick={() => removePackDiscount(discount.id)}

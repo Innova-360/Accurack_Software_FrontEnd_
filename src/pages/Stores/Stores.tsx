@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import {
   FaStore,
   FaPlus,
@@ -68,12 +69,12 @@ const StoresPage: React.FC = () => {
       setIsCreating(true);
       await dispatch(createStore(storeData)).unwrap();
       setIsCreateModalOpen(false);
-      // Show success message - you can replace this with a proper toast notification
-      alert("Store created successfully!");
+      // Show success message
+      toast.success("Store created successfully!");
     } catch (error: any) {
       console.error("Failed to create store:", error);
-      // Show error message - you can replace this with a proper toast notification
-      alert(`Failed to create store: ${error || "Unknown error"}`);
+      // Show error message
+      toast.error(`Failed to create store: ${error || "Unknown error"}`);
     } finally {
       setIsCreating(false);
     }

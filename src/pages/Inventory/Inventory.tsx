@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import { useStoreFromUrl } from "../../hooks/useStoreFromUrl";
 import Header from "../../components/Header";
 import InventoryStats from "../../components/InventoryComponents/InventoryStats";
@@ -12,6 +13,7 @@ import LowStockSection from "../../components/InventoryComponents/LowStockSectio
 import {
   AddInventoryOptionsModal,
   UploadInventoryModal,
+  BarcodeScanModal,
 } from "../../components/modals";
 import { products } from "../../data/inventoryData";
 import {
@@ -50,6 +52,7 @@ const Inventory: React.FC = () => {
   const [isAddInventoryModalOpen, setIsAddInventoryModalOpen] = useState(false);
   const [isUploadInventoryModalOpen, setIsUploadInventoryModalOpen] =
     useState(false);
+  const [isBarcodeScanModalOpen, setIsBarcodeScanModalOpen] = useState(false);
 
   // Use custom hooks for data processing
   const inventoryStats = useInventoryStats(products);
@@ -202,8 +205,20 @@ const Inventory: React.FC = () => {
 
   const handleScanInventory = () => {
     setIsAddInventoryModalOpen(false);
-    // TODO: Implement scan inventory functionality
-    console.log("Scan inventory clicked - functionality coming soon");
+    setIsBarcodeScanModalOpen(true);
+  };
+  const handleBarcodeScanned = (barcode: string) => {
+    setIsBarcodeScanModalOpen(false);
+    const currentPath = window.location.pathname;
+    if (currentPath.includes("/store/")) {
+      // Extract store ID from path
+      const storeId = currentPath.split("/store/")[1].split("/")[0];
+      navigate(`/store/${storeId}/inventory/create`, {
+        state: { scannedPLU: barcode },
+      });
+    } else {
+      navigate("/inventory/create", { state: { scannedPLU: barcode } });
+    }
   };
 
   const handleFileUpload = async (file: File) => {
@@ -211,13 +226,11 @@ const Inventory: React.FC = () => {
     console.log("Uploading file:", file.name);
 
     // Simulate upload process
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Close modal after successful upload
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // Close modal after successful upload
     setIsUploadInventoryModalOpen(false);
 
-    // You can add success notification here
-    alert("Inventory uploaded successfully!");
+    // Show success notification
+    toast.success("Inventory uploaded successfully!");
   };
 
   return (
@@ -388,6 +401,12 @@ const Inventory: React.FC = () => {
         isOpen={isUploadInventoryModalOpen}
         onClose={() => setIsUploadInventoryModalOpen(false)}
         onUpload={handleFileUpload}
+      />
+
+      <BarcodeScanModal
+        isOpen={isBarcodeScanModalOpen}
+        onClose={() => setIsBarcodeScanModalOpen(false)}
+        onBarcodeScanned={handleBarcodeScanned}
       />
     </>
   );

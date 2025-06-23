@@ -1,45 +1,91 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import React Icons
+import toast from "react-hot-toast";
 import { useAppDispatch } from "../../store/hooks";
 import { loginUser, googleAuth } from "../../store/slices/authSlice";
+import {
+  loadSavedCredentials,
+  saveCredentials,
+  clearSavedCredentials,
+} from "../../utils/rememberMeUtils";
 
 const Login = () => {
   const navigate = useNavigate();
   const [rememberMe, setRememberMe] = useState(false);
-  const [formData, setFormData] = useState({ email: "", password: "" });  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
 
   const dispatch = useAppDispatch();
+  // Load saved credentials on component mount
+  useEffect(() => {
+    const savedCredentials = loadSavedCredentials();
+    if (savedCredentials) {
+      setFormData({
+        email: savedCredentials.email || "",
+        password: savedCredentials.password || "",
+      });
+      setRememberMe(savedCredentials.rememberMe || false);
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();    try {
+    e.preventDefault();
+    try {
       const resultAction = await dispatch(
-        loginUser({ email: formData.email, password: formData.password })      );
+        loginUser({ email: formData.email, password: formData.password })
+      );
       if (loginUser.fulfilled.match(resultAction)) {
         console.log("Login successful", resultAction.payload);
+        // Handle Remember Me functionality
+        if (rememberMe) {
+          // Save credentials to localStorage
+          saveCredentials({
+            email: formData.email,
+            password: formData.password,
+            rememberMe: true,
+          });
+        } else {
+          // Remove saved credentials if Remember Me is unchecked
+          clearSavedCredentials();
+        }
+
         // Navigate to stores page after successful login
-        navigate('/stores');
+        navigate("/stores");
       } else {
         console.error("Login failed", resultAction.payload);
-        alert(resultAction.payload || "Login failed");
+        toast.error(
+          typeof resultAction.payload === "string"
+            ? resultAction.payload
+            : "Login failed"
+        );
       }
     } catch (error) {
       console.error("Error during login", error);
-      alert("An error occurred during login. Please try again.");
+      toast.error("An error occurred during login. Please try again.");
     }
   };
+  const handleRememberMeChange = () => {
+    const newRememberMe = !rememberMe;
+    setRememberMe(newRememberMe);
+
+    // If unchecking Remember Me, remove saved credentials
+    if (!newRememberMe) {
+      clearSavedCredentials();
+    }
+  };
+
   const handleGoogleAuth = async () => {
     try {
       // Dispatch the Google auth action which will redirect to Google
       await dispatch(googleAuth());
     } catch (error) {
       console.error("Error during Google authentication", error);
-      alert(
+      toast.error(
         "An error occurred during Google authentication. Please try again."
       );
     }
@@ -135,12 +181,13 @@ const Login = () => {
               </span>
             </div>
             <div className="flex items-center justify-between text-xs mt-1">
+              {" "}
               <div className="flex items-center">
                 <input
                   id="rememberMe"
                   type="checkbox"
                   checked={rememberMe}
-                  onChange={() => setRememberMe(!rememberMe)}
+                  onChange={handleRememberMeChange}
                   className="mr-2 accent-[#0b5c5a]"
                 />
                 <label htmlFor="rememberMe" className="text-gray-700">

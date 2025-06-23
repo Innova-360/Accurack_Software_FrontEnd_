@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import toast from "react-hot-toast";
 
 interface UploadInventoryModalProps {
   isOpen: boolean;
@@ -33,24 +34,22 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
       if (isValidFileType(file)) {
         setSelectedFile(file);
       } else {
-        alert("Please upload only Excel files (.xlsx, .xls)");
+        toast.error("Please upload only Excel files (.xlsx, .xls)");
       }
     }
   };
-
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (isValidFileType(file)) {
         setSelectedFile(file);
       } else {
-        alert("Please upload only Excel files (.xlsx, .xls)");
+        toast.error("Please upload only Excel files (.xlsx, .xls)");
       }
     }
   };
@@ -93,7 +92,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
         handleClose();
       }, 1000);
     } catch (error) {
-      alert("Upload failed. Please try again.");
+      toast.error("Upload failed. Please try again.");
       setIsUploading(false);
       setUploadProgress(0);
     }

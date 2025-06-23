@@ -6,6 +6,7 @@ interface ProductBasicInfoProps {
   onFormDataChange: (field: keyof ProductFormData, value: any) => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
   showOptionalFields: boolean;
+  isVariantMode?: boolean;
 }
 
 const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
@@ -13,19 +14,8 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
   onFormDataChange,
   fileInputRef,
   showOptionalFields,
+  isVariantMode = false,
 }) => {
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      onFormDataChange("imageFile", file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        onFormDataChange("imagePreview", e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   // Calculate minimum order value when itemSellingCost or minSellingQuantity changes
   React.useEffect(() => {
     const sellingCost = parseFloat(formData.itemSellingCost) || 0;
@@ -75,6 +65,41 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
     return currentValue >= minRequired;
   };
 
+  // Prefill quantity if empty
+  React.useEffect(() => {
+    if (
+      (!formData.quantity || formData.quantity === "") &&
+      formData.individualItemQuantity &&
+      formData.minSellingQuantity
+    ) {
+      const iiq = parseInt(formData.individualItemQuantity) || 0;
+      const msq = parseInt(formData.minSellingQuantity) || 1;
+      if (iiq && msq) {
+        const prefill = Math.floor(iiq / msq);
+        if (!isNaN(prefill) && prefill > 0) {
+          onFormDataChange("quantity", prefill.toString());
+        }
+      }
+    }
+  }, [
+    formData.individualItemQuantity,
+    formData.minSellingQuantity,
+    formData.quantity,
+    onFormDataChange,
+  ]);
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      onFormDataChange("imageFile", file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        onFormDataChange("imagePreview", e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 hover:shadow-xl transition-all duration-300">
       <div className="flex items-center space-x-3 mb-8">
@@ -101,10 +126,9 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
             Enter the basic details of your product
           </p>
         </div>
-      </div>
-
+      </div>{" "}
       {/* Primary Fields - Always Visible */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-gray-700">
             Product Name *
@@ -118,7 +142,6 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
             required
           />
         </div>
-
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-gray-700">
             Category *
@@ -138,8 +161,34 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
             <option value="books">Books</option>
             <option value="other">Other</option>
           </select>
+          {formData.category === "other" && (
+            <input
+              type="text"
+              value={formData.customCategory || ""}
+              onChange={(e) =>
+                onFormDataChange("customCategory", e.target.value)
+              }
+              className="w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+              placeholder="Enter custom category"
+              required
+            />
+          )}
         </div>
-
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-gray-700">
+            Brand Name{" "}
+            <span className="text-gray-400 text-xs font-normal">
+              (Optional)
+            </span>
+          </label>
+          <input
+            type="text"
+            value={formData.brandName || ""}
+            onChange={(e) => onFormDataChange("brandName", e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+            placeholder="Enter brand name"
+          />
+        </div>
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-gray-700">
             Price *
@@ -156,153 +205,222 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
               required
             />
           </div>
-        </div>
-      </div>
-
-      {/* Vendor and Identification Fields */}
-      <div className="bg-gray-50 rounded-lg p-6 mb-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <svg
-            className="w-5 h-5 mr-2 text-[#0f4d57]"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6"
-            />
-          </svg>
-          Vendor & Identification
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              Vendor *
-            </label>
-            <input
-              type="text"
-              value={formData.vendor}
-              onChange={(e) => onFormDataChange("vendor", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
-              placeholder="Vendor name"
-              required
-            />
-          </div>{" "}
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              Custom SKU{" "}
-              <span className="text-gray-400 text-xs font-normal">
-                (Optional)
-              </span>
-            </label>
-            <input
-              type="text"
-              value={formData.customSku}
-              onChange={(e) => onFormDataChange("customSku", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
-              placeholder="Optional custom SKU"
-            />
-          </div>{" "}
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              EAN{" "}
-              <span className="text-gray-400 text-xs font-normal">
-                (Optional)
-              </span>
-            </label>
-            <input
-              type="text"
-              value={formData.ean}
-              onChange={(e) => onFormDataChange("ean", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
-              placeholder="EAN barcode"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              PLU/UPC{" "}
-              <span className="text-gray-400 text-xs font-normal">
-                (Optional)
-              </span>
-            </label>
-            <input
-              type="text"
-              value={formData.pluUpc}
-              onChange={(e) => onFormDataChange("pluUpc", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
-              placeholder="PLU or UPC code"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Cost and Pricing Information */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-8 border border-blue-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <svg
-            className="w-5 h-5 mr-2 text-[#0f4d57]"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-            />
-          </svg>
-          Cost & Pricing
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              Individual Item Cost *
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-3 text-gray-500">$</span>
+        </div>{" "}
+      </div>{" "}
+      {/* Vendor and Product Identification - Hidden in variant mode */}
+      {!isVariantMode && (
+        <div className="bg-gray-50 rounded-lg p-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            {" "}
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                Vendor *
+              </label>
               <input
-                type="number"
-                step="0.01"
-                value={formData.itemCost}
-                onChange={(e) => onFormDataChange("itemCost", e.target.value)}
-                className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
-                placeholder="0.00"
+                type="text"
+                value={formData.vendor}
+                onChange={(e) => onFormDataChange("vendor", e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                placeholder="Enter vendor name"
                 required
               />
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              Individual Item Selling Cost *
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-3 text-gray-500">$</span>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                Custom SKU{" "}
+                <span className="text-gray-400 text-xs font-normal">
+                  (Optional)
+                </span>
+              </label>
+              <input
+                type="text"
+                value={formData.customSku}
+                onChange={(e) => onFormDataChange("customSku", e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                placeholder="Optional custom SKU"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                EAN{" "}
+                <span className="text-gray-400 text-xs font-normal">
+                  (Optional)
+                </span>
+              </label>
+              <input
+                type="text"
+                value={formData.ean}
+                onChange={(e) => onFormDataChange("ean", e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                placeholder="EAN barcode"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                PLU/UPC *
+              </label>
+              <input
+                type="text"
+                value={formData.pluUpc}
+                onChange={(e) => onFormDataChange("pluUpc", e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                placeholder="PLU or UPC code"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                Individual Item Quantity *
+              </label>
               <input
                 type="number"
-                step="0.01"
-                value={formData.itemSellingCost}
+                min="1"
+                value={formData.individualItemQuantity}
                 onChange={(e) =>
-                  onFormDataChange("itemSellingCost", e.target.value)
+                  onFormDataChange("individualItemQuantity", e.target.value)
                 }
-                className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400 ${
-                  !isSellingCostValid() &&
-                  formData.itemCost &&
-                  formData.itemSellingCost
-                    ? "border-red-300 bg-red-50"
-                    : "border-gray-300"
-                }`}
-                placeholder="0.00"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                placeholder="1"
                 required
               />
             </div>
-            {!isSellingCostValid() &&
-              formData.itemCost &&
-              formData.itemSellingCost && (
+          </div>
+        </div>
+      )}
+      {/* Cost and Pricing Information - Hidden in variant mode */}
+      {!isVariantMode && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-8 border border-blue-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <svg
+              className="w-5 h-5 mr-2 text-[#0f4d57]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+              />
+            </svg>
+            Cost & Pricing
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                Individual Item Cost *
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-3 text-gray-500">$</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.itemCost}
+                  onChange={(e) => onFormDataChange("itemCost", e.target.value)}
+                  className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                Individual Item Selling Price *
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-3 text-gray-500">$</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.itemSellingCost}
+                  onChange={(e) =>
+                    onFormDataChange("itemSellingCost", e.target.value)
+                  }
+                  className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400 ${
+                    !isSellingCostValid() &&
+                    formData.itemCost &&
+                    formData.itemSellingCost
+                      ? "border-red-300 bg-red-50"
+                      : "border-gray-300"
+                  }`}
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+              {!isSellingCostValid() &&
+                formData.itemCost &&
+                formData.itemSellingCost && (
+                  <p className="text-red-500 text-xs mt-1 flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-1"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Selling cost must be ≥ item cost
+                  </p>
+                )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                Minimum Selling Quantity *
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={formData.minSellingQuantity}
+                onChange={(e) =>
+                  onFormDataChange("minSellingQuantity", e.target.value)
+                }
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                placeholder="1"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                MSRP Price
+              </label>
+              <input
+                type="number"
+                value={formData.msrpPrice}
+                onChange={(e) => onFormDataChange("msrpPrice", e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder="e.g. 29.99"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                Minimum Order Value *
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-3 text-gray-500">$</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.minOrderValue}
+                  onChange={(e) =>
+                    onFormDataChange("minOrderValue", e.target.value)
+                  }
+                  className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400 ${
+                    !isMinOrderValueValid() && formData.minOrderValue
+                      ? "border-red-300 bg-red-50"
+                      : "border-gray-300"
+                  }`}
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+              {!isMinOrderValueValid() && formData.minOrderValue && (
                 <p className="text-red-500 text-xs mt-1 flex items-center">
                   <svg
                     className="w-4 h-4 mr-1"
@@ -315,169 +433,117 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                       clipRule="evenodd"
                     />
                   </svg>
-                  Selling cost must be ≥ item cost
+                  Min: $
+                  {(
+                    (parseFloat(formData.itemSellingCost) || 0) *
+                    (parseInt(formData.minSellingQuantity) || 1)
+                  ).toFixed(2)}
                 </p>
-              )}
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              Minimum Selling Quantity *
-            </label>
-            <input
-              type="number"
-              min="1"
-              value={formData.minSellingQuantity}
-              onChange={(e) =>
-                onFormDataChange("minSellingQuantity", e.target.value)
-              }
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
-              placeholder="1"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              Minimum Order Value *
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-3 text-gray-500">$</span>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.minOrderValue}
-                onChange={(e) =>
-                  onFormDataChange("minOrderValue", e.target.value)
-                }
-                className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400 ${
-                  !isMinOrderValueValid() && formData.minOrderValue
-                    ? "border-red-300 bg-red-50"
-                    : "border-gray-300"
-                }`}
-                placeholder="0.00"
-                required
-              />
+              )}{" "}
             </div>
-            {!isMinOrderValueValid() && formData.minOrderValue && (
-              <p className="text-red-500 text-xs mt-1 flex items-center">
-                <svg
-                  className="w-4 h-4 mr-1"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Min: $
-                {(
-                  (parseFloat(formData.itemSellingCost) || 0) *
-                  (parseInt(formData.minSellingQuantity) || 1)
-                ).toFixed(2)}
-              </p>
-            )}
           </div>
         </div>
-      </div>
-
-      {/* Order Value Discount */}
-      <div className="bg-green-50 rounded-lg p-6 mb-8 border border-green-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <svg
-            className="w-5 h-5 mr-2 text-green-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          Order Value Discount (Optional)
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              Discount Type & Value
-            </label>
-            <div className="flex space-x-2">
-              <select
-                value={formData.orderValueDiscountType}
-                onChange={(e) =>
-                  onFormDataChange("orderValueDiscountType", e.target.value)
-                }
-                className="w-1/3 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
-              >
-                <option value="">No Discount</option>
-                <option value="percentage">Percentage</option>
-                <option value="fixed">Fixed Amount</option>
-              </select>
-              <div className="flex-1 relative">
-                {formData.orderValueDiscountType === "fixed" && (
-                  <span className="absolute left-3 top-3 text-gray-500">$</span>
-                )}
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.orderValueDiscountValue}
+      )}
+      {/* Order Value Discount - Hidden in variant mode */}
+      {!isVariantMode && (
+        <div className="bg-green-50 rounded-lg p-6 mb-8 border border-green-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <svg
+              className="w-5 h-5 mr-2 text-green-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            Order Value Discount (Optional)
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                Discount Type & Value
+              </label>
+              <div className="flex space-x-2">
+                <select
+                  value={formData.orderValueDiscountType}
                   onChange={(e) =>
-                    onFormDataChange("orderValueDiscountValue", e.target.value)
+                    onFormDataChange("orderValueDiscountType", e.target.value)
                   }
-                  disabled={!formData.orderValueDiscountType}
-                  placeholder={
-                    formData.orderValueDiscountType === "percentage"
-                      ? "0-100"
-                      : "0.00"
-                  }
-                  className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400 disabled:bg-gray-100 disabled:text-gray-500 ${
-                    formData.orderValueDiscountType === "fixed" ? "pl-8" : ""
-                  }`}
-                />
-                {formData.orderValueDiscountType === "percentage" && (
-                  <span className="absolute right-3 top-3 text-gray-500">
-                    %
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {formData.orderValueDiscountType &&
-            formData.orderValueDiscountValue && (
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  Discounted Value
-                </label>
-                <div className="bg-white p-4 rounded-lg border-2 border-green-300">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Original:</span>
-                    <span className="font-medium">
-                      ${parseFloat(formData.minOrderValue || "0").toFixed(2)}
+                  className="w-1/3 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                >
+                  <option value="">No Discount</option>
+                  <option value="percentage">Percentage</option>
+                  <option value="fixed">Fixed Amount</option>
+                </select>
+                <div className="flex-1 relative">
+                  {formData.orderValueDiscountType === "fixed" && (
+                    <span className="absolute left-3 top-3 text-gray-500">
+                      $
                     </span>
-                  </div>
-                  <div className="flex items-center justify-between text-green-600 font-bold text-lg">
-                    <span>Final Price:</span>
-                    <span>${discountedOrderValue.toFixed(2)}</span>
-                  </div>
-                  <div className="text-sm text-green-600 mt-1">
-                    You save: $
-                    {(
-                      parseFloat(formData.minOrderValue || "0") -
-                      discountedOrderValue
-                    ).toFixed(2)}
-                  </div>
+                  )}
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.orderValueDiscountValue}
+                    onChange={(e) =>
+                      onFormDataChange(
+                        "orderValueDiscountValue",
+                        e.target.value
+                      )
+                    }
+                    disabled={!formData.orderValueDiscountType}
+                    placeholder={
+                      formData.orderValueDiscountType === "percentage"
+                        ? "0-100"
+                        : "0.00"
+                    }
+                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400 disabled:bg-gray-100 disabled:text-gray-500 ${
+                      formData.orderValueDiscountType === "fixed" ? "pl-8" : ""
+                    }`}
+                  />
+                  {formData.orderValueDiscountType === "percentage" && (
+                    <span className="absolute right-3 top-3 text-gray-500">
+                      %
+                    </span>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
+            {formData.orderValueDiscountType &&
+              formData.orderValueDiscountValue && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Discounted Value
+                  </label>
+                  <div className="bg-white p-4 rounded-lg border-2 border-green-300">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Original:</span>
+                      <span className="font-medium">
+                        ${parseFloat(formData.minOrderValue || "0").toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-green-600 font-bold text-lg">
+                      <span>Final Price:</span>
+                      <span>${discountedOrderValue.toFixed(2)}</span>
+                    </div>
+                    <div className="text-sm text-green-600 mt-1">
+                      You save: $
+                      {(
+                        parseFloat(formData.minOrderValue || "0") -
+                        discountedOrderValue
+                      ).toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+              )}{" "}
+          </div>
         </div>
-      </div>
-
+      )}
       {/* Secondary Fields - Conditionally Hidden */}
       {showOptionalFields && (
         <div className="bg-gray-50 rounded-lg p-6">
