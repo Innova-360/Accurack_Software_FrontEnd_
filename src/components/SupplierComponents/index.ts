@@ -7,5 +7,6 @@ export { default as SupplierSidebar } from './SupplierSidebar';
 export { default as SupplierTable } from './SupplierTable';
 export { default as ProductsTable } from './ProductsTable';
 export { default as StatsGrid } from './StatsGrid';
+export { default as PaginationControls } from './PaginationControls';
 
 export type { Supplier, Product } from './types';

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaPlus, FaFileExport, FaTrash, FaBars } from 'react-icons/fa';
 import { SpecialButton } from '../../components/buttons';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchSuppliers, clearSuppliers } from '../../store/slices/supplierSlice';
+import { fetchSuppliers, clearSuppliers, setPage } from '../../store/slices/supplierSlice';
 import {  
   AddSupplierModal,  
   EditSupplierModal, 
@@ -12,7 +12,8 @@ import {
   SupplierSidebar,
   SupplierTable,
   ProductsTable,
-  StatsGrid
+  StatsGrid,
+  PaginationControls
 } from '../../components/SupplierComponents';
 import type { Supplier } from '../../types/supplier';
 import Header from '../../components/Header';
@@ -21,9 +22,8 @@ import useRequireStore from '../../hooks/useRequireStore';
 const SupplierPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const currentStore = useRequireStore();
-  
-  // Get suppliers from Redux store
-  const { suppliers, loading, error } = useAppSelector((state) => state.suppliers);
+    // Get suppliers from Redux store
+  const { suppliers, loading, error, pagination } = useAppSelector((state) => state.suppliers);
   
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -41,7 +41,7 @@ const SupplierPage: React.FC = () => {
       if (currentStore?.id) {
         try {
           // Using unwrap() for cleaner promise handling
-          await dispatch(fetchSuppliers(currentStore.id)).unwrap();
+          await dispatch(fetchSuppliers({ storeId: currentStore.id })).unwrap();
         } catch (error) {
           console.error('Failed to fetch suppliers:', error);
         }
@@ -128,6 +128,14 @@ const SupplierPage: React.FC = () => {
       console.error('Error exporting data:', error);
       alert('Error exporting data. Please try again.');
     }  };
+
+  // Pagination handler
+  const handlePageChange = (page: number) => {
+    if (currentStore?.id) {
+      dispatch(setPage(page));
+      dispatch(fetchSuppliers({ storeId: currentStore.id, page, limit: 10 }));
+    }
+  };
 
   return (
     <>
@@ -227,25 +235,34 @@ const SupplierPage: React.FC = () => {
               <div className="mx-6 mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-red-600">Error: {error}</p>
                 <button 
-                  onClick={() => currentStore?.id && dispatch(fetchSuppliers(currentStore.id))}
+                  onClick={() => currentStore?.id && dispatch(fetchSuppliers({ storeId: currentStore.id }))}
                   className="mt-2 text-sm text-red-700 hover:text-red-900 underline"
                 >
                   Try Again
                 </button>
-              </div>            )}
-
-            {/* Content based on view mode */}
+              </div>            )}            {/* Content based on view mode */}
             {!loading && !error && (
               <>
                 {viewMode === 'suppliers' ? (
-                  <SupplierTable
-                    suppliers={suppliers}
-                    onViewSupplier={handleViewSupplier}
-                    onEditSupplier={handleEditSupplier}
-                    onDeleteSupplier={handleDeleteSupplier}
-                    onViewProducts={handleViewProducts}
-                    onAddSupplier={() => setIsAddSupplierModalOpen(true)}
-                  />
+                  <>
+                    <SupplierTable
+                      suppliers={suppliers}
+                      onViewSupplier={handleViewSupplier}
+                      onEditSupplier={handleEditSupplier}
+                      onDeleteSupplier={handleDeleteSupplier}
+                      onViewProducts={handleViewProducts}
+                      onAddSupplier={() => setIsAddSupplierModalOpen(true)}
+                    />
+                    {/* Pagination Controls */}
+                    <PaginationControls
+                      currentPage={pagination.page}
+                      totalPages={pagination.totalPages}
+                      total={pagination.total}
+                      limit={pagination.limit}
+                      onPageChange={handlePageChange}
+                      loading={loading}
+                    />
+                  </>
                 ) : selectedSupplier && (
                   <ProductsTable
                     products={[]} // TODO: Integrate with products API when available

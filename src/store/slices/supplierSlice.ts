@@ -11,33 +11,79 @@ const initialState: SupplierState = {
   currentSupplier: null,
   loading: false,
   error: null,
+  pagination: {
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  },
 };
 
 // Async thunks for API calls
 export const fetchSuppliers = createAsyncThunk(
   "suppliers/fetchSuppliers",
-  async (storeId: string | undefined, { rejectWithValue }) => {    try {
-      const url = storeId ? `/supplier/list?storeId=${storeId}` : '/supplier/list';
+  async (
+    { storeId, page = 1, limit = 10 }: { storeId: string | undefined; page?: number; limit?: number },
+    { rejectWithValue }
+  ) => {
+    try {
+      const params = new URLSearchParams();
+      if (storeId) params.append('storeId', storeId);
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
+      
+      const url = `/supplier/list?${params.toString()}`;
       const response = await apiClient.get(url);
       
       // Handle different response structures from backend
       let suppliers = [];
+      let pagination = {
+        page,
+        limit,
+        total: 0,
+        totalPages: 0,
+      };
       
       if (response.data) {
         if (Array.isArray(response.data)) {
           suppliers = response.data;
+          pagination.total = suppliers.length;
+          pagination.totalPages = Math.ceil(suppliers.length / limit);
         } else if (response.data.data && response.data.data.suppliers && Array.isArray(response.data.data.suppliers)) {
           suppliers = response.data.data.suppliers;
+          if (response.data.data.pagination) {
+            pagination = { ...pagination, ...response.data.data.pagination };
+          } else {
+            pagination.total = suppliers.length;
+            pagination.totalPages = Math.ceil(suppliers.length / limit);
+          }
         } else if (response.data.data && Array.isArray(response.data.data)) {
           suppliers = response.data.data;
+          pagination.total = suppliers.length;
+          pagination.totalPages = Math.ceil(suppliers.length / limit);
         } else if (response.data.suppliers && Array.isArray(response.data.suppliers)) {
           suppliers = response.data.suppliers;
-        } else if (response.data.data.data.suppliers){
+          if (response.data.pagination) {
+            pagination = { ...pagination, ...response.data.pagination };
+          } else {
+            pagination.total = suppliers.length;
+            pagination.totalPages = Math.ceil(suppliers.length / limit);
+          }
+        } else if (response.data.data.data.suppliers) {
           suppliers = response.data.data.data.suppliers;
+          if (response.data.data.data.pagination) {
+            pagination = { ...pagination, ...response.data.data.data.pagination };
+          } else {
+            pagination.total = suppliers.length;
+            pagination.totalPages = Math.ceil(suppliers.length / limit);
+          }
         }
       }
-      console.log('suplier',suppliers)
-      return suppliers;
+      
+      console.log('suppliers:', suppliers);
+      console.log('pagination:', pagination);
+      
+      return { suppliers, pagination };
     } catch (error: any) {
       console.error('Fetch suppliers error:', error);
       return rejectWithValue(
@@ -71,9 +117,8 @@ export const createSupplier = createAsyncThunk(
   async (supplierData: SupplierFormData, { rejectWithValue, dispatch }) => {
     try {
       await apiClient.post("/supplier/create", supplierData);
-      
-      // Refresh suppliers list after creation
-      await dispatch(fetchSuppliers(supplierData.storeId));
+        // Refresh suppliers list after creation
+      await dispatch(fetchSuppliers({ storeId: supplierData.storeId }));
       
       return { success: true, message: "Supplier created successfully" };
     } catch (error: any) {
@@ -101,9 +146,8 @@ export const updateSupplier = createAsyncThunk(
       }      // Use standard REST endpoint format
       const response = await apiClient.put(`/supplier/${id}`, supplierData);
       console.log('Update response:', response.data);
-      
-      // Refresh suppliers list after update
-      await dispatch(fetchSuppliers(supplierData.storeId));
+        // Refresh suppliers list after update
+      await dispatch(fetchSuppliers({ storeId: supplierData.storeId }));
       
       return { success: true, message: "Supplier updated successfully" };
     } catch (error: any) {
@@ -127,12 +171,11 @@ export const deleteSupplier = createAsyncThunk(
       if (!id || id.length > 50 || id.includes(' ')) {
         throw new Error('Invalid supplier ID format. Cannot delete supplier with invalid ID.');
       }
-        // Use standard REST endpoint format
-      await apiClient.delete(`/supplier/${id}`);
+        // Use standard REST endpoint format      await apiClient.delete(`/supplier/${id}`);
       console.log('Supplier deleted successfully');
       
       // Refresh suppliers list after deletion
-      await dispatch(fetchSuppliers(storeId));
+      await dispatch(fetchSuppliers({ storeId }));
       
       return { id, success: true, message: "Supplier deleted successfully" };
     } catch (error: any) {
@@ -149,11 +192,9 @@ export const deleteAllSuppliers = createAsyncThunk(
   "suppliers/deleteAllSuppliers",
   async (storeId: string, { rejectWithValue, dispatch }) => {
     try {
-      console.log('Deleting all suppliers for store:', storeId);
-      
-      // Get all suppliers for this store
-      const suppliersResponse = await dispatch(fetchSuppliers(storeId)).unwrap();
-      const suppliers = Array.isArray(suppliersResponse) ? suppliersResponse : [];
+      console.log('Deleting all suppliers for store:', storeId);      // Get all suppliers for this store (use high limit to get all suppliers)
+      const suppliersResponse = await dispatch(fetchSuppliers({ storeId, page: 1, limit: 1000 })).unwrap();
+      const suppliers = Array.isArray(suppliersResponse.suppliers) ? suppliersResponse.suppliers : [];
       
       if (suppliers.length === 0) {
         console.log('No suppliers to delete');
@@ -189,9 +230,8 @@ export const deleteAllSuppliers = createAsyncThunk(
       
       await Promise.all(deletePromises);
       console.log('All suppliers deleted successfully');
-      
-      // Refresh suppliers list after deletion
-      await dispatch(fetchSuppliers(storeId));
+        // Refresh suppliers list after deletion
+      await dispatch(fetchSuppliers({ storeId }));
       
       return { success: true, message: `Successfully deleted ${realSuppliers.length} suppliers` };
     } catch (error: any) {
@@ -231,12 +271,20 @@ export const supplierSlice = createSlice({
     },
     clearCurrentSupplier: (state) => {
       state.currentSupplier = null;
-    },
-    clearError: (state) => {
+    },    clearError: (state) => {
       state.error = null;
     },
     clearSuppliers: (state) => {
       state.suppliers = [];
+      state.pagination = {
+        page: 1,
+        limit: 10,
+        total: 0,
+        totalPages: 0,
+      };
+    },
+    setPage: (state, action: PayloadAction<number>) => {
+      state.pagination.page = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -245,10 +293,10 @@ export const supplierSlice = createSlice({
       .addCase(fetchSuppliers.pending, (state) => {
         state.loading = true;
         state.error = null;
-      })
-      .addCase(fetchSuppliers.fulfilled, (state, action) => {
+      })      .addCase(fetchSuppliers.fulfilled, (state, action) => {
         state.loading = false;
-        state.suppliers = action.payload;
+        state.suppliers = action.payload.suppliers;
+        state.pagination = action.payload.pagination;
       })
       .addCase(fetchSuppliers.rejected, (state, action) => {
         state.loading = false;
@@ -326,6 +374,7 @@ export const {
   clearCurrentSupplier,
   clearError,
   clearSuppliers,
+  setPage,
 } = supplierSlice.actions;
 
 export default supplierSlice.reducer;

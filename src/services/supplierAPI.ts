@@ -26,16 +26,14 @@ export interface Supplier {
   status: 'active' | 'inactive';
 }
 
-export const supplierAPI = {
-  // GET /api/supplier/list
+export const supplierAPI = {  // GET /api/supplier/list
   getSuppliers: async (
     storeId: string,
     page: number = 1,
-    limit?: number
+    limit: number = 10
   ): Promise<SupplierResponse> => {
     try {
-      const params: any = { storeId, page };
-      if (limit) params.limit = limit;
+      const params: any = { storeId, page, limit };
       const response = await apiClient.get('/supplier/list', { params });
       return response.data;
     } catch (error) {
@@ -85,12 +83,11 @@ export const supplierAPI = {
       throw error;
     }
   },
-
   // DELETE ALL suppliers for a store
   deleteAllSuppliers: async (storeId: string): Promise<{ success: boolean; message: string }> => {
     try {
-      // Get all suppliers first
-      const suppliersResponse = await supplierAPI.getSuppliers(storeId);
+      // Get all suppliers first (use a high limit to get all suppliers)
+      const suppliersResponse = await supplierAPI.getSuppliers(storeId, 1, 1000);
       const suppliers = suppliersResponse.data.suppliers;
       
       if (suppliers.length === 0) {
