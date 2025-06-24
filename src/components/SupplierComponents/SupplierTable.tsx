@@ -83,7 +83,7 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
 
         {/* Table Content */}
         <div className="divide-y divide-gray-200">
-          {currentSuppliers?.map((supplier, index) => (            <div
+          {currentSuppliers?.map((supplier, index) => (<div
               key={supplier.supplier_id}
               className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150 group"
             >

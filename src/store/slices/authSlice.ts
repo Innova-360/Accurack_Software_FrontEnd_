@@ -45,22 +45,30 @@ export const loginUser = createAsyncThunk(
 );
 
 export const registerUser = createAsyncThunk(
-  "/auth/signup/super-admin",
+  "/auth/create-client-with-admin",
   async (
     userData: {
       firstName: string;
       lastName: string;
       email: string;
       password: string;
+      companyName: string;
+      companyEmail: string;
+      companyPhone: string;
+      companyAddress: string;
     },
     { rejectWithValue }
   ) => {
     try {
-      const response = await apiClient.post("/auth/signup/super-admin", {
+      const response = await apiClient.post("/auth/create-client-with-admin", {
         firstName: userData.firstName,
         lastName: userData.lastName,
         email: userData.email,
         password: userData.password,
+        companyName: userData.companyName,
+        companyEmail: userData.companyEmail,
+        companyPhone: userData.companyPhone,
+        companyAddress: userData.companyAddress,
       });
       return response.data;
     } catch (error: any) {

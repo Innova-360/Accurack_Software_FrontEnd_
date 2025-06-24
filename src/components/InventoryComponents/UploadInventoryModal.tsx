@@ -1,5 +1,7 @@
+import axios from "axios";
 import React, { useState, useRef } from "react";
 import toast from "react-hot-toast";
+import { useParams } from "react-router-dom";
 
 interface UploadInventoryModalProps {
   isOpen: boolean;
@@ -17,6 +19,8 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { id } = useParams();
 
   if (!isOpen) return null;
 
@@ -62,7 +66,8 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
     return (
       validTypes.includes(file.type) ||
       file.name.endsWith(".xlsx") ||
-      file.name.endsWith(".xls")
+      file.name.endsWith(".xls") ||
+      file.name.endsWith(".csv")
     );
   };
 
@@ -85,7 +90,27 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
 
     try {
       // Call the parent's upload handler
-      await onUpload(selectedFile);
+      // await onUpload(selectedFile);
+      // Send as multipart/form-data for multer
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      await axios.post(
+        `http://localhost:4000/api/v1/product/uploadsheet?storeId=${id}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          withCredentials: true,
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              setUploadProgress(
+                Math.round((progressEvent.loaded * 100) / progressEvent.total)
+              );
+            }
+          },
+        }
+      );
       setUploadProgress(100);
 
       setTimeout(() => {

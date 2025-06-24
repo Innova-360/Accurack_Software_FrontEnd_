@@ -9,13 +9,16 @@ import {
 } from "../../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 
-const Signup = () => {
-  const [formData, setFormData] = useState({
+const Signup = () => {  const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
+    companyName: "",
+    companyEmail: "",
+    companyPhone: "",
+    companyAddress: "",
   });
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State to toggle confirm password visibility
@@ -38,6 +41,22 @@ const Signup = () => {
       toast.error("Last Name is required");
       return;
     }
+    if (!formData.companyName.trim()) {
+      toast.error("Company Name is required");
+      return;
+    }
+    if (!formData.companyEmail.trim()) {
+      toast.error("Company Email is required");
+      return;
+    }
+    if (!formData.companyPhone.trim()) {
+      toast.error("Company Phone is required");
+      return;
+    }
+    if (!formData.companyAddress.trim()) {
+      toast.error("Company Address is required");
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match");
       return;
@@ -50,6 +69,10 @@ const Signup = () => {
           lastName: formData.lastName.trim(),
           email: formData.email,
           password: formData.password,
+          companyName: formData.companyName.trim(),
+          companyEmail: formData.companyEmail.trim(),
+          companyPhone: formData.companyPhone.trim(),
+          companyAddress: formData.companyAddress.trim(),
         })
       );
       if (registerUser.fulfilled.match(resultAction)) {
@@ -129,9 +152,9 @@ const Signup = () => {
       <div className="flex flex-col justify-start items-center w-full lg:w-1/2  min-h-screen order-2 lg:order-none">
         <h2 className="text-2xl sm:text-4xl font-bold text-[#181c1f] mb-6 sm:mb-8 text-center pt-8 sm:pt-16">
           Create Free Account
-        </h2>
-        <div className="w-full max-w-md bg-white rounded-xl shadow-md p-5 sm:p-8 mx-3 text-xs sm:text-sm mb-6 sm:mb-8">
+        </h2>        <div className="w-full max-w-md bg-white rounded-xl shadow-md p-5 sm:p-8 mx-3 text-xs sm:text-sm mb-6 sm:mb-8">
           <form className="space-y-2 sm:space-y-3" onSubmit={handleSubmit}>
+            {/* Personal Information */}
             <input
               type="text"
               name="firstName"
@@ -153,6 +176,40 @@ const Signup = () => {
               name="email"
               placeholder="Email Address"
               value={formData.email}
+              onChange={handleChange}
+              className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
+            />
+            
+            {/* Company Information */}
+            <input
+              type="text"
+              name="companyName"
+              placeholder="Company Name"
+              value={formData.companyName}
+              onChange={handleChange}
+              className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
+            />
+            <input
+              type="email"
+              name="companyEmail"
+              placeholder="Company Email"
+              value={formData.companyEmail}
+              onChange={handleChange}
+              className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
+            />
+            <input
+              type="tel"
+              name="companyPhone"
+              placeholder="Company Phone"
+              value={formData.companyPhone}
+              onChange={handleChange}
+              className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
+            />
+            <input
+              type="text"
+              name="companyAddress"
+              placeholder="Company Address"
+              value={formData.companyAddress}
               onChange={handleChange}
               className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
             />

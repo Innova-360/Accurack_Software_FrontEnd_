@@ -1,5 +1,9 @@
 import React from "react";
 import type { ProductFormData } from "./types";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchInventorySuppliers } from "../../../store/slices/inventorySupplierSlice";
+import type { RootState } from "../../../store";
+import type { Supplier } from '../../../services/supplierAPI';
 
 interface ProductBasicInfoProps {
   formData: ProductFormData;
@@ -16,6 +20,28 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
   showOptionalFields,
   isVariantMode = false,
 }) => {
+  const dispatch = useDispatch();
+  // Use correct key: inventorySuppliers (plural)
+  const {
+    suppliers,
+    loading: suppliersLoading,
+    error: suppliersError,
+  } = useSelector((state: RootState) => state.inventorySuppliers) as {
+    suppliers: Supplier[];
+    loading: boolean;
+    error: string | null;
+  };
+
+  // Fetch suppliers when component mounts or storeId changes
+  React.useEffect(() => {
+    // Extract storeId from URL (works for /store/:id/)
+    const match = window.location.pathname.match(/store\/(.+?)(?:\/|$)/);
+    const storeId = match ? match[1] : "";
+    if (storeId) {
+      dispatch(fetchInventorySuppliers({ storeId, page: 1, limit: 50 }) as any);
+    }
+  }, [dispatch]);
+
   // Calculate minimum order value when itemSellingCost or minSellingQuantity changes
   React.useEffect(() => {
     const sellingCost = parseFloat(formData.itemSellingCost) || 0;
@@ -207,24 +233,45 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
           </div>
         </div>{" "}
       </div>{" "}
-      {/* Vendor and Product Identification - Hidden in variant mode */}
       {!isVariantMode && (
         <div className="bg-gray-50 rounded-lg p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            {" "}
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">
                 Vendor *
               </label>
-              <input
-                type="text"
-                value={formData.vendor}
-                onChange={(e) => onFormDataChange("vendor", e.target.value)}
+              <select
+                value={formData.supplierId}
+                onChange={(e) => {
+                  const selectedSupplierId = e.target.value;
+                  onFormDataChange("supplierId", selectedSupplierId);
+                }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
-                placeholder="Enter vendor name"
                 required
-              />
+              >
+                <option value="">Select Vendor</option>
+                {suppliersLoading && <option disabled>Loading suppliers...</option>}
+                {suppliersError && <option disabled>Error loading suppliers</option>}
+                {suppliers &&
+                  suppliers.length > 0 &&
+                  suppliers.map((supplier) => (
+                    <option key={supplier.id} value={supplier.id}>
+                      {supplier.name}
+                    </option>
+                  ))}
+              </select>
+              {suppliersLoading && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Loading suppliers...
+                </div>
+              )}
+              {suppliersError && (
+                <div className="text-xs text-red-500 mt-1">
+                  {suppliersError}
+                </div>
+              )}
             </div>
+
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">
                 Custom SKU{" "}

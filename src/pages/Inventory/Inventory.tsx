@@ -14,7 +14,7 @@ import {
   AddInventoryOptionsModal,
   UploadInventoryModal,
   BarcodeScanModal,
-} from "../../components/modals";
+} from "../../components/InventoryComponents";
 import { products } from "../../data/inventoryData";
 import {
   useInventoryStats,

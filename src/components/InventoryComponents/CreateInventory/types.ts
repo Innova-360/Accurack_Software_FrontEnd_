@@ -43,7 +43,6 @@ export interface Variation {
   price: number;
   plu: string;
   discount: number;
-  vendor: string;
   customSku: string;
   imageFile: File | null;
   imagePreview: string;
@@ -59,7 +58,6 @@ export interface ProductFormData {
   customCategory?: string;
   brandName?: string;
   price: string;
-  vendor: string;
   customSku: string;
   ean: string;
   pluUpc: string;
@@ -68,7 +66,7 @@ export interface ProductFormData {
   itemSellingCost: string;
   minSellingQuantity: string;
   minOrderValue: string;
-  msrpPrice: string,
+  msrpPrice: string;
   orderValueDiscountType: "percentage" | "fixed" | "";
   orderValueDiscountValue: string;
   quantity: string;
@@ -82,6 +80,7 @@ export interface ProductFormData {
   hasAttributes: boolean;
   attributes: Attribute[];
   variations: Variation[];
+  supplierId: string; // Added for API payload compatibility
 }
 
 
