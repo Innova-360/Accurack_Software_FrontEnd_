@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import React Icons
 import toast from "react-hot-toast";
-import { useAppDispatch } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
-  registerUser,
   googleAuth,
-  verifyOtp,
+  createClientWithAdmin,
 } from "../../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 
@@ -16,18 +15,20 @@ const Signup = () => {
     email: "",
     password: "",
     confirmPassword: "",
-  });
-  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+    companyName: "",
+    companyEmail: "",
+    companyPhone: "",
+    companyAddress: "",
+  });  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State to toggle confirm password visibility
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { loading } = useAppSelector((state) => state.auth);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); // Validate form fields
     if (!formData.firstName.trim()) {
@@ -38,22 +39,52 @@ const Signup = () => {
       toast.error("Last Name is required");
       return;
     }
+    if (!formData.email.trim()) {
+      toast.error("Email is required");
+      return;
+    }
+    if (!formData.password) {
+      toast.error("Password is required");
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
+    if (!formData.companyName.trim()) {
+      toast.error("Company Name is required");
+      return;
+    }
+    if (!formData.companyEmail.trim()) {
+      toast.error("Company Email is required");
+      return;
+    }
+    if (!formData.companyPhone.trim()) {
+      toast.error("Company Phone is required");
+      return;
+    }
+    if (!formData.companyAddress.trim()) {
+      toast.error("Company Address is required");
+      return;
+    }
 
     try {
+
       const resultAction = await dispatch(
-        registerUser({
+        createClientWithAdmin({
           firstName: formData.firstName.trim(),
           lastName: formData.lastName.trim(),
-          email: formData.email,
+          email: formData.email.trim(),
           password: formData.password,
+          companyName: formData.companyName.trim(),
+          companyEmail: formData.companyEmail.trim(),
+          companyPhone: formData.companyPhone.trim(),
+          companyAddress: formData.companyAddress.trim(),
         })
       );
-      if (registerUser.fulfilled.match(resultAction)) {
+      if (createClientWithAdmin.fulfilled.match(resultAction)) {
         console.log("Signup successful", resultAction.payload);
+        toast.success("Account created successfully!");
         // Save email to localStorage
         localStorage.setItem("userEmail", formData.email);
         // Redirect to OTP page - OTP will be sent from there
@@ -129,80 +160,142 @@ const Signup = () => {
       <div className="flex flex-col justify-start items-center w-full lg:w-1/2  min-h-screen order-2 lg:order-none">
         <h2 className="text-2xl sm:text-4xl font-bold text-[#181c1f] mb-6 sm:mb-8 text-center pt-8 sm:pt-16">
           Create Free Account
-        </h2>
-        <div className="w-full max-w-md bg-white rounded-xl shadow-md p-5 sm:p-8 mx-3 text-xs sm:text-sm mb-6 sm:mb-8">
+        </h2>        <div className="w-full max-w-md bg-white rounded-xl shadow-md p-5 sm:p-8 mx-3 text-xs sm:text-sm mb-6 sm:mb-8">
           <form className="space-y-2 sm:space-y-3" onSubmit={handleSubmit}>
-            <input
-              type="text"
-              name="firstName"
-              placeholder="First Name"
-              value={formData.firstName}
-              onChange={handleChange}
-              className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
-            />
-            <input
-              type="text"
-              name="lastName"
-              placeholder="Last Name"
-              value={formData.lastName}
-              onChange={handleChange}
-              className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
-            />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email Address"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
-            />
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"} // Toggle input type
-                name="password"
-                placeholder="Create Password"
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center pr-10"
-              />
-              <span
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
-                onClick={() => setShowPassword(!showPassword)} // Toggle visibility on click
-              >
-                {showPassword ? (
-                  <FaEyeSlash className="w-5 h-5" />
-                ) : (
-                  <FaEye className="w-5 h-5" />
-                )}{" "}
-                {/* Use React Icons */}
-              </span>
+            {/* Personal Information */}
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">Personal Information</h3>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  name="firstName"
+                  placeholder="First Name"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
+                />
+                <input
+                  type="text"
+                  name="lastName"
+                  placeholder="Last Name"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
+                />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email Address"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
+                />
+              </div>
             </div>
-            <div className="relative">
-              <input
-                type={showConfirmPassword ? "text" : "password"} // Toggle input type
-                name="confirmPassword"
-                placeholder="Confirm Password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center pr-10"
-              />
-              <span
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)} // Toggle visibility on click
-              >
-                {showConfirmPassword ? (
-                  <FaEyeSlash className="w-5 h-5" />
-                ) : (
-                  <FaEye className="w-5 h-5" />
-                )}{" "}
-                {/* Use React Icons */}
-              </span>
+
+            {/* Password Fields */}
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">Password</h3>
+              <div className="space-y-2">
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"} // Toggle input type
+                    name="password"
+                    placeholder="Create Password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center pr-10"
+                  />
+                  <span
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
+                    onClick={() => setShowPassword(!showPassword)} // Toggle visibility on click
+                  >
+                    {showPassword ? (
+                      <FaEyeSlash className="w-5 h-5" />
+                    ) : (
+                      <FaEye className="w-5 h-5" />
+                    )}{" "}
+                    {/* Use React Icons */}
+                  </span>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"} // Toggle input type
+                    name="confirmPassword"
+                    placeholder="Confirm Password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center pr-10"
+                  />
+                  <span
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)} // Toggle visibility on click
+                  >
+                    {showConfirmPassword ? (
+                      <FaEyeSlash className="w-5 h-5" />
+                    ) : (
+                      <FaEye className="w-5 h-5" />
+                    )}{" "}
+                    {/* Use React Icons */}
+                  </span>
+                </div>
+              </div>
             </div>
-            <button
+
+            {/* Company Information */}
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">Company Information</h3>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  name="companyName"
+                  placeholder="Company Name"
+                  value={formData.companyName}
+                  onChange={handleChange}
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
+                />
+                <input
+                  type="email"
+                  name="companyEmail"
+                  placeholder="Company Email"
+                  value={formData.companyEmail}
+                  onChange={handleChange}
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
+                />
+                <input
+                  type="tel"
+                  name="companyPhone"
+                  placeholder="Company Phone"
+                  value={formData.companyPhone}
+                  onChange={handleChange}
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
+                />
+                <textarea
+                  name="companyAddress"
+                  placeholder="Company Address"
+                  value={formData.companyAddress}
+                  onChange={handleChange}
+                  rows={3}
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal resize-none"
+                />
+              </div>
+            </div>            <button
               type="submit"
-              className="w-full bg-[#0b5c5a] text-white py-2 rounded-md font-medium hover:bg-[#084c4a] transition"
+              disabled={loading}
+              className={`w-full py-2 rounded-md font-medium transition ${
+                loading 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-[#0b5c5a] hover:bg-[#084c4a]'
+              } text-white`}
             >
-              Sign Up
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Creating Account...
+                </div>
+              ) : (
+                'Create Account'
+              )}
             </button>
           </form>
           {/* Social signup section */}

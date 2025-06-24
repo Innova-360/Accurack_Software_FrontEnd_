@@ -16,7 +16,8 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const { currentStore } = useAppSelector((state) => state.stores);
-  const { loading } = useAppSelector((state) => state.suppliers);  const [formData, setFormData] = useState<SupplierFormData>({
+  const { loading } = useAppSelector((state) => state.suppliers);
+  const [formData, setFormData] = useState<SupplierFormData>({
     supplier_id: '',
     name: '',
     email: '',
@@ -52,10 +53,6 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
   };  const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.supplier_id.trim()) {
-      newErrors.supplier_id = 'Supplier ID is required';
-    }
-
     if (!formData.name.trim()) {
       newErrors.name = 'Supplier name is required';
     }
@@ -80,16 +77,15 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };  const handleSubmit = async (e: React.FormEvent) => {
+  };const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
       return;
     }
-    
-    try {
+      try {
       await dispatch(createSupplier({
-        supplier_id: formData.supplier_id,
+        supplier_id: formData.name.toLowerCase().replace(/\s+/g, '-'), // Generate a simple ID from name
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -111,8 +107,7 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
     } catch (error) {
       console.error('Error creating supplier:', error);
     }
-  };
-  const handleClose = () => {
+  };  const handleClose = () => {
     setFormData({
       supplier_id: '',
       name: '',
@@ -149,25 +144,6 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
           </button>
         </div>        {/* Form */}
         <form onSubmit={(e)=>handleSubmit(e)} className="p-6 space-y-4">
-          {/* Supplier ID */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Supplier ID *
-            </label>
-            <input
-              type="text"
-              value={formData.supplier_id}
-              onChange={(e) => handleInputChange('supplier_id', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${errors.supplier_id ? 'border-red-500' : 'border-gray-300'
-                }`}
-              placeholder="Enter supplier ID (e.g., SUP001)"
-              disabled={loading}
-            />
-            {errors.supplier_id && (
-              <p className="mt-1 text-sm text-red-600">{errors.supplier_id}</p>
-            )}
-          </div>
-
           {/* Supplier Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

@@ -71,6 +71,41 @@ export const registerUser = createAsyncThunk(
   }
 );
 
+export const createClientWithAdmin = createAsyncThunk(
+  "/auth/create-client-with-admin",
+  async (
+    userData: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      password: string;
+      companyName: string;
+      companyEmail: string;
+      companyPhone: string;
+      companyAddress: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await apiClient.post("/auth/create-client-with-admin", {
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        password: userData.password,
+        companyName: userData.companyName,
+        companyEmail: userData.companyEmail,
+        companyPhone: userData.companyPhone,
+        companyAddress: userData.companyAddress,
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Client registration failed"
+      );
+    }
+  }
+);
+
 export const logoutUser = createAsyncThunk(
   "auth/logout",
   async (_, { rejectWithValue }) => {
@@ -203,8 +238,23 @@ export const authSlice = createSlice({
         state.token = action.payload.token;
         state.isAuthenticated = true;
         localStorage.setItem("authToken", action.payload.token);
+      })      .addCase(registerUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       })
-      .addCase(registerUser.rejected, (state, action) => {
+      // Create Client with Admin
+      .addCase(createClientWithAdmin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createClientWithAdmin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.isAuthenticated = true;
+        localStorage.setItem("authToken", action.payload.token);
+      })
+      .addCase(createClientWithAdmin.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

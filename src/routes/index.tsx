@@ -12,6 +12,9 @@ import SalesPage from "../pages/salesPage/Sales";
 import GoogleAuthCallback from "../components/GoogleAuthCallback";
 import Supplier from "../pages/Supplier/Supplier";
 import StoresPage from "../pages/Stores/Stores";
+import EmployeePage from "../pages/Employee/EmployeePage";
+import PermissionsPage from "../pages/Employee/PermissionsPage";
+import EditEmployeePage from "../pages/Employee/EditEmployeePage";
 
 const AppRoutes = () => {
   return (
@@ -21,12 +24,15 @@ const AppRoutes = () => {
       <Route path="/otp" element={<OtpPage />} />
       <Route path="/stores" element={<StoresPage />} />
       <Route path="/store/create" element={<StoreForm />} />
-      <Route path="/store/edit/:id" element={<StoreForm />} />      <Route path="/store/:id" element={<Home />} />
+      <Route path="/store/edit/:id" element={<StoreForm />} />      
+      <Route path="/store/:id" element={<Home />} />
       <Route path="/store/:id/inventory" element={<Inventory />} />
-      <Route path="/store/:id/inventory/create" element={<CreateInventory />} />
+      <Route path="/store/:id/inventory/create" element={<CreateInventory />} />      
       <Route path="/store/:id/sales" element={<SalesPage />} />
       <Route path="/store/:id/expenses" element={<ExpensePage />} />
-      <Route path="/store/:id/supplier" element={<Supplier />} />
+      <Route path="/store/:id/supplier" element={<Supplier />} />      <Route path="/store/:id/employee" element={<EmployeePage />} />
+      <Route path="/store/:id/permissions" element={<PermissionsPage />} />
+      <Route path="/store/:id/edit-employee" element={<EditEmployeePage />} />
       <Route path="/inventory" element={<Inventory />} />
       <Route path="/inventory/create" element={<CreateInventory />} />
       <Route path="/" element={<Home />} />
@@ -35,7 +41,9 @@ const AppRoutes = () => {
       <Route path="/expenses" element={<ExpensePage />} />
       <Route path="/sales" element={<SalesPage />} />
       <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
-      <Route path="/supplier" element={<Supplier />} />
+      <Route path="/supplier" element={<Supplier />} />      <Route path="/employee" element={<EmployeePage />} />
+      <Route path="/permissions" element={<PermissionsPage />} />
+      <Route path="/edit-employee" element={<EditEmployeePage />} />
     </Routes>
   );
 };
