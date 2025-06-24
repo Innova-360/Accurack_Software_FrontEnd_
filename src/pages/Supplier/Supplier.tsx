@@ -222,6 +222,7 @@ const SupplierPage: React.FC = () => {
                 suppliers={suppliers}
                 selectedSupplier={selectedSupplier}
                 currentSupplierProducts={[]} // TODO: Integrate with products API when available
+                totalSuppliers={pagination.total}
               />
             </div>            {/* Loading and Error States */}
             {loading && (
