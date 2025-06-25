@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaPlus, FaFileExport, FaTrash, FaBars } from 'react-icons/fa';
+import toast from 'react-hot-toast';
 import { SpecialButton } from '../../components/buttons';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchSuppliers, clearSuppliers, setPage } from '../../store/slices/supplierSlice';
@@ -106,7 +107,7 @@ const SupplierPage: React.FC = () => {
       }));
 
       if (dataToExport.length === 0) {
-        alert('No suppliers to export');
+        toast.error('No suppliers to export');
         return;
       }
 
@@ -124,9 +125,10 @@ const SupplierPage: React.FC = () => {
       link.download = `suppliers_${new Date().toISOString().split('T')[0]}.csv`;
       link.click();
       window.URL.revokeObjectURL(url);
+      toast.success('Suppliers exported successfully!');
     } catch (error) {
       console.error('Error exporting data:', error);
-      alert('Error exporting data. Please try again.');
+      toast.error('Error exporting data. Please try again.');
     }  };
 
   // Pagination handler
