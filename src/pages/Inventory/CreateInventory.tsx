@@ -116,19 +116,22 @@ const CreateInventory: React.FC = () => {
         (variant: any, index: number) => {
           // Use the correct field names from the Variation interface
           const price = variant.itemSellingCost || 0; // itemSellingCost is the selling price in Variation
-          const msrpPrice = variant.msrpPrice || 0;
-
-          console.log(`🔸 Variant ${index + 1}:`, {
+          const msrpPrice = variant.msrpPrice || 0;          console.log(`🔸 Variant ${index + 1} complete data:`, {
             name: variant.name,
             itemSellingCost: variant.itemSellingCost,
             customSku: variant.customSku,
             msrpPrice: variant.msrpPrice,
+            discount: variant.discount,
+            orderValueDiscount: variant.orderValueDiscount,
             packDiscounts: variant.packDiscounts,
+            allFields: Object.keys(variant),
           });
 
           // Handle variant-level discounts
           const variantDiscountAmount = variant.discount || 0;
-          const variantPercentDiscount = variant.orderValueDiscount || 0;          const mappedVariant = {
+          const variantPercentDiscount = variant.orderValueDiscount || 0;
+          
+          const mappedVariant = {
             name: variant.name || "",
             price,
             sku: variant.customSku || "",
