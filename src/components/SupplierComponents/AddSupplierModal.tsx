@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { FaPlus, FaTimes } from 'react-icons/fa';
-import { SpecialButton } from '../buttons';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { createSupplier } from '../../store/slices/supplierSlice';
-import type { SupplierFormData } from '../../types/supplier';
+import React, { useState } from "react";
+import { FaPlus, FaTimes } from "react-icons/fa";
+import toast from "react-hot-toast";
+import { SpecialButton } from "../buttons";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { createSupplier } from "../../store/slices/supplierSlice";
+import type { SupplierFormData } from "../../types/supplier";
 
 interface AddSupplierModalProps {
   isOpen: boolean;
@@ -12,109 +13,120 @@ interface AddSupplierModalProps {
 
 const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
   isOpen,
-  onClose
+  onClose,
 }) => {
   const dispatch = useAppDispatch();
   const { currentStore } = useAppSelector((state) => state.stores);
   const { loading } = useAppSelector((state) => state.suppliers);
   const [formData, setFormData] = useState<SupplierFormData>({
-    supplier_id: '',
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    storeId: currentStore?.id || ''
+    supplier_id: "",
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    storeId: currentStore?.id || "",
   });
 
   // Update storeId when currentStore changes
   React.useEffect(() => {
     if (currentStore?.id && !formData.storeId) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        storeId: currentStore.id
+        storeId: currentStore.id,
       }));
     }
   }, [currentStore?.id, formData.storeId]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const handleInputChange = (field: keyof (SupplierFormData), value: string) => {
-    setFormData(prev => ({
+  const handleInputChange = (field: keyof SupplierFormData, value: string) => {
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
 
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [field]: ''
+        [field]: "",
       }));
     }
-  };  const validateForm = (): boolean => {
+  };
+  const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Supplier name is required';
+      newErrors.name = "Supplier name is required";
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = "Email is invalid";
     }
 
     if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
+      newErrors.phone = "Phone number is required";
     }
 
     if (!formData.address.trim()) {
-      newErrors.address = 'Address is required';
+      newErrors.address = "Address is required";
     }
 
     if (!formData.storeId) {
-      newErrors.storeId = 'Store ID is required';
+      newErrors.storeId = "Store ID is required";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };const handleSubmit = async (e: React.FormEvent) => {
+  };
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-      try {
-      await dispatch(createSupplier({
-        supplier_id: formData.name.toLowerCase().replace(/\s+/g, '-'), // Generate a simple ID from name
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        storeId: currentStore?.id || formData.storeId
-      })).unwrap();
-      
+    try {
+      await dispatch(
+        createSupplier({
+          supplier_id: formData.name.toLowerCase().replace(/\s+/g, "-"), // Generate a simple ID from name
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          storeId: currentStore?.id || formData.storeId,
+        })
+      ).unwrap();
+
       // Reset form and close modal
       setFormData({
-        supplier_id: '',
-        name: '',
-        email: '',
-        phone: '',
-        address: '',
-        storeId: currentStore?.id || ''
+        supplier_id: "",
+        name: "",
+        email: "",
+        phone: "",
+        address: "",
+        storeId: currentStore?.id || "",
       });
       setErrors({});
+      toast.success("Supplier created successfully!");
       onClose();
     } catch (error) {
-      console.error('Error creating supplier:', error);
+      console.error("Error creating supplier:", error);
+      const errorMessage =
+        typeof error === "string"
+          ? error
+          : "Failed to create supplier. Please try again.";
+      toast.error(errorMessage);
     }
-  };  const handleClose = () => {
+  };
+  const handleClose = () => {
     setFormData({
-      supplier_id: '',
-      name: '',
-      email: '',
-      phone: '',
-      address: '',
-      storeId: currentStore?.id || ''
+      supplier_id: "",
+      name: "",
+      email: "",
+      phone: "",
+      address: "",
+      storeId: currentStore?.id || "",
     });
     setErrors({});
     onClose();
@@ -132,8 +144,12 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               <FaPlus className="text-white" size={18} />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Add New Supplier</h2>
-              <p className="text-sm text-gray-600">Create a new supplier profile</p>
+              <h2 className="text-xl font-semibold text-gray-900">
+                Add New Supplier
+              </h2>
+              <p className="text-sm text-gray-600">
+                Create a new supplier profile
+              </p>
             </div>
           </div>
           <button
@@ -142,8 +158,9 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
           >
             <FaTimes className="text-gray-400" size={18} />
           </button>
-        </div>        {/* Form */}
-        <form onSubmit={(e)=>handleSubmit(e)} className="p-6 space-y-4">
+        </div>{" "}
+        {/* Form */}
+        <form onSubmit={(e) => handleSubmit(e)} className="p-6 space-y-4">
           {/* Supplier Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -152,9 +169,10 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
             <input
               type="text"
               value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${errors.name ? 'border-red-500' : 'border-gray-300'
-                }`}
+              onChange={(e) => handleInputChange("name", e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
+                errors.name ? "border-red-500" : "border-gray-300"
+              }`}
               placeholder="Enter supplier name (e.g., ABC Suppliers Ltd)"
               disabled={loading}
             />
@@ -171,9 +189,10 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
             <input
               type="email"
               value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${errors.email ? 'border-red-500' : 'border-gray-300'
-                }`}
+              onChange={(e) => handleInputChange("email", e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
+                errors.email ? "border-red-500" : "border-gray-300"
+              }`}
               placeholder="Enter email address (e.g., supplier@example.com)"
               disabled={loading}
             />
@@ -190,9 +209,10 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
             <input
               type="tel"
               value={formData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${errors.phone ? 'border-red-500' : 'border-gray-300'
-                }`}
+              onChange={(e) => handleInputChange("phone", e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
+                errors.phone ? "border-red-500" : "border-gray-300"
+              }`}
               placeholder="Enter phone number (e.g., +1-555-123-4567)"
               disabled={loading}
             />
@@ -208,9 +228,10 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
             </label>
             <textarea
               value={formData.address}
-              onChange={(e) => handleInputChange('address', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${errors.address ? 'border-red-500' : 'border-gray-300'
-                }`}
+              onChange={(e) => handleInputChange("address", e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
+                errors.address ? "border-red-500" : "border-gray-300"
+              }`}
               placeholder="Enter supplier address (e.g., 123 Main St, City, State 12345)"
               rows={3}
               disabled={loading}
@@ -222,7 +243,6 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
 
           {/* Store Information */}
 
-
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
             <SpecialButton
@@ -232,19 +252,20 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               disabled={loading}
             >
               Cancel
-            </SpecialButton>            <SpecialButton
+            </SpecialButton>{" "}
+            <SpecialButton
               variant="modal-confirm"
               type="button"
               onClick={async () => {
-                const event = new Event('submit') as unknown as React.FormEvent;
+                const event = new Event("submit") as unknown as React.FormEvent;
                 await handleSubmit(event);
               }}
               disabled={loading}
             >
-              {loading ? 'Adding...' : 'Add Supplier'}
+              {loading ? "Adding..." : "Add Supplier"}
             </SpecialButton>
-          </div>        
-          </form>
+          </div>
+        </form>
       </div>
     </div>
   );
