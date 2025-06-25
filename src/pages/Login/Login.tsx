@@ -231,7 +231,7 @@ const Login = () => {
           </div>
           <p className="text-center text-xs text-gray-500 mt-5">
             Don’t have an account?{" "}
-            <a href="#" className="text-[#0b5c5a] font-semibold">
+            <a href="#" className="text-[#0b5c5a] font-semibold" onClick={() => navigate("/signup")}>
               Register Here
             </a>
           </p>

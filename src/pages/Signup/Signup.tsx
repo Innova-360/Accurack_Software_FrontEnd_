@@ -19,7 +19,7 @@ const Signup = () => {
     companyEmail: "",
     companyPhone: "",
     companyAddress: "",
-  });  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  }); const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State to toggle confirm password visibility
 
   const dispatch = useAppDispatch();
@@ -282,11 +282,10 @@ const Signup = () => {
             </div>            <button
               type="submit"
               disabled={loading}
-              className={`w-full py-2 rounded-md font-medium transition ${
-                loading 
-                  ? 'bg-gray-400 cursor-not-allowed' 
+              className={`w-full py-2 rounded-md font-medium transition ${loading
+                  ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-[#0b5c5a] hover:bg-[#084c4a]'
-              } text-white`}
+                } text-white`}
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
@@ -318,6 +317,9 @@ const Signup = () => {
                 <img src="/apple.png" alt="Apple" className="h-6 w-6" />
               </span>
             </div>
+            <span className="flex items-center justify-center cursor-pointer mt-4">
+              Already have an account?<button className="text-[#0b5c5a] cursor-pointer ml-2.5" onClick={() => navigate("/login")}>   Signup</button>
+            </span>
           </div>
         </div>
         {/* Lower Text Section for mobile */}

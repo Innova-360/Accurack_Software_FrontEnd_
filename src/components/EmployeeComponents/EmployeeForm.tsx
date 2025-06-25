@@ -444,13 +444,13 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
                         <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">                            <button
                                 type="button"
                                 onClick={onCancel}
-                                className="px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                className="px-6 py-2 text-gray-700 bg-white border-[1px] border-[#D1D5DB] rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
-                                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                className="px-6 py-2 bg-[#043E49] text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             >
                                 {isEditMode ? 'Update Employee' : 'Save Role'}
                             </button>
