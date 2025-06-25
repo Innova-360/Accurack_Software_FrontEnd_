@@ -1,0 +1,20 @@
+import { Provider } from "react-redux";
+import { store } from "./store";
+import { BrowserRouter } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import AppRoutes from "./routes";
+
+const App = () => {
+  return (
+    <Provider store={store}>
+      <BrowserRouter>
+        <AppRoutes />
+        <Toaster
+          position="top-center"
+        />
+      </BrowserRouter>
+    </Provider>
+  );
+};
+
+export default App;
