@@ -12,7 +12,7 @@ import {
   FaTrash,
 } from "react-icons/fa";
 import { SpecialButton, IconButton } from "../../components/buttons";
-import { CreateStoreModal } from "../../components/modals";
+import { CreateStoreModal } from "../../components/StoreComponents";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   fetchStores,

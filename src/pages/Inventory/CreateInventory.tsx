@@ -9,13 +9,13 @@ import ProductBasicInfo from "../../components/InventoryComponents/CreateInvento
 import PackConfiguration from "../../components/InventoryComponents/CreateInventory/PackConfiguration";
 import AttributesConfiguration from "../../components/InventoryComponents/CreateInventory/AttributesConfiguration";
 import VariationsConfiguration from "../../components/InventoryComponents/CreateInventory/VariationsConfiguration";
-import { v4 as uuidv4 } from "uuid"; // npm install uuid
 import { useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { createProduct } from "../../store/slices/productsSlice";
 import { useAppSelector } from "../../store/hooks";
 import { selectCurrentStore } from "../../store/selectors";
 import useSuppliers from "../../hooks/useSuppliers";
+import { fetchUser } from "../../store/slices/userSlice";
 
 const CreateInventory: React.FC = () => {
   const dispatch = useDispatch();
@@ -29,53 +29,147 @@ const CreateInventory: React.FC = () => {
 
   const currentStore = useAppSelector(selectCurrentStore);
   const storeId = currentStore?.id || getStoreIdFromUrl();
-  useSuppliers(storeId);
+  const {
+    suppliers,
+    loading: suppliersLoading,
+    error: suppliersError,
+  } = useSuppliers(storeId);
+
+  // const user = useAppSelector((state) => state.user.user);
+
+  // Get user from Redux store
+  const clientId = useAppSelector((state) => state.user.user?.clientId);
+  // console.log("Client ID from Redux store:", clientId);
+  // Add explicit types for calculateDiscounts
+  const calculateDiscounts = (
+    discountType: "percentage" | "fixed" | undefined,
+    discountValue: number | string | undefined,
+    price: number | string | undefined
+  ) => {
+    if (!discountValue || isNaN(Number(discountValue))) {
+      return { discountAmount: 0, percentAmount: 0 };
+    }
+    if (discountType === "percentage") {
+      const percent = parseFloat(String(discountValue));
+      const amount = price ? (parseFloat(String(price)) * percent) / 100 : 0;
+      return { discountAmount: 0, percentAmount: amount };
+    } else if (discountType === "fixed") {
+      return {
+        discountAmount: parseFloat(String(discountValue)),
+        percentAmount: 0,
+      };
+    }
+    return { discountAmount: 0, percentAmount: 0 };
+  };
 
   const buildApiPayload = () => {
-    return {
+    // Use clientId from Redux store
+    const basePayload: any = {
       name: formData.productName,
       category: formData.category,
       ean: formData.ean,
       pluUpc: formData.pluUpc,
-      supplierId: uuidv4(),
+      supplierId: formData.supplierId || "",
       sku: formData.customSku,
       singleItemCostPrice: parseFloat(formData.itemCost) || 0,
       itemQuantity: parseInt(formData.quantity) || 0,
       msrpPrice: parseFloat(formData.msrpPrice) || 0,
       singleItemSellingPrice: parseFloat(formData.itemSellingCost) || 0,
-      discountAmount: 0, // Map from form if needed
-      percentDiscount: 0, // Map from form if needed
-      clientId: uuidv4(),
+      clientId: clientId, // Use clientId from Redux store
       storeId: storeId,
-      hasVariants: !!formData.variations?.length,
-      packs: (formData.packDiscounts || []).map((pack: any) => ({
-        minimumSellingQuantity: pack.minSellingQuantity,
-        totalPacksQuantity: pack.totalPacksQuantity,
-        orderedPacksPrice: pack.orderedPacksPrice,
-        discountAmount: pack.discountAmount,
-        percentDiscount: pack.percentDiscount,
-      })),
-      variants: (formData.variations || []).map((variant: any) => ({
-        name: variant.name,
-        price: variant.price,
-        sku: variant.sku || variant.customSku,
-        msrpPrice:
-          variant.msrpPrice !== undefined
-            ? parseFloat(variant.msrpPrice)
-            : undefined,
-        discountAmount: variant.discountAmount,
-        percentDiscount: variant.percentDiscount,
-        packs: (variant.packs || variant.packDiscounts || []).map(
-          (pack: any) => ({
-            minimumSellingQuantity: pack.minSellingQuantity,
-            totalPacksQuantity: pack.totalPacksQuantity,
-            orderedPacksPrice: pack.orderedPacksPrice,
-            discountAmount: pack.discountAmount,
-            percentDiscount: pack.percentDiscount,
-          })
-        ),
-      })),
+      hasVariants: hasVariants,
+      packs: (formData.packDiscounts || []).map((pack: any) => {
+        const { discountAmount, percentAmount } = calculateDiscounts(
+          pack.discountType,
+          pack.discountValue,
+          formData.itemSellingCost
+        );
+        return {
+          minimumSellingQuantity: pack.quantity,
+          totalPacksQuantity: pack.totalPacksQuantity || 0,
+          orderedPacksPrice: pack.orderedPacksPrice || 0,
+          discountAmount,
+          percentDiscount:
+            pack.discountType === "percentage" ? pack.discountValue : 0,
+        };
+      }),
+      // Add discountAmount and percentDiscount at root if needed (for non-variant products)
+      discountAmount: (() => {
+        if (formData.orderValueDiscountType === "fixed") {
+          return parseFloat(formData.orderValueDiscountValue) || 0;
+        }
+        return 0;
+      })(),
+      percentDiscount: (() => {
+        if (formData.orderValueDiscountType === "percentage") {
+          return parseFloat(formData.orderValueDiscountValue) || 0;
+        }
+        return 0;
+      })(),
+      variants: [], // always include variants field for API structure
     };
+    if (hasVariants) {
+      console.log("🔍 Processing variants for API payload:");
+      console.log("Raw variations data:", formData.variations);
+
+      basePayload.variants = (formData.variations || []).map(
+        (variant: any, index: number) => {
+          // Use the correct field names from the Variation interface
+          const price = variant.itemSellingCost || 0; // itemSellingCost is the selling price in Variation
+          const msrpPrice = variant.msrpPrice || 0;          console.log(`🔸 Variant ${index + 1} complete data:`, {
+            name: variant.name,
+            itemSellingCost: variant.itemSellingCost,
+            customSku: variant.customSku,
+            msrpPrice: variant.msrpPrice,
+            discount: variant.discount,
+            orderValueDiscount: variant.orderValueDiscount,
+            packDiscounts: variant.packDiscounts,
+            allFields: Object.keys(variant),
+          });
+
+          // Handle variant-level discounts
+          const variantDiscountAmount = variant.discount || 0;
+          const variantPercentDiscount = variant.orderValueDiscount || 0;
+          
+          const mappedVariant = {
+            name: variant.name || "",
+            price,
+            sku: variant.customSku || "",
+            msrpPrice,
+            discountAmount: variantDiscountAmount,
+            percentDiscount: variantPercentDiscount,
+            packs: (variant.packDiscounts || []).map((pack: any) => {
+              const packPrice = pack.orderedPacksPrice || 0;
+              const { discountAmount: packDiscountAmount } = calculateDiscounts(
+                pack.discountType,
+                pack.discountValue,
+                packPrice
+              );
+              return {
+                minimumSellingQuantity: pack.quantity || 0,
+                totalPacksQuantity: pack.totalPacksQuantity || 0,
+                orderedPacksPrice: packPrice,
+                discountAmount: packDiscountAmount,
+                percentDiscount:
+                  pack.discountType === "percentage"
+                    ? pack.discountValue || 0
+                    : 0,
+              };
+            }),
+          };
+
+          console.log(`🔸 Mapped variant ${index + 1}:`, mappedVariant);
+          return mappedVariant;
+        }
+      );
+      console.log("✅ Final variants payload:", basePayload.variants);
+    }
+
+    console.log(
+      "🚀 Complete API Payload being sent:",
+      JSON.stringify(basePayload, null, 2)
+    );
+    return basePayload;
   };
 
   // Form state management
@@ -86,7 +180,7 @@ const CreateInventory: React.FC = () => {
     productName: "",
     category: "",
     price: "",
-    vendor: "",
+    // vendor: "",
     customSku: "",
     ean: "",
     pluUpc: "",
@@ -96,6 +190,7 @@ const CreateInventory: React.FC = () => {
     minSellingQuantity: "1",
     minOrderValue: "",
     msrpPrice: "",
+    supplierId: "",
     orderValueDiscountType: "",
     orderValueDiscountValue: "",
     quantity: "",
@@ -199,7 +294,7 @@ const CreateInventory: React.FC = () => {
         formData.productName,
         formData.category,
         formData.price,
-        formData.vendor,
+        // formData.vendor,
         formData.pluUpc,
         formData.individualItemQuantity,
         formData.itemCost,
@@ -219,10 +314,13 @@ const CreateInventory: React.FC = () => {
   const progress = calculateProgress();
 
   useEffect(() => {
-    if (location.state && location.state.scannedPLU) {
-      setFormData((prev) => ({ ...prev, pluUpc: location.state.scannedPLU }));
-    }
-    // eslint-disable-next-line
+    // Fetch user info on mount to ensure user is loaded
+    dispatch(fetchUser() as any).then((result: any) => {
+      // result.payload will be the user data if fulfilled
+      if (result && result.payload) {
+        localStorage.setItem("clientId", result.payload.clientId || "");
+      }
+    });
   }, []);
 
   return (
@@ -377,7 +475,6 @@ const CreateInventory: React.FC = () => {
                     </svg>
                   )}
                 </div>
-
                 {/* Enhanced Connection Line with Animation */}
                 <div
                   className={`w-8 h-0.5 transition-all duration-500 transform ${
@@ -386,7 +483,6 @@ const CreateInventory: React.FC = () => {
                       : "bg-gray-300"
                   }`}
                 ></div>
-
                 <div
                   className={`flex items-center space-x-3 px-4 py-2 rounded-full transition-all duration-500 transform ${
                     showVariations
@@ -428,7 +524,7 @@ const CreateInventory: React.FC = () => {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H5a2 2 0 00-2 2v2M7 7h10"
                       />
                     </svg>
                   </div>
@@ -526,6 +622,9 @@ const CreateInventory: React.FC = () => {
                       hasVariants ? false : showOptionalFields
                     }
                     isVariantMode={hasVariants}
+                    suppliers={suppliers}
+                    suppliersLoading={suppliersLoading}
+                    suppliersError={suppliersError}
                   />
                 </div>{" "}
                 {/* Configuration Sections - Only show if optional fields are visible and not in variant mode */}
@@ -703,17 +802,21 @@ const CreateInventory: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-8">
+                {" "}
                 {/* Variations Configuration with enhanced styling */}
                 <div className="transform transition-all duration-500 ease-in-out animate-slideUp">
+                  {" "}
                   <VariationsConfiguration
                     variations={formData.variations}
                     attributes={formData.attributes}
                     onVariationsChange={(variations) =>
                       handleFormDataChange("variations", variations)
                     }
+                    suppliers={suppliers}
+                    suppliersLoading={suppliersLoading}
+                    suppliersError={suppliersError}
                   />
                 </div>
-
                 {/* Enhanced Action Buttons for Variations */}
                 <div
                   className="flex items-center justify-between pt-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-gray-200/50 animate-slideUp"

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { BrowserMultiFormatReader } from "@zxing/browser";
-import { NotFoundException } from "@zxing/library";                 
+import { NotFoundException } from "@zxing/library";
 
 interface BarcodeScanModalProps {
   isOpen: boolean;
