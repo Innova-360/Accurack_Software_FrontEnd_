@@ -45,6 +45,33 @@ export const loginUser = createAsyncThunk(
 );
 
 export const registerUser = createAsyncThunk(
+  "/auth/signup/super-admin",
+  async (
+    userData: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      password: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await apiClient.post("/auth/signup/super-admin", {
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        password: userData.password,
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Registration failed"
+      );
+    }
+  }
+);
+
+export const createClientWithAdmin = createAsyncThunk(
   "/auth/create-client-with-admin",
   async (
     userData: {
@@ -73,7 +100,7 @@ export const registerUser = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || "Registration failed"
+        error.response?.data?.message || "Client registration failed"
       );
     }
   }
@@ -211,8 +238,23 @@ export const authSlice = createSlice({
         state.token = action.payload.token;
         state.isAuthenticated = true;
         localStorage.setItem("authToken", action.payload.token);
+      })      .addCase(registerUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       })
-      .addCase(registerUser.rejected, (state, action) => {
+      // Create Client with Admin
+      .addCase(createClientWithAdmin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createClientWithAdmin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.isAuthenticated = true;
+        localStorage.setItem("authToken", action.payload.token);
+      })
+      .addCase(createClientWithAdmin.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

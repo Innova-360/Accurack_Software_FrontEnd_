@@ -39,7 +39,7 @@ const CreateInventory: React.FC = () => {
 
   // Get user from Redux store
   const clientId = useAppSelector((state) => state.user.user?.clientId);
-  console.log("Client ID from Redux store:", clientId);
+  // console.log("Client ID from Redux store:", clientId);
   // Add explicit types for calculateDiscounts
   const calculateDiscounts = (
     discountType: "percentage" | "fixed" | undefined,
@@ -89,7 +89,6 @@ const CreateInventory: React.FC = () => {
           totalPacksQuantity: pack.totalPacksQuantity || 0,
           orderedPacksPrice: pack.orderedPacksPrice || 0,
           discountAmount,
-          percentAmount,
           percentDiscount:
             pack.discountType === "percentage" ? pack.discountValue : 0,
         };
@@ -109,55 +108,64 @@ const CreateInventory: React.FC = () => {
       })(),
       variants: [], // always include variants field for API structure
     };
-
     if (hasVariants) {
-      basePayload.variants = (formData.variations || []).map((variant: any) => {
-        const price =
-          variant.price !== undefined ? parseFloat(String(variant.price)) : 0;
-        const msrpPrice =
-          variant.msrpPrice !== undefined
-            ? parseFloat(String(variant.msrpPrice))
-            : 0;
-        const discountType = variant.discountType as
-          | "percentage"
-          | "fixed"
-          | undefined;
-        const discountValue =
-          variant.discountValue !== undefined ? variant.discountValue : 0;
-        const { discountAmount, percentAmount } = calculateDiscounts(
-          discountType,
-          discountValue,
-          price
-        );
-        return {
-          name: variant.name,
-          price,
-          sku: variant.sku || variant.customSku || "",
-          msrpPrice,
-          discountAmount,
-          percentAmount,
-          percentDiscount: discountType === "percentage" ? discountValue : 0,
-          packs: (variant.packs || variant.packDiscounts || []).map(
-            (pack: any) => {
-              const { discountAmount, percentAmount } = calculateDiscounts(
+      console.log("🔍 Processing variants for API payload:");
+      console.log("Raw variations data:", formData.variations);
+
+      basePayload.variants = (formData.variations || []).map(
+        (variant: any, index: number) => {
+          // Use the correct field names from the Variation interface
+          const price = variant.itemSellingCost || 0; // itemSellingCost is the selling price in Variation
+          const msrpPrice = variant.msrpPrice || 0;
+
+          console.log(`🔸 Variant ${index + 1}:`, {
+            name: variant.name,
+            itemSellingCost: variant.itemSellingCost,
+            customSku: variant.customSku,
+            msrpPrice: variant.msrpPrice,
+            packDiscounts: variant.packDiscounts,
+          });
+
+          // Handle variant-level discounts
+          const variantDiscountAmount = variant.discount || 0;
+          const variantPercentDiscount = variant.orderValueDiscount || 0;          const mappedVariant = {
+            name: variant.name || "",
+            price,
+            sku: variant.customSku || "",
+            msrpPrice,
+            discountAmount: variantDiscountAmount,
+            percentDiscount: variantPercentDiscount,
+            packs: (variant.packDiscounts || []).map((pack: any) => {
+              const packPrice = pack.orderedPacksPrice || 0;
+              const { discountAmount: packDiscountAmount } = calculateDiscounts(
                 pack.discountType,
                 pack.discountValue,
-                price
+                packPrice
               );
               return {
-                minimumSellingQuantity: pack.quantity,
+                minimumSellingQuantity: pack.quantity || 0,
                 totalPacksQuantity: pack.totalPacksQuantity || 0,
-                orderedPacksPrice: pack.orderedPacksPrice || 0,
-                discountAmount,
-                percentAmount,
+                orderedPacksPrice: packPrice,
+                discountAmount: packDiscountAmount,
                 percentDiscount:
-                  pack.discountType === "percentage" ? pack.discountValue : 0,
+                  pack.discountType === "percentage"
+                    ? pack.discountValue || 0
+                    : 0,
               };
-            }
-          ),
-        };
-      });
+            }),
+          };
+
+          console.log(`🔸 Mapped variant ${index + 1}:`, mappedVariant);
+          return mappedVariant;
+        }
+      );
+      console.log("✅ Final variants payload:", basePayload.variants);
     }
+
+    console.log(
+      "🚀 Complete API Payload being sent:",
+      JSON.stringify(basePayload, null, 2)
+    );
     return basePayload;
   };
 
@@ -791,17 +799,21 @@ const CreateInventory: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-8">
+                {" "}
                 {/* Variations Configuration with enhanced styling */}
                 <div className="transform transition-all duration-500 ease-in-out animate-slideUp">
+                  {" "}
                   <VariationsConfiguration
                     variations={formData.variations}
                     attributes={formData.attributes}
                     onVariationsChange={(variations) =>
                       handleFormDataChange("variations", variations)
                     }
+                    suppliers={suppliers}
+                    suppliersLoading={suppliersLoading}
+                    suppliersError={suppliersError}
                   />
                 </div>
-
                 {/* Enhanced Action Buttons for Variations */}
                 <div
                   className="flex items-center justify-between pt-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-gray-200/50 animate-slideUp"

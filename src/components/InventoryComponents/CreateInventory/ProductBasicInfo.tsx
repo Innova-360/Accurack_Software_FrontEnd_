@@ -3,7 +3,7 @@ import type { ProductFormData } from "./types";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchInventorySuppliers } from "../../../store/slices/inventorySupplierSlice";
 import type { RootState } from "../../../store";
-import type { Supplier } from '../../../services/supplierAPI';
+import type { Supplier } from "../../../services/supplierAPI";
 
 interface ProductBasicInfoProps {
   formData: ProductFormData;
@@ -11,6 +11,10 @@ interface ProductBasicInfoProps {
   fileInputRef: React.RefObject<HTMLInputElement>;
   showOptionalFields: boolean;
   isVariantMode?: boolean;
+  // Add suppliers as props to avoid duplicate API calls
+  suppliers?: Supplier[];
+  suppliersLoading?: boolean;
+  suppliersError?: string | null;
 }
 
 const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
@@ -19,28 +23,57 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
   fileInputRef,
   showOptionalFields,
   isVariantMode = false,
+  suppliers: propSuppliers,
+  suppliersLoading: propSuppliersLoading,
+  suppliersError: propSuppliersError,
 }) => {
   const dispatch = useDispatch();
-  // Use correct key: inventorySuppliers (plural)
+  // Use suppliers from props if available, otherwise fall back to Redux
   const {
-    suppliers,
-    loading: suppliersLoading,
-    error: suppliersError,
+    suppliers: reduxSuppliers,
+    loading: reduxSuppliersLoading,
+    error: reduxSuppliersError,
   } = useSelector((state: RootState) => state.inventorySuppliers) as {
     suppliers: Supplier[];
     loading: boolean;
     error: string | null;
   };
 
-  // Fetch suppliers when component mounts or storeId changes
+  // Use prop suppliers if available, otherwise use Redux suppliers
+  const suppliers = propSuppliers || reduxSuppliers;
+  const suppliersLoading = propSuppliersLoading ?? reduxSuppliersLoading;
+  const suppliersError = propSuppliersError || reduxSuppliersError; // Only fetch suppliers if not provided as props and not already loading/loaded
   React.useEffect(() => {
+    // Skip fetching if suppliers are provided as props
+    if (propSuppliers || propSuppliersLoading !== undefined) {
+      return;
+    }
+
     // Extract storeId from URL (works for /store/:id/)
     const match = window.location.pathname.match(/store\/(.+?)(?:\/|$)/);
     const storeId = match ? match[1] : "";
-    if (storeId) {
+
+    // Only fetch if we have a storeId and suppliers haven't been loaded yet
+    if (
+      storeId &&
+      !suppliersLoading &&
+      suppliers.length === 0 &&
+      !suppliersError
+    ) {
+      console.log(
+        "📦 Fetching suppliers for store (ProductBasicInfo):",
+        storeId
+      );
       dispatch(fetchInventorySuppliers({ storeId, page: 1, limit: 50 }) as any);
     }
-  }, [dispatch]);
+  }, [
+    dispatch,
+    suppliers.length,
+    suppliersLoading,
+    suppliersError,
+    propSuppliers,
+    propSuppliersLoading,
+  ]);
 
   // Calculate minimum order value when itemSellingCost or minSellingQuantity changes
   React.useEffect(() => {
@@ -250,8 +283,12 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                 required
               >
                 <option value="">Select Vendor</option>
-                {suppliersLoading && <option disabled>Loading suppliers...</option>}
-                {suppliersError && <option disabled>Error loading suppliers</option>}
+                {suppliersLoading && (
+                  <option disabled>Loading suppliers...</option>
+                )}
+                {suppliersError && (
+                  <option disabled>Error loading suppliers</option>
+                )}
                 {suppliers &&
                   suppliers.length > 0 &&
                   suppliers.map((supplier) => (

@@ -1,18 +1,74 @@
 import React, { useRef } from "react";
 import type { Variation, Attribute, PackDiscount, DiscountTier } from "./types";
 import { generateId } from "./utils";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchInventorySuppliers } from "../../../store/slices/inventorySupplierSlice";
+import type { RootState } from "../../../store";
+import type { Supplier } from "../../../services/supplierAPI";
 
 interface VariationsConfigurationProps {
   variations: Variation[];
   attributes: Attribute[];
   onVariationsChange: (variations: Variation[]) => void;
+  // Add suppliers as props to avoid duplicate API calls
+  suppliers?: Supplier[];
+  suppliersLoading?: boolean;
+  suppliersError?: string | null;
 }
 
 const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
   variations,
   attributes,
   onVariationsChange,
+  suppliers: propSuppliers,
+  suppliersLoading: propSuppliersLoading,
+  suppliersError: propSuppliersError,
 }) => {
+  const dispatch = useDispatch();
+  // Use suppliers from props if available, otherwise fall back to Redux
+  const {
+    suppliers: reduxSuppliers,
+    loading: reduxSuppliersLoading,
+    error: reduxSuppliersError,
+  } = useSelector((state: RootState) => state.inventorySuppliers) as {
+    suppliers: Supplier[];
+    loading: boolean;
+    error: string | null;
+  };
+
+  // Use prop suppliers if available, otherwise use Redux suppliers
+  const suppliers = propSuppliers || reduxSuppliers;
+  const suppliersLoading = propSuppliersLoading ?? reduxSuppliersLoading;
+  const suppliersError = propSuppliersError || reduxSuppliersError; // Only fetch suppliers if not provided as props and not already loading/loaded
+  React.useEffect(() => {
+    // Skip fetching if suppliers are provided as props
+    if (propSuppliers || propSuppliersLoading !== undefined) {
+      return;
+    }
+
+    // Extract storeId from URL (works for /store/:id/)
+    const match = window.location.pathname.match(/store\/(.+?)(?:\/|$)/);
+    const storeId = match ? match[1] : "";
+
+    // Only fetch if we have a storeId and suppliers haven't been loaded yet
+    if (
+      storeId &&
+      !suppliersLoading &&
+      suppliers.length === 0 &&
+      !suppliersError
+    ) {
+      console.log("📦 Fetching suppliers for store:", storeId);
+      dispatch(fetchInventorySuppliers({ storeId, page: 1, limit: 50 }) as any);
+    }
+  }, [
+    dispatch,
+    suppliers.length,
+    suppliersLoading,
+    suppliersError,
+    propSuppliers,
+    propSuppliersLoading,
+  ]);
+
   const addVariation = () => {
     const newVariation: Variation = {
       id: generateId(),
@@ -33,6 +89,7 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
       plu: "",
       discount: 0,
       customSku: "",
+      supplierId: "",
       imageFile: null,
       imagePreview: "",
       hasPackSettings: false,
@@ -93,7 +150,6 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
       reader.readAsDataURL(file);
     }
   };
-
   const addVariationPackDiscount = (variationId: string) => {
     const variation = variations.find((v) => v.id === variationId);
     if (variation) {
@@ -102,6 +158,8 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
         quantity: 1,
         discountType: "percentage",
         discountValue: 0,
+        totalPacksQuantity: 0,
+        orderedPacksPrice: 0,
       };
       updateVariation(variationId, "packDiscounts", [
         ...variation.packDiscounts,
@@ -201,6 +259,9 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
             variation={variation}
             index={index}
             attributes={attributes}
+            suppliers={suppliers}
+            suppliersLoading={suppliersLoading}
+            suppliersError={suppliersError}
             onUpdate={updateVariation}
             onUpdateAttribute={updateVariationAttribute}
             onRemove={removeVariation}
@@ -222,6 +283,9 @@ interface VariationCardProps {
   variation: Variation;
   index: number;
   attributes: Attribute[];
+  suppliers: Supplier[];
+  suppliersLoading: boolean;
+  suppliersError: string | null;
   onUpdate: (id: string, field: keyof Variation, value: any) => void;
   onUpdateAttribute: (
     variationId: string,
@@ -255,6 +319,9 @@ const VariationCard: React.FC<VariationCardProps> = ({
   variation,
   index,
   attributes,
+  suppliers,
+  suppliersLoading,
+  suppliersError,
   onUpdate,
   onUpdateAttribute,
   onRemove,
@@ -547,13 +614,38 @@ const VariationCard: React.FC<VariationCardProps> = ({
         <div>
           {" "}
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Vendor
+            Vendor *
           </label>
-          <input
-            type="text"
-            // onChange={(e) => onUpdate(variation.id, "vendor", e.target.value)}
+          <select
+            value={variation.supplierId}
+            onChange={(e) => {
+              const selectedSupplierId = e.target.value;
+              onUpdate(variation.id, "supplierId", selectedSupplierId);
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
-          />
+            required
+          >
+            <option value="">Select Vendor</option>
+            {suppliersLoading && <option disabled>Loading suppliers...</option>}
+            {suppliersError && (
+              <option disabled>Error loading suppliers</option>
+            )}
+            {suppliers &&
+              suppliers.length > 0 &&
+              suppliers.map((supplier) => (
+                <option key={supplier.id} value={supplier.id}>
+                  {supplier.name}
+                </option>
+              ))}
+          </select>
+          {suppliersLoading && (
+            <div className="text-xs text-gray-500 mt-1">
+              Loading suppliers...
+            </div>
+          )}
+          {suppliersError && (
+            <div className="text-xs text-red-500 mt-1">{suppliersError}</div>
+          )}
         </div>
         <div>
           {" "}
@@ -638,12 +730,13 @@ const VariationCard: React.FC<VariationCardProps> = ({
               </div>
             )}
             <div className="space-y-2">
+              {" "}
               {variation.packDiscounts.map((discount) => (
                 <div
                   key={discount.id}
                   className="grid grid-cols-12 gap-2 p-2 bg-gray-50 rounded items-center border border-gray-200 relative group"
                 >
-                  <div className="col-span-3 flex flex-col">
+                  <div className="col-span-2 flex flex-col">
                     <label className="text-xs text-gray-600 mb-1">
                       Pack Qty<span className="text-red-500">*</span>
                     </label>
@@ -664,7 +757,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
                       required
                     />
                   </div>
-                  <div className="col-span-3 flex flex-col">
+                  <div className="col-span-2 flex flex-col">
                     <label className="text-xs text-gray-600 mb-1">
                       Discount Type
                     </label>
@@ -684,7 +777,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
                       <option value="fixed">₹ (Fixed)</option>
                     </select>
                   </div>
-                  <div className="col-span-4 flex flex-col">
+                  <div className="col-span-2 flex flex-col">
                     <label className="text-xs text-gray-600 mb-1">
                       Discount Value<span className="text-red-500">*</span>
                     </label>
@@ -710,6 +803,47 @@ const VariationCard: React.FC<VariationCardProps> = ({
                         {discount.discountType === "percentage" ? "%" : "₹"}
                       </span>
                     </div>
+                  </div>
+                  <div className="col-span-2 flex flex-col">
+                    <label className="text-xs text-gray-600 mb-1">
+                      Total Packs
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      placeholder="Total"
+                      value={discount.totalPacksQuantity || ""}
+                      onChange={(e) =>
+                        onUpdatePackDiscount(
+                          variation.id,
+                          discount.id,
+                          "totalPacksQuantity",
+                          parseInt(e.target.value) || 0
+                        )
+                      }
+                      className="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+                    />
+                  </div>
+                  <div className="col-span-2 flex flex-col">
+                    <label className="text-xs text-gray-600 mb-1">
+                      Ordered Price
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      placeholder="Price"
+                      value={discount.orderedPacksPrice || ""}
+                      onChange={(e) =>
+                        onUpdatePackDiscount(
+                          variation.id,
+                          discount.id,
+                          "orderedPacksPrice",
+                          parseFloat(e.target.value) || 0
+                        )
+                      }
+                      className="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+                    />
                   </div>
                   <div className="col-span-2 flex items-center justify-end">
                     <button
