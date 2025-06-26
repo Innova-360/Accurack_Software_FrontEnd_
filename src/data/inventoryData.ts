@@ -1,12 +1,33 @@
+// export interface Variant {
+//   id?: string;
+//   name: string;
+//   price: number;
+//   sku: string;
+//   msrpPrice?: number;
+//   discountAmount?: number;
+//   percentDiscount?: number;
+//   packs: Array<{
+//     minimumSellingQuantity: number;
+//     totalPacksQuantity: number;
+//     orderedPacksPrice: number;
+//     percentDiscount: number;
+//     discountAmount?: number;
+//   }>;
+// }
+
 export interface Variant {
   id?: string;
   name: string;
   price: number;
-  sku: string;
+  sku?: string;
+  pluUpc?: string;
+  quantity?: number;
   msrpPrice?: number;
   discountAmount?: number;
   percentDiscount?: number;
-  packs: Array<{
+  supplierId?: string;
+  packIds?: string[];
+  packs?: Array<{
     minimumSellingQuantity: number;
     totalPacksQuantity: number;
     orderedPacksPrice: number;

@@ -15,13 +15,88 @@ import {
   AddInventoryOptionsModal,
   UploadInventoryModal,
   BarcodeScanModal,
+  EditProductModal,
 } from "../../components/InventoryComponents";
+import { productAPI } from "../../services/productAPI";
+import type { Product } from "../../data/inventoryData";
+import type { EditProductFormData } from "../../components/InventoryComponents/EditProductModal";
 import {
   useInventoryStats,
   useFilteredProducts,
   useGroupedProducts,
   useLowStockProducts,
 } from "../../hooks/useInventory";
+
+// Utility function to extract error messages from API response
+const extractErrorMessage = (error: any): string => {
+  // Default fallback message
+  const defaultMessage = "An unexpected error occurred. Please try again.";
+
+  try {
+    // Check if error exists and has response data
+    if (!error?.response?.data) {
+      return defaultMessage;
+    }
+
+    const { data } = error.response;
+
+    // Handle different message formats
+    if (data.message) {
+      // If message is a string, return it directly
+      if (typeof data.message === "string") {
+        return data.message;
+      }
+
+      // If message is an array, join the messages
+      if (Array.isArray(data.message)) {
+        return data.message.join(", ");
+      }
+
+      // If message is an object, try to extract meaningful text
+      if (typeof data.message === "object") {
+        // Handle nested validation errors (e.g., { field: ['error1', 'error2'] })
+        const errorMessages: string[] = [];
+        Object.values(data.message).forEach((value: any) => {
+          if (typeof value === "string") {
+            errorMessages.push(value);
+          } else if (Array.isArray(value)) {
+            errorMessages.push(...value);
+          }
+        });
+        return errorMessages.length > 0
+          ? errorMessages.join(", ")
+          : defaultMessage;
+      }
+    }
+
+    // Check for other common error fields
+    if (data.error) {
+      if (typeof data.error === "string") {
+        return data.error;
+      }
+      if (Array.isArray(data.error)) {
+        return data.error.join(", ");
+      }
+    }
+
+    // Check for detail field (common in some APIs)
+    if (data.detail && typeof data.detail === "string") {
+      return data.detail;
+    }
+
+    // If we have any string value in the data object, use it
+    const firstStringValue = Object.values(data).find(
+      (value) => typeof value === "string"
+    );
+    if (firstStringValue) {
+      return firstStringValue as string;
+    }
+  } catch (extractionError) {
+    console.error("Error extracting error message:", extractionError);
+  }
+
+  return defaultMessage;
+};
 
 const Inventory: React.FC = () => {
   const navigate = useNavigate();
@@ -50,12 +125,14 @@ const Inventory: React.FC = () => {
   const [mobileViewType, setMobileViewType] = useState<"cards" | "table">(
     "cards"
   );
-
   // Modal states
   const [isAddInventoryModalOpen, setIsAddInventoryModalOpen] = useState(false);
   const [isUploadInventoryModalOpen, setIsUploadInventoryModalOpen] =
     useState(false);
   const [isBarcodeScanModalOpen, setIsBarcodeScanModalOpen] = useState(false);
+  const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
+  const [selectedProductToEdit, setSelectedProductToEdit] =
+    useState<Product | null>(null);
   // Use custom hooks for data processing - MUST be called before any early returns
   const inventoryStats = useInventoryStats(products);
   const filteredProducts = useFilteredProducts(
@@ -85,6 +162,7 @@ const Inventory: React.FC = () => {
 
   // Show error state
   if (error) {
+    const errorMessage = extractErrorMessage(error);
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -105,7 +183,7 @@ const Inventory: React.FC = () => {
                 </svg>
               </div>
               <p className="text-gray-600 mb-4">
-                Error loading products: {error}
+                Error loading products: {errorMessage}
               </p>
               <button
                 onClick={refetch}
@@ -276,7 +354,6 @@ const Inventory: React.FC = () => {
       navigate("/inventory/create", { state: { scannedPLU: barcode } });
     }
   };
-
   const handleFileUpload = async (file: File) => {
     // TODO: Implement file upload logic
     console.log("Uploading file:", file.name);
@@ -287,6 +364,34 @@ const Inventory: React.FC = () => {
 
     // Show success notification
     toast.success("Inventory uploaded successfully!");
+  };
+
+  // Edit product handlers
+  const handleEditProduct = (product: Product) => {
+    setSelectedProductToEdit(product);
+    setIsEditProductModalOpen(true);
+  };
+
+  const handleUpdateProduct = async (
+    productData: EditProductFormData,
+    productId: string
+  ) => {
+    try {
+      await productAPI.updateProduct(productId, productData);
+      toast.success("Product updated successfully!");
+      refetch(); // Refresh the product list
+      setIsEditProductModalOpen(false);
+      setSelectedProductToEdit(null);
+    } catch (error) {
+      const errorMessage = extractErrorMessage(error);
+      console.error("Failed to update product:", error);
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditProductModalOpen(false);
+    setSelectedProductToEdit(null);
   };
 
   return (
@@ -390,12 +495,13 @@ const Inventory: React.FC = () => {
                     onSelectAll={handleSelectAll}
                     onSelectItem={handleSelectItem}
                     onSort={handleSort}
+                    onProductDeleted={refetch}
+                    onProductEdited={handleEditProduct}
                   />
                 )}
               </div>
             )}
-          </div>
-
+          </div>{" "}
           {/* Desktop View */}
           <div className="hidden md:block overflow-x-auto">
             {groupBy === "category" && groupedProducts ? (
@@ -413,10 +519,11 @@ const Inventory: React.FC = () => {
                 onSelectAll={handleSelectAll}
                 onSelectItem={handleSelectItem}
                 onSort={handleSort}
+                onProductDeleted={refetch}
+                onProductEdited={handleEditProduct}
               />
             )}
           </div>
-
           {/* Pagination - Only show when not grouped by category */}
           {groupBy !== "category" && (
             <Pagination
@@ -443,7 +550,6 @@ const Inventory: React.FC = () => {
           isPageChanging={isLowStockPageChanging}
         />
       </div>
-
       {/* Modals */}
       <AddInventoryOptionsModal
         isOpen={isAddInventoryModalOpen}
@@ -452,17 +558,21 @@ const Inventory: React.FC = () => {
         onCreateInventory={handleCreateInventory}
         onScanInventory={handleScanInventory}
       />
-
       <UploadInventoryModal
         isOpen={isUploadInventoryModalOpen}
         onClose={() => setIsUploadInventoryModalOpen(false)}
         onUpload={handleFileUpload}
-      />
-
+      />{" "}
       <BarcodeScanModal
         isOpen={isBarcodeScanModalOpen}
         onClose={() => setIsBarcodeScanModalOpen(false)}
         onBarcodeScanned={handleBarcodeScanned}
+      />
+      <EditProductModal
+        isOpen={isEditProductModalOpen}
+        onClose={handleCloseEditModal}
+        onSave={handleUpdateProduct}
+        product={selectedProductToEdit}
       />
     </>
   );

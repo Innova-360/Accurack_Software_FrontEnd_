@@ -1,7 +1,55 @@
 import apiClient from "./api";
 import type { Product as BaseProduct, Variant } from "../data/inventoryData";
 
-// Define the API response types based on the productsSlice payload
+// export interface ApiProduct {
+//   id: string;
+//   name: string;
+//   category: string;
+//   ean: string;
+//   pluUpc: string;
+//   supplierId: string;
+//   sku: string;
+//   singleItemCostPrice: number;
+//   itemQuantity: number;
+//   msrpPrice: number;
+//   singleItemSellingPrice: number;
+//   discountAmount: number;
+//   percentDiscount: number;
+//   clientId: string;
+//   storeId: string;
+//   hasVariants: boolean;
+//   description?: string;
+//   supplier?: string;
+//   createdAt?: string;
+//   packs: Array<{
+//     minimumSellingQuantity: number;
+//     totalPacksQuantity: number;
+//     orderedPacksPrice: number;
+//     discountAmount: number;
+//     percentDiscount: number;
+//   }>;
+//   variants: Array<{
+//     id?: string;
+//     name: string;
+//     price: number;
+//     sku?: string;
+//     pluUpc?: string;
+//     quantity?: number;
+//     msrpPrice?: number;
+//     discountAmount?: number;
+//     percentDiscount?: number;
+//     supplierId?: string;
+//     packIds?: string[];
+//     packs: Array<{
+//       minimumSellingQuantity: number;
+//       totalPacksQuantity: number;
+//       orderedPacksPrice: number;
+//       percentDiscount: number;
+//       discountAmount?: number;
+//     }>;
+//   }>;
+// }
+
 export interface ApiProduct {
   id: string;
   name: string;
@@ -22,6 +70,16 @@ export interface ApiProduct {
   description?: string;
   supplier?: string;
   createdAt?: string;
+  store?: {
+    id: string;
+    name: string;
+  };
+  productSuppliers?: Array<{
+    supplier: {
+      id: string;
+      name: string;
+    };
+  }>;
   packs: Array<{
     minimumSellingQuantity: number;
     totalPacksQuantity: number;
@@ -33,10 +91,14 @@ export interface ApiProduct {
     id?: string;
     name: string;
     price: number;
-    sku: string;
+    sku?: string;
+    pluUpc?: string;
+    quantity?: number;
     msrpPrice?: number;
     discountAmount?: number;
     percentDiscount?: number;
+    supplierId?: string;
+    packIds?: string[];
     packs: Array<{
       minimumSellingQuantity: number;
       totalPacksQuantity: number;
@@ -61,19 +123,28 @@ export const productAPI = {
       let apiProducts: ApiProduct[];
 
       // First check if response.data.data exists and has products
-      if (response.data?.data?.products && Array.isArray(response.data.data.products)) {
+      if (
+        response.data?.data?.products &&
+        Array.isArray(response.data.data.products)
+      ) {
         apiProducts = response.data.data.products;
       } else if (response.data?.data && Array.isArray(response.data.data)) {
         apiProducts = response.data.data;
       } else if (Array.isArray(response.data)) {
         apiProducts = response.data;
-      } else if (response.data?.products && Array.isArray(response.data.products)) {
+      } else if (
+        response.data?.products &&
+        Array.isArray(response.data.products)
+      ) {
         apiProducts = response.data.products;
-      } else if (response.data?.data && typeof response.data.data === 'object') {
+      } else if (
+        response.data?.data &&
+        typeof response.data.data === "object"
+      ) {
         // If data is an object, look for arrays inside it
         const dataKeys = Object.keys(response.data.data);
         console.log("Data object keys:", dataKeys);
-        
+
         // Try to find an array in the data object
         let foundArray = null;
         for (const key of dataKeys) {
@@ -83,7 +154,7 @@ export const productAPI = {
             break;
           }
         }
-        
+
         if (foundArray) {
           apiProducts = foundArray;
         } else {
@@ -100,47 +171,102 @@ export const productAPI = {
       if (!Array.isArray(apiProducts)) {
         console.error("API products is not an array:", apiProducts);
         return [];
-      }      // Transform API products to match the existing Product interface
+      } // Transform API products to match the existing Product interface
       return apiProducts.map((apiProduct) => {
         try {
+          // return {
+          //   id: apiProduct.id || "",
+          //   name: apiProduct.name || "Unknown Product",
+          //   quantity: apiProduct.itemQuantity || 0,
+          //   plu: apiProduct.pluUpc || "",
+          //   sku: apiProduct.sku || "",
+          //   description: apiProduct.description || "",
+          //   price: `$${(apiProduct.singleItemSellingPrice || 0).toFixed(2)}`,
+          //   category: apiProduct.category || "Uncategorized",
+          //   itemsPerUnit: 1, // Default value, adjust if needed
+          //   supplier: apiProduct.supplier || "",
+          //   createdAt:
+          //     apiProduct.createdAt || new Date().toISOString().split("T")[0],
+          //   hasVariants: apiProduct.hasVariants || false,
+          //   // variants: apiProduct.variants?.map((variant) => ({
+          //   //   id: variant.id,
+          //   //   name: variant.name || 'Unknown Variant',
+          //   //   price: variant.price || 0,
+          //   //   sku: variant.sku || '',
+          //   //   msrpPrice: variant.msrpPrice,
+          //   //   discountAmount: variant.discountAmount,
+          //   //   percentDiscount: variant.percentDiscount,
+          //   //   packs: variant.packs || [],
+          //   // })) || [],
+
+          //   variants:
+          //     apiProduct.variants?.map((variant) => ({
+          //       id: variant.id,
+          //       name: variant.name || "Unknown Variant",
+          //       price: variant.price || 0,
+          //       sku: variant.sku || "",
+          //       pluUpc: variant.pluUpc || "",
+          //       quantity: variant.quantity || 0,
+          //       msrpPrice: variant.msrpPrice,
+          //       discountAmount: variant.discountAmount,
+          //       percentDiscount: variant.percentDiscount,
+          //       supplierId: variant.supplierId,
+          //       packIds: variant.packIds || [],
+          //       packs: variant.packs || [],
+          //     })) || [],
+          // };
+
           return {
-            id: apiProduct.id || '',
-            name: apiProduct.name || 'Unknown Product',
+            id: apiProduct.id || "",
+            name: apiProduct.name || "Unknown Product",
             quantity: apiProduct.itemQuantity || 0,
-            plu: apiProduct.pluUpc || '',
-            sku: apiProduct.sku || '',
-            description: apiProduct.description || '',
+            plu: apiProduct.pluUpc || "",
+            sku: apiProduct.sku || "",
+            description: apiProduct.description || "",
             price: `$${(apiProduct.singleItemSellingPrice || 0).toFixed(2)}`,
-            category: apiProduct.category || 'Uncategorized',
+            category: apiProduct.category || "Uncategorized",
             itemsPerUnit: 1, // Default value, adjust if needed
-            supplier: apiProduct.supplier || '',
-            createdAt: apiProduct.createdAt || new Date().toISOString().split("T")[0],
+            supplier:
+              apiProduct.supplier ||
+              apiProduct.store?.name ||
+              "Unknown Supplier",
+            createdAt:
+              apiProduct.createdAt || new Date().toISOString().split("T")[0],
             hasVariants: apiProduct.hasVariants || false,
-            variants: apiProduct.variants?.map((variant) => ({
-              id: variant.id,
-              name: variant.name || 'Unknown Variant',
-              price: variant.price || 0,
-              sku: variant.sku || '',
-              msrpPrice: variant.msrpPrice,
-              discountAmount: variant.discountAmount,
-              percentDiscount: variant.percentDiscount,
-              packs: variant.packs || [],
-            })) || [],
+            variants:
+              apiProduct.variants?.map((variant) => ({
+                id: variant.id,
+                name: variant.name || "Unknown Variant",
+                price: variant.price || 0,
+                sku: variant.sku || variant.id || "",
+                pluUpc: variant.pluUpc || "",
+                quantity: variant.quantity || 0,
+                msrpPrice: variant.msrpPrice,
+                discountAmount: variant.discountAmount,
+                percentDiscount: variant.percentDiscount,
+                supplierId: variant.supplierId,
+                packIds: variant.packIds || [],
+                packs: variant.packs || [],
+              })) || [],
           };
         } catch (transformError) {
-          console.error('Error transforming product:', apiProduct, transformError);
+          console.error(
+            "Error transforming product:",
+            apiProduct,
+            transformError
+          );
           // Return a basic product structure for failed transformations
           return {
             id: apiProduct.id || Math.random().toString(),
-            name: apiProduct.name || 'Unknown Product',
+            name: apiProduct.name || "Unknown Product",
             quantity: 0,
-            plu: '',
-            sku: '',
-            description: 'Error loading product details',
-            price: '$0.00',
-            category: 'Uncategorized',
+            plu: "",
+            sku: "",
+            description: "Error loading product details",
+            price: "$0.00",
+            category: "Uncategorized",
             itemsPerUnit: 1,
-            supplier: '',
+            supplier: "",
             createdAt: new Date().toISOString().split("T")[0],
             hasVariants: false,
             variants: [],
@@ -149,6 +275,33 @@ export const productAPI = {
       });
     } catch (error) {
       console.error("Error fetching products:", error);
+      throw error;
+    }
+  },
+
+  // Delete a product
+  async deleteProduct(
+    id: string
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await apiClient.delete(`/product/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      throw error;
+    }
+  },
+
+  // Update a product
+  async updateProduct(
+    id: string,
+    productData: any
+  ): Promise<{ success: boolean; message: string; data?: any }> {
+    try {
+      const response = await apiClient.put(`/product/${id}`, productData);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating product:", error);
       throw error;
     }
   },

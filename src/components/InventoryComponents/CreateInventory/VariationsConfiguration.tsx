@@ -646,7 +646,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
           {suppliersError && (
             <div className="text-xs text-red-500 mt-1">{suppliersError}</div>
           )}
-        </div>
+        </div>{" "}
         <div>
           {" "}
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -659,6 +659,34 @@ const VariationCard: React.FC<VariationCardProps> = ({
               onUpdate(variation.id, "customSku", e.target.value)
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            PLU
+          </label>
+          <input
+            type="text"
+            value={variation.plu || ""}
+            onChange={(e) => onUpdate(variation.id, "plu", e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            placeholder="PLU"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Stock Quantity *
+          </label>
+          <input
+            type="number"
+            min="0"
+            value={variation.quantity || 0}
+            onChange={(e) =>
+              onUpdate(variation.id, "quantity", parseInt(e.target.value) || 0)
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            placeholder="Stock quantity"
+            required
           />
         </div>
         <div>
