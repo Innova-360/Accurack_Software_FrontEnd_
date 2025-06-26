@@ -31,11 +31,17 @@ const AddNewSale: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [notes, setNotes] = useState('');
   const [discount, setDiscount] = useState(0);
+  const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('percentage');
+  const [taxRate, setTaxRate] = useState(10); // Default 10% tax, but user can change
   
   // Calculated values
   const subtotal = products.reduce((sum, product) => sum + product.total, 0);
-  const discountAmount = (subtotal * discount) / 100;
-  const taxRate = 10; // 10% tax
+  const discountAmount = discountType === 'percentage' 
+    ? (subtotal * discount) / 100 
+    : discount;
+  const discountPercentage = discountType === 'amount' 
+    ? subtotal > 0 ? (discount / subtotal) * 100 : 0
+    : discount;
   const taxAmount = ((subtotal - discountAmount) * taxRate) / 100;
   const finalTotal = subtotal - discountAmount + taxAmount;
 
@@ -74,6 +80,16 @@ const AddNewSale: React.FC = () => {
     if (products.length > 1) {
       setProducts(products.filter((_, i) => i !== index));
     }
+  };
+
+  const handleDiscountChange = (value: number) => {
+    setDiscount(value);
+  };
+
+  const handleDiscountTypeChange = (type: 'percentage' | 'amount') => {
+    setDiscountType(type);
+    // Reset discount value when changing type to avoid confusion
+    setDiscount(0);
   };
 
   const handleSaveDraft = () => {
@@ -266,10 +282,10 @@ const AddNewSale: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Postal Code <span className="text-red-500">*</span>
+                      Postal Code/ Zip Code <span className="text-red-500">*</span>
                     </label>
                     <input
-                      type="text"
+                      type="number"
                       value={postalCode}
                       onChange={(e) => setPostalCode(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
@@ -418,42 +434,74 @@ const AddNewSale: React.FC = () => {
           {/* Order Summary - Right Column */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
-              
-              <div className="space-y-3">
-                <div className="flex justify-between text-gray-600">
-                  <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
-                </div>
-                
-                <div className="flex justify-between text-gray-600">
-                  <span>Discount</span>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={discount}
-                      onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
-                      className="w-16 px-2 py-1 text-sm border border-gray-300 rounded"
-                    />
-                    <span>%</span>
-                    <span>-${discountAmount.toFixed(2)}</span>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>                <div className="space-y-3">
+                  <div className="flex justify-between text-gray-600">
+                    <span>Subtotal</span>
+                    <span>${subtotal.toFixed(2)}</span>
+                  </div>
+                  
+                  <div className="border-t border-gray-100 pt-3">
+                    <div className="flex justify-between items-start text-gray-600 mb-3">
+                      <span className="font-medium">Discount</span>
+                      <div className="flex flex-col items-end space-y-2">
+                        <div className="flex items-center gap-3">
+                          <select
+                            value={discountType}
+                            onChange={(e) => handleDiscountTypeChange(e.target.value as 'percentage' | 'amount')}
+                            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                          >
+                            <option value="percentage">Percentage</option>
+                            <option value="amount">Amount</option>
+                          </select>
+                          <input
+                            type="number"
+                            min="0"
+                            max={discountType === 'percentage' ? 100 : subtotal}
+                            step={discountType === 'percentage' ? 1 : 0.01}
+                            value={discount}
+                            onChange={(e) => handleDiscountChange(parseFloat(e.target.value) || 0)}
+                            className="w-24 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                            placeholder={discountType === 'percentage' ? '0' : '0.00'}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span></span>
+                      <span className="text-red-600">-${discountAmount.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-start text-gray-600">
+                    <span className="font-medium">Tax</span>
+                    <div className="flex flex-col items-end space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          value={taxRate}
+                          onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+                          className="w-[100%] px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                          placeholder="0"
+                        />
+                        <span className="text-sm">%</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-gray-600">
+                    <span></span>
+                    <span>${taxAmount.toFixed(2)}</span>
+                  </div>
+                  
+                  <hr className="my-4" />
+                  
+                  <div className="flex justify-between font-semibold text-lg">
+                    <span>Total</span>
+                    <span>${finalTotal.toFixed(2)}</span>
                   </div>
                 </div>
-                
-                <div className="flex justify-between text-gray-600">
-                  <span>Tax ({taxRate}%)</span>
-                  <span>${taxAmount.toFixed(2)}</span>
-                </div>
-                
-                <hr className="my-4" />
-                
-                <div className="flex justify-between font-semibold text-lg">
-                  <span>Total</span>
-                  <span>${finalTotal.toFixed(2)}</span>
-                </div>
-              </div>
               
               <div className="mt-6 space-y-3">
                 <SpecialButton
