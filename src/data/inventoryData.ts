@@ -1,4 +1,43 @@
+// export interface Variant {
+//   id?: string;
+//   name: string;
+//   price: number;
+//   sku: string;
+//   msrpPrice?: number;
+//   discountAmount?: number;
+//   percentDiscount?: number;
+//   packs: Array<{
+//     minimumSellingQuantity: number;
+//     totalPacksQuantity: number;
+//     orderedPacksPrice: number;
+//     percentDiscount: number;
+//     discountAmount?: number;
+//   }>;
+// }
+
+export interface Variant {
+  id?: string;
+  name: string;
+  price: number;
+  sku?: string;
+  pluUpc?: string;
+  quantity?: number;
+  msrpPrice?: number;
+  discountAmount?: number;
+  percentDiscount?: number;
+  supplierId?: string;
+  packIds?: string[];
+  packs?: Array<{
+    minimumSellingQuantity: number;
+    totalPacksQuantity: number;
+    orderedPacksPrice: number;
+    percentDiscount: number;
+    discountAmount?: number;
+  }>;
+}
+
 export interface Product {
+  id?: string;
   name: string;
   quantity: number;
   plu: string;
@@ -9,6 +48,8 @@ export interface Product {
   itemsPerUnit: number;
   supplier: string;
   createdAt: string;
+  hasVariants?: boolean;
+  variants?: Variant[];
 }
 
 export const products: Product[] = [
@@ -23,6 +64,39 @@ export const products: Product[] = [
     itemsPerUnit: 1,
     supplier: "Coffee Co.",
     createdAt: "2024-01-15",
+    hasVariants: true,
+    variants: [
+      {
+        id: "var-cf-001-1",
+        name: "Dark Roast",
+        price: 24.99,
+        sku: "SKU-CF-001-DARK",
+        msrpPrice: 29.99,
+        discountAmount: 0,
+        percentDiscount: 0,
+        packs: [],
+      },
+      {
+        id: "var-cf-001-2",
+        name: "Medium Roast",
+        price: 22.99,
+        sku: "SKU-CF-001-MED",
+        msrpPrice: 27.99,
+        discountAmount: 0,
+        percentDiscount: 0,
+        packs: [],
+      },
+      {
+        id: "var-cf-001-3",
+        name: "Light Roast",
+        price: 21.99,
+        sku: "SKU-CF-001-LIGHT",
+        msrpPrice: 26.99,
+        discountAmount: 0,
+        percentDiscount: 0,
+        packs: [],
+      },
+    ],
   },
   {
     name: "Organic Milk",
@@ -47,6 +121,29 @@ export const products: Product[] = [
     itemsPerUnit: 1,
     supplier: "Local Bakery",
     createdAt: "2024-01-20",
+    hasVariants: true,
+    variants: [
+      {
+        id: "var-br-003-1",
+        name: "Whole Wheat",
+        price: 8.99,
+        sku: "SKU-BR-003-WW",
+        msrpPrice: 10.99,
+        discountAmount: 0,
+        percentDiscount: 0,
+        packs: [],
+      },
+      {
+        id: "var-br-003-2",
+        name: "Sourdough",
+        price: 7.99,
+        sku: "SKU-BR-003-SD",
+        msrpPrice: 9.99,
+        discountAmount: 0,
+        percentDiscount: 0,
+        packs: [],
+      },
+    ],
   },
   {
     name: "Seasonal Fruits Mix",

@@ -1,18 +1,74 @@
 import React, { useRef } from "react";
 import type { Variation, Attribute, PackDiscount, DiscountTier } from "./types";
 import { generateId } from "./utils";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchInventorySuppliers } from "../../../store/slices/inventorySupplierSlice";
+import type { RootState } from "../../../store";
+import type { Supplier } from "../../../services/supplierAPI";
 
 interface VariationsConfigurationProps {
   variations: Variation[];
   attributes: Attribute[];
   onVariationsChange: (variations: Variation[]) => void;
+  // Add suppliers as props to avoid duplicate API calls
+  suppliers?: Supplier[];
+  suppliersLoading?: boolean;
+  suppliersError?: string | null;
 }
 
 const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
   variations,
   attributes,
   onVariationsChange,
+  suppliers: propSuppliers,
+  suppliersLoading: propSuppliersLoading,
+  suppliersError: propSuppliersError,
 }) => {
+  const dispatch = useDispatch();
+  // Use suppliers from props if available, otherwise fall back to Redux
+  const {
+    suppliers: reduxSuppliers,
+    loading: reduxSuppliersLoading,
+    error: reduxSuppliersError,
+  } = useSelector((state: RootState) => state.inventorySuppliers) as {
+    suppliers: Supplier[];
+    loading: boolean;
+    error: string | null;
+  };
+
+  // Use prop suppliers if available, otherwise use Redux suppliers
+  const suppliers = propSuppliers || reduxSuppliers;
+  const suppliersLoading = propSuppliersLoading ?? reduxSuppliersLoading;
+  const suppliersError = propSuppliersError || reduxSuppliersError; // Only fetch suppliers if not provided as props and not already loading/loaded
+  React.useEffect(() => {
+    // Skip fetching if suppliers are provided as props
+    if (propSuppliers || propSuppliersLoading !== undefined) {
+      return;
+    }
+
+    // Extract storeId from URL (works for /store/:id/)
+    const match = window.location.pathname.match(/store\/(.+?)(?:\/|$)/);
+    const storeId = match ? match[1] : "";
+
+    // Only fetch if we have a storeId and suppliers haven't been loaded yet
+    if (
+      storeId &&
+      !suppliersLoading &&
+      suppliers.length === 0 &&
+      !suppliersError
+    ) {
+      console.log("📦 Fetching suppliers for store:", storeId);
+      dispatch(fetchInventorySuppliers({ storeId, page: 1, limit: 50 }) as any);
+    }
+  }, [
+    dispatch,
+    suppliers.length,
+    suppliersLoading,
+    suppliersError,
+    propSuppliers,
+    propSuppliersLoading,
+  ]);
+
   const addVariation = () => {
     const newVariation: Variation = {
       id: generateId(),
@@ -32,8 +88,8 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
       price: 0,
       plu: "",
       discount: 0,
-      vendor: "",
       customSku: "",
+      supplierId: "",
       imageFile: null,
       imagePreview: "",
       hasPackSettings: false,
@@ -94,7 +150,6 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
       reader.readAsDataURL(file);
     }
   };
-
   const addVariationPackDiscount = (variationId: string) => {
     const variation = variations.find((v) => v.id === variationId);
     if (variation) {
@@ -103,6 +158,8 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
         quantity: 1,
         discountType: "percentage",
         discountValue: 0,
+        totalPacksQuantity: 0,
+        orderedPacksPrice: 0,
       };
       updateVariation(variationId, "packDiscounts", [
         ...variation.packDiscounts,
@@ -202,6 +259,9 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
             variation={variation}
             index={index}
             attributes={attributes}
+            suppliers={suppliers}
+            suppliersLoading={suppliersLoading}
+            suppliersError={suppliersError}
             onUpdate={updateVariation}
             onUpdateAttribute={updateVariationAttribute}
             onRemove={removeVariation}
@@ -223,6 +283,9 @@ interface VariationCardProps {
   variation: Variation;
   index: number;
   attributes: Attribute[];
+  suppliers: Supplier[];
+  suppliersLoading: boolean;
+  suppliersError: string | null;
   onUpdate: (id: string, field: keyof Variation, value: any) => void;
   onUpdateAttribute: (
     variationId: string,
@@ -256,6 +319,9 @@ const VariationCard: React.FC<VariationCardProps> = ({
   variation,
   index,
   attributes,
+  suppliers,
+  suppliersLoading,
+  suppliersError,
   onUpdate,
   onUpdateAttribute,
   onRemove,
@@ -325,26 +391,52 @@ const VariationCard: React.FC<VariationCardProps> = ({
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Category
           </label>
-          <input
-            type="text"
-            value={variation.category || ""}
-            onChange={(e) => onUpdate(variation.id, "category", e.target.value)}
+          <select
+            value={
+              ["Beverages", "Snacks", "Dairy", "Produce"].includes(
+                variation.category || ""
+              )
+                ? variation.category
+                : "Other"
+            }
+            onChange={(e) => {
+              if (e.target.value === "Other") {
+                onUpdate(variation.id, "category", "");
+              } else {
+                onUpdate(variation.id, "category", e.target.value);
+              }
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
-            placeholder="Category"
-            list={`category-list-${variation.id}`}
-          />
-          {/* Optionally, you can provide a datalist for suggestions */}
-          <datalist id={`category-list-${variation.id}`}>
-            <option value="Beverages" />
-            <option value="Snacks" />
-            <option value="Dairy" />
-            <option value="Produce" />
-            {/* Add more default categories as needed */}
-          </datalist>
-          <span className="text-xs text-gray-500">
-            Type to add a custom category.
-          </span>
+          >
+            <option value="">Select Category</option>
+            <option value="Beverages">Beverages</option>
+            <option value="Snacks">Snacks</option>
+            <option value="Dairy">Dairy</option>
+            <option value="Produce">Produce</option>
+            <option value="Other">Other</option>
+          </select>
+          {(!["Beverages", "Snacks", "Dairy", "Produce"].includes(
+            variation.category || ""
+          ) &&
+            variation.category !== "") ||
+          (variation.category === "" &&
+            (["", undefined, null].includes(variation.category as any) ||
+              ((variation.category as string) !== "Beverages" &&
+                (variation.category as string) !== "Snacks" &&
+                (variation.category as string) !== "Dairy" &&
+                (variation.category as string) !== "Produce"))) ? (
+            <input
+              type="text"
+              value={variation.category}
+              onChange={(e) =>
+                onUpdate(variation.id, "category", e.target.value)
+              }
+              className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+              placeholder="Enter custom category"
+            />
+          ) : null}
         </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Brand Name (Optional)
@@ -521,15 +613,39 @@ const VariationCard: React.FC<VariationCardProps> = ({
         <div>
           {" "}
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Vendor
+            Vendor *
           </label>
-          <input
-            type="text"
-            value={variation.vendor}
-            onChange={(e) => onUpdate(variation.id, "vendor", e.target.value)}
+          <select
+            value={variation.supplierId}
+            onChange={(e) => {
+              const selectedSupplierId = e.target.value;
+              onUpdate(variation.id, "supplierId", selectedSupplierId);
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
-          />
-        </div>
+            required
+          >
+            <option value="">Select Vendor</option>
+            {suppliersLoading && <option disabled>Loading suppliers...</option>}
+            {suppliersError && (
+              <option disabled>Error loading suppliers</option>
+            )}
+            {suppliers &&
+              suppliers.length > 0 &&
+              suppliers.map((supplier) => (
+                <option key={supplier.id} value={supplier.id}>
+                  {supplier.name}
+                </option>
+              ))}
+          </select>
+          {suppliersLoading && (
+            <div className="text-xs text-gray-500 mt-1">
+              Loading suppliers...
+            </div>
+          )}
+          {suppliersError && (
+            <div className="text-xs text-red-500 mt-1">{suppliersError}</div>
+          )}
+        </div>{" "}
         <div>
           {" "}
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -546,15 +662,30 @@ const VariationCard: React.FC<VariationCardProps> = ({
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Description
+            PLU
           </label>
           <input
             type="text"
-            value={variation.description}
+            value={variation.plu || ""}
+            onChange={(e) => onUpdate(variation.id, "plu", e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            placeholder="PLU"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Stock Quantity *
+          </label>
+          <input
+            type="number"
+            min="0"
+            value={variation.quantity || 0}
             onChange={(e) =>
-              onUpdate(variation.id, "description", e.target.value)
+              onUpdate(variation.id, "quantity", parseInt(e.target.value) || 0)
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            placeholder="Stock quantity"
+            required
           />
         </div>
         <div>
@@ -609,83 +740,167 @@ const VariationCard: React.FC<VariationCardProps> = ({
 
         {variation.hasPackSettings && (
           <div className="ml-6 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">
+            <div className="mb-2 border-b pb-2 flex items-center justify-between">
+              <span className="text-base font-semibold text-gray-800 flex items-center gap-1">
                 Pack Discounts
+                <span
+                  className="text-xs text-gray-400 ml-1"
+                  title="Offer discounts for buying in packs (e.g. 6-pack, 12-pack)"
+                >
+                  ?
+                </span>
               </span>
+            </div>
+            {variation.packDiscounts.length === 0 && (
+              <div className="text-xs text-gray-500 mb-2">
+                No pack discounts added yet.
+              </div>
+            )}
+            <div className="space-y-2">
+              {" "}
+              {variation.packDiscounts.map((discount) => (
+                <div
+                  key={discount.id}
+                  className="grid grid-cols-12 gap-2 p-2 bg-gray-50 rounded items-center border border-gray-200 relative group"
+                >
+                  <div className="col-span-2 flex flex-col">
+                    <label className="text-xs text-gray-600 mb-1">
+                      Pack Qty<span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      placeholder="Qty"
+                      value={discount.quantity}
+                      onChange={(e) =>
+                        onUpdatePackDiscount(
+                          variation.id,
+                          discount.id,
+                          "quantity",
+                          Math.max(1, parseInt(e.target.value) || 1)
+                        )
+                      }
+                      className="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+                      required
+                    />
+                  </div>
+                  <div className="col-span-2 flex flex-col">
+                    <label className="text-xs text-gray-600 mb-1">
+                      Discount Type
+                    </label>
+                    <select
+                      value={discount.discountType}
+                      onChange={(e) =>
+                        onUpdatePackDiscount(
+                          variation.id,
+                          discount.id,
+                          "discountType",
+                          e.target.value
+                        )
+                      }
+                      className="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+                    >
+                      <option value="percentage">% (Percent)</option>
+                      <option value="fixed">₹ (Fixed)</option>
+                    </select>
+                  </div>
+                  <div className="col-span-2 flex flex-col">
+                    <label className="text-xs text-gray-600 mb-1">
+                      Discount Value<span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative flex items-center">
+                      <input
+                        type="number"
+                        min={0.01}
+                        step="0.01"
+                        placeholder="Value"
+                        value={discount.discountValue}
+                        onChange={(e) =>
+                          onUpdatePackDiscount(
+                            variation.id,
+                            discount.id,
+                            "discountValue",
+                            Math.max(0, parseFloat(e.target.value) || 0)
+                          )
+                        }
+                        className="px-2 py-1 text-sm border border-gray-300 rounded w-full focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent pr-8"
+                        required
+                      />
+                      <span className="absolute right-2 text-gray-400 text-xs">
+                        {discount.discountType === "percentage" ? "%" : "₹"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="col-span-2 flex flex-col">
+                    <label className="text-xs text-gray-600 mb-1">
+                      Total Packs
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      placeholder="Total"
+                      value={discount.totalPacksQuantity || ""}
+                      onChange={(e) =>
+                        onUpdatePackDiscount(
+                          variation.id,
+                          discount.id,
+                          "totalPacksQuantity",
+                          parseInt(e.target.value) || 0
+                        )
+                      }
+                      className="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+                    />
+                  </div>
+                  <div className="col-span-2 flex flex-col">
+                    <label className="text-xs text-gray-600 mb-1">
+                      Ordered Price
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      placeholder="Price"
+                      value={discount.orderedPacksPrice || ""}
+                      onChange={(e) =>
+                        onUpdatePackDiscount(
+                          variation.id,
+                          discount.id,
+                          "orderedPacksPrice",
+                          parseFloat(e.target.value) || 0
+                        )
+                      }
+                      className="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+                    />
+                  </div>
+                  <div className="col-span-2 flex items-center justify-end">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onRemovePackDiscount(variation.id, discount.id)
+                      }
+                      className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors opacity-80 group-hover:opacity-100"
+                      title="Remove discount"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="pt-2 flex justify-end">
               <button
                 type="button"
                 onClick={() => onAddPackDiscount(variation.id)}
-                className="px-2 py-1 bg-[#0f4d57] text-white rounded text-xs hover:bg-[#0f4d57]/90 transition-colors"
+                className="px-4 py-1.5 bg-[#0f4d57] text-white rounded shadow hover:bg-[#0f4d57]/90 transition-colors text-sm font-medium flex items-center gap-1"
               >
-                Add
+                + Add Pack Discount
               </button>
             </div>
-            {variation.packDiscounts.map((discount) => (
-              <div
-                key={discount.id}
-                className="grid grid-cols-4 gap-2 p-2 bg-gray-50 rounded"
-              >
-                <input
-                  type="number"
-                  placeholder="Qty"
-                  value={discount.quantity}
-                  onChange={(e) =>
-                    onUpdatePackDiscount(
-                      variation.id,
-                      discount.id,
-                      "quantity",
-                      parseInt(e.target.value) || 0
-                    )
-                  }
-                  className="px-2 py-1 text-sm border border-gray-300 rounded"
-                />
-                <select
-                  value={discount.discountType}
-                  onChange={(e) =>
-                    onUpdatePackDiscount(
-                      variation.id,
-                      discount.id,
-                      "discountType",
-                      e.target.value
-                    )
-                  }
-                  className="px-2 py-1 text-sm border border-gray-300 rounded"
-                >
-                  <option value="percentage">%</option>
-                  <option value="fixed">$</option>
-                </select>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="Value"
-                  value={discount.discountValue}
-                  onChange={(e) =>
-                    onUpdatePackDiscount(
-                      variation.id,
-                      discount.id,
-                      "discountValue",
-                      parseFloat(e.target.value) || 0
-                    )
-                  }
-                  className="px-2 py-1 text-sm border border-gray-300 rounded"
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    onRemovePackDiscount(variation.id, discount.id)
-                  }
-                  className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
           </div>
         )}
       </div>
 
-      {/* Discount Tiers Toggle */}
+      {/* Discount Tiers Toggle
       <div className="mb-4">
         <div className="flex items-center space-x-3 mb-3">
           <label className="relative inline-flex items-center cursor-pointer">
@@ -778,7 +993,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
             ))}
           </div>
         )}
-      </div>
+      </div> */}
     </div>
   );
 };

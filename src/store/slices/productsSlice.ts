@@ -29,6 +29,9 @@ export interface CreateProductPayload {
     name: string;
     price: number;
     sku: string;
+    pluUpc: string;
+    supplierId: string;
+    quantity: number;
     packs: Array<{
       minimumSellingQuantity: number;
       totalPacksQuantity: number;
@@ -47,9 +50,11 @@ export const createProduct = createAsyncThunk(
   "products/createProduct",
   async (productData: CreateProductPayload, { rejectWithValue }) => {
     try {
-      const response = await apiClient.post("/products/create", productData);
+      const response = await apiClient.post("/product/create", productData);
+      console.log(response.data)
       return response.data;
     } catch (error: any) {
+      console.log(error);
       return rejectWithValue(
         error.response?.data?.message || "Failed to create product"
       );
@@ -80,6 +85,7 @@ const productsSlice = createSlice({
       .addCase(createProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+        console.log(state.error);
       });
   },
 });

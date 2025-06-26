@@ -12,7 +12,6 @@ export const useSuppliers = (storeId: string): UseSupplierReturn => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const fetchSuppliers = async () => {
     try {
       setLoading(true);

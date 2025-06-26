@@ -1,5 +1,9 @@
 import React from "react";
 import type { ProductFormData } from "./types";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchInventorySuppliers } from "../../../store/slices/inventorySupplierSlice";
+import type { RootState } from "../../../store";
+import type { Supplier } from "../../../services/supplierAPI";
 
 interface ProductBasicInfoProps {
   formData: ProductFormData;
@@ -7,6 +11,10 @@ interface ProductBasicInfoProps {
   fileInputRef: React.RefObject<HTMLInputElement>;
   showOptionalFields: boolean;
   isVariantMode?: boolean;
+  // Add suppliers as props to avoid duplicate API calls
+  suppliers?: Supplier[];
+  suppliersLoading?: boolean;
+  suppliersError?: string | null;
 }
 
 const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
@@ -15,7 +23,58 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
   fileInputRef,
   showOptionalFields,
   isVariantMode = false,
+  suppliers: propSuppliers,
+  suppliersLoading: propSuppliersLoading,
+  suppliersError: propSuppliersError,
 }) => {
+  const dispatch = useDispatch();
+  // Use suppliers from props if available, otherwise fall back to Redux
+  const {
+    suppliers: reduxSuppliers,
+    loading: reduxSuppliersLoading,
+    error: reduxSuppliersError,
+  } = useSelector((state: RootState) => state.inventorySuppliers) as {
+    suppliers: Supplier[];
+    loading: boolean;
+    error: string | null;
+  };
+
+  // Use prop suppliers if available, otherwise use Redux suppliers
+  const suppliers = propSuppliers || reduxSuppliers;
+  const suppliersLoading = propSuppliersLoading ?? reduxSuppliersLoading;
+  const suppliersError = propSuppliersError || reduxSuppliersError; // Only fetch suppliers if not provided as props and not already loading/loaded
+  React.useEffect(() => {
+    // Skip fetching if suppliers are provided as props
+    if (propSuppliers || propSuppliersLoading !== undefined) {
+      return;
+    }
+
+    // Extract storeId from URL (works for /store/:id/)
+    const match = window.location.pathname.match(/store\/(.+?)(?:\/|$)/);
+    const storeId = match ? match[1] : "";
+
+    // Only fetch if we have a storeId and suppliers haven't been loaded yet
+    if (
+      storeId &&
+      !suppliersLoading &&
+      suppliers.length === 0 &&
+      !suppliersError
+    ) {
+      console.log(
+        "📦 Fetching suppliers for store (ProductBasicInfo):",
+        storeId
+      );
+      dispatch(fetchInventorySuppliers({ storeId, page: 1, limit: 50 }) as any);
+    }
+  }, [
+    dispatch,
+    suppliers.length,
+    suppliersLoading,
+    suppliersError,
+    propSuppliers,
+    propSuppliersLoading,
+  ]);
+
   // Calculate minimum order value when itemSellingCost or minSellingQuantity changes
   React.useEffect(() => {
     const sellingCost = parseFloat(formData.itemSellingCost) || 0;
@@ -207,24 +266,49 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
           </div>
         </div>{" "}
       </div>{" "}
-      {/* Vendor and Product Identification - Hidden in variant mode */}
       {!isVariantMode && (
         <div className="bg-gray-50 rounded-lg p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            {" "}
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">
                 Vendor *
               </label>
-              <input
-                type="text"
-                value={formData.vendor}
-                onChange={(e) => onFormDataChange("vendor", e.target.value)}
+              <select
+                value={formData.supplierId}
+                onChange={(e) => {
+                  const selectedSupplierId = e.target.value;
+                  onFormDataChange("supplierId", selectedSupplierId);
+                }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
-                placeholder="Enter vendor name"
                 required
-              />
+              >
+                <option value="">Select Vendor</option>
+                {suppliersLoading && (
+                  <option disabled>Loading suppliers...</option>
+                )}
+                {suppliersError && (
+                  <option disabled>Error loading suppliers</option>
+                )}
+                {suppliers &&
+                  suppliers.length > 0 &&
+                  suppliers.map((supplier) => (
+                    <option key={supplier.id} value={supplier.id}>
+                      {supplier.name}
+                    </option>
+                  ))}
+              </select>
+              {suppliersLoading && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Loading suppliers...
+                </div>
+              )}
+              {suppliersError && (
+                <div className="text-xs text-red-500 mt-1">
+                  {suppliersError}
+                </div>
+              )}
             </div>
+
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">
                 Custom SKU{" "}

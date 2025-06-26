@@ -16,7 +16,6 @@ import StoresPage from "../pages/Stores/Stores";
 import EmployeePage from "../pages/Employee/EmployeePage";
 import PermissionsPage from "../pages/Employee/PermissionsPage";
 import EditEmployeePage from "../pages/Employee/EditEmployeePage";
-
 const AppRoutes = () => {
   return (
     <Routes>
@@ -35,18 +34,17 @@ const AppRoutes = () => {
       <Route path="/store/:id/employee/create" element={<EmployeePage />} />
       <Route path="/store/:id/employee" element={<PermissionsPage />} />
       <Route path="/store/:id/edit-employee" element={<EditEmployeePage />} />
-      <Route path="/inventory" element={<Inventory />} />
-      <Route path="/inventory/create" element={<CreateInventory />} />
+      <Route path="/store/:id/sales" element={<SalesPage />} />
       <Route path="/" element={<Home />} />
       <Route path="/term" element={<Terms />} />
       <Route path="/Form" element={<StoreForm />} />
       <Route path="/expenses" element={<ExpensePage />} />
       <Route path="/sales" element={<SalesPage />} />
-      <Route path="/sales/new" element={<AddNewSale />} />
+
       <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
-      <Route path="/supplier" element={<Supplier />} />      <Route path="/employee" element={<EmployeePage />} />
       <Route path="/permissions" element={<PermissionsPage />} />
       <Route path="/edit-employee" element={<EditEmployeePage />} />
+
     </Routes>
   );
 };

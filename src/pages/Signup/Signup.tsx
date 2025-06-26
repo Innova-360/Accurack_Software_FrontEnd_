@@ -69,7 +69,6 @@ const Signup = () => {
     }
 
     try {
-
       const resultAction = await dispatch(
         createClientWithAdmin({
           firstName: formData.firstName.trim(),

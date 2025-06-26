@@ -21,6 +21,8 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
       quantity: 1,
       discountType: "percentage",
       discountValue: 0,
+      totalPacksQuantity: 0,
+      orderedPacksPrice: 0,
     };
     onPackDiscountsChange([...packDiscounts, newDiscount]);
   };
@@ -126,7 +128,7 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
               key={discount.id}
               className="flex flex-col md:flex-row gap-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200 hover:shadow-md transition-all duration-200"
             >
-              <div className="space-y-1 w-full md:w-1/4">
+              <div className="space-y-1 w-full md:w-1/6">
                 <label className="block text-xs font-medium text-gray-700">
                   Pack Of Quantity
                 </label>
@@ -144,7 +146,7 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
-              <div className="space-y-1 w-full md:w-1/4">
+              <div className="space-y-1 w-full md:w-1/6">
                 <label className="block text-xs font-medium text-gray-700">
                   Type
                 </label>
@@ -186,7 +188,44 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
-              <div className="flex items-end w-full md:w-1/4">
+              <div className="space-y-1 w-full md:w-1/4">
+                <label className="block text-xs font-medium text-gray-700">
+                  Total Packs Quantity
+                </label>
+                <input
+                  type="number"
+                  placeholder="Total packs"
+                  value={discount.totalPacksQuantity || ""}
+                  onChange={(e) =>
+                    updatePackDiscount(
+                      discount.id,
+                      "totalPacksQuantity",
+                      parseInt(e.target.value) || 0
+                    )
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                />
+              </div>{" "}
+              <div className="space-y-1 w-full md:w-1/6">
+                <label className="block text-xs font-medium text-gray-700">
+                  Ordered Packs Price
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={discount.orderedPacksPrice || ""}
+                  onChange={(e) =>
+                    updatePackDiscount(
+                      discount.id,
+                      "orderedPacksPrice",
+                      parseFloat(e.target.value) || 0
+                    )
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                />
+              </div>
+              <div className="flex items-end w-full md:w-1/6">
                 <button
                   type="button"
                   onClick={() => removePackDiscount(discount.id)}

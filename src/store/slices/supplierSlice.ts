@@ -364,7 +364,6 @@ export const supplierSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-
       // Create supplier
       .addCase(createSupplier.pending, (state) => {
         state.loading = true;
@@ -377,7 +376,6 @@ export const supplierSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-
       // Update supplier
       .addCase(updateSupplier.pending, (state) => {
         state.loading = true;
@@ -390,7 +388,6 @@ export const supplierSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-
       // Delete supplier
       .addCase(deleteSupplier.pending, (state) => {
         state.loading = true;
@@ -403,7 +400,6 @@ export const supplierSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-
       // Delete all suppliers
       .addCase(deleteAllSuppliers.pending, (state) => {
         state.loading = true;
