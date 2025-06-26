@@ -1,16 +1,15 @@
 export interface EmployeeAPIData {
   id?: string;
-  employeeId: string;
+  employeeCode: string; // 6-digit employee code (matches backend schema)
   firstName: string;
   lastName: string;
   role: string;
   status: string;
-  employeeCode: string;
   position: string;
   department: string;
   phone: string;
-  joiningDate: string;
   email: string;
+  createdAt?: string; // Backend uses createdAt instead of joiningDate
   permissions: [
     {resource: string ,
       actions: string[]; // Changed from 'action' to 'actions'
@@ -22,17 +21,16 @@ export interface EmployeeAPIData {
 
 export interface EmployeeFormData {
   id?: string;
-  employeeId: string;
+  employeeCode: string; // 6-digit employee code (matches backend schema)
   firstName: string;
   lastName: string;
   role: string;
   status: string;
-  employeeCode: string;
   position: string;
   department: string;
   phone: string;
-  joiningDate: string;
   email: string;
+  joiningDate: string; // Frontend-only field for display
   password?: string; // Optional for edit mode
   permissions: [
     {

@@ -21,16 +21,15 @@ interface EmployeeFormProps {
 
 interface EmployeeFormData {
     id?: string;
-    employeeId: string;
+    employeeCode: string; // 6-digit employee code (backend field name)
     firstName: string;
     lastName: string;
     role: string;
     status: string;
-    employeeCode: string;
     position: string;
     department: string;
     phone: string;
-    joiningDate: string;
+    joiningDate: string; // Frontend display field (backend uses createdAt)
     email: string;
     // Note: password field for creation only
     password?: string;
@@ -81,19 +80,47 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
     const {id} = useParams<{ id: string }>();
     const { loading, error } = useSelector((state: RootState) => state.employees);
     
+    // Helper function to generate 6-digit employee code
+    const generateEmployeeCode = () => {
+        return Math.floor(100000 + Math.random() * 900000).toString(); // Generates 6-digit number
+    };
+
+    // Helper function to get current date in ISO format
+    const getCurrentDate = () => {
+        return new Date().toISOString();
+    };
+
+    // Helper function to format date for display
+    const formatDateForDisplay = (dateString: string) => {
+        if (!dateString) return 'N/A';
+        
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Invalid Date';
+        
+        return date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        });
+    };
+    
+    console.log('EmployeeForm props:', { isEditMode, initialData, onSubmit, onCancel });
+    console.log('URL params:', { id });
+    console.log('Form will be in edit mode:', isEditMode);
+    console.log('Initial data received:', initialData);
+    
     const [formData, setFormData] = useState<EmployeeFormData>({
         id: initialData?.id || '',
-        employeeId: initialData?.employeeId || '',
+        employeeCode: isEditMode ? (initialData?.employeeCode || generateEmployeeCode()) : generateEmployeeCode(), // Auto-generate 6-digit code for new employees
         firstName: initialData?.firstName || '',
         lastName: initialData?.lastName || '',
         role: initialData?.role || '',
         status: initialData?.status || 'active',
-        employeeCode: initialData?.employeeCode || '',
         position: initialData?.position || '',
         department: initialData?.department || '',
         phone: initialData?.phone || '',
         email: initialData?.email || '',
-        joiningDate: initialData?.joiningDate || '',
+        joiningDate: isEditMode ? ((initialData as any)?.createdAt || getCurrentDate()) : getCurrentDate(), // Use createdAt from backend for edit mode
         password: '', // Always empty for security
         permissions: initialData?.permissions || [{
             resource: 'inventory',
@@ -137,6 +164,12 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
+        
+        // Prevent changes to employeeCode and joiningDate as they are auto-generated
+        if (name === 'employeeCode' || name === 'joiningDate') {
+            return;
+        }
+        
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -169,11 +202,16 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
                 storeId: id || '' // Use current store ID from URL params
             }));
 
+        // Prepare submit data with proper formatting
         const submitData = {
             ...formData,
             permissions: permissions as any,
             storeIds: id ? [id] : formData.storeIds // Ensure current store ID is in storeIds
         };
+        
+        // Remove frontend-only fields that backend doesn't need
+        delete (submitData as any).joiningDate; // Backend uses createdAt automatically
+        
         console.log('Submitting employee data:', submitData);
         console.log('Current store ID from URL:', id);
         console.log('Permissions with store IDs:', permissions);
@@ -185,14 +223,20 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
 
         try {
             if (isEditMode && formData.id) {
+                console.log('Editing employee with ID:', formData.id);
+                console.log('Update data:', submitData);
                 await dispatch(updateEmployee({ id: formData.id, employeeData: submitData })).unwrap();
+                console.log('Employee updated successfully');
                 // For edit mode, call onSubmit if provided
                 if (onSubmit) {
                     onSubmit(submitData);
                 }
             } else {
+                console.log('Creating new employee');
+                console.log('Create data:', submitData);
                 // Creating new employee
-                await dispatch(createEmployee(submitData)).unwrap()
+                await dispatch(createEmployee(submitData)).unwrap();
+                console.log('Employee created successfully');
                 
                 // Redirect to employee list/permissions page
                 if (id) {
@@ -333,24 +377,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
                                 Employee Information
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                {/* Employee ID */}
-                                <div>
-                                    <label htmlFor="employeeId" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Employee ID
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="employeeId"
-                                        name="employeeId"
-                                        value={formData.employeeId}
-                                        onChange={handleInputChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                        required
-                                        placeholder="e.g., EMP001"
-                                    />
-                                </div>
-
-                                {/* Employee Code */}
+                                {/* Employee Code - Auto-generated, Read-only */}
                                 <div>
                                     <label htmlFor="employeeCode" className="block text-sm font-medium text-gray-700 mb-1">
                                         Employee Code
@@ -360,11 +387,11 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
                                         id="employeeCode"
                                         name="employeeCode"
                                         value={formData.employeeCode}
-                                        onChange={handleInputChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                        required
-                                        placeholder="e.g., EC001"
+                                        readOnly
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-600 cursor-not-allowed"
+                                        placeholder="Auto-generated"
                                     />
+                                    <p className="text-xs text-gray-500 mt-1">Auto-generated 6-digit code</p>
                                 </div>
 
                                 {/* Position */}
@@ -439,21 +466,21 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
                                     </select>
                                 </div>
 
-                                {/* Joining Date */}
+                                {/* Joining Date - Display only (uses createdAt from backend) */}
                                 <div>
                                     <label htmlFor="joiningDate" className="block text-sm font-medium text-gray-700 mb-1">
                                         Joining Date
                                     </label>
                                     <input
-                                        type="date"
+                                        type="text"
                                         id="joiningDate"
                                         name="joiningDate"
-                                        value={formData.joiningDate}
-                                        onChange={handleInputChange}
-                                        placeholder="mm/dd/yyyy"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                        required
+                                        value={formatDateForDisplay(formData.joiningDate)}
+                                        readOnly
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-600 cursor-not-allowed"
+                                        placeholder="Auto-set to current date"
                                     />
+                                    <p className="text-xs text-gray-500 mt-1">Set automatically when employee is created</p>
                                 </div>
                             </div>
                         </div>
