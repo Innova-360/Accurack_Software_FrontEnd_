@@ -354,17 +354,6 @@ const Inventory: React.FC = () => {
       navigate("/inventory/create", { state: { scannedPLU: barcode } });
     }
   };
-  const handleFileUpload = async (file: File) => {
-    // TODO: Implement file upload logic
-    console.log("Uploading file:", file.name);
-
-    // Simulate upload process
-    await new Promise((resolve) => setTimeout(resolve, 2000)); // Close modal after successful upload
-    setIsUploadInventoryModalOpen(false);
-
-    // Show success notification
-    toast.success("Inventory uploaded successfully!");
-  };
 
   // Edit product handlers
   const handleEditProduct = (product: Product) => {
@@ -561,7 +550,6 @@ const Inventory: React.FC = () => {
       <UploadInventoryModal
         isOpen={isUploadInventoryModalOpen}
         onClose={() => setIsUploadInventoryModalOpen(false)}
-        onUpload={handleFileUpload}
       />{" "}
       <BarcodeScanModal
         isOpen={isBarcodeScanModalOpen}
