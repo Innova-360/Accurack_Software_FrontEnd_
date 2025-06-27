@@ -99,6 +99,7 @@ export const fetchSuppliers = createAsyncThunk(
       }
 
       console.log("suppliers:", suppliers);
+      console.log("response:", response);
       console.log("pagination:", pagination);
 
       return { suppliers, pagination };

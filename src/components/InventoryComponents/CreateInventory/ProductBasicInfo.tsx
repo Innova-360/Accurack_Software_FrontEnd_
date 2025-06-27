@@ -42,16 +42,53 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
   // Use prop suppliers if available, otherwise use Redux suppliers
   const suppliers = propSuppliers || reduxSuppliers;
   const suppliersLoading = propSuppliersLoading ?? reduxSuppliersLoading;
-  const suppliersError = propSuppliersError || reduxSuppliersError; // Only fetch suppliers if not provided as props and not already loading/loaded
+  const suppliersError = propSuppliersError || reduxSuppliersError;
+
+  // Debug logging to see supplier state
+  React.useEffect(() => {
+    console.log("🔍 ProductBasicInfo - Suppliers data:", {
+      propSuppliers: propSuppliers?.length || 0,
+      reduxSuppliers: reduxSuppliers?.length || 0,
+      finalSuppliers: suppliers?.length || 0,
+      loading: suppliersLoading,
+      error: suppliersError,
+      isVariantMode,
+      propSuppliersData: propSuppliers?.slice(0, 2),
+      reduxSuppliersData: reduxSuppliers?.slice(0, 2),
+      finalSuppliersData: suppliers?.slice(0, 2),
+    });
+  }, [
+    propSuppliers,
+    reduxSuppliers,
+    suppliers,
+    suppliersLoading,
+    suppliersError,
+    isVariantMode,
+  ]);
+
+  // Only fetch suppliers if not provided as props and not already loading/loaded
   React.useEffect(() => {
     // Skip fetching if suppliers are provided as props
     if (propSuppliers || propSuppliersLoading !== undefined) {
       return;
     }
 
-    // Extract storeId from URL (works for /store/:id/)
-    const match = window.location.pathname.match(/store\/(.+?)(?:\/|$)/);
-    const storeId = match ? match[1] : "";
+    // Extract storeId from URL - try multiple patterns
+    const pathname = window.location.pathname;
+    let storeId = "";
+
+    // Try different URL patterns
+    const storeMatch = pathname.match(/store\/([^\/]+)/);
+    const inventoryMatch = pathname.match(/inventory.*store[\/=]([^\/&]+)/);
+
+    if (storeMatch) {
+      storeId = storeMatch[1];
+    } else if (inventoryMatch) {
+      storeId = inventoryMatch[1];
+    }
+
+    console.log("🔍 Current pathname:", pathname);
+    console.log("📦 Extracted storeId:", storeId);
 
     // Only fetch if we have a storeId and suppliers haven't been loaded yet
     if (

@@ -18,6 +18,13 @@ export const useSuppliers = (storeId: string): UseSupplierReturn => {
       setError(null);
       const response = await supplierAPI.getSuppliers(storeId);
 
+      console.log("🔧 useSuppliers hook - API response:", {
+        response,
+        success: response.success,
+        suppliers: response.data?.suppliers,
+        suppliersCount: response.data?.suppliers?.length,
+      });
+
       if (response.success) {
         setSuppliers(response.data.suppliers);
       } else {
