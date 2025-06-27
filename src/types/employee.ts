@@ -11,10 +11,11 @@ export interface EmployeeAPIData {
   email: string;
   createdAt?: string; // Backend uses createdAt instead of joiningDate
   permissions: [
-    {resource: string ,
+    {
+      resource: string;
       actions: string[]; // Changed from 'action' to 'actions'
       storeId: string;
-    }
+    },
   ];
   storeIds: string[];
 }
@@ -37,11 +38,10 @@ export interface EmployeeFormData {
       resource: string;
       actions: string[]; // Changed from 'action' to 'actions'
       storeId: string;
-    }
+    },
   ];
   storeIds: string[];
 }
-
 
 export interface Role {
   id: string;
@@ -74,4 +74,29 @@ export interface EmployeeState {
   loading: boolean;
   error: string | null;
   pagination: EmployeePagination;
+  // --- Role Templates State ---
+  roleTemplates: RoleTemplate[];
+  roleTemplatesLoading: boolean;
+  roleTemplatesError: string | null;
+}
+
+// --- Role Template Types ---
+export interface RoleTemplatePermission {
+  resource: string;
+  action: string;
+  scope: string;
+}
+
+export interface RoleTemplate {
+  id: string;
+  name: string;
+  description: string;
+  permissions: RoleTemplatePermission[];
+  inheritsFrom: string | null;
+  isDefault: boolean;
+  isActive: boolean;
+  priority: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
 }

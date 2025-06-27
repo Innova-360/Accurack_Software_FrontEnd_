@@ -15,9 +15,10 @@ import StoresPage from "../pages/Stores/Stores";
 import EmployeePage from "../pages/Employee/EmployeePage";
 import PermissionsPage from "../pages/Employee/PermissionsPage";
 import EditEmployeePage from "../pages/Employee/EditEmployeePage";
-// import RolePage from "../pages/RolePage/RolePage"; 
-// import Srole from "../pages/RolePage/PermissionsPage"
-// import EditRolePage from "../pages/RolePage/EditRolePage";
+import RolePage from "../pages/RolePage/RolePage"; 
+import Srole from "../pages/RolePage/RolePermissionsPage"
+import EditRolePage from "../pages/RolePage/EditRolePage";
+import AssignProductsPage from "../pages/Supplier/AssignProductsPage";
 
 const AppRoutes = () => {
   return (
@@ -33,13 +34,14 @@ const AppRoutes = () => {
       <Route path="/store/:id/inventory/create" element={<CreateInventory />} />      
       <Route path="/store/:id/sales" element={<SalesPage />} />
       <Route path="/store/:id/expenses" element={<ExpensePage />} />
-      <Route path="/store/:id/supplier" element={<Supplier />} />   
+      <Route path="/store/:id/supplier" element={<Supplier />} />
+      <Route path="/store/:id/supplier/assign-products" element={<AssignProductsPage />} />   
       <Route path="/store/:id/employee/create" element={<EmployeePage />} />
       <Route path="/store/:id/employee" element={<PermissionsPage />} />
       <Route path="/store/:id/edit-employee" element={<EditEmployeePage />} />
-      {/* <Route path="/store/:id/role" element={<Srole />} />
+      <Route path="/store/:id/role" element={<Srole />} />
       <Route path="/store/:id/role/create" element={<RolePage />} />
-      <Route path="/store/:id/role/edit" element={<EditRolePage />} /> */}
+      <Route path="/store/:id/role/edit" element={<EditRolePage />} />
       <Route path="/inventory" element={<Inventory />} />
       <Route path="/inventory/create" element={<CreateInventory />} />
       <Route path="/" element={<Home />} />

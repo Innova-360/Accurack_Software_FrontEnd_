@@ -31,9 +31,9 @@ const EditEmployeePage: React.FC = () => {
     const storeIndex = urlParts.findIndex(part => part === 'store');
     if (storeIndex !== -1 && urlParts[storeIndex + 1]) {
       const storeId = urlParts[storeIndex + 1];
-      navigate(`/store/${storeId}/employee`);
+      navigate(`/store/${storeId}/role`);
     } else {
-      navigate('/permissions');
+      navigate('/role');
     }
   };
 

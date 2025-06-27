@@ -22,6 +22,9 @@ const initialState: EmployeeState = {
     total: 0,
     totalPages: 0,
   },
+  roleTemplates: [],
+  roleTemplatesLoading: false,
+  roleTemplatesError: null,
 };
 
 // Async thunks for API calls
@@ -43,7 +46,7 @@ export const fetchEmployees = createAsyncThunk(
 
       const url = `/employees?${params.toString()}`;
       const response = await apiClient.get(url);
-      console.log(response)
+      console.log(response);
 
       // Handle different response structures from backend
       let employees = [];
@@ -187,13 +190,16 @@ export const fetchRoles = createAsyncThunk(
   }
 );
 
-// Fetch role templates from permissions API
+// --- Role Templates Thunks ---
 export const fetchRoleTemplates = createAsyncThunk(
   "employees/fetchRoleTemplates",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await apiClient.get('/permissions/templates');
-      return response.data?.data || response.data || [];
+      const response = await apiClient.get("/permissions/templates");
+      if (response.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+      return [];
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch role templates"
@@ -202,13 +208,15 @@ export const fetchRoleTemplates = createAsyncThunk(
   }
 );
 
-// Create role template
 export const createRoleTemplate = createAsyncThunk(
   "employees/createRoleTemplate",
-  async (roleData: any, { rejectWithValue }) => {
+  async (templateData: any, { rejectWithValue }) => {
     try {
-      const response = await apiClient.post('/permissions/templates', roleData);
-      return response.data?.data || response.data;
+      const response = await apiClient.post(
+        "/permissions/templates",
+        templateData
+      );
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to create role template"
@@ -217,56 +225,21 @@ export const createRoleTemplate = createAsyncThunk(
   }
 );
 
-// Update role template
 export const updateRoleTemplate = createAsyncThunk(
   "employees/updateRoleTemplate",
   async (
-    { id, roleData }: { id: string; roleData: any },
+    { id, templateData }: { id: string; templateData: any },
     { rejectWithValue }
   ) => {
     try {
-      const response = await apiClient.put(`/permissions/templates/${id}`, roleData);
-      return response.data?.data || response.data;
+      const response = await apiClient.put(
+        `/permissions/templates/${id}`,
+        templateData
+      );
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to update role template"
-      );
-    }
-  }
-);
-
-// Delete role template
-export const deleteRoleTemplate = createAsyncThunk(
-  "employees/deleteRoleTemplate",
-  async (id: string, { rejectWithValue }) => {
-    try {
-      await apiClient.delete(`/permissions/templates/${id}`);
-      return id;
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to delete role template"
-      );
-    }
-  }
-);
-
-// Assign role template to users
-export const assignRoleTemplate = createAsyncThunk(
-  "employees/assignRoleTemplate",
-  async (
-    { userIds, roleTemplateId, storeId }: { userIds: string[]; roleTemplateId: string; storeId?: string },
-    { rejectWithValue }
-  ) => {
-    try {
-      const response = await apiClient.post('/permissions/templates/assign', {
-        userIds,
-        roleTemplateId,
-        storeId,
-      });
-      return response.data?.data || response.data;
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to assign role template"
       );
     }
   }
@@ -424,82 +397,50 @@ const employeeSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-
-      // Fetch role templates
+      // --- Role Templates ---
       .addCase(fetchRoleTemplates.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.roleTemplatesLoading = true;
+        state.roleTemplatesError = null;
       })
       .addCase(fetchRoleTemplates.fulfilled, (state, action) => {
-        state.loading = false;
-        state.roles = action.payload;
-        state.error = null;
+        state.roleTemplatesLoading = false;
+        state.roleTemplates = action.payload;
+        state.roleTemplatesError = null;
       })
       .addCase(fetchRoleTemplates.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
+        state.roleTemplatesLoading = false;
+        state.roleTemplatesError = action.payload as string;
       })
-
-      // Create role template
       .addCase(createRoleTemplate.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.roleTemplatesLoading = true;
+        state.roleTemplatesError = null;
       })
       .addCase(createRoleTemplate.fulfilled, (state, action) => {
-        state.loading = false;
-        state.roles.push(action.payload);
-        state.error = null;
+        state.roleTemplatesLoading = false;
+        state.roleTemplates.push(action.payload);
+        state.roleTemplatesError = null;
       })
       .addCase(createRoleTemplate.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
+        state.roleTemplatesLoading = false;
+        state.roleTemplatesError = action.payload as string;
       })
-
-      // Update role template
       .addCase(updateRoleTemplate.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.roleTemplatesLoading = true;
+        state.roleTemplatesError = null;
       })
       .addCase(updateRoleTemplate.fulfilled, (state, action) => {
-        state.loading = false;
-        const index = state.roles.findIndex(role => role.id === action.payload.id);
-        if (index !== -1) {
-          state.roles[index] = action.payload;
+        state.roleTemplatesLoading = false;
+        const idx = state.roleTemplates.findIndex(
+          (tpl: any) => tpl.id === action.payload.id
+        );
+        if (idx !== -1) {
+          state.roleTemplates[idx] = action.payload;
         }
-        state.error = null;
+        state.roleTemplatesError = null;
       })
       .addCase(updateRoleTemplate.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-
-      // Delete role template
-      .addCase(deleteRoleTemplate.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(deleteRoleTemplate.fulfilled, (state, action) => {
-        state.loading = false;
-        state.roles = state.roles.filter(role => role.id !== action.payload);
-        state.error = null;
-      })
-      .addCase(deleteRoleTemplate.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-
-      // Assign role template
-      .addCase(assignRoleTemplate.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(assignRoleTemplate.fulfilled, (state) => {
-        state.loading = false;
-        state.error = null;
-      })
-      .addCase(assignRoleTemplate.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
+        state.roleTemplatesLoading = false;
+        state.roleTemplatesError = action.payload as string;
       });
   },
 });

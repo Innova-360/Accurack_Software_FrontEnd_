@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaPlus, FaTimes } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import { SpecialButton } from '../buttons';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { createSupplier } from '../../store/slices/supplierSlice';
@@ -15,6 +16,7 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
   onClose
 }) => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { currentStore } = useAppSelector((state) => state.stores);
   const { loading } = useAppSelector((state) => state.suppliers);
   const [formData, setFormData] = useState<SupplierFormData>({
@@ -84,14 +86,16 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
       return;
     }
       try {
-      await dispatch(createSupplier({
+      const supplierData = {
         supplier_id: formData.name.toLowerCase().replace(/\s+/g, '-'), // Generate a simple ID from name
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         address: formData.address,
         storeId: currentStore?.id || formData.storeId
-      })).unwrap();
+      };
+      
+      await dispatch(createSupplier(supplierData)).unwrap();
       
       // Reset form and close modal
       setFormData({
@@ -104,6 +108,11 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
       });
       setErrors({});
       onClose();
+      
+      // Navigate to assign products page
+      navigate(`/store/${currentStore?.id}/supplier/assign-products`, {
+        state: { supplier: supplierData }
+      });
     } catch (error) {
       console.error('Error creating supplier:', error);
     }

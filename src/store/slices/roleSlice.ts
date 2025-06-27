@@ -54,7 +54,7 @@ export const fetchRoleTemplates = createAsyncThunk(
   "roles/fetchRoleTemplates",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await apiClient.get('/permissions/templates');
+      const response = await apiClient.get("/permissions/templates");
       return response.data?.data || response.data || [];
     } catch (error: any) {
       return rejectWithValue(
@@ -82,7 +82,7 @@ export const createRoleTemplate = createAsyncThunk(
   "roles/createRoleTemplate",
   async (roleData: Partial<RoleTemplate>, { rejectWithValue }) => {
     try {
-      const response = await apiClient.post('/permissions/templates', roleData);
+      const response = await apiClient.post("/permissions/templates", roleData);
       return response.data?.data || response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -99,7 +99,10 @@ export const updateRoleTemplate = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await apiClient.put(`/permissions/templates/${id}`, roleData);
+      const response = await apiClient.put(
+        `/permissions/templates/${id}`,
+        roleData
+      );
       return response.data?.data || response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -126,11 +129,15 @@ export const deleteRoleTemplate = createAsyncThunk(
 export const assignRoleTemplate = createAsyncThunk(
   "roles/assignRoleTemplate",
   async (
-    { userIds, roleTemplateId, storeId }: { userIds: string[]; roleTemplateId: string; storeId?: string },
+    {
+      userIds,
+      roleTemplateId,
+      storeId,
+    }: { userIds: string[]; roleTemplateId: string; storeId?: string },
     { rejectWithValue }
   ) => {
     try {
-      const response = await apiClient.post('/permissions/templates/assign', {
+      const response = await apiClient.post("/permissions/templates/assign", {
         userIds,
         roleTemplateId,
         storeId,
@@ -220,7 +227,9 @@ const roleSlice = createSlice({
       })
       .addCase(updateRoleTemplate.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.roleTemplates.findIndex(role => role.id === action.payload.id);
+        const index = state.roleTemplates.findIndex(
+          (role) => role.id === action.payload.id
+        );
         if (index !== -1) {
           state.roleTemplates[index] = action.payload;
         }
@@ -241,7 +250,9 @@ const roleSlice = createSlice({
       })
       .addCase(deleteRoleTemplate.fulfilled, (state, action) => {
         state.loading = false;
-        state.roleTemplates = state.roleTemplates.filter(role => role.id !== action.payload);
+        state.roleTemplates = state.roleTemplates.filter(
+          (role) => role.id !== action.payload
+        );
         if (state.currentRole?.id === action.payload) {
           state.currentRole = null;
         }
