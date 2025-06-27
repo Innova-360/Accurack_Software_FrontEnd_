@@ -42,7 +42,7 @@ const ViewTransactionModal: React.FC<ViewTransactionModalProps> = ({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-500">
-                  Transaction ID
+                  Sales ID
                 </label>
                 <p className="text-sm font-semibold text-blue-600">
                   {transaction.transactionId}

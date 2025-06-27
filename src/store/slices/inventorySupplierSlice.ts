@@ -1,6 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import apiClient from "../../services/api";
-
 // Async thunk to fetch suppliers by storeId, page, and limit
 export const fetchInventorySuppliers = createAsyncThunk(
   "inventorySuppliers/fetchInventorySuppliers",
@@ -26,7 +25,6 @@ export const fetchInventorySuppliers = createAsyncThunk(
     }
   }
 );
-
 const inventorySupplierSlice = createSlice({
   name: "inventorySuppliers",
   initialState: {
@@ -52,5 +50,4 @@ const inventorySupplierSlice = createSlice({
       });
   },
 });
-
-export default inventorySupplierSlice.reducer;
+export default inventorySupplierSlice.reducer

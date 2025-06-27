@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import React Icons
 import toast from "react-hot-toast";
-import { useAppDispatch } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   googleAuth,
   createClientWithAdmin,
@@ -19,12 +19,12 @@ const Signup = () => {
     companyEmail: "",
     companyPhone: "",
     companyAddress: "",
-  });
-  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  }); const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State to toggle confirm password visibility
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { loading } = useAppSelector((state) => state.auth);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -278,13 +278,22 @@ const Signup = () => {
                   className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal resize-none"
                 />
               </div>
-            </div>
-
-            <button
+            </div>            <button
               type="submit"
-              className="w-full bg-[#0b5c5a] text-white py-2 rounded-md font-medium hover:bg-[#084c4a] transition"
+              disabled={loading}
+              className={`w-full py-2 rounded-md font-medium transition ${loading
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-[#0b5c5a] hover:bg-[#084c4a]'
+                } text-white`}
             >
-              Create Account
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Creating Account...
+                </div>
+              ) : (
+                'Create Account'
+              )}
             </button>
           </form>
           {/* Social signup section */}
@@ -307,6 +316,9 @@ const Signup = () => {
                 <img src="/apple.png" alt="Apple" className="h-6 w-6" />
               </span>
             </div>
+            <span className="flex items-center justify-center cursor-pointer mt-4">
+              Already have an account?<button className="text-[#0b5c5a] cursor-pointer ml-2.5" onClick={() => navigate("/login")}>   Signup</button>
+            </span>
           </div>
         </div>
         {/* Lower Text Section for mobile */}

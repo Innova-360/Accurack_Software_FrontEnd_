@@ -5,7 +5,6 @@ import {
   FaUsers, 
   FaShoppingCart, 
   FaBoxes, 
-  FaExclamationTriangle
 } from 'react-icons/fa';
 import type { StatsData } from '../../services/salesService';
 import { formatCurrency } from '../../services/salesService';
@@ -35,7 +34,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
           change: "Loading...",
           changeType: 'positive',
           icon: <FaChartLine />,
-          color: 'bg-blue-500'
+          color: 'bg-teal-600'
         },
         {
           title: "Transactions",
@@ -43,7 +42,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
           change: "Loading...",
           changeType: 'positive',
           icon: <FaFileAlt />,
-          color: 'bg-green-500'
+          color: 'bg-teal-600'
         },
         {
           title: "Customers",
@@ -51,7 +50,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
           change: "Loading...",
           changeType: 'positive',
           icon: <FaUsers />,
-          color: 'bg-purple-500'
+          color: 'bg-teal-600'
         },
         {
           title: "Avg. Transaction",
@@ -59,7 +58,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
           change: "Loading...",
           changeType: 'positive',
           icon: <FaShoppingCart />,
-          color: 'bg-orange-500'
+          color: 'bg-teal-600'
         },
         {
           title: "Products Available",
@@ -67,16 +66,8 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
           change: "of 0 total",
           changeType: 'positive',
           icon: <FaBoxes />,
-          color: 'bg-cyan-500'
+          color: 'bg-teal-600'
         },
-        {
-          title: "Low Stock Alert",
-          value: "0",
-          change: "Items need restock",
-          changeType: 'negative',
-          icon: <FaExclamationTriangle />,
-          color: 'bg-red-500'
-        }
       ];
     }
 
@@ -87,7 +78,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
         change: "+12.5% from yesterday",
         changeType: 'positive',
         icon: <FaChartLine />,
-        color: 'bg-blue-500'
+        color: 'bg-teal-600'
       },
       {
         title: "Transactions",
@@ -95,7 +86,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
         change: "+3.2% from yesterday",
         changeType: 'positive',
         icon: <FaFileAlt />,
-        color: 'bg-green-500'
+        color: 'bg-teal-600'
       },
       {
         title: "Customers",
@@ -103,7 +94,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
         change: "+5.1% from yesterday",
         changeType: 'positive',
         icon: <FaUsers />,
-        color: 'bg-purple-500'
+        color: 'bg-teal-600'
       },
       {
         title: "Avg. Transaction",
@@ -111,7 +102,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
         change: "+2.7% from yesterday",
         changeType: 'positive',
         icon: <FaShoppingCart />,
-        color: 'bg-orange-500'
+        color: 'bg-teal-600'
       },
       {
         title: "Products Available",
@@ -119,23 +110,15 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
         change: "of 5 total",
         changeType: 'positive',
         icon: <FaBoxes />,
-        color: 'bg-cyan-500'
+        color: 'bg-teal-600'
       },
-      {
-        title: "Low Stock Alert",
-        value: data.lowStockItems.toString(),
-        change: "Items need restock",
-        changeType: data.lowStockItems > 0 ? 'negative' : 'positive',
-        icon: <FaExclamationTriangle />,
-        color: 'bg-red-500'
-      }
     ];
   };
 
   const statsCards = getStatsCards(stats);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
       {statsCards.map((stat, index) => (
         <div key={index} className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-3">

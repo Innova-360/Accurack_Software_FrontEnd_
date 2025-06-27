@@ -108,7 +108,79 @@ const mockTransactions: Transaction[] = [
     payment: 'Card',
     status: 'Pending',
     cashier: 'Bob Chen'
-  }
+  },
+    {
+    id: '8',
+    transactionId: 'TXN-2024-005',
+    dateTime: '2024-06-16 04:20 PM',
+    customer: 'David Lee',
+    items: 1,
+    total: 14.03,
+    tax: 1.04,
+    payment: 'Cash',
+    status: 'Refunded',
+    cashier: 'Bob Chen'
+  },
+    {
+    id: '9',
+    transactionId: 'TXN-2024-005',
+    dateTime: '2024-06-16 04:20 PM',
+    customer: 'David Lee',
+    items: 1,
+    total: 14.03,
+    tax: 1.04,
+    payment: 'Cash',
+    status: 'Refunded',
+    cashier: 'Bob Chen'
+  },
+    {
+    id: '10',
+    transactionId: 'TXN-2024-005',
+    dateTime: '2024-06-16 04:20 PM',
+    customer: 'David Lee',
+    items: 1,
+    total: 14.03,
+    tax: 1.04,
+    payment: 'Cash',
+    status: 'Refunded',
+    cashier: 'Bob Chen'
+  },
+    {
+    id: '11',
+    transactionId: 'TXN-2024-005',
+    dateTime: '2024-06-16 04:20 PM',
+    customer: 'David Lee',
+    items: 1,
+    total: 14.03,
+    tax: 1.04,
+    payment: 'Cash',
+    status: 'Refunded',
+    cashier: 'Bob Chen'
+  },
+    {
+    id: '12',
+    transactionId: 'TXN-2024-005',
+    dateTime: '2024-06-16 04:20 PM',
+    customer: 'David Lee',
+    items: 1,
+    total: 14.03,
+    tax: 1.04,
+    payment: 'Cash',
+    status: 'Refunded',
+    cashier: 'Bob Chen'
+  },
+    {
+    id: '13',
+    transactionId: 'TXN-2024-005',
+    dateTime: '2024-06-16 04:20 PM',
+    customer: 'David Lee',
+    items: 1,
+    total: 14.03,
+    tax: 1.04,
+    payment: 'Cash',
+    status: 'Refunded',
+    cashier: 'Bob Chen'
+  },
 ];
 
 const mockStatsData: StatsData = {

@@ -53,7 +53,6 @@ const StoreForm: React.FC = () => {
     email: "",
     timezone: "America/New_York",
     currency: "USD",
-    taxMode: "exclusive",
   });
 
   const [errors, setErrors] = useState<Partial<StoreFormData>>({});
@@ -70,7 +69,6 @@ const StoreForm: React.FC = () => {
           email: store.email,
           timezone: store.timezone,
           currency: store.currency,
-          taxMode: store.taxMode,
         });
       }
     }
@@ -101,6 +99,7 @@ const StoreForm: React.FC = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -131,7 +130,6 @@ const StoreForm: React.FC = () => {
     navigate("/stores");
   };
 
-const EmployeeForm = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -250,7 +248,7 @@ const EmployeeForm = () => {
                 </h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Timezone
@@ -286,25 +284,6 @@ const EmployeeForm = () => {
                     ))}
                   </select>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tax Mode
-                  </label>
-                  <select
-                    name="taxMode"
-                    value={formData.taxMode}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                  >
-                    <option value="inclusive">
-                      Inclusive - Tax included in price
-                    </option>
-                    <option value="exclusive">
-                      Exclusive - Tax added to price
-                    </option>
-                  </select>
-                </div>
               </div>
             </div>
 
@@ -333,31 +312,9 @@ const EmployeeForm = () => {
             </div>
           </form>
         </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Store Password</label>
-            <input type="Password" placeholder="Enter your Password" className="w-full border rounded-md px-3 py-2" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Confirm Password</label>
-            <input type="Password" placeholder="Enter your Password" className="w-full border rounded-md px-3 py-2" />
-          </div>
-
-        {/* Right Side Permissions */}
-        
       </div>
-
-      {/* Other Details Section */}
-      <div>
-       
-        
-
-        <button className="flex items-center justify-center gap-2 bg-[#03414C] text-white font-medium px-6 py-2 rounded-md">
-          <FaStumbleuponCircle className="text-sm" /> Create Store
-        </button>
-      </div>
-    </div>
     </div>
   );
 };
 
-export default EmployeeForm;
+export default StoreForm;

@@ -55,7 +55,7 @@ export const updateStore = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await apiClient.put(`/stores/${id}`, storeData);
+      const response = await apiClient.put(`/store/${id}`, storeData);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -69,7 +69,7 @@ export const deleteStore = createAsyncThunk(
   "stores/deleteStore",
   async (storeId: string, { rejectWithValue }) => {
     try {
-      await apiClient.delete(`/stores/${storeId}`);
+      await apiClient.delete(`/store/${storeId}`);
       return storeId;
     } catch (error: any) {
       return rejectWithValue(

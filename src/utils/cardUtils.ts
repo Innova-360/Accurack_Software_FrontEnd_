@@ -42,12 +42,12 @@ export const getAllCards = (): CardSection[] => {
   return [    {
       sectionTitle: 'Liabilities',
       cards: [
-        { title: 'Add Store' },
+        { title: 'Suppliers' },
         { title: 'Total Inventory\nCount' },
         { title: 'View\nExpenses' },
         { title: 'Sales\nDashboard' },
-        { title: 'Report\nBuilder' },
-        { title: 'Settings' },
+        { title: 'Employee' },
+        { title: 'EmployeeRoles' },
       ]
     },
     {
