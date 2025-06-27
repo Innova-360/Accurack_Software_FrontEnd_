@@ -34,10 +34,9 @@ const SpecialButton: React.FC<SpecialButtonProps> = ({
 }) => {
   const baseClasses = getSpecialVariantClasses(variant);
   
-  // Determine which variants need common button classes
-  const needsCommonClasses = !variant.startsWith('action-') && !variant.startsWith('sidebar-');
-  
-  const commonClasses = needsCommonClasses ? [
+  // Add common classes for most buttons (except action buttons which are just icon/text)
+  const needsButtonClasses = !variant.startsWith('action-');
+  const commonClasses = needsButtonClasses ? [
     'flex',
     'items-center',
     'justify-center',

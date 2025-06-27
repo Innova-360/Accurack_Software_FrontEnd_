@@ -131,6 +131,7 @@ const StoreForm: React.FC = () => {
     navigate("/stores");
   };
 
+const EmployeeForm = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -332,9 +333,31 @@ const StoreForm: React.FC = () => {
             </div>
           </form>
         </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Store Password</label>
+            <input type="Password" placeholder="Enter your Password" className="w-full border rounded-md px-3 py-2" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Confirm Password</label>
+            <input type="Password" placeholder="Enter your Password" className="w-full border rounded-md px-3 py-2" />
+          </div>
+
+        {/* Right Side Permissions */}
+        
       </div>
+
+      {/* Other Details Section */}
+      <div>
+       
+        
+
+        <button className="flex items-center justify-center gap-2 bg-[#03414C] text-white font-medium px-6 py-2 rounded-md">
+          <FaStumbleuponCircle className="text-sm" /> Create Store
+        </button>
+      </div>
+    </div>
     </div>
   );
 };
 
-export default StoreForm;
+export default EmployeeForm;

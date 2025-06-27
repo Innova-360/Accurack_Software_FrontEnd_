@@ -1,17 +1,17 @@
-import { Routes, Route } from "react-router-dom";
-import Signup from "../pages/Signup/Signup";
-import Login from "../pages/Login/Login";
-import OtpPage from "../pages/OtpPage/OtpPage";
-import Inventory from "../pages/Inventory/Inventory";
-import CreateInventory from "../pages/Inventory/CreateInventory";
-import Home from "../pages/Home";
-import Terms from "../pages/Terms";
-import StoreForm from "../components/StoreForm";
-import ExpensePage from "../pages/expensePage/Expense";
-import SalesPage from "../pages/salesPage/Sales";
 import GoogleAuthCallback from "../components/GoogleAuthCallback";
 import Supplier from "../pages/Supplier/Supplier";
 import StoresPage from "../pages/Stores/Stores";
+import { Routes, Route } from 'react-router-dom';
+import Signup from '../pages/Signup/Signup';
+import Login from '../pages/Login/Login';
+import OtpPage from '../pages/OtpPage/OtpPage';
+import Inventory from '../pages/Inventory/Inventory';
+import Home from '../pages/Home';
+import Terms from '../pages/Terms'
+import StoreForm from '../components/StoreForm'
+import ExpensePage from '../pages/expensePage/Expense'
+import SalesPage from '../pages/salesPage/Sales'
+import CreateInventory from '../pages/Inventory/CreateInventory'
 
 const AppRoutes = () => {
   return (
@@ -28,7 +28,6 @@ const AppRoutes = () => {
       <Route path="/store/:id/expenses" element={<ExpensePage />} />
       <Route path="/store/:id/supplier" element={<Supplier />} />
       <Route path="/inventory" element={<Inventory />} />
-      <Route path="/inventory/create" element={<CreateInventory />} />
       <Route path="/" element={<Home />} />
       <Route path="/term" element={<Terms />} />
       <Route path="/Form" element={<StoreForm />} />

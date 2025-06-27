@@ -11,11 +11,11 @@ import {
 } from "../../utils/rememberMeUtils";
 
 const Login = () => {
-  const navigate = useNavigate();
   const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
 
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   // Load saved credentials on component mount
   useEffect(() => {

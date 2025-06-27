@@ -28,6 +28,10 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
     'rounded-md',
     'transition-colors',
     'duration-200',
+    'focus:outline-none',
+    'focus:ring-2',
+    'focus:ring-offset-2',
+    'focus:ring-[#03414C]'
   ];
 
   const stateClasses = active 
