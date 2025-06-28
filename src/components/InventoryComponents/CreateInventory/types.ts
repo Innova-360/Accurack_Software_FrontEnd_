@@ -3,6 +3,8 @@ export interface PackDiscount {
   quantity: number;
   discountType: "percentage" | "fixed";
   discountValue: number;
+  totalPacksQuantity?: number; // Added for API payload compatibility
+  orderedPacksPrice?: number; // Added for API payload compatibility
 }
 
 export interface DiscountTier {
@@ -43,8 +45,8 @@ export interface Variation {
   price: number;
   plu: string;
   discount: number;
-  vendor: string;
   customSku: string;
+  supplierId: string;
   imageFile: File | null;
   imagePreview: string;
   hasPackSettings: boolean;
@@ -59,7 +61,6 @@ export interface ProductFormData {
   customCategory?: string;
   brandName?: string;
   price: string;
-  vendor: string;
   customSku: string;
   ean: string;
   pluUpc: string;
@@ -68,7 +69,7 @@ export interface ProductFormData {
   itemSellingCost: string;
   minSellingQuantity: string;
   minOrderValue: string;
-  msrpPrice: string,
+  msrpPrice: string;
   orderValueDiscountType: "percentage" | "fixed" | "";
   orderValueDiscountValue: string;
   quantity: string;
@@ -82,6 +83,5 @@ export interface ProductFormData {
   hasAttributes: boolean;
   attributes: Attribute[];
   variations: Variation[];
+  supplierId: string; // Added for API payload compatibility
 }
-
-

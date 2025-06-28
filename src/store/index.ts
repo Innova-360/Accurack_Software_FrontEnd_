@@ -7,6 +7,8 @@ import storeReducer from "./slices/storeSlice";
 import supplierReducer from "./slices/supplierSlice";
 import employeeReducer from "./slices/employeeSlice";
 import roleReducer from "./slices/roleSlice";
+import userReducer from "./slices/userSlice";
+import inventorySupplierReducer from "./slices/inventorySupplierSlice";
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +20,8 @@ export const store = configureStore({
     suppliers: supplierReducer,
     employees: employeeReducer,
     roles: roleReducer,
+    user: userReducer,
+    inventorySuppliers: inventorySupplierReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

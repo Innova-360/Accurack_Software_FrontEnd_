@@ -42,6 +42,10 @@ const AppRoutes = () => {
       <Route path="/store/:id/role" element={<Srole />} />
       <Route path="/store/:id/role/create" element={<RolePage />} />
       <Route path="/store/:id/role/edit" element={<EditRolePage />} />
+      <Route path="/store/:id/supplier" element={<Supplier />} />     
+       <Route path="/store/:id/employee" element={<EmployeePage />} />
+      <Route path="/store/:id/permissions" element={<PermissionsPage />} />
+      <Route path="/store/:id/edit-employee" element={<EditEmployeePage />} />
       <Route path="/inventory" element={<Inventory />} />
       <Route path="/inventory/create" element={<CreateInventory />} />
       <Route path="/" element={<Home />} />
@@ -50,7 +54,8 @@ const AppRoutes = () => {
       <Route path="/expenses" element={<ExpensePage />} />
       <Route path="/sales" element={<SalesPage />} />
       <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
-      <Route path="/supplier" element={<Supplier />} />      <Route path="/employee" element={<EmployeePage />} />
+      <Route path="/supplier" element={<Supplier />} />      
+      <Route path="/employee" element={<EmployeePage />} />
       <Route path="/permissions" element={<PermissionsPage />} />
       <Route path="/edit-employee" element={<EditEmployeePage />} />
     </Routes>

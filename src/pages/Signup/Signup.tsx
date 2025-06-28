@@ -19,7 +19,8 @@ const Signup = () => {
     companyEmail: "",
     companyPhone: "",
     companyAddress: "",
-  }); const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  });
+  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State to toggle confirm password visibility
 
   const dispatch = useAppDispatch();
