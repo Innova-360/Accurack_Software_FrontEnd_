@@ -4,6 +4,7 @@ import { productAPI } from "../../services/productAPI";
 import type { Product } from "../../data/inventoryData";
 
 // Define the payload type for product creation
+
 export interface CreateProductPayload {
   name: string;
   category: string;

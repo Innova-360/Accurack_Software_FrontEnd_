@@ -1,10 +1,11 @@
-import React, { useState } from "react";
-import { FaPlus, FaTimes } from "react-icons/fa";
 import toast from "react-hot-toast";
-import { SpecialButton } from "../buttons";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { createSupplier } from "../../store/slices/supplierSlice";
-import type { SupplierFormData } from "../../types/supplier";
+import React, { useState } from 'react';
+import { FaPlus, FaTimes } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { SpecialButton } from '../buttons';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { createSupplier } from '../../store/slices/supplierSlice';
+import type { SupplierFormData } from '../../types/supplier';
 
 interface AddSupplierModalProps {
   isOpen: boolean;
@@ -13,18 +14,19 @@ interface AddSupplierModalProps {
 
 const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
   isOpen,
-  onClose,
+  onClose
 }) => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { currentStore } = useAppSelector((state) => state.stores);
   const { loading } = useAppSelector((state) => state.suppliers);
   const [formData, setFormData] = useState<SupplierFormData>({
-    supplier_id: "",
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    storeId: currentStore?.id || "",
+    supplier_id: '',
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    storeId: currentStore?.id || ''
   });
 
   // Update storeId when currentStore changes
@@ -144,12 +146,8 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               <FaPlus className="text-white" size={18} />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">
-                Add New Supplier
-              </h2>
-              <p className="text-sm text-gray-600">
-                Create a new supplier profile
-              </p>
+              <h2 className="text-xl font-semibold text-gray-900">Add New Supplier</h2>
+              <p className="text-sm text-gray-600">Create a new supplier profile</p>
             </div>
           </div>
           <button
@@ -252,20 +250,19 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               disabled={loading}
             >
               Cancel
-            </SpecialButton>{" "}
-            <SpecialButton
+            </SpecialButton>            <SpecialButton
               variant="modal-confirm"
               type="button"
               onClick={async () => {
-                const event = new Event("submit") as unknown as React.FormEvent;
+                const event = new Event('submit') as unknown as React.FormEvent;
                 await handleSubmit(event);
               }}
               disabled={loading}
             >
-              {loading ? "Adding..." : "Add Supplier"}
+              {loading ? 'Adding...' : 'Add Supplier'}
             </SpecialButton>
-          </div>
-        </form>
+          </div>        
+          </form>
       </div>
     </div>
   );

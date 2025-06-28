@@ -3,32 +3,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { EmployeeForm, Permissions } from '../../components/EmployeeComponents';
 import Header from '../../components/Header';
 import { FaPlus, FaArrowLeft } from 'react-icons/fa';
-
-interface EmployeeData {
-  id?: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  status: string;
-  employeeCode: string;
-  position: string;
-  department: string;
-  phone: string;
-  joiningDate: string;
-  password: string;
-  email: string;
-  permissions: {
-    [resource: string]: {
-      [action: string]: boolean;
-    };
-  };
-}
+import type { EmployeeFormData } from '../../types/employee';
 
 const EditEmployeePage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [currentView, setCurrentView] = useState<'list' | 'edit'>('list');
-  const [editingEmployee, setEditingEmployee] = useState<EmployeeData | null>(null);
+  const [editingEmployee, setEditingEmployee] = useState<EmployeeFormData | null>(null);
 
   // Check if we came from navigation with employee data
   useEffect(() => {
@@ -38,18 +19,25 @@ const EditEmployeePage: React.FC = () => {
     }
   }, [location.state]);
 
-  const handleEditEmployee = (employeeData: EmployeeData) => {
+  const handleEditEmployee = (employeeData: EmployeeFormData) => {
     setEditingEmployee(employeeData);
     setCurrentView('edit');
   };
   const handleBackToList = () => {
     setCurrentView('list');
     setEditingEmployee(null);
-    // Navigate back to permissions page
-    navigate('/permissions');
+    // Navigate back to permissions page with store context
+    const urlParts = location.pathname.split('/');
+    const storeIndex = urlParts.findIndex(part => part === 'store');
+    if (storeIndex !== -1 && urlParts[storeIndex + 1]) {
+      const storeId = urlParts[storeIndex + 1];
+      navigate(`/store/${storeId}/role`);
+    } else {
+      navigate('/role');
+    }
   };
 
-  const handleSubmitEmployee = (data: EmployeeData) => {
+  const handleSubmitEmployee = (data: EmployeeFormData) => {
     // Here you will integrate with your API
     console.log('Employee data to be updated:', data);
     

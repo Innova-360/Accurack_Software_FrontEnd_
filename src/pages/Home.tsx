@@ -24,8 +24,7 @@ function Home() {
       <Topbar />
       <Cards />
     </div>
-  )
+  );
 }
 
-
-export default Home
+export default Home;

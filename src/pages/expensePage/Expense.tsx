@@ -271,7 +271,6 @@ const ExpensePage: React.FC = () => {
     setDeletingItemId(itemId);
     setIsDeleteModalOpen(true);
   };
-
   const confirmDeleteItem = () => {
     if (deletingItemId) {
       if (selectedCategory === "All Expenses") {
@@ -301,7 +300,6 @@ const ExpensePage: React.FC = () => {
       setDeletingItemId(null);
     }
   };
-
   // Delete all items in current category or all categories
   const handleDeleteAll = () => {
     setIsDeleteAllModalOpen(true);
