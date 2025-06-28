@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ProductFormData } from "../../components/InventoryComponents/CreateInventory/types";
 import {
@@ -15,7 +15,6 @@ import { createProduct } from "../../store/slices/productsSlice";
 import { useAppSelector } from "../../store/hooks";
 import { selectCurrentStore } from "../../store/selectors";
 import useSuppliers from "../../hooks/useSuppliers";
-import { fetchUser } from "../../store/slices/userSlice";
 
 const CreateInventory: React.FC = () => {
   const dispatch = useDispatch();
@@ -316,16 +315,6 @@ const CreateInventory: React.FC = () => {
   };
 
   const progress = calculateProgress();
-
-  useEffect(() => {
-    // Fetch user info on mount to ensure user is loaded
-    dispatch(fetchUser() as any).then((result: any) => {
-      // result.payload will be the user data if fulfilled
-      if (result && result.payload) {
-        localStorage.setItem("clientId", result.payload.clientId || "");
-      }
-    });
-  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">

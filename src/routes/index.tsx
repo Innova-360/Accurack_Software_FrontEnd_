@@ -16,6 +16,9 @@ import StoresPage from "../pages/Stores/Stores";
 import EmployeePage from "../pages/Employee/EmployeePage";
 import PermissionsPage from "../pages/Employee/PermissionsPage";
 import EditEmployeePage from "../pages/Employee/EditEmployeePage";
+import CustomerPage from "../pages/Customer/Customer";
+import CreateCustomer from "../pages/Customer/CreateCustomer";
+import CustomerBalanceSheet from "../pages/Customer/CustomerBalanceSheet";
 const AppRoutes = () => {
   return (
     <Routes>
@@ -34,6 +37,11 @@ const AppRoutes = () => {
       <Route path="/store/:id/employee/create" element={<EmployeePage />} />
       <Route path="/store/:id/employee" element={<PermissionsPage />} />
       <Route path="/store/:id/edit-employee" element={<EditEmployeePage />} />
+      <Route path="/store/:id/customer" element={<CustomerPage />} />
+      <Route path="/store/:id/customer/create" element={<CreateCustomer />} />
+      <Route path="/store/:id/customer/edit/:customerId" element={<CreateCustomer />} />
+      <Route path="/store/:id/customer/view/:customerId" element={<CreateCustomer />} />
+      <Route path="/store/:id/customer/balance/:customerId" element={<CustomerBalanceSheet />} />
       <Route path="/store/:id/sales" element={<SalesPage />} />
       <Route path="/" element={<Home />} />
       <Route path="/term" element={<Terms />} />
