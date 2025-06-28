@@ -74,9 +74,12 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
     handleClose();
 
     // Show processing toast
-    const processingToast = toast.loading(`Processing ${selectedFile.name}...`, {
-      duration: Infinity,
-    });
+    const processingToast = toast.loading(
+      `Processing ${selectedFile.name}...`,
+      {
+        duration: Infinity,
+      }
+    );
 
     try {
       // Send as multipart/form-data for multer
@@ -303,8 +306,6 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
           onChange={handleFileSelect}
           className="hidden"
         />
-
-
 
         {/* Actions */}
         <div className="flex justify-end space-x-4 mt-6">
