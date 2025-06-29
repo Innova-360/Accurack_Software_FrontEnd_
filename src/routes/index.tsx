@@ -12,6 +12,8 @@ import SalesPage from "../pages/salesPage/Sales";
 import GoogleAuthCallback from "../components/GoogleAuthCallback";
 import Supplier from "../pages/Supplier/Supplier";
 import StoresPage from "../pages/Stores/Stores";
+import Tax from "../pages/Tax";
+import AddTax from "../pages/AddTax"
 
 const AppRoutes = () => {
   return (
@@ -36,6 +38,8 @@ const AppRoutes = () => {
       <Route path="/sales" element={<SalesPage />} />
       <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
       <Route path="/supplier" element={<Supplier />} />
+      <Route path="/tax" element={<Tax/>}/>
+      <Route path="/add-tax" element={<AddTax/>}/>
     </Routes>
   );
 };
