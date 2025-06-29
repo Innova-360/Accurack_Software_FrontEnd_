@@ -1,6 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import apiClient from "../../services/api";
-
 // Async thunk to fetch suppliers by storeId, page, and limit
 export const fetchInventorySuppliers = createAsyncThunk(
   "inventorySuppliers/fetchInventorySuppliers",
@@ -16,8 +15,14 @@ export const fetchInventorySuppliers = createAsyncThunk(
       const response = await apiClient.get(
         `/supplier/list?storeId=${storeId}&page=${page}&limit=${limit}`
       );
-      console.log("Fetched inventory suppliers:", response.data);
-      return response.data;
+      console.log("📦 Fetched inventory suppliers response structure:", {
+        fullResponse: response.data,
+        dataLevel1: response.data.data,
+        dataLevel2: response.data.data.data,
+        suppliers: response.data.data.data.suppliers,
+        suppliersCount: response.data.data.data.suppliers?.length,
+      });
+      return response.data.data.data.suppliers;
     } catch (error: any) {
       console.error("Error fetching inventory suppliers:", error);
       return rejectWithValue(
@@ -26,7 +31,6 @@ export const fetchInventorySuppliers = createAsyncThunk(
     }
   }
 );
-
 const inventorySupplierSlice = createSlice({
   name: "inventorySuppliers",
   initialState: {
@@ -43,8 +47,8 @@ const inventorySupplierSlice = createSlice({
       })
       .addCase(fetchInventorySuppliers.fulfilled, (state, action) => {
         state.loading = false;
-        // Fix: extract suppliers from response.data.data.suppliers
-        state.suppliers = action.payload?.data?.data?.suppliers || [];
+        // Fix: suppliers are directly in the payload since we return them from the thunk
+        state.suppliers = action.payload || [];
       })
       .addCase(fetchInventorySuppliers.rejected, (state, action) => {
         state.loading = false;
@@ -52,5 +56,4 @@ const inventorySupplierSlice = createSlice({
       });
   },
 });
-
 export default inventorySupplierSlice.reducer;

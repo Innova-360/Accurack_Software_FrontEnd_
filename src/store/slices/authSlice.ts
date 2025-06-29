@@ -87,6 +87,7 @@ export const createClientWithAdmin = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
+      console.log("🚀 API call to create-client-with-admin starting...");
       const response = await apiClient.post("/auth/create-client-with-admin", {
         firstName: userData.firstName,
         lastName: userData.lastName,
@@ -97,11 +98,42 @@ export const createClientWithAdmin = createAsyncThunk(
         companyPhone: userData.companyPhone,
         companyAddress: userData.companyAddress,
       });
+      console.log("✅ API call successful:", response.data);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || "Client registration failed"
-      );
+      console.error("❌ API call failed:", error);
+
+      // Handle different types of errors
+      let errorMessage = "Client registration failed";
+
+      if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
+        errorMessage =
+          "Unable to connect to server. Please check if the backend is running on port 4000.";
+      } else if (error.message?.includes("CORS")) {
+        errorMessage =
+          "CORS error: Backend needs to allow requests from your current port (5175). Please check backend CORS configuration.";
+      } else if (error.response?.status === 404) {
+        errorMessage =
+          "API endpoint not found. Please verify the backend route exists.";
+      } else if (error.response?.status === 500) {
+        errorMessage = "Server error. Please check backend logs.";
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      console.error("Error details:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: errorMessage,
+        code: error.code,
+        originalError: error,
+      });
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -171,17 +203,42 @@ export const googleAuthCallback = createAsyncThunk(
   }
 );
 
+export const sendOtp = createAsyncThunk(
+  "/auth/send-otp",
+  async (email: string, { rejectWithValue }) => {
+    try {
+      console.log("📤 Sending OTP to email:", email);
+      const response = await apiClient.post("/auth/send-otp", { email });
+      console.log("✅ OTP sent successfully:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Failed to send OTP:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to send OTP";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
 
 export const verifyOtp = createAsyncThunk(
   "/auth/verify-otp",
   async (otpData: { email: string; otp: string }, { rejectWithValue }) => {
     try {
+      console.log("🔐 Verifying OTP for email:", otpData.email);
       const response = await apiClient.post("/auth/verify-otp", otpData);
+      console.log("✅ OTP verified successfully:", response.data);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || "OTP operation failed"
-      );
+      console.error("❌ OTP verification failed:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "OTP verification failed";
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -207,6 +264,22 @@ export const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
       localStorage.removeItem("authToken");
+    },
+    // Add new reducer to initialize from localStorage
+    initializeFromLocalStorage: (state) => {
+      const token = localStorage.getItem("authToken");
+      const userEmail = localStorage.getItem("userEmail");
+
+      if (token && token !== "undefined" && userEmail) {
+        state.token = token;
+        state.isAuthenticated = true;
+        // Create a basic user object if we have the email
+        state.user = {
+          id: "", // We don't have ID in localStorage
+          email: userEmail,
+          name: userEmail.split("@")[0], // Use email prefix as name
+        };
+      }
     },
   },
   extraReducers: (builder) => {
@@ -238,7 +311,8 @@ export const authSlice = createSlice({
         state.token = action.payload.token;
         state.isAuthenticated = true;
         localStorage.setItem("authToken", action.payload.token);
-      })      .addCase(registerUser.rejected, (state, action) => {
+      })
+      .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
@@ -306,6 +380,18 @@ export const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+      // Send OTP
+      .addCase(sendOtp.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(sendOtp.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(sendOtp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
       // Verify OTP
       .addCase(verifyOtp.pending, (state) => {
         state.loading = true;
@@ -328,5 +414,11 @@ export const authSlice = createSlice({
   },
 });
 
-export const { setUser, setToken, clearError, logout } = authSlice.actions;
+export const {
+  setUser,
+  setToken,
+  clearError,
+  logout,
+  initializeFromLocalStorage,
+} = authSlice.actions;
 export default authSlice.reducer;

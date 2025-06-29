@@ -4,14 +4,12 @@ export interface SupplierResponse {
   success: boolean;
   message: string;
   data: {
-    data: {
-      suppliers: Supplier[];
-      pagination: {
-        page: number;
-        limit: number;
-        total: number;
-        totalPages: number;
-      };
+    suppliers: Supplier[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
     };
   };
   status: number;
@@ -33,13 +31,24 @@ export const supplierAPI = {
   getSuppliers: async (
     storeId: string,
     page: number = 1,
-    limit?: number
+    limit: number = 10
   ): Promise<SupplierResponse> => {
     try {
-      const params: any = { storeId, page };
-      if (limit) params.limit = limit;
+      const params: any = { storeId, page, limit };
       const response = await apiClient.get("/supplier/list", { params });
-      return response.data;
+
+      // The response structure is: response.data.data.data.suppliers
+      // We need to restructure it to match our SupplierResponse interface
+      return {
+        success: response.data.success,
+        message: response.data.message,
+        data: {
+          suppliers: response.data.data.data.suppliers,
+          pagination: response.data.data.data.pagination,
+        },
+        status: response.data.status,
+        timestamp: response.data.timestamp,
+      };
     } catch (error) {
       console.error("Error fetching suppliers:", error);
       throw error;
@@ -101,16 +110,20 @@ export const supplierAPI = {
     storeId: string
   ): Promise<{ success: boolean; message: string }> => {
     try {
-      // Get all suppliers first
-      const suppliersResponse = await supplierAPI.getSuppliers(storeId);
-      const suppliers = suppliersResponse.data.data.suppliers;
+      // Get all suppliers first (use a high limit to get all suppliers)
+      const suppliersResponse = await supplierAPI.getSuppliers(
+        storeId,
+        1,
+        1000
+      );
+      const suppliers = suppliersResponse.data.suppliers;
 
       if (suppliers.length === 0) {
         return { success: true, message: "No suppliers to delete" };
       }
 
       // Delete each supplier individually
-      const deletePromises = suppliers.map((supplier: Supplier) =>
+      const deletePromises = suppliers.map((supplier) =>
         supplierAPI.deleteSupplier(supplier.id)
       );
 

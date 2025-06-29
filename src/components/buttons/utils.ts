@@ -80,23 +80,24 @@ export const getIconClasses = (size: BaseButtonProps['size'] = 'md', position: '
 export const getSpecialVariantClasses = (variant: string): string => {
   const specialVariants: Record<string, string> = {
     // Expense page specific variants
-    'expense-export': 'px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 border',
-    'expense-delete': 'px-4 py-2 text-sm bg-red-100 hover:bg-red-200 text-red-600 border',
-    'expense-save': 'px-4 py-2 text-sm bg-[#03414C] hover:bg-[#025a6b] text-white',
-    'expense-add': 'px-4 py-2 text-sm bg-teal-600 hover:bg-teal-700 text-white',
+    'expense-export': 'bg-gray-100 hover:bg-gray-200 text-gray-700 border',
+    'expense-delete': 'bg-red-100 hover:bg-red-200 text-red-600 border',
+    'expense-save': 'bg-[#03414C] hover:bg-[#025a6b] text-white',
+    'expense-add': 'bg-teal-600 hover:bg-teal-700 text-white',
     
     // Inventory page specific variants
-    'inventory-primary': 'px-3 py-2 sm:px-4 sm:py-2 bg-[#0f4d57] text-white hover:bg-[#0d4049] text-sm sm:text-base',
+    'inventory-primary': 'bg-[#0f4d57] text-white hover:bg-[#0d4049]',
     
     // Modal specific variants
-    'modal-cancel': 'px-4 py-2 text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-700',
-    'modal-confirm': 'px-4 py-2 text-sm font-medium bg-[#03414C] hover:bg-[#025a6b] text-white',
-    'modal-delete': 'px-4 py-2 text-sm font-medium bg-red-500 hover:bg-red-600 text-white',
-    'modal-add': 'px-4 py-2 text-sm font-medium bg-teal-500 hover:bg-teal-600 text-white',
-      // Sidebar button (these already have padding built in via the w-full layout)
+    'modal-cancel': 'bg-gray-100 hover:bg-gray-200 text-gray-700',
+    'modal-confirm': 'bg-[#03414C] hover:bg-[#025a6b] text-white',
+    'modal-delete': 'bg-red-500 hover:bg-red-600 text-white',
+    'modal-add': 'bg-teal-500 hover:bg-teal-600 text-white',
+    
+    // Sidebar button
     'sidebar-category': 'w-full px-3 py-2 text-left rounded-md hover:bg-gray-100 transition-colors',
     'sidebar-category-active': 'w-full px-3 py-2 text-left rounded-md bg-[#03414C] text-white',
-    'sidebar-add': 'flex items-center w-full px-3 py-2 text-left rounded-md hover:bg-gray-100 transition-colors text-gray-700',
+    'sidebar-add': 'w-full px-3 py-2 text-left rounded-md hover:bg-gray-100 transition-colors text-gray-700',
     
     // Action buttons (small icon buttons)
     'action-edit': 'text-gray-500 hover:text-blue-600',

@@ -5,8 +5,11 @@ import uiReducer from "./slices/uiSlice";
 import searchReducer from "./slices/searchSlice";
 import storeReducer from "./slices/storeSlice";
 import supplierReducer from "./slices/supplierSlice";
+import employeeReducer from "./slices/employeeSlice";
 import userReducer from "./slices/userSlice";
 import inventorySupplierReducer from "./slices/inventorySupplierSlice";
+import productsReducer from "./slices/productsSlice";
+import roleReducer from "./slices/roleSlice";
 
 export const store = configureStore({
   reducer: {
@@ -16,8 +19,11 @@ export const store = configureStore({
     search: searchReducer,
     stores: storeReducer,
     suppliers: supplierReducer,
+    employees: employeeReducer,
     user: userReducer,
     inventorySuppliers: inventorySupplierReducer,
+    products: productsReducer,
+    roles: roleReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

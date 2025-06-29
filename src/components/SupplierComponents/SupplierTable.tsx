@@ -83,8 +83,8 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
 
         {/* Table Content */}
         <div className="divide-y divide-gray-200">
-          {currentSuppliers?.map((supplier, index) => (<div
-              key={supplier.supplier_id}
+          {currentSuppliers?.map((supplier, index) => (            <div
+              // key={supplier.supplier_id}
               className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150 group"
             >
               <div className="grid grid-cols-12 gap-4 items-center">
@@ -151,7 +151,6 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
             </div>
           ))}
         </div>
-
         {/* Footer Summary */}
         <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
           <div className="flex justify-between items-center">
@@ -167,7 +166,6 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
             </div>
           </div>
         </div>
-
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="px-6 py-4 bg-white border-t border-gray-200">

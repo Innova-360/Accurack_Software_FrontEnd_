@@ -1,3 +1,7 @@
+export interface ExpenseCategory {
+  name: string;
+  // Add other properties if needed
+}
 export interface ExpenseItem {
   id: number;
   name: string;

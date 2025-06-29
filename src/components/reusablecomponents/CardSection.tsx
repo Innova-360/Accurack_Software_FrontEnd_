@@ -29,8 +29,8 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
           <div
             key={idx}
             onClick={() => {
-              if (card.title === "Add Store") {
-                navigate("/Form");
+              if (card.title === "Suppliers") {
+                navigate(`/store/${activeStoreId}/supplier`);
               } else if (card.title === "View\nExpenses") {
                 navigate(
                   activeStoreId
@@ -46,6 +46,19 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
                   activeStoreId
                     ? `/store/${activeStoreId}/inventory`
                     : "/inventory"
+                );
+              } else if (card.title === "Employee") {
+                navigate(
+                  activeStoreId
+                    ? `/store/${activeStoreId}/employee`
+                    : "/employee"
+                );
+              }
+               else if (card.title === "EmployeeRoles") {
+                navigate(
+                  activeStoreId
+                    ? `/store/${activeStoreId}/permissions`
+                    : "/permissions"
                 );
               }
             }}

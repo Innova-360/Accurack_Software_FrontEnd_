@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { verifyOtp } from "../../store/slices/authSlice";
+import { verifyOtp, sendOtp } from "../../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 
 const OtpPage = () => {
@@ -9,6 +9,7 @@ const OtpPage = () => {
   const [userEmail, setUserEmail] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [initialOtpSent, setInitialOtpSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const inputs = [
     useRef(null),
     useRef(null),
@@ -34,14 +35,11 @@ const OtpPage = () => {
   // Send initial OTP when user lands on OTP page
   const sendInitialOtp = async (email: string) => {
     try {
-      const resultAction = await dispatch(
-        verifyOtp({
-          email: email,
-          otp: "", // Send empty OTP to trigger OTP sending
-        })
-      );
-      if (verifyOtp.fulfilled.match(resultAction)) {
-        console.log("Initial OTP sent successfully", resultAction.payload);
+      console.log("📤 Sending initial OTP to:", email);
+      const resultAction = await dispatch(sendOtp(email));
+
+      if (sendOtp.fulfilled.match(resultAction)) {
+        console.log("✅ Initial OTP sent successfully", resultAction.payload);
         setSuccessMessage("OTP has been sent to your email");
         setInitialOtpSent(true);
         // Focus on first input
@@ -51,7 +49,7 @@ const OtpPage = () => {
         // Clear success message after 3 seconds
         setTimeout(() => setSuccessMessage(""), 3000);
       } else {
-        console.error("Failed to send initial OTP", resultAction.payload);
+        console.error("❌ Failed to send initial OTP", resultAction.payload);
         toast.error(
           typeof resultAction.payload === "string"
             ? resultAction.payload
@@ -59,7 +57,7 @@ const OtpPage = () => {
         );
       }
     } catch (error) {
-      console.error("Error sending initial OTP", error);
+      console.error("💥 Error sending initial OTP", error);
       toast.error("An error occurred while sending OTP. Please try again.");
     }
   };
@@ -90,8 +88,14 @@ const OtpPage = () => {
   };
   // Handle OTP verification
   const handleVerifyOtp = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // Clear any success messages
-    setSuccessMessage(""); // Check if all OTP fields are filled
+    e.preventDefault();
+
+    console.log("🔐 Starting OTP verification process");
+
+    // Clear any success messages
+    setSuccessMessage("");
+
+    // Check if all OTP fields are filled
     const otpString = otp.join("");
     if (otpString.length !== 6) {
       toast.error("Please enter the complete 6-digit OTP");
@@ -105,6 +109,7 @@ const OtpPage = () => {
     }
 
     try {
+      console.log("📤 Verifying OTP for:", userEmail);
       const resultAction = await dispatch(
         verifyOtp({
           email: userEmail,
@@ -113,11 +118,12 @@ const OtpPage = () => {
       );
 
       if (verifyOtp.fulfilled.match(resultAction)) {
-        console.log("OTP verification successful", resultAction.payload);
-        // Navigate to dashboard or home page after successful verification
+        console.log("✅ OTP verification successful", resultAction.payload);
+        toast.success("Email verified successfully!");
+        // Navigate to login page after successful verification
         navigate("/login");
       } else {
-        console.error("OTP verification failed", resultAction.payload);
+        console.error("❌ OTP verification failed", resultAction.payload);
         toast.error(
           typeof resultAction.payload === "string"
             ? resultAction.payload
@@ -125,10 +131,51 @@ const OtpPage = () => {
         );
       }
     } catch (error) {
-      console.error("Error during OTP verification", error);
+      console.error("💥 Error during OTP verification", error);
       toast.error(
         "An error occurred during OTP verification. Please try again."
       );
+    }
+  };
+
+  // Resend OTP functionality
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0) return;
+
+    try {
+      console.log("🔄 Resending OTP to:", userEmail);
+      const resultAction = await dispatch(sendOtp(userEmail));
+
+      if (sendOtp.fulfilled.match(resultAction)) {
+        console.log("✅ OTP resent successfully");
+        toast.success("OTP has been resent to your email");
+        setSuccessMessage("New OTP sent to your email");
+
+        // Start cooldown timer (60 seconds)
+        setResendCooldown(60);
+        const timer = setInterval(() => {
+          setResendCooldown((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccessMessage(""), 3000);
+      } else {
+        console.error("❌ Failed to resend OTP", resultAction.payload);
+        toast.error(
+          typeof resultAction.payload === "string"
+            ? resultAction.payload
+            : "Failed to resend OTP"
+        );
+      }
+    } catch (error) {
+      console.error("💥 Error resending OTP", error);
+      toast.error("An error occurred while resending OTP. Please try again.");
     }
   };
 
@@ -252,13 +299,36 @@ const OtpPage = () => {
             <div className="text-xs text-gray-500 mb-5">
               Code expires in 10 minutes
             </div>
+            {/* Resend OTP section */}
+            <div className="text-center mb-4">
+              <span className="text-sm text-gray-500">
+                Didn't receive the code?{" "}
+              </span>
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={resendCooldown > 0 || loading}
+                className={`text-sm font-semibold ${
+                  resendCooldown > 0 || loading
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-[#0b5c5a] hover:text-[#094543] cursor-pointer"
+                }`}
+              >
+                {resendCooldown > 0
+                  ? `Resend in ${resendCooldown}s`
+                  : loading
+                    ? "Sending..."
+                    : "Resend OTP"}
+              </button>
+            </div>
             <div className="flex w-full gap-3 mt-2">
               <button
                 type="button"
+                onClick={() => navigate("/signup")}
                 className="flex-1 border border-gray-200 rounded-lg py-2 font-semibold text-gray-700 hover:bg-gray-100 transition"
               >
                 Cancel
-              </button>{" "}
+              </button>
               <button
                 type="submit"
                 disabled={loading}
@@ -268,6 +338,54 @@ const OtpPage = () => {
               </button>
             </div>
           </form>
+          {/* Resend OTP section */}
+          {initialOtpSent && (
+            <div className="flex flex-col items-center w-full mt-4">
+              <button
+                onClick={handleResendOtp}
+                disabled={resendCooldown > 0 || loading}
+                className="w-full bg-[#0b5c5a] text-white py-2 rounded-lg font-semibold hover:bg-[#094543] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <svg
+                    role="status"
+                    className="w-5 h-5 text-white animate-spin"
+                    viewBox="0 0 100 101"
+                    fill="none"
+                  >
+                    <path
+                      d="M100 50.5C100 78.2091 78.2091 100 50.5 100C22.7909 100 1 78.2091 1 50.5C1 22.7909 22.7909 1 50.5 1C78.2091 1 100 22.7909 100 50.5Z"
+                      fill="#0b5c5a"
+                    />
+                    <path
+                      d="M93.9706 50.5C93.9706 76.9531 76.9531 93.9706 50.5 93.9706C24.0469 93.9706 7.02941 76.9531 7.02941 50.5C7.02941 24.0469 24.0469 7.02941 50.5 7.02941C76.9531 7.02941 93.9706 24.0469 93.9706 50.5Z"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M54.9998 15.9998C57.7614 15.9998 60.4545 16.9998 62.8284 18.5858C65.2023 20.1718 67.1213 22.1213 68.4853 24.4853C69.8492 26.8492 70.8284 29.5423 70.8284 32.3039C70.8284 35.0655 69.8492 37.7586 68.4853 40.1213C67.1213 42.4853 65.2023 44.4348 62.8284 46.0208C60.4545 47.6068 57.7614 48.6068 54.9998 48.6068C52.2382 48.6068 49.5451 47.6068 47.1712 46.0208C44.7973 44.4348 42.8783 42.4853 41.5143 40.1213C40.1504 37.7586 39.1712 35.0655 39.1712 32.3039C39.1712 29.5423 40.1504 26.8492 41.5143 24.4853C42.8783 22.1213 44.7973 20.1718 47.1712 18.5858C49.5451 16.9998 52.2382 15.9998 54.9998 15.9998Z"
+                      fill="white"
+                    />
+                  </svg>
+                ) : (
+                  "Resend OTP"
+                )}
+                {resendCooldown > 0 && (
+                  <span className="text-xs">
+                    {" "}
+                    (Resend available in{" "}
+                    <span className="font-semibold">
+                      {Math.floor(resendCooldown / 60)}:
+                      {String(resendCooldown % 60).padStart(2, "0")}
+                    </span>
+                    )
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
         </div>
         {/* Lower Text Section for mobile */}
         <p className="text-xs text-gray-400 mt-6 sm:mt-8 text-center">

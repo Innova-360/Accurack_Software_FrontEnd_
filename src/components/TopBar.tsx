@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
-import { FaChevronLeft, FaChevronRight, FaSearch, FaRegSun, FaTimes, FaStore } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaSearch, FaRegSun, FaTimes } from 'react-icons/fa';
 import dayjs from 'dayjs';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useDebounceSearch } from '../hooks/useDebounceSearch';
-import { useAppSelector } from '../store/hooks';
 
 const TopBar: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(new Date('2025-05-12'));
   const [showCalendar, setShowCalendar] = useState(false);
   const { searchTerm, updateSearchTerm } = useDebounceSearch(300);
-  const { currentStore } = useAppSelector((state) => state.stores);
 
   const handlePrev = () => setSelectedDate(prev => dayjs(prev).subtract(1, 'day').toDate());
   const handleNext = () => setSelectedDate(prev => dayjs(prev).add(1, 'day').toDate());
@@ -59,24 +57,16 @@ const TopBar: React.FC = () => {
               />
             </div>
           )}
-        </div>        {/* Greeting and Search */}
+        </div>
+
+        {/* Greeting and Search */}
         {/* Combined: Greeting + Search in ONE container */}
 <div className="flex items-center bg-white rounded-xl px-4 py-2 shadow-sm border-2 border-[#EDEDED] w-full sm:w-auto gap-4">
   {/* Hello + Icon */}
-  <div className="flex items-center mr-4">
+  <div className="flex items-center mr-60">
     <FaRegSun className="text-yellow-400 mr-2" />
-    <span>Hello, Michael Doe</span>
-  </div>
-  
-  {/* Store Info */}
-  {currentStore && (
-    <div className="flex items-center mr-4 px-3 py-1 bg-teal-50 rounded-md border border-teal-200">
-      <FaStore className="text-teal-600 mr-2 text-sm" />
-      <span className="text-teal-700 text-sm font-medium">{currentStore.name}</span>
-    </div>
-  )}
-
-  {/* Search Box */}
+    <span >Hello, Michael Doe</span>
+  </div>  {/* Search Box */}
   <div className="flex items-center bg-gray-100 px-3 py-[6px] rounded-md w-full sm:w-64 relative">
     <FaSearch className="text-gray-400 mr-2" />
     <input

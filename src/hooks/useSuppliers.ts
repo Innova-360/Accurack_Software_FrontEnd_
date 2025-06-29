@@ -16,37 +16,19 @@ export const useSuppliers = (storeId: string): UseSupplierReturn => {
     try {
       setLoading(true);
       setError(null);
-      console.log("🔄 useSuppliers: Fetching suppliers for storeId:", storeId);
       const response = await supplierAPI.getSuppliers(storeId);
-      console.log("📦 useSuppliers: Response received:", response);      if (response && response.success) {
-        // Safely access suppliers array with fallback and validation
-        const suppliersArray = Array.isArray(response.data?.data?.suppliers)
-          ? response.data.data.suppliers
-          : [];
-        console.log(
-          "✅ useSuppliers: Suppliers fetched successfully:",
-          suppliersArray.length,
-          "suppliers:",
-          suppliersArray
-        );
-        setSuppliers(suppliersArray);
+
+      if (response.success) {
+        setSuppliers(response.data.suppliers);
       } else {
-        console.error(
-          "❌ useSuppliers: Failed to fetch suppliers:",
-          response?.message || "Unknown error"
-        );
-        setError(response?.message || "Failed to fetch suppliers");
-        setSuppliers([]); // Reset suppliers on error
+        setError(response.message || "Failed to fetch suppliers");
       }
     } catch (err) {
-      const errorMessage =
+      setError(
         err instanceof Error
           ? err.message
-          : "An error occurred while fetching suppliers";
-      console.error("💥 useSuppliers: Error fetching suppliers:", errorMessage);
-      console.error("💥 useSuppliers: Full error object:", err);
-      setError(errorMessage);
-      setSuppliers([]); // Reset suppliers on error
+          : "An error occurred while fetching suppliers"
+      );
     } finally {
       setLoading(false);
     }
