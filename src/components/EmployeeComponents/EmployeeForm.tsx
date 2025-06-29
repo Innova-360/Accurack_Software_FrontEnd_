@@ -15,6 +15,7 @@ import {
   FaDownload,
   FaCog,
 } from "react-icons/fa";
+import apiClient from "../../services/api";
 
 interface EmployeeFormProps {
   onSubmit?: (data: EmployeeFormData) => void;
@@ -194,6 +195,15 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
   });
   const [creatingRole, setCreatingRole] = useState(false);
 
+  // RoleTemplate State
+  const [roleTemplateState, setRoleTemplateState] = useState<{
+    name: string;
+    description: string;
+    permissions: Record<string, string[]>;
+    isDefault: boolean;
+    priority: number;
+  } | null>(null);
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -230,28 +240,18 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
     try {
       setCreatingRole(true);
       
-      // Create role template via API
-      const response = await fetch('/api/v1/permissions/templates', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify({
-          name: newRoleData.name,
-          description: newRoleData.description,
-          permissions: {} 
-        })
+      // Store role template state for later use in handleSubmit
+      setRoleTemplateState({
+        name: newRoleData.name,
+        description: newRoleData.description,
+        permissions: selectedPermissions,
+        isDefault: false,
+        priority: 0
       });
       
-      if (response.ok) {
-        // Refresh role templates
-        dispatch(fetchRoleTemplates());
-        
-        // Reset form
-        setNewRoleData({ name: '', description: '' });
-        setShowAddRoleForm(false);
-      }
+      // Reset form
+      setNewRoleData({ name: '', description: '' });
+      setShowAddRoleForm(false);
     } catch (error) {
       console.error('Failed to create role:', error);
     } finally {
@@ -262,70 +262,72 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Convert selectedPermissions to API format
-    const permissions = Object.entries(selectedPermissions)
-      .filter(([_, actions]) => actions.length > 0)
-      .map(([resource, actions]) => ({
-        resource,
-        actions: actions, // Changed from 'action' to 'actions'
-        storeId: id || "", // Use current store ID from URL params
-      }));
-
-    // Prepare submit data with proper formatting
-    const submitData = {
-      ...formData,
-      permissions: permissions as any,
-      storeIds: id ? [id] : formData.storeIds, // Ensure current store ID is in storeIds
-    };
-
-    // Remove frontend-only fields that backend doesn't need
-    delete (submitData as any).joiningDate; // Backend uses createdAt automatically
-
-    console.log("Submitting employee data:", submitData);
-    console.log("Current store ID from URL:", id);
-    console.log("Permissions with store IDs:", permissions);
-
-    // Remove password field if editing or if password is empty
-    if (isEditMode || !submitData.password) {
-      delete submitData.password;
-    }
-
     try {
+      let roleTemplateId = formData.roleTemplateId;
+
+      // Step 1: Create role template if we have roleTemplateState
+      if (roleTemplateState) {
+        console.log('Creating role template first:', roleTemplateState);
+        
+        const roleResponse = await apiClient.post('/permissions/templates', {
+          name: roleTemplateState.name,
+          description: roleTemplateState.description,
+          permissions: roleTemplateState.permissions,
+          isDefault: roleTemplateState.isDefault,
+          priority: roleTemplateState.priority
+        });
+        
+        // Get the role template ID from response
+        roleTemplateId = roleResponse.data.data?.id || roleResponse.data.id;
+        console.log('Role template created with ID:', roleTemplateId);
+        
+        // Clear the role template state
+        setRoleTemplateState(null);
+      }
+
+      // Step 2: Prepare employee data
+      const permissions = Object.entries(selectedPermissions)
+        .filter(([_, actions]) => actions.length > 0)
+        .map(([resource, actions]) => ({
+          resource,
+          actions: actions,
+          storeId: id || "",
+        }));
+
+      const submitData = {
+        ...formData,
+        roleTemplateId, // Use the created or selected role template ID
+        permissions: permissions as any,
+        storeIds: id ? [id] : formData.storeIds,
+      };
+
+      delete (submitData as any).joiningDate;
+
+      if (isEditMode || !submitData.password) {
+        delete submitData.password;
+      }
+
+      console.log("Submitting employee data:", submitData);
+
+      // Step 3: Create/Update employee
       if (isEditMode && formData.id) {
-        console.log("Editing employee with ID:", formData.id);
-        console.log("Update data:", submitData);
         await dispatch(
           updateEmployee({ id: formData.id, employeeData: submitData })
         ).unwrap();
-        console.log("Employee updated successfully");
-        // For edit mode, call onSubmit if provided
-        if (onSubmit) {
-          onSubmit(submitData);
-        }
+        if (onSubmit) onSubmit(submitData);
       } else {
-        console.log("Creating new employee");
-        console.log("Create data:", submitData);
-        // Creating new employee
         await dispatch(createEmployee(submitData)).unwrap();
-        console.log("Employee created successfully");
-
-        // Redirect to employee list/permissions page
+        
         if (id) {
-          // If we have a store ID, redirect to store-specific employee page
           navigate(`/store/${id}/employee`);
         } else {
-          // Otherwise redirect to general employee/permissions page
           navigate("/permissions");
         }
-
-        // Call onSubmit if provided (for parent component handling)
-        if (onSubmit) {
-          onSubmit(submitData);
-        }
+        
+        if (onSubmit) onSubmit(submitData);
       }
     } catch (error) {
       console.error("Failed to save employee:", error);
-      // Don't redirect on error - let user see the error and try again
     }
   };
 
