@@ -71,7 +71,7 @@ const PERMISSIONS_MATRIX = {
     { id: "update", name: "Update" },
     { id: "delete", name: "Delete" },
     { id: "export", name: "Export" },
-    { id: "manage", name: "Manage" },
+    { id: "import", name: "Import" },
   ],
 };
 
@@ -269,10 +269,18 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
       if (roleTemplateState) {
         console.log('Creating role template first:', roleTemplateState);
         
+        // Convert permissions to API format
+        const formattedPermissions = Object.entries(roleTemplateState.permissions)
+          .filter(([_, actions]) => actions.length > 0)
+          .map(([resource, actions]) => ({
+            resource,
+            action: actions // API expects 'action' not 'actions'
+          }));
+        
         const roleResponse = await apiClient.post('/permissions/templates', {
           name: roleTemplateState.name,
           description: roleTemplateState.description,
-          permissions: roleTemplateState.permissions,
+          permissions: formattedPermissions,
           isDefault: roleTemplateState.isDefault,
           priority: roleTemplateState.priority
         });

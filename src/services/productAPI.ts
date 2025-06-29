@@ -210,15 +210,14 @@ export const productAPI = {
             id: apiProduct.id || "",
             name: apiProduct.name || "Unknown Product",
             quantity: apiProduct.itemQuantity || 0,
-            plu: apiProduct.pluUpc || "",
-            sku: apiProduct.sku || "",
-            description: apiProduct.description || "",
+            plu: apiProduct.pluUpc || "plu not found",
+            sku: apiProduct.sku || "sku not found",
+            description: apiProduct.description || "this is description",
             price: `$${(apiProduct.singleItemSellingPrice || 0).toFixed(2)}`,
             category: apiProduct.category || "Uncategorized",
             itemsPerUnit: 1, // Default value, adjust if needed
             supplier:
               apiProduct.supplier ||
-              apiProduct.store?.name ||
               "Unknown Supplier",
             createdAt:
               apiProduct.createdAt || new Date().toISOString().split("T")[0],
@@ -294,6 +293,11 @@ export const productAPI = {
     }
   },
 };
+
+
+
+
+
 
 
 
