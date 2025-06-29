@@ -228,7 +228,6 @@ export const productAPI = {
             itemsPerUnit: 1, // Default value, adjust if needed
             supplier:
               apiProduct.supplier ||
-              apiProduct.store?.name ||
               "Unknown Supplier",
             createdAt:
               apiProduct.createdAt || new Date().toISOString().split("T")[0],
