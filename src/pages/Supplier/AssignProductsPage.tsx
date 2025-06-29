@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { FaArrowLeft, FaCheck, FaTimes, FaSearch } from 'react-icons/fa';
 import { useAppSelector } from '../../store/hooks';
 import apiClient from '../../services/api';
+// import { getProductsBySupplierId, getProducts } from '../../services/productAPI'
 import toast from 'react-hot-toast';
 
 interface Product {
@@ -43,25 +44,16 @@ const AssignProductsPage: React.FC = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        console.log('Fetching products for storeId:', currentStore?.id || storeId);
+        const finalStoreId = currentStore?.id || storeId;
         
         const response = await apiClient.get('/product/list', {
-          params: { storeId: currentStore?.id || storeId }
+          params: { storeId: finalStoreId }
         });
         
-        console.log('API Response:', response.data);
+        console.log('Products fetched:', response.data?.data?.products?.length || 0);
         
-        let productList = [];
-        
-        // Based on your API response structure
-        if (response.data?.data?.products) {
-          productList = response.data.data.products;
-        } else {
-          console.log('Unexpected response structure:', response.data);
-        }
-        
-        console.log('Extracted products:', productList);
-        setProducts(productList || []);
+        const productList = response.data?.data?.products || [];
+        setProducts(productList);
       } catch (error) {
         console.error('Error fetching products:', error);
         toast.error('Failed to load products');

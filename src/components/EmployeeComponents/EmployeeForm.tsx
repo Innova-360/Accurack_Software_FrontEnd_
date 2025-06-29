@@ -186,6 +186,14 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
     [key: string]: string[];
   }>(initializePermissions());
 
+  // State for Add Role form
+  const [showAddRoleForm, setShowAddRoleForm] = useState(false);
+  const [newRoleData, setNewRoleData] = useState({
+    name: '',
+    description: ''
+  });
+  const [creatingRole, setCreatingRole] = useState(false);
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -214,6 +222,41 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
         [resource]: updatedActions,
       };
     });
+  };
+
+  const handleAddRole = async () => {
+    if (!newRoleData.name.trim()) return;
+    
+    try {
+      setCreatingRole(true);
+      
+      // Create role template via API
+      const response = await fetch('/api/v1/permissions/templates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify({
+          name: newRoleData.name,
+          description: newRoleData.description,
+          permissions: {} 
+        })
+      });
+      
+      if (response.ok) {
+        // Refresh role templates
+        dispatch(fetchRoleTemplates());
+        
+        // Reset form
+        setNewRoleData({ name: '', description: '' });
+        setShowAddRoleForm(false);
+      }
+    } catch (error) {
+      console.error('Failed to create role:', error);
+    } finally {
+      setCreatingRole(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -479,7 +522,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
                   />
                 </div>
 
-                {/* Role Template Dropdown (replaces static Role dropdown) */}
+                {/* Role Template Dropdown with Add Role Feature */}
                 <div>
                   <label
                     htmlFor="roleTemplateId"
@@ -487,25 +530,102 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
                   >
                     Role
                   </label>
-                  <select
-                    id="roleTemplateId"
-                    name="roleTemplateId"
-                    value={formData.roleTemplateId || ""}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                    required
-                  >
-                    <option value="" disabled>
-                      Select a role
-                    </option>
-                    {roleTemplatesLoading && <option>Loading...</option>}
-                    {roleTemplates &&
-                      roleTemplates.map((role: any) => (
-                        <option key={role.id} value={role.id}>
-                          {role.name}
+                  
+                  <div className="space-y-3">
+                    {/* Show dropdown when roles exist */}
+                    {!roleTemplatesLoading && roleTemplates && roleTemplates.length > 0 && (
+                      <select
+                        id="roleTemplateId"
+                        name="roleTemplateId"
+                        value={formData.roleTemplateId || ""}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                        required
+                      >
+                        <option value="" disabled>
+                          Select a role
                         </option>
-                      ))}
-                  </select>
+                        {roleTemplates.map((role: any) => (
+                          <option key={role.id} value={role.id}>
+                            {role.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    
+                    {/* Show loading state */}
+                    {roleTemplatesLoading && (
+                      <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
+                        Loading roles...
+                      </div>
+                    )}
+                    
+                    {/* Show Add Role button - always visible when not loading */}
+                    {!roleTemplatesLoading && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAddRoleForm(true)}
+                        className={`w-full px-4 py-2 border rounded-md transition-colors flex items-center justify-center gap-2 text-sm ${
+                          (!roleTemplates || roleTemplates.length === 0)
+                            ? 'border-2 border-dashed border-blue-300 text-blue-600 hover:border-blue-400 hover:bg-blue-50 py-3'
+                            : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <FaPlus className="w-4 h-4" />
+                        {(!roleTemplates || roleTemplates.length === 0) ? 'Add Role' : 'Add New Role'}
+                      </button>
+                    )}
+                    
+                    {/* Expandable Add Role Form */}
+                    {showAddRoleForm && (
+                      <div className="border border-gray-200 rounded-md p-4 bg-gray-50 space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Role Name
+                          </label>
+                          <input
+                            type="text"
+                            value={newRoleData.name}
+                            onChange={(e) => setNewRoleData(prev => ({ ...prev, name: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            placeholder="Enter role name"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Role Description
+                          </label>
+                          <input
+                            type="text"
+                            value={newRoleData.description}
+                            onChange={(e) => setNewRoleData(prev => ({ ...prev, description: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            placeholder="Enter role description"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={handleAddRole}
+                            disabled={!newRoleData.name.trim() || creatingRole}
+                            className="px-4 py-2 bg-[#043E49] text-white rounded-md hover:bg-[#043E49] disabled:opacity-50 text-sm"
+                          >
+                            {creatingRole ? 'Creating...' : 'Create Role'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowAddRoleForm(false);
+                              setNewRoleData({ name: '', description: '' });
+                            }}
+                            className="px-4 py-2 bg-gray-400 text-black rounded-md hover:bg-gray-400 text-sm"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Status */}

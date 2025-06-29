@@ -386,6 +386,7 @@ const Inventory: React.FC = () => {
                     products={currentProducts}
                     selectedItems={selectedItems}
                     startIndex={startIndex}
+                    onProductDeleted={refetch}
                     sortConfig={sortConfig}
                     onSelectAll={handleSelectAll}
                     onSelectItem={handleSelectItem}
@@ -408,6 +409,7 @@ const Inventory: React.FC = () => {
               <InventoryTable
                 products={currentProducts}
                 selectedItems={selectedItems}
+                onProductDeleted={refetch}
                 startIndex={startIndex}
                 sortConfig={sortConfig}
                 onSelectAll={handleSelectAll}

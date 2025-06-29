@@ -151,7 +151,6 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
             </div>
           ))}
         </div>
-
         {/* Footer Summary */}
         <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
           <div className="flex justify-between items-center">
@@ -167,7 +166,6 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
             </div>
           </div>
         </div>
-
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="px-6 py-4 bg-white border-t border-gray-200">

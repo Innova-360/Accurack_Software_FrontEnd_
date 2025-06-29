@@ -106,7 +106,7 @@ const CreateInventory: React.FC = () => {
         }
         return 0;
       })(),
-      variants: [], // always include variants field for API structure
+      variants: [], 
     };
     if (hasVariants) {
       console.log("🔍 Processing variants for API payload:");

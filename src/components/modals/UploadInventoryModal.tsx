@@ -14,8 +14,6 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
@@ -69,39 +67,20 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
   const handleUpload = async () => {
     if (!selectedFile) return;
 
-    setIsUploading(true);
-    setUploadProgress(0);
-
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 90) {
-          clearInterval(interval);
-          return prev;
-        }
-        return prev + 10;
-      });
-    }, 200);
+    // Close modal immediately
+    handleClose();
 
     try {
       // Call the parent's upload handler
       await onUpload(selectedFile);
-      setUploadProgress(100);
-
-      setTimeout(() => {
-        handleClose();
-      }, 1000);
     } catch (error) {
-      toast.error("Upload failed. Please try again.");
-      setIsUploading(false);
-      setUploadProgress(0);
+      // Error handling is now done in the parent component
+      console.error("Upload error:", error);
     }
   };
 
   const handleClose = () => {
     setSelectedFile(null);
-    setUploadProgress(0);
-    setIsUploading(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -182,7 +161,6 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors p-1"
-            disabled={isUploading}
           >
             <svg
               className="w-6 h-6"
@@ -254,7 +232,6 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
               <button
                 onClick={() => setSelectedFile(null)}
                 className="text-sm text-red-600 hover:text-red-700 underline"
-                disabled={isUploading}
               >
                 Remove file
               </button>
@@ -302,37 +279,20 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
           className="hidden"
         />
 
-        {/* Upload Progress */}
-        {isUploading && (
-          <div className="mt-4">
-            <div className="flex justify-between text-sm text-gray-600 mb-2">
-              <span>Uploading...</span>
-              <span>{uploadProgress}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-[#0f4d57] h-2 rounded-full transition-all duration-300"
-                style={{ width: `${uploadProgress}%` }}
-              />
-            </div>
-          </div>
-        )}
-
         {/* Actions */}
         <div className="flex justify-end space-x-4 mt-6">
           <button
             onClick={handleClose}
             className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            disabled={isUploading}
           >
             Cancel
           </button>
           <button
             onClick={handleUpload}
-            disabled={!selectedFile || isUploading}
+            disabled={!selectedFile}
             className="px-6 py-2 bg-[#0f4d57] text-white rounded-lg hover:bg-[#0d3f47] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isUploading ? "Uploading..." : "Upload"}
+            Upload
           </button>
         </div>
       </div>

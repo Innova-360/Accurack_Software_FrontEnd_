@@ -5,12 +5,10 @@ import { SpecialButton } from '../buttons';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { createSupplier } from '../../store/slices/supplierSlice';
 import type { SupplierFormData } from '../../types/supplier';
-
 interface AddSupplierModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
 const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
   isOpen,
   onClose
@@ -27,7 +25,6 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
     address: '',
     storeId: currentStore?.id || ''
   });
-
   // Update storeId when currentStore changes
   React.useEffect(() => {
     if (currentStore?.id && !formData.storeId) {
@@ -37,14 +34,12 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
       }));
     }
   }, [currentStore?.id, formData.storeId]);
-
   const [errors, setErrors] = useState<Record<string, string>>({});
   const handleInputChange = (field: keyof (SupplierFormData), value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
-
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({
@@ -54,34 +49,27 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
     }
   };  const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-
     if (!formData.name.trim()) {
       newErrors.name = 'Supplier name is required';
     }
-
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
-
     if (!formData.phone.trim()) {
       newErrors.phone = 'Phone number is required';
     }
-
     if (!formData.address.trim()) {
       newErrors.address = 'Address is required';
     }
-
     if (!formData.storeId) {
       newErrors.storeId = 'Store ID is required';
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validateForm()) {
       return;
     }
@@ -94,9 +82,7 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
         address: formData.address,
         storeId: currentStore?.id || formData.storeId
       };
-      
       await dispatch(createSupplier(supplierData)).unwrap();
-      
       // Reset form and close modal
       setFormData({
         supplier_id: '',
@@ -108,7 +94,6 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
       });
       setErrors({});
       onClose();
-      
       // Navigate to assign products page
       navigate(`/store/${currentStore?.id}/supplier/assign-products`, {
         state: { supplier: supplierData }
@@ -128,9 +113,7 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
     setErrors({});
     onClose();
   };
-
   if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 bg-transparent backdrop-blur-[1px] bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -171,7 +154,6 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               <p className="mt-1 text-sm text-red-600">{errors.name}</p>
             )}
           </div>
-
           {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -190,7 +172,6 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               <p className="mt-1 text-sm text-red-600">{errors.email}</p>
             )}
           </div>
-
           {/* Phone */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -209,7 +190,6 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
             )}
           </div>
-
           {/* Address */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -228,10 +208,7 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               <p className="mt-1 text-sm text-red-600">{errors.address}</p>
             )}
           </div>
-
           {/* Store Information */}
-
-
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
             <SpecialButton
@@ -252,11 +229,20 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
             >
               {loading ? 'Adding...' : 'Add Supplier'}
             </SpecialButton>
-          </div>        
+          </div>
           </form>
       </div>
     </div>
   );
 };
-
 export default AddSupplierModal;
+
+
+
+
+
+
+
+
+
+
