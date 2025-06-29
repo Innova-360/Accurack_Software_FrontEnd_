@@ -550,6 +550,7 @@ const Inventory: React.FC = () => {
       <UploadInventoryModal
         isOpen={isUploadInventoryModalOpen}
         onClose={() => setIsUploadInventoryModalOpen(false)}
+        onUploadSuccess={refetch}
       />{" "}
       <BarcodeScanModal
         isOpen={isBarcodeScanModalOpen}

@@ -8,11 +8,13 @@ import { useParams } from "react-router-dom";
 interface UploadInventoryModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onUploadSuccess?: () => void;
 }
 
 const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
   isOpen,
   onClose,
+  onUploadSuccess,
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -101,6 +103,9 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
       // Dismiss processing toast and show success
       toast.dismiss(processingToast);
       toast.success("Inventory uploaded successfully!");
+      
+      // Call the success callback to refetch products
+      onUploadSuccess?.();
     } catch (error) {
       // Dismiss processing toast and show error
       toast.dismiss(processingToast);

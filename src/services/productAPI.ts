@@ -225,10 +225,10 @@ export const productAPI = {
             description: apiProduct.description || "this is description",
             price: `$${(apiProduct.singleItemSellingPrice || 0).toFixed(2)}`,
             category: apiProduct.category || "Uncategorized",
-            itemsPerUnit: 1, // Default value, adjust if needed
+            itemsPerUnit: 1, 
             supplier:
               apiProduct.supplier ||
-              "Unknown Supplier",
+              "-",
             createdAt:
               apiProduct.createdAt || new Date().toISOString().split("T")[0],
             hasVariants: apiProduct.hasVariants || false,

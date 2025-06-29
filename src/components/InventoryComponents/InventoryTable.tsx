@@ -290,7 +290,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <div className="truncate">
                           {/* Show the main product supplier name */}
-                          {product.supplier || "Unknown Supplier"}
+                          {product.supplier || "-"}
                         </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
