@@ -1,15 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { FaArrowLeft, FaCheck, FaTimes, FaSearch } from 'react-icons/fa';
+import { FaArrowLeft, FaCheck, FaSearch } from 'react-icons/fa';
 import { useAppSelector } from '../../store/hooks';
 import apiClient from '../../services/api';
 // import { getProductsBySupplierId, getProducts } from '../../services/productAPI'
 import toast from 'react-hot-toast';
 
+interface CategoryObj {
+  id: string;
+  name: string;
+  code: string;
+  description?: string;
+  parentId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 interface Product {
   id: string;
   name: string;
-  category: string;
+  category: string | CategoryObj;
   sku?: string;
   msrpPrice: number;
   singleItemSellingPrice: number;
@@ -19,7 +29,7 @@ interface Product {
 interface ProductAssignment {
   productId: string;
   costPrice: number;
-  category: 'primary' | 'secondary';
+  state: 'primary' | 'secondary';
 }
 
 const AssignProductsPage: React.FC = () => {
@@ -70,7 +80,11 @@ const AssignProductsPage: React.FC = () => {
   // Filter products based on search
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (
+      typeof product.category === 'string'
+        ? product.category.toLowerCase()
+        : (product.category?.name?.toLowerCase() || product.category?.code?.toLowerCase() || '')
+    ).includes(searchTerm.toLowerCase()) ||
     product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -124,11 +138,11 @@ const AssignProductsPage: React.FC = () => {
       const assignments: ProductAssignment[] = Array.from(selectedProducts).map(productId => ({
         productId,
         costPrice: costPrices[productId],
-        category: categories[productId] || 'secondary'
+        state: categories[productId] || 'secondary'
       }));
 
       // API call to assign products to supplier
-      await apiClient.post('/supplier/assign-products', {
+      await apiClient.post('/supplier/assign-supplier', {
         supplierId: supplierInfo?.id || supplierInfo?.supplier_id,
         storeId: currentStore?.id || storeId,
         products: assignments
@@ -289,7 +303,9 @@ const AssignProductsPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                          {product.category}
+                          {typeof product.category === 'object' && product.category !== null
+                            ? product.category.name || product.category.code || JSON.stringify(product.category)
+                            : product.category}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
