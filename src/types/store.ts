@@ -1,4 +1,5 @@
 export interface Store {
+  logoUrl: string;
   settings: any;
   id: string;
   name: string;
@@ -8,8 +9,8 @@ export interface Store {
   currency: string;
   timezone: string;
   role: string;
-  logo?: string;
   createdAt: string;
+  taxMode?: string;
 }
 
 export interface StoreFormData {
@@ -19,7 +20,8 @@ export interface StoreFormData {
   phone: string;
   currency: string;
   timezone: string;
-  logo?: string;
+  logoUrl?: string;
+  taxMode?: string;
 }
 
 export interface StoreState {

@@ -177,9 +177,9 @@ const StoresPage: React.FC = () => {
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center">
                       <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mr-3 overflow-hidden">
-                        {store.logo ? (
+                        {store.logoUrl? (
                           <img
-                            src={store.logo}
+                            src={store.logoUrl}
                             alt={`${store.name} logo`}
                             className="w-full h-full object-cover rounded-lg"
                           />

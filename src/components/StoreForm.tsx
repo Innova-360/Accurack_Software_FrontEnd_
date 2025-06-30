@@ -55,12 +55,12 @@ const StoreForm: React.FC = () => {
     timezone: "America/New_York",
     currency: "USD",
     taxMode: "exclusive",
-    logo: "",
+    logoUrl: "",
   });
 
   const [errors, setErrors] = useState<Partial<StoreFormData>>({});
   const [uploading, setUploading] = useState(false);
-  const [logoPreview, setLogoPreview] = useState<string>("");
+  const [logoUrlPreview, setLogoPreview] = useState<string>("");
 
   useEffect(() => {
     if (isEditing && id) {
@@ -75,9 +75,9 @@ const StoreForm: React.FC = () => {
           timezone: store.timezone,
           currency: store.currency,
           taxMode: store.taxMode,
-          logo: store.logo || "",
+          logoUrl: store.logoUrl || "",
         });
-        setLogoPreview(store.logo || "");
+        setLogoPreview(store.logoUrl || "");
       }
     }
   }, [isEditing, id, stores]);
@@ -97,24 +97,24 @@ const StoreForm: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select a valid image file');
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
+      toast.error("Image size should be less than 5MB");
       return;
     }
 
     setUploading(true);
     try {
       const imageUrl = await uploadImageToCloudinary(file);
-      setFormData(prev => ({ ...prev, logo: imageUrl }));
+      setFormData((prev) => ({ ...prev, logoUrl: imageUrl }));
       setLogoPreview(imageUrl);
-      toast.success('Logo uploaded successfully');
+      toast.success("Logo uploaded successfully");
     } catch (error) {
-      toast.error('Failed to upload logo');
+      toast.error("Failed to upload logoUrl");
     } finally {
       setUploading(false);
     }
@@ -181,7 +181,7 @@ const StoreForm: React.FC = () => {
                 {isEditing
                   ? "Update your store information and settings"
                   : "Set up your store with basic information and preferences"}
-              </p>  
+              </p>
             </div>
           </div>
 
@@ -199,10 +199,10 @@ const StoreForm: React.FC = () => {
                 </label>
                 <div className="flex items-center space-x-4">
                   <div className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
-                    {logoPreview ? (
+                    {logoUrlPreview ? (
                       <img
-                        src={logoPreview}
-                        alt="Store logo"
+                        src={logoUrlPreview}
+                        alt="Store logoUrl"
                         className="w-full h-full object-cover rounded-lg"
                       />
                     ) : (
@@ -221,11 +221,11 @@ const StoreForm: React.FC = () => {
                     <label
                       htmlFor="logo-upload"
                       className={`inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer ${
-                        uploading ? 'opacity-50 cursor-not-allowed' : ''
+                        uploading ? "opacity-50 cursor-not-allowed" : ""
                       }`}
                     >
                       <FaUpload className="mr-2" />
-                      {uploading ? 'Uploading...' : 'Upload Logo'}
+                      {uploading ? "Uploading..." : "Upload Logo"}
                     </label>
                     <p className="text-xs text-gray-500 mt-1">
                       PNG, JPG up to 5MB

@@ -156,6 +156,8 @@ const AssignProductsPage: React.FC = () => {
   }
 
   return (
+    <>
+      
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
@@ -193,7 +195,29 @@ const AssignProductsPage: React.FC = () => {
           </div>
         </div>
       </div>
-
+{selectedProducts.size > 0 && (
+          <div className="mt-6 bg-white rounded-lg shadow-sm p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Assignment Summary</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{selectedProducts.size}</div>
+                <div className="text-sm text-blue-600">Products Selected</div>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">
+                  ${Object.values(costPrices).reduce((sum, price) => sum + (price || 0), 0).toFixed(2)}
+                </div>
+                <div className="text-sm text-green-600">Total Cost Value</div>
+              </div>
+              <div className="text-center p-4 bg-purple-50 rounded-lg">
+                <div className="text-2xl font-bold text-purple-600">
+                  {Object.keys(costPrices).filter(id => costPrices[id] > 0).length}
+                </div>
+                <div className="text-sm text-purple-600">Ready to Assign</div>
+              </div>
+            </div>
+          </div>
+        )}
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Search Bar */}
@@ -315,31 +339,10 @@ const AssignProductsPage: React.FC = () => {
         </div>
 
         {/* Summary */}
-        {selectedProducts.size > 0 && (
-          <div className="mt-6 bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Assignment Summary</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{selectedProducts.size}</div>
-                <div className="text-sm text-blue-600">Products Selected</div>
-              </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">
-                  ${Object.values(costPrices).reduce((sum, price) => sum + (price || 0), 0).toFixed(2)}
-                </div>
-                <div className="text-sm text-green-600">Total Cost Value</div>
-              </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">
-                  {Object.keys(costPrices).filter(id => costPrices[id] > 0).length}
-                </div>
-                <div className="text-sm text-purple-600">Ready to Assign</div>
-              </div>
-            </div>
-          </div>
-        )}
+      
       </div>
     </div>
+    </>
   );
 };
 

@@ -25,7 +25,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({
     phone: "",
     currency: "USD",
     timezone: "America/New_York",
-    logo: "",
+    logoUrl: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -55,24 +55,24 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select a valid image file');
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
+      toast.error("Image size should be less than 5MB");
       return;
     }
 
     setUploading(true);
     try {
       const imageUrl = await uploadImageToCloudinary(file);
-      setFormData(prev => ({ ...prev, logo: imageUrl }));
+      setFormData((prev) => ({ ...prev, logoUrl: imageUrl }));
       setLogoPreview(imageUrl);
-      toast.success('Logo uploaded successfully');
+      toast.success("Logo uploaded successfully");
     } catch (error) {
-      toast.error('Failed to upload logo');
+      toast.error("Failed to upload logo");
     } finally {
       setUploading(false);
     }
@@ -116,7 +116,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({
         phone: "",
         currency: "USD",
         timezone: "America/New_York",
-        logo: "",
+        logoUrl: "",
       });
       setErrors({});
       setLogoPreview("");
@@ -189,15 +189,13 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({
                 <label
                   htmlFor="modal-logo-upload"
                   className={`inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer ${
-                    uploading || loading ? 'opacity-50 cursor-not-allowed' : ''
+                    uploading || loading ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                 >
                   <FaUpload className="mr-2" />
-                  {uploading ? 'Uploading...' : 'Upload'}
+                  {uploading ? "Uploading..." : "Upload"}
                 </label>
-                <p className="text-xs text-gray-500 mt-1">
-                  PNG, JPG up to 5MB
-                </p>
+                <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
               </div>
             </div>
           </div>
