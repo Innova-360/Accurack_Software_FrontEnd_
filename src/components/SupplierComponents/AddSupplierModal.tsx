@@ -12,7 +12,7 @@ interface AddSupplierModalProps {
 }
 const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
   isOpen,
-  onClose
+  onClose,
 }) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -102,7 +102,12 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
         state: { supplier: supplierData }
       });
     } catch (error) {
-      console.error('Error creating supplier:', error);
+      console.error("Error creating supplier:", error);
+      const errorMessage =
+        typeof error === "string"
+          ? error
+          : "Failed to create supplier. Please try again.";
+      toast.error(errorMessage);
     }
   };  const handleClose = () => {
     setFormData({
@@ -127,8 +132,12 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               <FaPlus className="text-white" size={18} />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Add New Supplier</h2>
-              <p className="text-sm text-gray-600">Create a new supplier profile</p>
+              <h2 className="text-xl font-semibold text-gray-900">
+                Add New Supplier
+              </h2>
+              <p className="text-sm text-gray-600">
+                Create a new supplier profile
+              </p>
             </div>
           </div>
           <button
@@ -225,16 +234,17 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               disabled={loading}
             >
               Cancel
-            </SpecialButton>            <SpecialButton
+            </SpecialButton>{" "}
+            <SpecialButton
               variant="modal-confirm"
               type="button"
               onClick={async () => {
-                const event = new Event('submit') as unknown as React.FormEvent;
+                const event = new Event("submit") as unknown as React.FormEvent;
                 await handleSubmit(event);
               }}
               disabled={loading}
             >
-              {loading ? 'Adding...' : 'Add Supplier'}
+              {loading ? "Adding..." : "Add Supplier"}
             </SpecialButton>
           </div>
           </form>

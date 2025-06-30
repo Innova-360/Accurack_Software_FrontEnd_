@@ -3,7 +3,11 @@ import {
   createAsyncThunk,
   type PayloadAction,
 } from "@reduxjs/toolkit";
-import type { Supplier, SupplierFormData, SupplierState } from "../../types/supplier";
+import type {
+  Supplier,
+  SupplierFormData,
+  SupplierState,
+} from "../../types/supplier";
 import apiClient from "../../services/api";
 
 const initialState: SupplierState = {
@@ -23,18 +27,22 @@ const initialState: SupplierState = {
 export const fetchSuppliers = createAsyncThunk(
   "suppliers/fetchSuppliers",
   async (
-    { storeId, page = 1, limit = 10 }: { storeId: string | undefined; page?: number; limit?: number },
+    {
+      storeId,
+      page = 1,
+      limit = 10,
+    }: { storeId: string | undefined; page?: number; limit?: number },
     { rejectWithValue }
   ) => {
     try {
       const params = new URLSearchParams();
-      if (storeId) params.append('storeId', storeId);
-      params.append('page', page.toString());
-      params.append('limit', limit.toString());
-      
+      if (storeId) params.append("storeId", storeId);
+      params.append("page", page.toString());
+      params.append("limit", limit.toString());
+
       const url = `/supplier/list?${params.toString()}`;
       const response = await apiClient.get(url);
-      
+
       // Handle different response structures from backend
       let suppliers = [];
       let pagination = {
@@ -49,7 +57,11 @@ export const fetchSuppliers = createAsyncThunk(
           suppliers = response.data;
           pagination.total = suppliers.length;
           pagination.totalPages = Math.ceil(suppliers.length / limit);
-        } else if (response.data.data && response.data.data.suppliers && Array.isArray(response.data.data.suppliers)) {
+        } else if (
+          response.data.data &&
+          response.data.data.suppliers &&
+          Array.isArray(response.data.data.suppliers)
+        ) {
           suppliers = response.data.data.suppliers;
           if (response.data.data.pagination) {
             pagination = { ...pagination, ...response.data.data.pagination };
@@ -61,7 +73,10 @@ export const fetchSuppliers = createAsyncThunk(
           suppliers = response.data.data;
           pagination.total = suppliers.length;
           pagination.totalPages = Math.ceil(suppliers.length / limit);
-        } else if (response.data.suppliers && Array.isArray(response.data.suppliers)) {
+        } else if (
+          response.data.suppliers &&
+          Array.isArray(response.data.suppliers)
+        ) {
           suppliers = response.data.suppliers;
           if (response.data.pagination) {
             pagination = { ...pagination, ...response.data.pagination };
@@ -72,20 +87,23 @@ export const fetchSuppliers = createAsyncThunk(
         } else if (response.data.data.data.suppliers) {
           suppliers = response.data.data.data.suppliers;
           if (response.data.data.data.pagination) {
-            pagination = { ...pagination, ...response.data.data.data.pagination };
+            pagination = {
+              ...pagination,
+              ...response.data.data.data.pagination,
+            };
           } else {
             pagination.total = suppliers.length;
             pagination.totalPages = Math.ceil(suppliers.length / limit);
           }
         }
       }
-      
-      console.log('suppliers:', suppliers);
-      console.log('pagination:', pagination);
-      
+
+      console.log("suppliers:", suppliers);
+      console.log("pagination:", pagination);
+
       return { suppliers, pagination };
     } catch (error: any) {
-      console.error('Fetch suppliers error:', error);
+      console.error("Fetch suppliers error:", error);
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch suppliers"
       );
@@ -99,10 +117,7 @@ export const fetchSupplierById = createAsyncThunk(
     try {
       const response = await apiClient.get(`/supplier/${supplierId}`);
       // Try to extract supplier data, fallback to null if not found
-      const supplier =
-        response.data?.data ??
-        response.data?.supplier ??
-        null;
+      const supplier = response.data?.data ?? response.data?.supplier ?? null;
       return supplier;
     } catch (error: any) {
       return rejectWithValue(
@@ -122,7 +137,7 @@ export const createSupplier = createAsyncThunk(
       
       return { success: true, message: "Supplier created successfully" };
     } catch (error: any) {
-      console.error('Create supplier error:', error);
+      console.error("Create supplier error:", error);
       return rejectWithValue(
         error.response?.data?.message || "Failed to create supplier"
       );
@@ -137,13 +152,13 @@ export const updateSupplier = createAsyncThunk(
     { rejectWithValue, dispatch }
   ) => {
     try {
-      console.log('Updating supplier with ID:', id);
-      console.log('Supplier data:', supplierData);
-      
+      console.log("Updating supplier with ID:", id);
+      console.log("Supplier data:", supplierData);
+
       // Validate the ID - it shouldn't contain spaces or be too long
-      if (!id || id.length > 50 || id.includes(' ')) {
-        throw new Error('Invalid supplier ID format');
-      }      // Use standard REST endpoint format
+      if (!id || id.length > 50 || id.includes(" ")) {
+        throw new Error("Invalid supplier ID format");
+      } // Use standard REST endpoint format
       const response = await apiClient.put(`/supplier/${id}`, supplierData);
       console.log('Update response:', response.data);
         // Refresh suppliers list after update
@@ -151,11 +166,13 @@ export const updateSupplier = createAsyncThunk(
       
       return { success: true, message: "Supplier updated successfully" };
     } catch (error: any) {
-      console.error('Update supplier error:', error);
-      console.error('Error response:', error.response?.data);
-      
+      console.error("Update supplier error:", error);
+      console.error("Error response:", error.response?.data);
+
       return rejectWithValue(
-        error.response?.data?.message || error.message || "Failed to update supplier"
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to update supplier"
       );
     }
   }
@@ -163,26 +180,33 @@ export const updateSupplier = createAsyncThunk(
 
 export const deleteSupplier = createAsyncThunk(
   "suppliers/deleteSupplier",
-  async ({ id, storeId }: { id: string; storeId: string }, { rejectWithValue, dispatch }) => {
+  async (
+    { id, storeId }: { id: string; storeId: string },
+    { rejectWithValue, dispatch }
+  ) => {
     try {
-      console.log('Deleting supplier with ID:', id);
-      
-      // Validate the ID - it shouldn't contain spaces or be too long
-      if (!id || id.length > 50 || id.includes(' ')) {
-        throw new Error('Invalid supplier ID format. Cannot delete supplier with invalid ID.');
+      console.log("deleteSupplier thunk called with:", { id, storeId });
+
+      // Basic validation
+      if (!id || !id.trim()) {
+        throw new Error("Supplier ID is required");
       }
         // Use standard REST endpoint format      await apiClient.delete(`/supplier/${id}`);
       console.log('Supplier deleted successfully');
       
       // Refresh suppliers list after deletion
+      console.log("Refreshing suppliers list for store:", storeId);
       await dispatch(fetchSuppliers({ storeId }));
       
       return { id, success: true, message: "Supplier deleted successfully" };
     } catch (error: any) {
-      console.error('Delete supplier error:', error);
-      
+      console.error("Delete supplier error:", error);
+      console.error("Error response:", error.response?.data);
+
       return rejectWithValue(
-        error.response?.data?.message || error.message || "Failed to delete supplier"
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to delete supplier"
       );
     }
   }
@@ -197,23 +221,23 @@ export const deleteAllSuppliers = createAsyncThunk(
       const suppliers = Array.isArray(suppliersResponse.suppliers) ? suppliersResponse.suppliers : [];
       
       if (suppliers.length === 0) {
-        console.log('No suppliers to delete');
+        console.log("No suppliers to delete");
         return { success: true, message: "No suppliers to delete" };
       }
-      
+
       // Filter to only real suppliers (not sample data)
       const realSuppliers = suppliers.filter((supplier: any) => {
         const validId = getValidId(supplier);
         return validId !== null;
       });
-      
+
       if (realSuppliers.length === 0) {
-        console.log('No real suppliers to delete (only sample data found)');
+        console.log("No real suppliers to delete (only sample data found)");
         return { success: true, message: "No real suppliers to delete" };
       }
-      
+
       console.log(`Found ${realSuppliers.length} real suppliers to delete`);
-      
+
       // Delete each supplier individually
       const deletePromises = realSuppliers.map(async (supplier: any) => {
         const validId = getValidId(supplier);
@@ -227,7 +251,7 @@ export const deleteAllSuppliers = createAsyncThunk(
           }
         }
       });
-      
+
       await Promise.all(deletePromises);
       console.log('All suppliers deleted successfully');
         // Refresh suppliers list after deletion
@@ -235,9 +259,11 @@ export const deleteAllSuppliers = createAsyncThunk(
       
       return { success: true, message: `Successfully deleted ${realSuppliers.length} suppliers` };
     } catch (error: any) {
-      console.error('Delete all suppliers error:', error);
+      console.error("Delete all suppliers error:", error);
       return rejectWithValue(
-        error.response?.data?.message || error.message || "Failed to delete all suppliers"
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to delete all suppliers"
       );
     }
   }
@@ -246,19 +272,26 @@ export const deleteAllSuppliers = createAsyncThunk(
 // Helper function to get valid ID (same logic as in components)
 const getValidId = (supplier: any): string | null => {
   // Prefer numeric/UUID id if available
-  if (supplier.id && supplier.id.trim() && !supplier.id.includes(' ') && supplier.id.length <= 50) {
+  if (
+    supplier.id &&
+    supplier.id.trim() &&
+    !supplier.id.includes(" ") &&
+    supplier.id.length <= 50
+  ) {
     return supplier.id;
   }
-  
+
   // Check if supplier_id is valid (should be numeric or UUID, not sample text)
-  if (supplier.supplier_id && 
-      supplier.supplier_id.trim() && 
-      !supplier.supplier_id.includes(' ') && 
-      supplier.supplier_id.length <= 50 &&
-      /^[a-zA-Z0-9_-]+$/.test(supplier.supplier_id)) {
+  if (
+    supplier.supplier_id &&
+    supplier.supplier_id.trim() &&
+    !supplier.supplier_id.includes(" ") &&
+    supplier.supplier_id.length <= 50 &&
+    /^[a-zA-Z0-9_-]+$/.test(supplier.supplier_id)
+  ) {
     return supplier.supplier_id;
   }
-  
+
   return null;
 };
 
@@ -314,7 +347,6 @@ export const supplierSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      
       // Create supplier
       .addCase(createSupplier.pending, (state) => {
         state.loading = true;
@@ -327,7 +359,6 @@ export const supplierSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      
       // Update supplier
       .addCase(updateSupplier.pending, (state) => {
         state.loading = true;
@@ -340,7 +371,6 @@ export const supplierSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      
       // Delete supplier
       .addCase(deleteSupplier.pending, (state) => {
         state.loading = true;
@@ -353,7 +383,6 @@ export const supplierSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      
       // Delete all suppliers
       .addCase(deleteAllSuppliers.pending, (state) => {
         state.loading = true;
