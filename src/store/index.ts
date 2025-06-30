@@ -8,8 +8,11 @@ import supplierReducer from "./slices/supplierSlice";
 import employeeReducer from "./slices/employeeSlice";
 import userReducer from "./slices/userSlice";
 import inventorySupplierReducer from "./slices/inventorySupplierSlice";
-import productsReducer from "./slices/productsSlice";
+import productsReducer, { productsApi } from "./slices/productsSlice";
+import { customerApi } from "./slices/customerSlice";
 import roleReducer from "./slices/roleSlice";
+import { taxApi, taxReducer } from "./slices/taxSlice";
+import { categoryApi } from "./slices/categorySlice";
 
 export const store = configureStore({
   reducer: {
@@ -24,13 +27,18 @@ export const store = configureStore({
     inventorySuppliers: inventorySupplierReducer,
     products: productsReducer,
     roles: roleReducer,
+    tax: taxReducer,
+    [taxApi.reducerPath]: taxApi.reducer,
+    [categoryApi.reducerPath]: categoryApi.reducer,
+    [productsApi.reducerPath]: productsApi.reducer,
+    [customerApi.reducerPath]: customerApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: ["persist/PERSIST"],
       },
-    }),
+    }).concat(taxApi.middleware, categoryApi.middleware, productsApi.middleware, customerApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
