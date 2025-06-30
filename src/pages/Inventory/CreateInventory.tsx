@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ProductFormData } from "../../components/InventoryComponents/CreateInventory/types";
 import {
@@ -239,7 +239,7 @@ const CreateInventory: React.FC = () => {
 
     dispatch(createProduct(payload) as any).then((result: any) => {
       if (!result.error) {
-        // navigate("/inventory");
+        // navigate("/stores/" + storeId + "/inventory");
         console.log("What to do?");
       }
     });
@@ -264,6 +264,7 @@ const CreateInventory: React.FC = () => {
     };
 
     console.log("Inventory Data:", inventoryData);
+    // navigate("/stores/" + storeId + "/inventory");
     navigate("/inventory");
   };
 

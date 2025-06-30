@@ -35,7 +35,7 @@ const GoogleAuthCallback = () => {
             navigate("/");
           } else {
             console.error("Google authentication failed", resultAction.payload);
-            toast.error(resultAction.payload || "Google authentication failed");
+            toast.error("Google authentication failed");
             navigate("/login");
           }
         } catch (error) {
