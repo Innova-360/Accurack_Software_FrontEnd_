@@ -445,34 +445,6 @@ const Inventory: React.FC = () => {
     }
   };
 
-  // Edit product handlers
-  const handleEditProduct = (product: Product) => {
-    setSelectedProductToEdit(product);
-    setIsEditProductModalOpen(true);
-  };
-
-  const handleUpdateProduct = async (
-    productData: EditProductFormData,
-    productId: string
-  ) => {
-    try {
-      await productAPI.updateProduct(productId, productData);
-      toast.success("Product updated successfully!");
-      refetch(); // Refresh the product list
-      setIsEditProductModalOpen(false);
-      setSelectedProductToEdit(null);
-    } catch (error) {
-      const errorMessage = extractErrorMessage(error);
-      console.error("Failed to update product:", error);
-      toast.error(errorMessage);
-    }
-  };
-
-  const handleCloseEditModal = () => {
-    setIsEditProductModalOpen(false);
-    setSelectedProductToEdit(null);
-  };
-
   return (
     <>
       <Header />
