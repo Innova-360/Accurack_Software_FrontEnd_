@@ -8,6 +8,7 @@ export interface Store {
   currency: string;
   timezone: string;
   role: string;
+  logo?: string;
   createdAt: string;
 }
 
@@ -18,6 +19,7 @@ export interface StoreFormData {
   phone: string;
   currency: string;
   timezone: string;
+  logo?: string;
 }
 
 export interface StoreState {

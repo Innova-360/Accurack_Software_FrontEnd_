@@ -12,7 +12,7 @@ export { default as AddInventoryOptionsModal } from "./AddInventoryOptionsModal"
 export { default as AddProductModal } from "./AddProductModal";
 export { default as EditProductModal } from "./EditProductModal";
 export { default as BarcodeScanModal } from "./BarcodeScanModal";
-export { default as UploadInventoryModal } from "./UploadInventoryModal"; // Uncomment when implemented
+export { default as UploadInventoryModal } from "./UploadInventoryModal";
 
 // Re-export types
 export type { ProductFormData } from "./AddProductModal";

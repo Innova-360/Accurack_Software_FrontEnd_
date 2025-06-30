@@ -6,7 +6,9 @@ import {
   createEmployee,
   updateEmployee,
   fetchRoleTemplates,
+  createRoleTemplate,
 } from "../../store/slices/employeeSlice";
+import apiClient from "../../services/api";
 import {
   FaPlus,
   FaEye,
@@ -15,7 +17,7 @@ import {
   FaDownload,
   FaCog,
 } from "react-icons/fa";
-import apiClient from "../../services/api";
+
 
 interface EmployeeFormProps {
   onSubmit?: (data: EmployeeFormData) => void;
@@ -35,7 +37,7 @@ interface EmployeeFormData {
   position: string;
   department: string;
   phone: string;
-  joiningDate: string; // Frontend display field (backend uses createdAt)
+
   email: string;
   // Note: password field for creation only
   password?: string;
@@ -57,13 +59,13 @@ const PERMISSIONS_MATRIX = {
     { id: "product", name: "Product" },
     { id: "supplier", name: "Supplier" },
     { id: "customer", name: "Customer" },
-    { id: "order", name: "Order" },
+    // { id: "order", name: "Order" },
     { id: "user", name: "User" },
-    { id: "report", name: "Report" },
-    { id: "setting", name: "Setting" },
-    { id: "transaction", name: "Transaction" },
+    // { id: "report", name: "Report" },
+    // { id: "setting", name: "Setting" },
+    // { id: "transaction", name: "Transaction" },
     { id: "category", name: "Category" },
-    { id: "brand", name: "Brand" },
+    // { id: "brand", name: "Brand" },
   ],
   actions: [
     { id: "create", name: "Create" },
@@ -71,7 +73,7 @@ const PERMISSIONS_MATRIX = {
     { id: "update", name: "Update" },
     { id: "delete", name: "Delete" },
     { id: "export", name: "Export" },
-    { id: "import", name: "Import" },
+    { id: "manage", name: "Manage" },
   ],
 };
 
@@ -141,9 +143,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
     department: initialData?.department || "",
     phone: initialData?.phone || "",
     email: initialData?.email || "",
-    joiningDate: isEditMode
-      ? (initialData as any)?.createdAt || getCurrentDate()
-      : getCurrentDate(), // Use createdAt from backend for edit mode
+
     password: "", // Always empty for security
     permissions: initialData?.permissions || [
       {
@@ -187,30 +187,21 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
     [key: string]: string[];
   }>(initializePermissions());
 
-  // State for Add Role form
-  const [showAddRoleForm, setShowAddRoleForm] = useState(false);
+  const [showCreateRole, setShowCreateRole] = useState(false);
   const [newRoleData, setNewRoleData] = useState({
     name: '',
-    description: ''
+    description: '',
+    isDefault: false,
+    priority: 0
   });
-  const [creatingRole, setCreatingRole] = useState(false);
-
-  // RoleTemplate State
-  const [roleTemplateState, setRoleTemplateState] = useState<{
-    name: string;
-    description: string;
-    permissions: Record<string, string[]>;
-    isDefault: boolean;
-    priority: number;
-  } | null>(null);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
 
-    // Prevent changes to employeeCode and joiningDate as they are auto-generated
-    if (name === "employeeCode" || name === "joiningDate") {
+    // Prevent changes to employeeCode as it is auto-generated
+    if (name === "employeeCode") {
       return;
     }
 
@@ -234,108 +225,111 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
     });
   };
 
-  const handleAddRole = async () => {
-    if (!newRoleData.name.trim()) return;
+  const handleCreateRole = async () => {
+    if (!newRoleData.name) return;
     
+    const permissions = Object.entries(selectedPermissions)
+      .filter(([_, actions]) => actions.length > 0)
+      .map(([resource, actions]) => ({
+        resource,
+        action: actions[0], // API expects single action, not array
+        scope: 'store'
+      }));
+
+    const rolePayload = {
+      ...newRoleData,
+      permissions
+    };
+
     try {
-      setCreatingRole(true);
-      
-      // Store role template state for later use in handleSubmit
-      setRoleTemplateState({
-        name: newRoleData.name,
-        description: newRoleData.description,
-        permissions: selectedPermissions,
-        isDefault: false,
-        priority: 0
-      });
-      
-      // Reset form
-      setNewRoleData({ name: '', description: '' });
-      setShowAddRoleForm(false);
+      const newRole = await dispatch(createRoleTemplate(rolePayload)).unwrap();
+      await dispatch(fetchRoleTemplates());
+      setFormData(prev => ({ ...prev, roleTemplateId: newRole.id }));
+      setShowCreateRole(false);
+      setNewRoleData({ name: '', description: '', isDefault: false, priority: 0 });
     } catch (error) {
       console.error('Failed to create role:', error);
-    } finally {
-      setCreatingRole(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Convert selectedPermissions to API format
+    const permissions = Object.entries(selectedPermissions)
+      .filter(([_, actions]) => actions.length > 0)
+      .map(([resource, actions]) => ({
+        resource,
+        actions: actions,
+        storeId: id || "",
+      }));
+
+    // Prepare submit data with proper formatting
+    const submitData = {
+      ...formData,
+      permissions: permissions as any,
+      storeIds: id ? [id] : formData.storeIds,
+    };
+
+
+
+    console.log("Submitting employee data:", submitData);
+    console.log("Current store ID from URL:", id);
+    console.log("Permissions with store IDs:", permissions);
+
+    // Remove password field if editing or if password is empty
+    if (isEditMode || !submitData.password) {
+      delete submitData.password;
+    }
+
     try {
-      let roleTemplateId = formData.roleTemplateId;
-
-      // Step 1: Create role template if we have roleTemplateState
-      if (roleTemplateState) {
-        console.log('Creating role template first:', roleTemplateState);
-        
-        // Convert permissions to API format
-        const formattedPermissions = Object.entries(roleTemplateState.permissions)
-          .filter(([_, actions]) => actions.length > 0)
-          .map(([resource, actions]) => ({
-            resource,
-            action: actions // API expects 'action' not 'actions'
-          }));
-        
-        const roleResponse = await apiClient.post('/permissions/templates', {
-          name: roleTemplateState.name,
-          description: roleTemplateState.description,
-          permissions: formattedPermissions,
-          isDefault: roleTemplateState.isDefault,
-          priority: roleTemplateState.priority
-        });
-        
-        // Get the role template ID from response
-        roleTemplateId = roleResponse.data.data?.id || roleResponse.data.id;
-        console.log('Role template created with ID:', roleTemplateId);
-        
-        // Clear the role template state
-        setRoleTemplateState(null);
-      }
-
-      // Step 2: Prepare employee data
-      const permissions = Object.entries(selectedPermissions)
-        .filter(([_, actions]) => actions.length > 0)
-        .map(([resource, actions]) => ({
-          resource,
-          actions: actions,
-          storeId: id || "",
-        }));
-
-      const submitData = {
-        ...formData,
-        roleTemplateId, // Use the created or selected role template ID
-        permissions: permissions as any,
-        storeIds: id ? [id] : formData.storeIds,
-      };
-
-      delete (submitData as any).joiningDate;
-
-      if (isEditMode || !submitData.password) {
-        delete submitData.password;
-      }
-
-      console.log("Submitting employee data:", submitData);
-
-      // Step 3: Create/Update employee
       if (isEditMode && formData.id) {
+        console.log("Editing employee with ID:", formData.id);
+        console.log("Update data:", submitData);
         await dispatch(
           updateEmployee({ id: formData.id, employeeData: submitData })
         ).unwrap();
-        if (onSubmit) onSubmit(submitData);
+        console.log("Employee updated successfully");
+        // For edit mode, call onSubmit if provided
+        if (onSubmit) {
+          onSubmit(submitData);
+        }
       } else {
-        await dispatch(createEmployee(submitData)).unwrap();
+        console.log("Creating new employee");
+        console.log("Create data:", submitData);
+        // Creating new employee
+        const result = await dispatch(createEmployee(submitData)).unwrap();
         
+        // Send email invite after employee creation
+        try {
+          await apiClient.post('/employees/invite', {
+            employeeId: result.id || result.data?.id,
+            email: formData.email,
+            storeId: id
+          });
+          console.log('Email invite sent successfully');
+        } catch (inviteError) {
+          console.error('Failed to send email invite:', inviteError);
+        }
+        console.log("Employee created successfully");
+
+        // Redirect to employee list/permissions page
         if (id) {
+          // If we have a store ID, redirect to store-specific employee page
           navigate(`/store/${id}/employee`);
         } else {
+          // Otherwise redirect to general employee/permissions page
           navigate("/permissions");
         }
-        
-        if (onSubmit) onSubmit(submitData);
+
+        // Call onSubmit if provided (for parent component handling)
+        if (onSubmit) {
+          onSubmit(submitData);
+        }
       }
     } catch (error) {
       console.error("Failed to save employee:", error);
+      // Don't redirect on error - let user see the error and try again
     }
   };
 
@@ -353,11 +347,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
                 ? "Update employee information and permissions"
                 : "Create a new role with specific permissions for the inventory system"}
             </p>
-            {id && (
-              <div className="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                Store Context: {id}
-              </div>
-            )}
+           
           </div>
 
           {/* Form Content */}
@@ -532,110 +522,94 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
                   />
                 </div>
 
-                {/* Role Template Dropdown with Add Role Feature */}
+                {/* Role Template Dropdown with Add Role Button */}
                 <div>
-                  <label
-                    htmlFor="roleTemplateId"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Role
-                  </label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label
+                      htmlFor="roleTemplateId"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Role
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateRole(!showCreateRole)}
+                      className="bg-[#043E49] hover:bg-[#032B2E] text-sm font-medium text-white px-3 py-1 rounded-md transition-colors duration-200"
+                    >
+                      {showCreateRole ? 'Cancel' : '+ Add Role'}
+                    </button>
+                  </div>
                   
-                  <div className="space-y-3">
-                    {/* Show dropdown when roles exist */}
-                    {!roleTemplatesLoading && roleTemplates && roleTemplates.length > 0 && (
-                      <select
-                        id="roleTemplateId"
-                        name="roleTemplateId"
-                        value={formData.roleTemplateId || ""}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                        required
-                      >
-                        <option value="" disabled>
-                          Select a role
-                        </option>
-                        {roleTemplates.map((role: any) => (
+                  {!showCreateRole ? (
+                    <select
+                      id="roleTemplateId"
+                      name="roleTemplateId"
+                      value={formData.roleTemplateId || ""}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                      required
+                    >
+                      <option value="" disabled>
+                        Select a role
+                      </option>
+                      {roleTemplatesLoading && <option>Loading...</option>}
+                      {roleTemplates &&
+                        roleTemplates.map((role: any) => (
                           <option key={role.id} value={role.id}>
                             {role.name}
                           </option>
                         ))}
-                      </select>
-                    )}
-                    
-                    {/* Show loading state */}
-                    {roleTemplatesLoading && (
-                      <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
-                        Loading roles...
+                    </select>
+                  ) : (
+                    <div className="space-y-3 p-4 border border-gray-300 rounded-md bg-gray-50">
+                      <div>
+                        <input
+                          type="text"
+                          placeholder="Role Name"
+                          value={newRoleData.name}
+                          onChange={(e) => setNewRoleData(prev => ({ ...prev, name: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                        />
                       </div>
-                    )}
-                    
-                    {/* Show Add Role button - always visible when not loading */}
-                    {!roleTemplatesLoading && (
+                      <div>
+                        <textarea
+                          placeholder="Role Description"
+                          value={newRoleData.description}
+                          onChange={(e) => setNewRoleData(prev => ({ ...prev, description: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                          rows={2}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center text-sm">
+                          <input
+                            type="checkbox"
+                            checked={newRoleData.isDefault}
+                            onChange={(e) => setNewRoleData(prev => ({ ...prev, isDefault: e.target.checked }))}
+                            className="mr-2"
+                          />
+                          Default Role
+                        </label>
+                        <div className="flex items-center space-x-2">
+                          <label className="text-sm text-gray-700">Priority:</label>
+                          <input
+                            type="number"
+                            value={newRoleData.priority}
+                            onChange={(e) => setNewRoleData(prev => ({ ...prev, priority: parseInt(e.target.value) }))}
+                            className="w-16 px-2 py-1 border border-gray-300 rounded"
+                            min="0"
+                          />
+                        </div>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => setShowAddRoleForm(true)}
-                        className={`w-full px-4 py-2 border rounded-md transition-colors flex items-center justify-center gap-2 text-sm ${
-                          (!roleTemplates || roleTemplates.length === 0)
-                            ? 'border-2 border-dashed border-blue-300 text-blue-600 hover:border-blue-400 hover:bg-blue-50 py-3'
-                            : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-                        }`}
+                        onClick={handleCreateRole}
+                        className="w-full bg-[#043E49] text-white py-2 rounded-md hover:bg-[#032B2E] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <FaPlus className="w-4 h-4" />
-                        {(!roleTemplates || roleTemplates.length === 0) ? 'Add Role' : 'Add New Role'}
+                        Create Role 
                       </button>
-                    )}
-                    
-                    {/* Expandable Add Role Form */}
-                    {showAddRoleForm && (
-                      <div className="border border-gray-200 rounded-md p-4 bg-gray-50 space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Role Name
-                          </label>
-                          <input
-                            type="text"
-                            value={newRoleData.name}
-                            onChange={(e) => setNewRoleData(prev => ({ ...prev, name: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            placeholder="Enter role name"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Role Description
-                          </label>
-                          <input
-                            type="text"
-                            value={newRoleData.description}
-                            onChange={(e) => setNewRoleData(prev => ({ ...prev, description: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            placeholder="Enter role description"
-                          />
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={handleAddRole}
-                            disabled={!newRoleData.name.trim() || creatingRole}
-                            className="px-4 py-2 bg-[#043E49] text-white rounded-md hover:bg-[#043E49] disabled:opacity-50 text-sm"
-                          >
-                            {creatingRole ? 'Creating...' : 'Create Role'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setShowAddRoleForm(false);
-                              setNewRoleData({ name: '', description: '' });
-                            }}
-                            className="px-4 py-2 bg-gray-400 text-black rounded-md hover:bg-gray-400 text-sm"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Status */}
@@ -659,40 +633,19 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
                   </select>
                 </div>
 
-                {/* Joining Date - Display only (uses createdAt from backend) */}
-                <div>
-                  <label
-                    htmlFor="joiningDate"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Joining Date
-                  </label>
-                  <input
-                    type="text"
-                    id="joiningDate"
-                    name="joiningDate"
-                    value={formatDateForDisplay(formData.joiningDate)}
-                    readOnly
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-600 cursor-not-allowed"
-                    placeholder="Auto-set to current date"
-                  />
-                  <div className="display flex items-center justify-center mt-1">
-                    <img src="/images.png" alt="" className="w-10 h-10 mt-1" />
-                    <p className="text-xs text-gray-500 mt-1">
-                      AI Set automatically when employee is created
-                    </p>
-                  </div>
-                </div>
+
               </div>
             </div>
 
             {/* Permissions Matrix Section */}
             <div className="mb-6">
               <h3 className="text-base font-medium text-gray-900 mb-4">
-                Permissions Matrix
+                {showCreateRole ? 'Role Permissions (will be saved with role)' : 'Employee Permissions'}
               </h3>
               <p className="text-sm text-gray-600 mb-4">
-                Select which actions this role can perform on each resource.
+                {showCreateRole 
+                  ? 'These permissions will be included when creating the new role.' 
+                  : 'Select which actions this employee can perform on each resource.'}
               </p>
 
               <div className="overflow-x-auto">
@@ -869,6 +822,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
             )}
           </form>
         </div>
+
+
       </div>
     </div>
   );

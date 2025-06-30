@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { FaStore, FaCog } from "react-icons/fa";
+import { FaStore, FaCog, FaUpload, FaImage } from "react-icons/fa";
 import { SpecialButton } from "./buttons";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { createStore, updateStore } from "../store/slices/storeSlice";
+import { uploadImageToCloudinary } from "../services/cloudinary";
 import type { StoreFormData } from "../types/store";
 
 const TIMEZONES = [
@@ -54,9 +55,12 @@ const StoreForm: React.FC = () => {
     timezone: "America/New_York",
     currency: "USD",
     taxMode: "exclusive",
+    logo: "",
   });
 
   const [errors, setErrors] = useState<Partial<StoreFormData>>({});
+  const [uploading, setUploading] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string>("");
 
   useEffect(() => {
     if (isEditing && id) {
@@ -71,7 +75,9 @@ const StoreForm: React.FC = () => {
           timezone: store.timezone,
           currency: store.currency,
           taxMode: store.taxMode,
+          logo: store.logo || "",
         });
+        setLogoPreview(store.logo || "");
       }
     }
   }, [isEditing, id, stores]);
@@ -84,6 +90,33 @@ const StoreForm: React.FC = () => {
     // Clear error when user starts typing
     if (errors[name as keyof StoreFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const imageUrl = await uploadImageToCloudinary(file);
+      setFormData(prev => ({ ...prev, logo: imageUrl }));
+      setLogoPreview(imageUrl);
+      toast.success('Logo uploaded successfully');
+    } catch (error) {
+      toast.error('Failed to upload logo');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -158,6 +191,48 @@ const StoreForm: React.FC = () => {
               <h2 className="text-lg font-semibold text-gray-900 mb-6">
                 Store Information
               </h2>
+
+              {/* Logo Upload Section */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Store Logo
+                </label>
+                <div className="flex items-center space-x-4">
+                  <div className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                    {logoPreview ? (
+                      <img
+                        src={logoPreview}
+                        alt="Store logo"
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    ) : (
+                      <FaImage className="text-gray-400 text-2xl" />
+                    )}
+                  </div>
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      id="logo-upload"
+                      disabled={uploading}
+                    />
+                    <label
+                      htmlFor="logo-upload"
+                      className={`inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer ${
+                        uploading ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      <FaUpload className="mr-2" />
+                      {uploading ? 'Uploading...' : 'Upload Logo'}
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">
+                      PNG, JPG up to 5MB
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -321,9 +396,9 @@ const StoreForm: React.FC = () => {
               <SpecialButton
                 type="submit"
                 variant="modal-add"
-                disabled={storeLoading}
+                disabled={storeLoading || uploading}
               >
-                {storeLoading
+                {storeLoading || uploading
                   ? "Saving..."
                   : isEditing
                     ? "Update Store"

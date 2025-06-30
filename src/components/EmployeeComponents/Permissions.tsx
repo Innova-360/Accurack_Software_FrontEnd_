@@ -167,7 +167,7 @@ const Permissions: React.FC<PermissionsProps> = ({ showHeader = true, onEditEmpl
       department: 'Operations', // Default department
       phone: '+1234567890', // Default phone
       email: `${role.name.toLowerCase().replace(/\s+/g, '.')}@company.com`,
-      joiningDate: '2023-01-01', // Default joining date
+      // joiningDate: '2023-01-01', // Default joining date
       password: '', // Empty for security
       permissions: permissionsObject
     };

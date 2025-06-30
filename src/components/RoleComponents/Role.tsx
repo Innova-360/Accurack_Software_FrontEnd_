@@ -80,7 +80,7 @@ const Permissions: React.FC<PermissionsProps> = ({
           id: emp.id,
           employeeCode: emp.employeeCode,
           createdAt: emp.createdAt,
-          joiningDate: (emp as any).joiningDate,
+          // joiningDate: (emp as any).joiningDate,
           status: emp.status,
           statusType: typeof emp.status,
           name: `${emp.firstName} ${emp.lastName}`,
@@ -149,7 +149,6 @@ const Permissions: React.FC<PermissionsProps> = ({
       department: employee?.department,
       phone: employee?.phone,
       email: employee?.email,
-      joiningDate: employee?.createdAt || getJoiningDate(employee), // Use createdAt from backend
       password: "", // Empty for security
       permissions: employee?.permissions || [],
     };
@@ -219,15 +218,7 @@ const Permissions: React.FC<PermissionsProps> = ({
   };
 
   // Helper function to get joining date
-  const getJoiningDate = (employee: any) => {
-    // Backend uses createdAt field, not joiningDate
-    return (
-      employee?.createdAt ||
-      (employee as any)?.created_at ||
-      (employee as any)?.dateJoined ||
-      new Date().toISOString()
-    );
-  };
+  
 
   const getPermissionCount = (permissions: any) => {
     if (!permissions || !Array.isArray(permissions)) return 0;
@@ -376,11 +367,7 @@ const Permissions: React.FC<PermissionsProps> = ({
                         </td>
 
                         {/* Created Date */}
-                        <td className="py-4 px-4 text-center">
-                          <span className="text-gray-600 text-sm">
-                            {formatDate(getJoiningDate(employee))}
-                          </span>
-                        </td>
+                  
 
                         {/* Permissions */}
                         <td className="py-4 px-4">

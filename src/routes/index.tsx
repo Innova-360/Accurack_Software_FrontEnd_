@@ -13,8 +13,8 @@ import GoogleAuthCallback from "../components/GoogleAuthCallback";
 import Supplier from "../pages/Supplier/Supplier";
 import StoresPage from "../pages/Stores/Stores";
 import EmployeePage from "../pages/Employee/EmployeePage";
-import PermissionsPage from "../pages/Employee/PermissionsPage";
-import EditEmployeePage from "../pages/Employee/EditEmployeePage";
+import PermissionsPage from "../pages/Employee/EmployeeManagementPage";
+import EditEmployeePage from "../pages/Employee/EmployeePage";
 import RolePage from "../pages/RolePage/RolePage"; 
 import Srole from "../pages/RolePage/RolePermissionsPage"
 import EditRolePage from "../pages/RolePage/EditRolePage";
@@ -38,7 +38,7 @@ const AppRoutes = () => {
       <Route path="/store/:id/supplier/assign-products" element={<AssignProductsPage />} />   
       <Route path="/store/:id/employee/create" element={<EmployeePage />} />
       <Route path="/store/:id/employee" element={<PermissionsPage />} />
-      <Route path="/store/:id/edit-employee" element={<EditEmployeePage />} />
+      {/* <Route path="/store/:id/edit-employee" element={<EditEmployeePage />} /> */}
       <Route path="/store/:id/role" element={<Srole />} />
       <Route path="/store/:id/role/create" element={<RolePage />} />
       <Route path="/store/:id/role/edit" element={<EditRolePage />} />

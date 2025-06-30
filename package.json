@@ -15,6 +15,7 @@
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
     "axios": "^1.10.0",
+    "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
     "quagga": "^0.12.1",

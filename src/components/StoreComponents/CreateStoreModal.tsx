@@ -1,5 +1,8 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
+import { FaUpload, FaImage } from "react-icons/fa";
 import { TIMEZONES, CURRENCIES } from "../../types/store";
+import { uploadImageToCloudinary } from "../../services/cloudinary";
 import type { StoreFormData } from "../../types/store";
 
 interface CreateStoreModalProps {
@@ -22,9 +25,12 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({
     phone: "",
     currency: "USD",
     timezone: "America/New_York",
+    logo: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [uploading, setUploading] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string>("");
 
   if (!isOpen) return null;
 
@@ -42,6 +48,33 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const imageUrl = await uploadImageToCloudinary(file);
+      setFormData(prev => ({ ...prev, logo: imageUrl }));
+      setLogoPreview(imageUrl);
+      toast.success('Logo uploaded successfully');
+    } catch (error) {
+      toast.error('Failed to upload logo');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -83,8 +116,10 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({
         phone: "",
         currency: "USD",
         timezone: "America/New_York",
+        logo: "",
       });
       setErrors({});
+      setLogoPreview("");
       onClose();
     }
   };
@@ -125,6 +160,48 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Logo Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Store Logo
+            </label>
+            <div className="flex items-center space-x-4">
+              <div className="w-16 h-16 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                {logoPreview ? (
+                  <img
+                    src={logoPreview}
+                    alt="Store logo"
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                ) : (
+                  <FaImage className="text-gray-400 text-xl" />
+                )}
+              </div>
+              <div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="modal-logo-upload"
+                  disabled={uploading || loading}
+                />
+                <label
+                  htmlFor="modal-logo-upload"
+                  className={`inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer ${
+                    uploading || loading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  <FaUpload className="mr-2" />
+                  {uploading ? 'Uploading...' : 'Upload'}
+                </label>
+                <p className="text-xs text-gray-500 mt-1">
+                  PNG, JPG up to 5MB
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Store Name */}
             <div className="md:col-span-2">
@@ -263,7 +340,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || uploading}
               className="px-6 py-2 bg-[#0f4d57] text-white rounded-lg hover:bg-[#0d3f47] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
               {loading && (
@@ -288,7 +365,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({
                   ></path>
                 </svg>
               )}
-              {loading ? "Creating..." : "Create Store"}
+              {loading || uploading ? "Creating..." : "Create Store"}
             </button>
           </div>
         </form>

@@ -1,19 +1,29 @@
+// only for backup, not used
+
+import axios from "axios";
 import React, { useState, useRef } from "react";
 import toast from "react-hot-toast";
+import { useParams } from "react-router-dom";
+
 interface UploadInventoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpload: (file: File) => void;
+  onUploadSuccess?: () => void;
 }
+
 const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
   isOpen,
   onClose,
-  onUpload,
+  onUploadSuccess,
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { id } = useParams();
+
   if (!isOpen) return null;
+
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -23,6 +33,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
       setDragActive(false);
     }
   };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -46,6 +57,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
       }
     }
   };
+
   const isValidFileType = (file: File): boolean => {
     const validTypes = [
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -54,21 +66,54 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
     return (
       validTypes.includes(file.type) ||
       file.name.endsWith(".xlsx") ||
-      file.name.endsWith(".xls")
+      file.name.endsWith(".xls") ||
+      file.name.endsWith(".csv")
     );
   };
+
   const handleUpload = async () => {
     if (!selectedFile) return;
+
     // Close modal immediately
     handleClose();
+
+    // Show processing toast
+    const processingToast = toast.loading(
+      `Processing ${selectedFile.name}...`,
+      {
+        duration: Infinity,
+      }
+    );
+
     try {
-      // Call the parent's upload handler
-      await onUpload(selectedFile);
+      // Send as multipart/form-data for multer
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      await axios.post(
+        `http://localhost:4000/api/v1/product/uploadsheet?storeId=${id}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          withCredentials: true,
+        }
+      );
+
+      // Dismiss processing toast and show success
+      toast.dismiss(processingToast);
+      toast.success("Inventory uploaded successfully!");
+      
+      // Call the success callback to refetch products
+      onUploadSuccess?.();
     } catch (error) {
-      // Error handling is now done in the parent component
+      // Dismiss processing toast and show error
+      toast.dismiss(processingToast);
+      toast.error("Upload failed. Please try again.");
       console.error("Upload error:", error);
     }
   };
+
   const handleClose = () => {
     setSelectedFile(null);
     if (fileInputRef.current) {
@@ -124,6 +169,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
         "Freshly baked sourdough bread",
       ],
     ];
+
     // Convert to CSV for download (simple implementation)
     const csvContent = templateData.map((row) => row.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
@@ -136,15 +182,17 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
   };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop with blur */}
       <div className="absolute inset-0 modal-overlay" onClick={handleClose} />
+
       {/* Modal Content */}
       <div className="relative bg-white rounded-xl shadow-2xl p-6 m-4 w-full max-w-lg animate-modal-enter">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-[#0F4D57]">Upload Inventory</h2>
+          <h2 className="text-xl font-bold text-[#0f4d57]">Upload Inventory</h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors p-1"
@@ -164,6 +212,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
             </svg>
           </button>
         </div>
+
         {/* Template Download */}
         <div className="mb-6 p-4 bg-blue-50 rounded-lg">
           <div className="flex items-center justify-between">
@@ -181,11 +230,12 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
             </button>
           </div>
         </div>
+
         {/* File Upload Area */}
         <div
           className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
             dragActive
-              ? "border-[#0F4D57] bg-[#0F4D57]/5"
+              ? "border-[#0f4d57] bg-[#0f4d57]/5"
               : selectedFile
                 ? "border-green-500 bg-green-50"
                 : "border-gray-300 hover:border-gray-400"
@@ -244,7 +294,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
               </div>
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="px-6 py-2 bg-[#0F4D57] text-white rounded-lg hover:bg-[#0D3F47] transition-colors"
+                className="px-6 py-2 bg-[#0f4d57] text-white rounded-lg hover:bg-[#0d3f47] transition-colors"
               >
                 Choose File
               </button>
@@ -254,6 +304,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
             </div>
           )}
         </div>
+
         {/* Hidden file input */}
         <input
           ref={fileInputRef}
@@ -262,6 +313,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
           onChange={handleFileSelect}
           className="hidden"
         />
+
         {/* Actions */}
         <div className="flex justify-end space-x-4 mt-6">
           <button
@@ -273,7 +325,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
           <button
             onClick={handleUpload}
             disabled={!selectedFile}
-            className="px-6 py-2 bg-[#0F4D57] text-white rounded-lg hover:bg-[#0D3F47] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-[#0f4d57] text-white rounded-lg hover:bg-[#0d3f47] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Upload
           </button>
@@ -282,4 +334,5 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
     </div>
   );
 };
+
 export default UploadInventoryModal;

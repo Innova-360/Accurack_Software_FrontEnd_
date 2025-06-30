@@ -44,8 +44,7 @@ export const fetchEmployees = createAsyncThunk(
       params.append("page", page.toString());
       params.append("limit", limit.toString());
 
-      const url = `/employees?${params.toString()}`;
-      const response = await apiClient.get(url);
+      const response = await apiClient.get(`/employees`);
       console.log(response);
 
       // Handle different response structures from backend
@@ -240,6 +239,118 @@ export const updateRoleTemplate = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to update role template"
+      );
+    }
+  }
+);
+
+// --- Role Template Management ---
+export const deleteRoleTemplate = createAsyncThunk(
+  "employees/deleteRoleTemplate",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await apiClient.delete(`/permissions/templates/${id}`);
+      return id;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to delete role template"
+      );
+    }
+  }
+);
+
+export const assignRoleTemplateToUsers = createAsyncThunk(
+  "employees/assignRoleTemplateToUsers",
+  async (
+    {
+      userIds,
+      roleTemplateId,
+      storeId,
+    }: { userIds: string[]; roleTemplateId: string; storeId: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await apiClient.post(
+        `/permissions/templates/assign`,
+        {
+          userIds,
+          roleTemplateId,
+          storeId,
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to assign role template"
+      );
+    }
+  }
+);
+
+// --- Employee Management ---
+export const deactivateEmployee = createAsyncThunk(
+  "employees/deactivateEmployee",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.put(
+        `/employees/${id}/deactivate`
+      );
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to deactivate employee"
+      );
+    }
+  }
+);
+
+export const resetEmployeePassword = createAsyncThunk(
+  "employees/resetEmployeePassword",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.post(
+        `/employees/${id}/reset-password`
+      );
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to reset employee password"
+      );
+    }
+  }
+);
+
+export const updateEmployeeStores = createAsyncThunk(
+  "employees/updateEmployeeStores",
+  async (
+    { id, storeIds }: { id: string; storeIds: string[] },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await apiClient.put(`/employees/${id}/stores`, {
+        storeIds,
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to update employee stores"
+      );
+    }
+  }
+);
+
+export const inviteEmployee = createAsyncThunk(
+  "employees/inviteEmployee",
+  async (inviteData: any, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.post(
+        `/employees/invite`,
+        inviteData
+      );
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to invite employee"
       );
     }
   }
@@ -441,6 +552,109 @@ const employeeSlice = createSlice({
       .addCase(updateRoleTemplate.rejected, (state, action) => {
         state.roleTemplatesLoading = false;
         state.roleTemplatesError = action.payload as string;
+      })
+      // --- Role Template Management ---
+      .addCase(deleteRoleTemplate.pending, (state) => {
+        state.roleTemplatesLoading = true;
+        state.roleTemplatesError = null;
+      })
+      .addCase(deleteRoleTemplate.fulfilled, (state, action) => {
+        state.roleTemplatesLoading = false;
+        state.roleTemplates = state.roleTemplates.filter(
+          (tpl) => tpl.id !== action.payload
+        );
+        state.roleTemplatesError = null;
+      })
+      .addCase(deleteRoleTemplate.rejected, (state, action) => {
+        state.roleTemplatesLoading = false;
+        state.roleTemplatesError = action.payload as string;
+      })
+      .addCase(assignRoleTemplateToUsers.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(assignRoleTemplateToUsers.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(assignRoleTemplateToUsers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(deactivateEmployee.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deactivateEmployee.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.employees.findIndex(
+          (emp) => emp.id === action.payload.id
+        );
+        if (index !== -1) {
+          state.employees[index] = action.payload;
+        }
+        if (state.currentEmployee?.id === action.payload.id) {
+          state.currentEmployee = action.payload;
+        }
+        state.error = null;
+      })
+      .addCase(deactivateEmployee.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(resetEmployeePassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resetEmployeePassword.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.employees.findIndex(
+          (emp) => emp.id === action.payload.id
+        );
+        if (index !== -1) {
+          state.employees[index] = action.payload;
+        }
+        if (state.currentEmployee?.id === action.payload.id) {
+          state.currentEmployee = action.payload;
+        }
+        state.error = null;
+      })
+      .addCase(resetEmployeePassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(updateEmployeeStores.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateEmployeeStores.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.employees.findIndex(
+          (emp) => emp.id === action.payload.id
+        );
+        if (index !== -1) {
+          state.employees[index] = action.payload;
+        }
+        if (state.currentEmployee?.id === action.payload.id) {
+          state.currentEmployee = action.payload;
+        }
+        state.error = null;
+      })
+      .addCase(updateEmployeeStores.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(inviteEmployee.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(inviteEmployee.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(inviteEmployee.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });

@@ -31,7 +31,7 @@ export interface EmployeeFormData {
   department: string;
   phone: string;
   email: string;
-  joiningDate: string; // Frontend-only field for display
+  // joiningDate?: string; // Frontend-only field for display
   password?: string; // Optional for edit mode
   permissions: [
     {

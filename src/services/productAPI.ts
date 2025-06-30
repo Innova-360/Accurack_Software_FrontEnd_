@@ -1,5 +1,6 @@
 import apiClient from "./api";
 import type { Product as BaseProduct, Variant } from "../data/inventoryData";
+
 // export interface ApiProduct {
 //   id: string;
 //   name: string;
@@ -48,6 +49,7 @@ import type { Product as BaseProduct, Variant } from "../data/inventoryData";
 //     }>;
 //   }>;
 // }
+
 export interface ApiProduct {
   id: string;
   name: string;
@@ -106,9 +108,11 @@ export interface ApiProduct {
     }>;
   }>;
 }
+
 // Export the Product type for use in other components
 export type Product = BaseProduct;
 export type { Variant };
+
 // API service
 export const productAPI = {
   // Fetch all products
@@ -117,6 +121,7 @@ export const productAPI = {
       const response = await apiClient.get("/product/list");
       console.log("API Response:", response.data); // Debug log      // Handle different possible response structures
       let apiProducts: ApiProduct[];
+
       // First check if response.data.data exists and has products
       if (
         response.data?.data?.products &&
@@ -139,6 +144,7 @@ export const productAPI = {
         // If data is an object, look for arrays inside it
         const dataKeys = Object.keys(response.data.data);
         console.log("Data object keys:", dataKeys);
+
         // Try to find an array in the data object
         let foundArray = null;
         for (const key of dataKeys) {
@@ -148,6 +154,7 @@ export const productAPI = {
             break;
           }
         }
+
         if (foundArray) {
           apiProducts = foundArray;
         } else {
@@ -159,6 +166,7 @@ export const productAPI = {
         // Return empty array if we can't find products
         return [];
       }
+
       // Validate that we have an array
       if (!Array.isArray(apiProducts)) {
         console.error("API products is not an array:", apiProducts);
@@ -190,6 +198,7 @@ export const productAPI = {
           //   //   percentDiscount: variant.percentDiscount,
           //   //   packs: variant.packs || [],
           //   // })) || [],
+
           //   variants:
           //     apiProduct.variants?.map((variant) => ({
           //       id: variant.id,
@@ -206,6 +215,7 @@ export const productAPI = {
           //       packs: variant.packs || [],
           //     })) || [],
           // };
+
           return {
             id: apiProduct.id || "",
             name: apiProduct.name || "Unknown Product",
@@ -215,10 +225,10 @@ export const productAPI = {
             description: apiProduct.description || "this is description",
             price: `$${(apiProduct.singleItemSellingPrice || 0).toFixed(2)}`,
             category: apiProduct.category || "Uncategorized",
-            itemsPerUnit: 1, // Default value, adjust if needed
+            itemsPerUnit: 1, 
             supplier:
               apiProduct.supplier ||
-              "Unknown Supplier",
+              "-",
             createdAt:
               apiProduct.createdAt || new Date().toISOString().split("T")[0],
             hasVariants: apiProduct.hasVariants || false,
@@ -267,6 +277,7 @@ export const productAPI = {
       throw error;
     }
   },
+
   // Delete a product
   async deleteProduct(
     id: string
@@ -279,6 +290,7 @@ export const productAPI = {
       throw error;
     }
   },
+
   // Update a product
   async updateProduct(
     id: string,
@@ -293,15 +305,3 @@ export const productAPI = {
     }
   },
 };
-
-
-
-
-
-
-
-
-
-
-
-

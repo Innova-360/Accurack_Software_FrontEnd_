@@ -176,8 +176,16 @@ const StoresPage: React.FC = () => {
                   {/* Store Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center">
-                      <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mr-3">
-                        <FaStore className="text-teal-600 text-xl" />
+                      <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mr-3 overflow-hidden">
+                        {store.logo ? (
+                          <img
+                            src={store.logo}
+                            alt={`${store.name} logo`}
+                            className="w-full h-full object-cover rounded-lg"
+                          />
+                        ) : (
+                          <FaStore className="text-teal-600 text-xl" />
+                        )}
                       </div>{" "}
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">
