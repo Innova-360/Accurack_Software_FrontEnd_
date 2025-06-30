@@ -4,6 +4,10 @@ import { useSelector, useDispatch } from "react-redux";
 import { fetchInventorySuppliers } from "../../../store/slices/inventorySupplierSlice";
 import type { RootState } from "../../../store";
 import type { Supplier } from "../../../services/supplierAPI";
+import {
+  type ProductCategory,
+  createProductCategory,
+} from "../../../store/slices/productCategoriesSlice";
 
 interface ProductBasicInfoProps {
   formData: ProductFormData;
@@ -15,6 +19,9 @@ interface ProductBasicInfoProps {
   suppliers?: Supplier[];
   suppliersLoading?: boolean;
   suppliersError?: string | null;
+  // Add categories as props
+  categories?: ProductCategory[];
+  categoriesLoading?: boolean;
 }
 
 const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
@@ -26,6 +33,8 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
   suppliers: propSuppliers,
   suppliersLoading: propSuppliersLoading,
   suppliersError: propSuppliersError,
+  categories: propCategories,
+  categoriesLoading: propCategoriesLoading,
 }) => {
   const dispatch = useDispatch();
   // Use suppliers from props if available, otherwise fall back to Redux
@@ -39,10 +48,25 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
     error: string | null;
   };
 
+  // Get categories from Redux store
+  const {
+    categories: reduxCategories,
+    loading: reduxCategoriesLoading,
+    creatingCategory,
+  } = useSelector((state: RootState) => state.productCategories);
+
+  // State for managing create category
+  const [isCreatingCategory, setIsCreatingCategory] = React.useState(false);
+  const [newCategoryName, setNewCategoryName] = React.useState("");
+
   // Use prop suppliers if available, otherwise use Redux suppliers
   const suppliers = propSuppliers || reduxSuppliers;
   const suppliersLoading = propSuppliersLoading ?? reduxSuppliersLoading;
   const suppliersError = propSuppliersError || reduxSuppliersError;
+
+  // Use prop categories if available, otherwise use Redux categories
+  const categories = propCategories || reduxCategories;
+  const categoriesLoading = propCategoriesLoading ?? reduxCategoriesLoading;
 
   // Debug logging to see supplier state
   React.useEffect(() => {
@@ -196,6 +220,35 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
     }
   };
 
+  // Handle category creation
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) return;
+
+    const categoryData = {
+      name: newCategoryName.trim(),
+      code: newCategoryName.trim().toUpperCase().replace(/\s+/g, "_"),
+    };
+
+    try {
+      const result = await dispatch(createProductCategory(categoryData) as any);
+      if (!result.error) {
+        // Successfully created category, select it and reset state
+        onFormDataChange("category", result.payload.id);
+        setIsCreatingCategory(false);
+        setNewCategoryName("");
+      }
+    } catch (error) {
+      console.error("Failed to create category:", error);
+    }
+  };
+
+  // Handle cancel create category
+  const handleCancelCreateCategory = () => {
+    setIsCreatingCategory(false);
+    setNewCategoryName("");
+    onFormDataChange("category", "");
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 hover:shadow-xl transition-all duration-300">
       <div className="flex items-center space-x-3 mb-8">
@@ -243,31 +296,145 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
             Category *
           </label>
           <select
-            value={formData.category}
-            onChange={(e) => onFormDataChange("category", e.target.value)}
+            value={isCreatingCategory ? "create_new" : formData.category}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "create_new") {
+                setIsCreatingCategory(true);
+                onFormDataChange("category", "");
+              } else {
+                setIsCreatingCategory(false);
+                onFormDataChange("category", value);
+              }
+            }}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
             required
+            disabled={categoriesLoading || isCreatingCategory}
           >
-            <option value="">Select Category</option>
-            <option value="electronics">Electronics</option>
-            <option value="clothing">Clothing</option>
-            <option value="food">Food & Beverages</option>
-            <option value="home">Home & Garden</option>
-            <option value="sports">Sports & Outdoors</option>
-            <option value="books">Books</option>
-            <option value="other">Other</option>
+            <option value="">
+              {categoriesLoading ? "Loading categories..." : "Select Category"}
+            </option>
+            <option value="create_new">+ Create New Category</option>
+            {categories?.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
           </select>
-          {formData.category === "other" && (
-            <input
-              type="text"
-              value={formData.customCategory || ""}
-              onChange={(e) =>
-                onFormDataChange("customCategory", e.target.value)
-              }
-              className="w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
-              placeholder="Enter custom category"
-              required
-            />
+
+          {isCreatingCategory && (
+            <div className="mt-2 space-y-2">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 30) {
+                      setNewCategoryName(value);
+                    }
+                  }}
+                  className="w-full px-4 py-3 pr-20 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                  placeholder="Enter new category name (max 30 chars)"
+                  disabled={creatingCategory}
+                  maxLength={30}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleCreateCategory();
+                    }
+                    if (e.key === "Escape") {
+                      handleCancelCreateCategory();
+                    }
+                  }}
+                  autoFocus
+                />
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
+                  {/* Cancel/Cross Icon */}
+                  <button
+                    type="button"
+                    onClick={handleCancelCreateCategory}
+                    disabled={creatingCategory}
+                    className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-all duration-200 disabled:opacity-50"
+                    title="Cancel"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* Submit/Tick Icon */}
+                  <button
+                    type="button"
+                    onClick={handleCreateCategory}
+                    disabled={!newCategoryName.trim() || creatingCategory}
+                    className="p-1.5 text-green-500 hover:text-green-700 hover:bg-green-50 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Create Category"
+                  >
+                    {creatingCategory ? (
+                      <svg
+                        className="w-4 h-4 animate-spin"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Character count and preview */}
+              <div className="flex justify-between text-xs">
+                <div className="text-gray-500">
+                  {newCategoryName.length}/30 characters
+                </div>
+                {newCategoryName.trim() && (
+                  <div className="text-gray-500">
+                    Code: {" "}
+                    <span className="font-mono text-gray-700">
+                      {newCategoryName.trim().toUpperCase().replace(/\s+/g, "_")}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </div>
         <div className="space-y-2">

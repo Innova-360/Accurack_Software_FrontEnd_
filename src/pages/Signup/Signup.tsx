@@ -26,12 +26,23 @@ const Signup = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { loading } = useAppSelector((state) => state.auth);
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // Validate form fields
+    e.preventDefault();
+
+    console.log("🚀 Starting signup process with data:", {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      companyName: formData.companyName,
+    });
+
+    // Validate form fields
     if (!formData.firstName.trim()) {
       toast.error("First Name is required");
       return;
@@ -44,10 +55,25 @@ const Signup = () => {
       toast.error("Email is required");
       return;
     }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
     if (!formData.password) {
       toast.error("Password is required");
       return;
     }
+
+    // Password validation
+    if (formData.password.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match");
       return;
@@ -60,17 +86,32 @@ const Signup = () => {
       toast.error("Company Email is required");
       return;
     }
+
+    // Company email validation
+    if (!emailRegex.test(formData.companyEmail.trim())) {
+      toast.error("Please enter a valid company email address");
+      return;
+    }
+
     if (!formData.companyPhone.trim()) {
       toast.error("Company Phone is required");
       return;
     }
+
+    // Phone validation (basic)
+    const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+    if (!phoneRegex.test(formData.companyPhone.trim())) {
+      toast.error("Please enter a valid phone number");
+      return;
+    }
+
     if (!formData.companyAddress.trim()) {
       toast.error("Company Address is required");
       return;
     }
 
     try {
-
+      console.log("📤 Dispatching createClientWithAdmin...");
       const resultAction = await dispatch(
         createClientWithAdmin({
           firstName: formData.firstName.trim(),
@@ -83,23 +124,43 @@ const Signup = () => {
           companyAddress: formData.companyAddress.trim(),
         })
       );
+
+      console.log("📥 Signup response:", resultAction);
+
       if (createClientWithAdmin.fulfilled.match(resultAction)) {
-        console.log("Signup successful", resultAction.payload);
+        console.log("✅ Signup successful", resultAction.payload);
         toast.success("Account created successfully!");
         // Save email to localStorage
         localStorage.setItem("userEmail", formData.email);
         // Redirect to OTP page - OTP will be sent from there
         navigate("/otp");
       } else {
-        console.error("Signup failed", resultAction.payload);
-        toast.error(
+        console.error("❌ Signup failed", resultAction.payload);
+        const errorMessage =
           typeof resultAction.payload === "string"
             ? resultAction.payload
-            : "Signup failed"
-        );
+            : "Signup failed";
+
+        // Show helpful error messages
+        if (errorMessage.includes("connect to server")) {
+          toast.error(
+            "Server connection failed. Please ensure the backend is running."
+          );
+        } else if (errorMessage.includes("CORS")) {
+          toast.error("Configuration error. Please contact support.");
+        } else if (
+          errorMessage.includes("already exists") ||
+          errorMessage.includes("already registered")
+        ) {
+          toast.error(
+            "This email is already registered. Please use a different email or try logging in."
+          );
+        } else {
+          toast.error(errorMessage);
+        }
       }
     } catch (error) {
-      console.error("Error during signup", error);
+      console.error("💥 Error during signup", error);
       toast.error("An error occurred during signup. Please try again.");
     }
   };
@@ -161,11 +222,14 @@ const Signup = () => {
       <div className="flex flex-col justify-start items-center w-full lg:w-1/2  min-h-screen order-2 lg:order-none">
         <h2 className="text-2xl sm:text-4xl font-bold text-[#181c1f] mb-6 sm:mb-8 text-center pt-8 sm:pt-16">
           Create Free Account
-        </h2>        <div className="w-full max-w-md bg-white rounded-xl shadow-md p-5 sm:p-8 mx-3 text-xs sm:text-sm mb-6 sm:mb-8">
+        </h2>{" "}
+        <div className="w-full max-w-md bg-white rounded-xl shadow-md p-5 sm:p-8 mx-3 text-xs sm:text-sm mb-6 sm:mb-8">
           <form className="space-y-2 sm:space-y-3" onSubmit={handleSubmit}>
             {/* Personal Information */}
             <div className="mb-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">Personal Information</h3>
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                Personal Information
+              </h3>
               <div className="space-y-2">
                 <input
                   type="text"
@@ -193,10 +257,11 @@ const Signup = () => {
                 />
               </div>
             </div>
-
             {/* Password Fields */}
             <div className="mb-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">Password</h3>
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                Password
+              </h3>
               <div className="space-y-2">
                 <div className="relative">
                   <input
@@ -242,10 +307,11 @@ const Signup = () => {
                 </div>
               </div>
             </div>
-
             {/* Company Information */}
             <div className="mb-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">Company Information</h3>
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                Company Information
+              </h3>
               <div className="space-y-2">
                 <input
                   type="text"
@@ -280,13 +346,15 @@ const Signup = () => {
                   className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal resize-none"
                 />
               </div>
-            </div>            <button
+            </div>{" "}
+            <button
               type="submit"
               disabled={loading}
-              className={`w-full py-2 rounded-md font-medium transition ${loading
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-[#0b5c5a] hover:bg-[#084c4a]'
-                } text-white`}
+              className={`w-full py-2 rounded-md font-medium transition ${
+                loading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[#0b5c5a] hover:bg-[#084c4a]"
+              } text-white`}
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
@@ -294,7 +362,7 @@ const Signup = () => {
                   Creating Account...
                 </div>
               ) : (
-                'Create Account'
+                "Create Account"
               )}
             </button>
           </form>
@@ -319,7 +387,13 @@ const Signup = () => {
               </span>
             </div>
             <span className="flex items-center justify-center cursor-pointer mt-4">
-              Already have an account?<button className="text-[#0b5c5a] cursor-pointer ml-2.5" onClick={() => navigate("/login")}>   Signup</button>
+              Already have an account?
+              <button
+                className="text-[#0b5c5a] cursor-pointer ml-2.5"
+                onClick={() => navigate("/login")}
+              >
+                Login
+              </button>
             </span>
           </div>
         </div>

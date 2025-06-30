@@ -34,8 +34,20 @@ export const supplierAPI = {  // GET /api/supplier/list
   ): Promise<SupplierResponse> => {
     try {
       const params: any = { storeId, page, limit };
-      const response = await apiClient.get('/supplier/list', { params });
-      return response.data;
+      const response = await apiClient.get("/supplier/list", { params });
+
+      // The response structure is: response.data.data.data.suppliers
+      // We need to restructure it to match our SupplierResponse interface
+      return {
+        success: response.data.success,
+        message: response.data.message,
+        data: {
+          suppliers: response.data.data.data.suppliers,
+          pagination: response.data.data.data.pagination,
+        },
+        status: response.data.status,
+        timestamp: response.data.timestamp,
+      };
     } catch (error) {
       console.error('Error fetching suppliers:', error);
       throw error;

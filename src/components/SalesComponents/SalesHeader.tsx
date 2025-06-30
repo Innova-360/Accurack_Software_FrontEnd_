@@ -1,43 +1,39 @@
 import React from 'react';
-import { FaPlus, FaFileAlt, FaChartLine } from 'react-icons/fa';
+import { useNavigate, useParams } from 'react-router-dom';
+import { FaPlus } from 'react-icons/fa';
 import { Button } from '../buttons';
 
 interface SalesHeaderProps {
-  onNewSale?: () => void;
   onSalesReport?: () => void;
   onAnalytics?: () => void;
 }
 
-const SalesHeader: React.FC<SalesHeaderProps> = ({
-  onNewSale,
-  onSalesReport,
-  onAnalytics
-}) => {
+const SalesHeader: React.FC<SalesHeaderProps> = () => {
+  const navigate = useNavigate();
+  const { id: storeId } = useParams();
+
+  const handleNewSale = () => {
+    if (storeId) {
+      navigate(`/store/${storeId}/sales/new`);
+    } else {
+      navigate('/sales/new');
+    }
+  };
+
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#03414C] mb-2">Sales Management</h1>
-      </div>      <div className="flex flex-wrap gap-2">
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">Sales</h1>
+        <p className="text-gray-600">Manage and track all your sales transactions</p>
+      </div>
+      <div className="mt-4 sm:mt-0">
         <Button 
-          onClick={onNewSale}
+          onClick={handleNewSale}
           variant="primary"
           icon={<FaPlus size={14} />}
+          className="bg-teal-600 hover:bg-teal-700 text-white"
         >
           New Sale
-        </Button>
-        <Button 
-          onClick={onSalesReport}
-          variant="primary"
-          icon={<FaFileAlt size={14} />}
-        >
-          Sales Report
-        </Button>
-        <Button 
-          onClick={onAnalytics}
-          variant="primary"
-          icon={<FaChartLine size={14} />}
-        >
-          Analytics
         </Button>
       </div>
     </div>

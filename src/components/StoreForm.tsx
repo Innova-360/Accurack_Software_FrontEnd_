@@ -134,6 +134,7 @@ const StoreForm: React.FC = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -324,7 +325,7 @@ const StoreForm: React.FC = () => {
                 </h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Timezone
@@ -358,25 +359,6 @@ const StoreForm: React.FC = () => {
                         {currency.label}
                       </option>
                     ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tax Mode
-                  </label>
-                  <select
-                    name="taxMode"
-                    value={formData.taxMode}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                  >
-                    <option value="inclusive">
-                      Inclusive - Tax included in price
-                    </option>
-                    <option value="exclusive">
-                      Exclusive - Tax added to price
-                    </option>
                   </select>
                 </div>
               </div>

@@ -105,10 +105,6 @@ const LowStockSection: React.FC<LowStockSectionProps> = ({
                   <span className="font-medium">Category:</span>{" "}
                   {product.category}
                 </div>
-                <div className="col-span-2">
-                  <span className="font-medium">Supplier:</span>{" "}
-                  {product.supplier}
-                </div>
               </div>
             </div>
           ))}
@@ -140,9 +136,6 @@ const LowStockSection: React.FC<LowStockSectionProps> = ({
                   </th>
                   <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200">
                     Price
-                  </th>
-                  <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200">
-                    Supplier
                   </th>
                   <th className="px-4 py-3 text-sm font-normal text-gray-500 border-b border-b-gray-200">
                     Category
@@ -191,9 +184,6 @@ const LowStockSection: React.FC<LowStockSectionProps> = ({
                     </td>
                     <td className="px-4 py-3 text-sm border-b border-b-gray-200">
                       {product.price}
-                    </td>
-                    <td className="px-4 py-3 text-sm border-b border-b-gray-200">
-                      {product.supplier}
                     </td>
                     <td className="px-4 py-3 text-sm border-b border-b-gray-200">
                       {product.category}

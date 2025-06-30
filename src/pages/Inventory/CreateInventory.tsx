@@ -16,6 +16,8 @@ import { useAppSelector } from "../../store/hooks";
 import { selectCurrentStore } from "../../store/selectors";
 import useSuppliers from "../../hooks/useSuppliers";
 import { fetchUser } from "../../store/slices/userSlice";
+import { fetchProductCategories } from "../../store/slices/productCategoriesSlice";
+import { useProductCategories } from "../../hooks/useProductCategories";
 
 const CreateInventory: React.FC = () => {
   const dispatch = useDispatch();
@@ -39,6 +41,10 @@ const CreateInventory: React.FC = () => {
 
   // Get user from Redux store
   const clientId = useAppSelector((state) => state.user.user?.clientId);
+
+  // Get product categories using the hook
+  const { categories: productCategories, loading: categoriesLoading } = useProductCategories();
+
   // console.log("Client ID from Redux store:", clientId);
   // Add explicit types for calculateDiscounts
   const calculateDiscounts = (
@@ -66,10 +72,10 @@ const CreateInventory: React.FC = () => {
     // Use clientId from Redux store
     const basePayload: any = {
       name: formData.productName,
-      category: formData.category,
+      categoryId: formData.category, // Now using categoryId instead of category
       ean: formData.ean,
       pluUpc: formData.pluUpc,
-      supplierId: formData.supplierId || "",
+      supplierId: (!hasVariants && formData.supplierId) || "",
       sku: formData.customSku,
       singleItemCostPrice: parseFloat(formData.itemCost) || 0,
       itemQuantity: parseInt(formData.quantity) || 0,
@@ -116,7 +122,9 @@ const CreateInventory: React.FC = () => {
         (variant: any, index: number) => {
           // Use the correct field names from the Variation interface
           const price = variant.itemSellingCost || 0; // itemSellingCost is the selling price in Variation
-          const msrpPrice = variant.msrpPrice || 0;          console.log(`🔸 Variant ${index + 1} complete data:`, {
+          const msrpPrice = variant.msrpPrice || 0;
+
+          console.log(`🔸 Variant ${index + 1} complete data:`, {
             name: variant.name,
             itemSellingCost: variant.itemSellingCost,
             customSku: variant.customSku,
@@ -130,11 +138,13 @@ const CreateInventory: React.FC = () => {
           // Handle variant-level discounts
           const variantDiscountAmount = variant.discount || 0;
           const variantPercentDiscount = variant.orderValueDiscount || 0;
-          
           const mappedVariant = {
             name: variant.name || "",
             price,
             sku: variant.customSku || "",
+            pluUpc: variant.plu || "",
+            quantity: variant.quantity || 0,
+            supplierId: variant.supplierId || "",
             msrpPrice,
             discountAmount: variantDiscountAmount,
             percentDiscount: variantPercentDiscount,
@@ -625,6 +635,8 @@ const CreateInventory: React.FC = () => {
                     suppliers={suppliers}
                     suppliersLoading={suppliersLoading}
                     suppliersError={suppliersError}
+                    categories={productCategories}
+                    categoriesLoading={categoriesLoading}
                   />
                 </div>{" "}
                 {/* Configuration Sections - Only show if optional fields are visible and not in variant mode */}

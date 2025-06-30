@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 
 interface InventoryStatsProps {
   totalProducts: number;
@@ -6,75 +6,11 @@ interface InventoryStatsProps {
   totalValue: string;
 }
 
-// Custom hook for counter animation
-const useCounterAnimation = (
-  end: number,
-  duration: number = 2000,
-  delay: number = 0
-) => {
-  const [count, setCount] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsAnimating(true);
-      let startTime: number;
-      const startValue = 0;
-      const endValue = end;
-
-      const animate = (currentTime: number) => {
-        if (!startTime) startTime = currentTime;
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-
-        // Easing function for smooth animation
-        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-        const currentCount = Math.floor(
-          startValue + (endValue - startValue) * easeOutQuart
-        );
-
-        setCount(currentCount);
-
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        } else {
-          setIsAnimating(false);
-        }
-      };
-
-      requestAnimationFrame(animate);
-    }, delay);
-
-    return () => clearTimeout(timer);
-  }, [end, duration, delay]);
-
-  return { count, isAnimating };
-};
-
 const InventoryStats: React.FC<InventoryStatsProps> = ({
   totalProducts,
   totalItems,
   totalValue,
 }) => {
-  // Animate the numbers with different delays
-  const { count: animatedTotalProducts, isAnimating: isProductsAnimating } =
-    useCounterAnimation(totalProducts, 2000, 200);
-  const { count: animatedTotalItems, isAnimating: isItemsAnimating } =
-    useCounterAnimation(totalItems, 2500, 400);
-
-  // For the total value, we need to extract the numeric part and animate it
-  const numericValue = parseFloat(totalValue.replace(/,/g, ""));
-  const { count: animatedTotalValue, isAnimating: isValueAnimating } =
-    useCounterAnimation(numericValue, 3000, 600);
-
-  // Format the animated value back to the original format
-  const formatAnimatedValue = (value: number) => {
-    return value.toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       {" "}
@@ -83,10 +19,8 @@ const InventoryStats: React.FC<InventoryStatsProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-600">Total Products</p>{" "}
-            <p
-              className={`text-3xl font-bold text-gray-900 mt-2 number-counter ${isProductsAnimating ? "animating animate-numberGlow" : ""}`}
-            >
-              {animatedTotalProducts}
+            <p className="text-3xl font-bold text-gray-900 mt-2">
+              {totalProducts}
             </p>
             <p className="text-sm text-gray-500 mt-1">Unique product types</p>
           </div>
@@ -115,10 +49,8 @@ const InventoryStats: React.FC<InventoryStatsProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-600">Total Items</p>{" "}
-            <p
-              className={`text-3xl font-bold text-gray-900 mt-2 number-counter ${isItemsAnimating ? "animating animate-numberGlow" : ""}`}
-            >
-              {animatedTotalItems.toLocaleString()}
+            <p className="text-3xl font-bold text-gray-900 mt-2">
+              {totalItems.toLocaleString()}
             </p>
             <p className="text-sm text-gray-500 mt-1">Items in stock</p>
           </div>
@@ -148,10 +80,8 @@ const InventoryStats: React.FC<InventoryStatsProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-600">Total Value</p>{" "}
-            <p
-              className={`text-3xl font-bold text-gray-900 mt-2 number-counter ${isValueAnimating ? "animating animate-numberGlow" : ""}`}
-            >
-              ${formatAnimatedValue(animatedTotalValue)}
+            <p className="text-3xl font-bold text-gray-900 mt-2">
+              ${totalValue}
             </p>
             <p className="text-sm text-gray-500 mt-1">Total stock value</p>
           </div>

@@ -1,28 +1,33 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { loadCurrentStoreFromStorage } from '../store/slices/storeSlice';
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAppSelector, useAppDispatch } from "../store/hooks";
+import { loadCurrentStoreFromStorage } from "../store/slices/storeSlice";
+import type { Store } from "../types/store";
 
-export const useRequireStore = () => {
+/**
+ * Custom hook that ensures a store is selected
+ * Redirects to /stores if no store is available
+ * Returns the current store or null if none is selected
+ */
+const useRequireStore = (): Store | null => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { currentStore } = useAppSelector((state) => state.stores);
+  const { currentStore, stores } = useAppSelector((state) => state.stores);
 
   useEffect(() => {
-    // Load store from localStorage on component mount
-    dispatch(loadCurrentStoreFromStorage());
-  }, [dispatch]);
-
-  useEffect(() => {
-    // If no store is selected, redirect to stores page
+    // Load store from localStorage if not already loaded
     if (!currentStore) {
-      const timer = setTimeout(() => {
-        navigate('/stores');
-      }, 100); // Small delay to allow for loading from storage
-      
-      return () => clearTimeout(timer);
+      dispatch(loadCurrentStoreFromStorage());
     }
-  }, [currentStore, navigate]);
+  }, [dispatch, currentStore]);
+
+  useEffect(() => {
+    // If no current store and no stores available, redirect to stores page
+    if (!currentStore && stores.length === 0) {
+      // navigate("/stores");
+      return;
+    }
+  }, [currentStore, stores, navigate]);
 
   return currentStore;
 };

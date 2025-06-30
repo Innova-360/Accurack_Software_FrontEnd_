@@ -12,6 +12,7 @@ interface InventoryTableProps {
   onSort: (key: string) => void;
   onProductDeleted?: () => void;
   onProductEdited?: (product: Product) => void;
+  onProductViewed?: (product: Product) => void;
 }
 
 const InventoryTable: React.FC<InventoryTableProps> = ({
@@ -24,6 +25,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
   onSort,
   onProductDeleted,
   onProductEdited,
+  onProductViewed,
 }) => {
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(
     new Set()
@@ -55,6 +57,10 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
 
   const handleEditProduct = (product: Product) => {
     onProductEdited?.(product);
+  };
+
+  const handleViewProduct = (product: Product) => {
+    onProductViewed?.(product);
   };
 
   const toggleProductExpansion = (productId: string) => {
@@ -151,15 +157,6 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                 <div className="flex items-center justify-between">
                   Price
                   {getSortIcon("price")}
-                </div>
-              </th>
-              <th
-                className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100 min-w-[100px]"
-                onClick={() => onSort("supplier")}
-              >
-                <div className="flex items-center justify-between">
-                  Supplier
-                  {getSortIcon("supplier")}
                 </div>
               </th>
               <th
@@ -289,12 +286,10 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <div className="truncate">
-                          {/* Show the main product supplier name */}
-                          {product.supplier || "-"}
+                          {typeof product.category === "string"
+                            ? product.category
+                            : product.category?.name || "Uncategorized"}
                         </div>
-                      </td>
-                      <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                        <div className="truncate">{product.category}</div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         {product.itemsPerUnit}
@@ -302,6 +297,32 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <div className="flex items-center gap-2">
                           {" "}
+                          {/* View Button */}
+                          <button
+                            onClick={() => handleViewProduct(product)}
+                            className="text-green-500 hover:text-green-700 p-1 rounded transition-colors"
+                            title="View product details"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                              />
+                            </svg>
+                          </button>{" "}
                           {/* Edit Button */}
                           <button
                             onClick={() => handleEditProduct(product)}
@@ -498,19 +519,10 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                           </td>
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                             <div className="truncate">
-                              {/* Get supplier name from variant.supplierId if available */}
-                              {variant.supplierId ? (
-                                <span className="text-xs text-gray-600">
-                                  Supplier ID: {variant.supplierId.slice(0, 8)}
-                                  ...
-                                </span>
-                              ) : (
-                                product.supplier
-                              )}
+                              {typeof product.category === "string"
+                                ? product.category
+                                : product.category?.name || "Uncategorized"}
                             </div>
-                          </td>
-                          <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                            <div className="truncate">{product.category}</div>
                           </td>{" "}
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                             <div className="flex flex-col text-xs">
@@ -534,7 +546,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
             ) : (
               <tr>
                 <td
-                  colSpan={11}
+                  colSpan={10}
                   className="px-2 sm:px-4 py-8 text-center text-gray-500 border-b border-gray-300 text-xs sm:text-sm"
                 >
                   No products found matching your search criteria.

@@ -15,7 +15,12 @@ import {
   AddInventoryOptionsModal,
   UploadInventoryModal,
   BarcodeScanModal,
+  EditProductModal,
+  DeleteAllInventoryModal,
 } from "../../components/InventoryComponents";
+import { productAPI } from "../../services/productAPI";
+import type { Product } from "../../data/inventoryData";
+import type { EditProductFormData } from "../../components/InventoryComponents/EditProductModal";
 import {
   useInventoryStats,
   useFilteredProducts,
@@ -23,9 +28,80 @@ import {
   useLowStockProducts,
 } from "../../hooks/useInventory";
 
+// Utility function to extract error messages from API response
+const extractErrorMessage = (error: any): string => {
+  // Default fallback message
+  const defaultMessage = "An unexpected error occurred. Please try again.";
+
+  try {
+    // Check if error exists and has response data
+    if (!error?.response?.data) {
+      return defaultMessage;
+    }
+
+    const { data } = error.response;
+
+    // Handle different message formats
+    if (data.message) {
+      // If message is a string, return it directly
+      if (typeof data.message === "string") {
+        return data.message;
+      }
+
+      // If message is an array, join the messages
+      if (Array.isArray(data.message)) {
+        return data.message.join(", ");
+      }
+
+      // If message is an object, try to extract meaningful text
+      if (typeof data.message === "object") {
+        // Handle nested validation errors (e.g., { field: ['error1', 'error2'] })
+        const errorMessages: string[] = [];
+        Object.values(data.message).forEach((value: any) => {
+          if (typeof value === "string") {
+            errorMessages.push(value);
+          } else if (Array.isArray(value)) {
+            errorMessages.push(...value);
+          }
+        });
+        return errorMessages.length > 0
+          ? errorMessages.join(", ")
+          : defaultMessage;
+      }
+    }
+
+    // Check for other common error fields
+    if (data.error) {
+      if (typeof data.error === "string") {
+        return data.error;
+      }
+      if (Array.isArray(data.error)) {
+        return data.error.join(", ");
+      }
+    }
+
+    // Check for detail field (common in some APIs)
+    if (data.detail && typeof data.detail === "string") {
+      return data.detail;
+    }
+
+    // If we have any string value in the data object, use it
+    const firstStringValue = Object.values(data).find(
+      (value) => typeof value === "string"
+    );
+    if (firstStringValue) {
+      return firstStringValue as string;
+    }
+  } catch (extractionError) {
+    console.error("Error extracting error message:", extractionError);
+  }
+
+  return defaultMessage;
+};
+
 const Inventory: React.FC = () => {
   const navigate = useNavigate();
-  useStoreFromUrl(); // Handle store selection from URL
+  const { storeId } = useStoreFromUrl(); // Handle store selection from URL
 
   // Fetch products from API
   const { products, loading, error, refetch } = useProducts();
@@ -50,12 +126,17 @@ const Inventory: React.FC = () => {
   const [mobileViewType, setMobileViewType] = useState<"cards" | "table">(
     "cards"
   );
-
   // Modal states
   const [isAddInventoryModalOpen, setIsAddInventoryModalOpen] = useState(false);
   const [isUploadInventoryModalOpen, setIsUploadInventoryModalOpen] =
     useState(false);
   const [isBarcodeScanModalOpen, setIsBarcodeScanModalOpen] = useState(false);
+  const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
+  const [selectedProductToEdit, setSelectedProductToEdit] =
+    useState<Product | null>(null);
+  const [isDeletingAllProducts, setIsDeletingAllProducts] = useState(false);
+  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
+
   // Use custom hooks for data processing - MUST be called before any early returns
   const inventoryStats = useInventoryStats(products);
   const filteredProducts = useFilteredProducts(
@@ -85,6 +166,7 @@ const Inventory: React.FC = () => {
 
   // Show error state
   if (error) {
+    const errorMessage = extractErrorMessage(error);
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -105,7 +187,7 @@ const Inventory: React.FC = () => {
                 </svg>
               </div>
               <p className="text-gray-600 mb-4">
-                Error loading products: {error}
+                Error loading products: {errorMessage}
               </p>
               <button
                 onClick={refetch}
@@ -277,16 +359,90 @@ const Inventory: React.FC = () => {
     }
   };
 
-  const handleFileUpload = async (file: File) => {
-    // TODO: Implement file upload logic
-    console.log("Uploading file:", file.name);
+  // Edit product handlers
+  const handleEditProduct = (product: Product) => {
+    setSelectedProductToEdit(product);
+    setIsEditProductModalOpen(true);
+  };
 
-    // Simulate upload process
-    await new Promise((resolve) => setTimeout(resolve, 2000)); // Close modal after successful upload
-    setIsUploadInventoryModalOpen(false);
+  const handleUpdateProduct = async (
+    productData: EditProductFormData,
+    productId: string
+  ) => {
+    try {
+      await productAPI.updateProduct(productId, productData);
+      toast.success("Product updated successfully!");
+      refetch(); // Refresh the product list
+      setIsEditProductModalOpen(false);
+      setSelectedProductToEdit(null);
+    } catch (error) {
+      const errorMessage = extractErrorMessage(error);
+      console.error("Failed to update product:", error);
+      toast.error(errorMessage);
+    }
+  };
 
-    // Show success notification
-    toast.success("Inventory uploaded successfully!");
+  const handleCloseEditModal = () => {
+    setIsEditProductModalOpen(false);
+    setSelectedProductToEdit(null);
+  };
+
+  // View product handler
+  const handleViewProduct = (product: Product) => {
+    const currentPath = window.location.pathname;
+    const productId = product.id || product.sku || product.plu;
+
+    if (!productId) {
+      toast.error("Cannot view product: No ID available");
+      return;
+    }
+
+    if (currentPath.includes("/store/")) {
+      // Extract store ID from path
+      const storeId = currentPath.split("/store/")[1].split("/")[0];
+      navigate(`/store/${storeId}/inventory/product/${productId}`);
+    } else {
+      navigate(`/inventory/product/${productId}`);
+    }
+  };
+
+  // Delete all inventory handler
+  const handleDeleteAllInventory = async () => {
+    if (!storeId) {
+      toast.error("Store ID not found. Cannot delete inventory.");
+      return;
+    }
+
+    if (products.length === 0) {
+      toast("No products to delete.", { icon: "ℹ️" });
+      return;
+    }
+
+    // Open the custom confirmation modal
+    setIsDeleteAllModalOpen(true);
+  };
+
+  // Confirm delete all inventory
+  const confirmDeleteAllInventory = async () => {
+    if (!storeId) {
+      toast.error("Store ID not found. Cannot delete inventory.");
+      setIsDeleteAllModalOpen(false);
+      return;
+    }
+
+    try {
+      setIsDeletingAllProducts(true);
+      await productAPI.deleteAllProducts(storeId);
+      toast.success("All inventory items have been successfully deleted!");
+      refetch(); // Refresh the product list
+      setIsDeleteAllModalOpen(false);
+    } catch (error) {
+      const errorMessage = extractErrorMessage(error);
+      console.error("Failed to delete all inventory:", error);
+      toast.error(`Failed to delete inventory: ${errorMessage}`);
+    } finally {
+      setIsDeletingAllProducts(false);
+    }
   };
 
   return (
@@ -305,8 +461,23 @@ const Inventory: React.FC = () => {
             >
               + Add Inventory
             </button>
-            <button className="bg-red-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base hover:bg-[#0d3f47] transition-all duration-300 hover:scale-105 hover:shadow-lg transform">
-              Delete Inventory
+            <button
+              onClick={handleDeleteAllInventory}
+              disabled={isDeletingAllProducts || products.length === 0}
+              className={`px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base transition-all duration-300 hover:scale-105 hover:shadow-lg transform ${
+                isDeletingAllProducts || products.length === 0
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-red-700 hover:bg-red-800 text-white"
+              }`}
+            >
+              {isDeletingAllProducts ? (
+                <>
+                  <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Deleting...
+                </>
+              ) : (
+                "Delete Inventory"
+              )}
             </button>
           </div>
         </div>
@@ -372,6 +543,7 @@ const Inventory: React.FC = () => {
                 groupBy={groupBy}
                 expandedCategories={expandedCategories}
                 onToggleCategory={toggleCategory}
+                onProductViewed={handleViewProduct}
               />
             ) : (
               <div className="overflow-x-auto">
@@ -391,12 +563,14 @@ const Inventory: React.FC = () => {
                     onSelectAll={handleSelectAll}
                     onSelectItem={handleSelectItem}
                     onSort={handleSort}
+                    onProductDeleted={refetch}
+                    onProductEdited={handleEditProduct}
+                    onProductViewed={handleViewProduct}
                   />
                 )}
               </div>
             )}
-          </div>
-
+          </div>{" "}
           {/* Desktop View */}
           <div className="hidden md:block overflow-x-auto">
             {groupBy === "category" && groupedProducts ? (
@@ -415,10 +589,12 @@ const Inventory: React.FC = () => {
                 onSelectAll={handleSelectAll}
                 onSelectItem={handleSelectItem}
                 onSort={handleSort}
+                onProductDeleted={refetch}
+                onProductEdited={handleEditProduct}
+                onProductViewed={handleViewProduct}
               />
             )}
           </div>
-
           {/* Pagination - Only show when not grouped by category */}
           {groupBy !== "category" && (
             <Pagination
@@ -445,7 +621,6 @@ const Inventory: React.FC = () => {
           isPageChanging={isLowStockPageChanging}
         />
       </div>
-
       {/* Modals */}
       <AddInventoryOptionsModal
         isOpen={isAddInventoryModalOpen}
@@ -454,17 +629,28 @@ const Inventory: React.FC = () => {
         onCreateInventory={handleCreateInventory}
         onScanInventory={handleScanInventory}
       />
-
       <UploadInventoryModal
         isOpen={isUploadInventoryModalOpen}
         onClose={() => setIsUploadInventoryModalOpen(false)}
-        onUpload={handleFileUpload}
-      />
-
+        onUploadSuccess={refetch}
+      />{" "}
       <BarcodeScanModal
         isOpen={isBarcodeScanModalOpen}
         onClose={() => setIsBarcodeScanModalOpen(false)}
         onBarcodeScanned={handleBarcodeScanned}
+      />
+      <EditProductModal
+        isOpen={isEditProductModalOpen}
+        onClose={handleCloseEditModal}
+        onSave={handleUpdateProduct}
+        product={selectedProductToEdit}
+      />
+      <DeleteAllInventoryModal
+        isOpen={isDeleteAllModalOpen}
+        onClose={() => setIsDeleteAllModalOpen(false)}
+        onConfirm={confirmDeleteAllInventory}
+        productCount={products.length}
+        isDeleting={isDeletingAllProducts}
       />
     </>
   );

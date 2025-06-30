@@ -1,12 +1,33 @@
+// export interface Variant {
+//   id?: string;
+//   name: string;
+//   price: number;
+//   sku: string;
+//   msrpPrice?: number;
+//   discountAmount?: number;
+//   percentDiscount?: number;
+//   packs: Array<{
+//     minimumSellingQuantity: number;
+//     totalPacksQuantity: number;
+//     orderedPacksPrice: number;
+//     percentDiscount: number;
+//     discountAmount?: number;
+//   }>;
+// }
+
 export interface Variant {
   id?: string;
   name: string;
   price: number;
-  sku: string;
+  sku?: string;
+  pluUpc?: string;
+  quantity?: number;
   msrpPrice?: number;
   discountAmount?: number;
   percentDiscount?: number;
-  packs: Array<{
+  supplierId?: string;
+  packIds?: string[];
+  packs?: Array<{
     minimumSellingQuantity: number;
     totalPacksQuantity: number;
     orderedPacksPrice: number;
@@ -21,14 +42,45 @@ export interface Product {
   quantity: number;
   plu: string;
   sku: string;
+  ean?: string; // Add EAN field
   description: string;
   price: string;
   category: string;
   itemsPerUnit: number;
-  supplier: string;
+  supplier:
+    | string
+    | {
+        id: string;
+        name: string;
+        email?: string;
+        phone?: string;
+      };
+  supplierId?: string; // Add supplier ID field
   createdAt: string;
   hasVariants?: boolean;
   variants?: Variant[];
+  // Additional fields for detailed product view
+  costPrice?: number;
+  msrpPrice?: number;
+  profitAmount?: number;
+  profitMargin?: number;
+  store?: {
+    id: string;
+    name: string;
+  };
+  sales?: any[];
+  purchaseOrders?: any[];
+  packs?: Array<{
+    id?: string;
+    productId?: string;
+    minimumSellingQuantity: number;
+    totalPacksQuantity: number;
+    orderedPacksPrice: number;
+    discountAmount?: number;
+    percentDiscount: number;
+    createdAt?: string;
+    updatedAt?: string;
+  }>;
 }
 
 export const products: Product[] = [

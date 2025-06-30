@@ -89,9 +89,6 @@ const GroupedTableView: React.FC<GroupedTableViewProps> = ({
                     <th className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 min-w-[80px]">
                       Price
                     </th>
-                    <th className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 min-w-[100px]">
-                      Supplier
-                    </th>
                     <th className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 min-w-[90px]">
                       <span className="hidden sm:inline">Items/Unit</span>
                       <span className="sm:hidden">Items</span>
@@ -193,9 +190,6 @@ const GroupedTableView: React.FC<GroupedTableViewProps> = ({
                             {product.price}
                           </td>
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                            <div className="truncate">{product.supplier}</div>
-                          </td>
-                          <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                             {product.itemsPerUnit}
                           </td>
                         </tr>
@@ -234,11 +228,6 @@ const GroupedTableView: React.FC<GroupedTableViewProps> = ({
                               </td>
                               <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                                 ${variant.price.toFixed(2)}
-                              </td>
-                              <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                                <div className="truncate">
-                                  {product.supplier}
-                                </div>
                               </td>
                               <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                                 {product.itemsPerUnit}

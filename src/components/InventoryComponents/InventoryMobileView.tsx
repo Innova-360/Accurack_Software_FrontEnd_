@@ -7,6 +7,7 @@ interface InventoryMobileViewProps {
   groupBy: string;
   expandedCategories: string[];
   onToggleCategory: (category: string) => void;
+  onProductViewed?: (product: Product) => void;
 }
 
 const InventoryMobileView: React.FC<InventoryMobileViewProps> = ({
@@ -15,6 +16,7 @@ const InventoryMobileView: React.FC<InventoryMobileViewProps> = ({
   groupBy,
   expandedCategories,
   onToggleCategory,
+  onProductViewed,
 }) => {
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(
     new Set()
@@ -156,10 +158,6 @@ const InventoryMobileView: React.FC<InventoryMobileViewProps> = ({
                           <div className="col-span-2">
                             <span className="font-medium">Items/Unit:</span>{" "}
                             {product.itemsPerUnit}
-                          </div>
-                          <div className="col-span-2">
-                            <span className="font-medium">Supplier:</span>{" "}
-                            {product.supplier}
                           </div>
                         </div>
                         <div className="mt-2 text-xs text-gray-500">
@@ -349,7 +347,7 @@ const InventoryMobileView: React.FC<InventoryMobileViewProps> = ({
                       </span>
                     )}
                     <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                      {product.category}
+                      {typeof product.category === 'string' ? product.category : (product.category?.name || 'Uncategorized')}
                     </span>
                   </div>
                 </div>
@@ -377,14 +375,39 @@ const InventoryMobileView: React.FC<InventoryMobileViewProps> = ({
                     <span className="font-medium">Items/Unit:</span>{" "}
                     {product.itemsPerUnit}
                   </div>
-                  <div className="col-span-2">
-                    <span className="font-medium">Supplier:</span>{" "}
-                    {product.supplier}
-                  </div>
                 </div>
                 <div className="mt-2 text-xs text-gray-500">
                   <span className="font-medium">Description:</span>{" "}
                   {product.description}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-3 flex justify-end">
+                  <button
+                    onClick={() => onProductViewed?.(product)}
+                    className="text-green-500 hover:text-green-700 p-2 rounded transition-colors"
+                    title="View product details"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  </button>
                 </div>
               </div>
 
