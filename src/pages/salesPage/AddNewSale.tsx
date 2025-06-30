@@ -166,6 +166,73 @@ const AddNewSale: React.FC = () => {
     navigate(-1);
   };
 
+  const handleCreateInvoice = () => {
+    // Validate form before proceeding to invoice creation
+    if (!customerName.trim()) {
+      alert('Customer name is required');
+      return;
+    }
+    
+    if (!phoneNumber.trim()) {
+      alert('Phone number is required');
+      return;
+    }
+    
+    // Validate address fields (except street which is optional)
+    if (!city.trim()) {
+      alert('City is required');
+      return;
+    }
+    
+    if (!state.trim()) {
+      alert('State/Province is required');
+      return;
+    }
+    
+    if (!postalCode.trim()) {
+      alert('Postal code is required');
+      return;
+    }
+    
+    if (!country.trim()) {
+      alert('Country is required');
+      return;
+    }
+    
+    if (products.some(p => !p.name.trim() || p.price <= 0)) {
+      alert('Please fill in all product details');
+      return;
+    }
+    
+    // Prepare invoice data
+    const invoiceData = {
+      customerDetails: {
+        name: customerName.trim(),
+        phone: phoneNumber.trim(),
+        email: email.trim(),
+        address: getFullAddress(),
+        street,
+        city,
+        state,
+        postalCode,
+        country
+      },
+      products: products.filter(p => p.name.trim() && p.price > 0),
+      subtotal,
+      discount,
+      discountType,
+      discountAmount,
+      taxRate,
+      taxAmount,
+      finalTotal,
+      paymentMethod,
+      notes
+    };
+    
+    // Navigate to invoice creation with data
+    navigate('/create-invoice', { state: { invoiceData } });
+  };
+
   const handleCancel = () => {
     navigate(-1);
   };
@@ -510,6 +577,14 @@ const AddNewSale: React.FC = () => {
                   className="w-full bg-[#03414C] hover:bg-[#025561] text-white py-3"
                 >
                   Create Sale
+                </SpecialButton>
+                
+                <SpecialButton
+                  variant="primary"
+                  onClick={handleCreateInvoice}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
+                >
+                  Create Invoice
                 </SpecialButton>
                 
                 <SpecialButton
