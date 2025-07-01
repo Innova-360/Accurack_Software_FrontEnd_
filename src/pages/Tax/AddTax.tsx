@@ -3,13 +3,16 @@ import { useState, useEffect } from 'react';
 import { ChevronDown, X, Search, Info, Check, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useParams } from 'react-router-dom';
-import { useGetTaxTypesQuery, useGetTaxCodesQuery, useGetTaxRegionsQuery, useCreateTaxTypeMutation, useCreateTaxCodeMutation, useCreateTaxRegionMutation, createTaxRateThunk, fetchCountriesThunk } from '../../store/slices/taxSlice';
+import { useGetTaxTypesQuery, useGetTaxCodesQuery, useGetTaxRegionsQuery, useCreateTaxTypeMutation, useCreateTaxCodeMutation, useCreateTaxRegionMutation, createTaxRateThunk, fetchCountriesThunk, useBulkAssignTaxMutation } from '../../store/slices/taxSlice';
 import { useSearchCategoriesQuery } from '../../store/slices/categorySlice';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { useSearchProductsQuery } from '../../store/slices/productsSlice';
 import { useSearchCustomersQuery } from '../../store/slices/customerSlice';
 import { searchStores } from '../../store/slices/storeSlice';
 import { useDebounce } from '../../hooks/useDebounce';
+import ModalActions from '../../components/TaxComponents/ModalActions';
+import Modal from '../../components/TaxComponents/Modal';
+import Input from '../../components/TaxComponents/TaxInput';
 
 
 const Page = () => {
@@ -24,7 +27,7 @@ const Page = () => {
         description: string;
         selectedProducts: string[];
         selectedCategories: string[];
-        selectedCustomers: string[];
+        selectedCustomers: Array<{ id: string, name: string }>;
         selectedSuppliers: string[];
         selectedStores: string[];
         region: string;
@@ -154,11 +157,14 @@ const Page = () => {
     };
 
     const selectCustomer = (customer: any) => {
-        const customerName = customer.name || customer;
-        if (!formData.selectedCustomers.includes(customerName)) {
+        const customerData = {
+            id: customer.id,
+            name: customer.customerName || customer.name
+        };
+        if (!formData.selectedCustomers.find(c => c.id === customerData.id)) {
             setFormData(prev => ({
                 ...prev,
-                selectedCustomers: [...prev.selectedCustomers, customerName]
+                selectedCustomers: [...prev.selectedCustomers, customerData]
             }));
         }
         setCustomerSearchTerm('');
@@ -224,31 +230,41 @@ const Page = () => {
     const [createTaxType] = useCreateTaxTypeMutation();
     const [createTaxCode] = useCreateTaxCodeMutation();
     const [createTaxRegion] = useCreateTaxRegionMutation();
+    const [bulkAssignTax, { isLoading: isAssigning }] = useBulkAssignTaxMutation();
     const dispatch = useAppDispatch();
-    
+    const [createdTaxRateId, setCreatedTaxRateId] = useState<string | null>(null);
+
 
     const handleSaveTax = async () => {
         try {
+            const selectedTaxType = taxTypes.data.find((t: typeof taxTypes[0]) => t.description === formData.name);
+            const selectedTaxCode = taxCodes.data.find((c: typeof taxCodes[0]) => c.description === formData.taxCode);
+            const selectedRegion = taxRegions.data.find((r: typeof taxRegions[0]) => r.code === formData.region);
 
-            const selectedTaxType = taxTypes?.data?.find(t => t.description === formData.name);
-            const selectedTaxCode = taxCodes?.data?.find(c => c.description === formData.taxCode);
-            const selectedRegion = taxRegions?.data?.find(r => r.code === formData.region);
+            // Prevent API call if any ID is a temp value or not found
+            if (!selectedTaxType?.id || !selectedTaxCode?.id || !selectedRegion?.id ||
+                selectedTaxType.id === 'temp-type-id' ||
+                selectedTaxCode.id === 'temp-code-id' ||
+                selectedRegion.id === 'temp-region-id') {
+                toast.error('Please select a valid Tax Type, Tax Code, and Region before creating a tax rate.');
+                return;
+            }
 
-            
-
-            await dispatch(createTaxRateThunk({
+            const response = await dispatch(createTaxRateThunk({
                 rate: parseFloat(formData.taxRate) / 100,
                 effectiveFrom: new Date(formData.effective_From || Date.now()).toISOString(),
                 effectiveTo: new Date(new Date().getFullYear() + 1, 11, 31, 23, 59, 59).toISOString(),
-                regionId: selectedRegion?.id || 'temp-region-id',
-                taxTypeId: selectedTaxType?.id || 'temp-type-id',
-                taxCodeId: selectedTaxCode?.id || 'temp-code-id'
+                regionId: selectedRegion.id,
+                taxTypeId: selectedTaxType.id,
+                taxCodeId: selectedTaxCode.id
             })).unwrap();
-            alert('Tax rate created successfully!');
+            // Save the created tax rate id
+            setCreatedTaxRateId(response?.data?.id || null);
+            toast.success('Tax rate created successfully!');
 
         } catch (error) {
             console.error('Failed to create tax rate:', error);
-            alert('Failed to create tax rate');
+            toast.error('Failed to create tax rate');
         }
     };
     const { data: taxTypes = [], isLoading: typesLoading } = useGetTaxTypesQuery();
@@ -270,6 +286,22 @@ const Page = () => {
     }, [debouncedStoreSearchTerm, dispatch]);
 
 
+    // Set default values for region, type, and code when data loads
+    useEffect(() => {
+        if (taxTypes.length && !formData.name) {
+            setFormData(prev => ({ ...prev, name: taxTypes[0].description || "" }));
+        }
+        if (taxCodes.length && !formData.taxCode) {
+            setFormData(prev => ({ ...prev, taxCode: taxCodes[0].description || "" }));
+        }
+        if (taxRegions.length && !formData.region) {
+            setFormData(prev => ({ ...prev, region: taxRegions[0].code || "" }));
+        }
+    }, [taxTypes, taxCodes, taxRegions]);
+
+
+    // Remove duplicate useMemo and use renderModal() directly in JSX
+
     if (typesLoading || codesLoading || regionsLoading || countriesLoading) {
         return (
             <>
@@ -283,19 +315,19 @@ const Page = () => {
 
 
     // Modal component must be defined before it is used in renderModal
-    function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-sm">
-                <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative">
-                    <button onClick={onClose} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600">
-                        <X className="w-5 h-5" />
-                    </button>
-                    <h2 className="text-lg font-semibold mb-4">{title}</h2>
-                    {children}
-                </div>
-            </div>
-        );
-    }
+    // function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
+    //     return (
+    //         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-sm">
+    //             <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative">
+    //                 <button onClick={onClose} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600">
+    //                     <X className="w-5 h-5" />
+    //                 </button>
+    //                 <h2 className="text-lg font-semibold mb-4">{title}</h2>
+    //                 {children}
+    //             </div>
+    //         </div>
+    //     );
+    // }
 
     const renderModal = () => {
         switch (showModal) {
@@ -323,7 +355,7 @@ const Page = () => {
                                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                                     <option value="">Select Tax Type</option>
-                                    {taxTypes?.data?.map((taxType: { id: string; name: string }) => (
+                                    {taxTypes?.data.map((taxType: { id: string; name: string }) => (
                                         <option key={taxType.id} value={taxType.id}>{taxType.name}</option>
                                     ))}
                                 </select>
@@ -456,6 +488,7 @@ const Page = () => {
         }
     };
 
+
     const handleInputChange = (field: keyof FormDataType, value: string) => {
         setFormData(prev => ({
             ...prev,
@@ -463,15 +496,86 @@ const Page = () => {
         }));
     };
 
-    const removeSelectedItem = (item: string, field: keyof FormDataType) => {
+    const removeSelectedItem = (item: any, field: keyof FormDataType) => {
         setFormData(prev => ({
             ...prev,
-            [field]: Array.isArray(prev[field]) ? (prev[field] as string[]).filter(i => i !== item) : prev[field]
+            [field]: field === 'selectedCustomers'
+                ? (prev[field] as Array<{ id: string, name: string }>).filter(i => i.id !== item.id)
+                : Array.isArray(prev[field]) ? (prev[field] as string[]).filter(i => i !== item) : prev[field]
         }));
     };
 
     const calculateTaxAmount = (basePrice: number, rate: number) => {
         return (basePrice * rate / 100).toFixed(2);
+    };
+
+    const handleAssignTax = async () => {
+        if (!createdTaxRateId) {
+            toast.error('Please create a tax rate first before assigning it.');
+            return;
+        }
+
+        const assignments = [];
+
+        // Add product assignments
+        formData.selectedProducts.forEach(productName => {
+            const product = searchResults?.data?.find(p => p.name === productName);
+            if (product?.id) {
+                assignments.push({
+                    entityType: 'PRODUCT' as const,
+                    entityId: product.id,
+                    taxRateId: createdTaxRateId
+                });
+            }
+        });
+
+        // Add category assignments
+        formData.selectedCategories.forEach(categoryName => {
+            const category = categorySearchResults?.data?.find(c => c.name === categoryName);
+            if (category?.id) {
+                assignments.push({
+                    entityType: 'CATEGORY' as const,
+                    entityId: category.id,
+                    taxRateId: createdTaxRateId
+                });
+            }
+        });
+
+        // Add customer assignments
+        formData.selectedCustomers.forEach(customer => {
+            if (customer.id) {
+                assignments.push({
+                    entityType: 'CUSTOMER' as const,
+                    entityId: customer.id,
+                    taxRateId: createdTaxRateId
+                });
+            }
+        });
+
+        // Add store assignments
+        formData.selectedStores.forEach(storeName => {
+            const store = storeSearchResults?.find(s => s.name === storeName);
+            if (store?.id) {
+                assignments.push({
+                    entityType: 'STORE' as const,
+                    entityId: store.id,
+                    taxRateId: createdTaxRateId
+                });
+            }
+        });
+
+        if (assignments.length === 0) {
+            toast.error('No valid entities selected for tax assignment.');
+            return;
+        }
+
+        try {
+            await bulkAssignTax({ assignments }).unwrap();
+            toast.success(`Tax assigned successfully to ${assignments.length} entities!`);
+        } catch (error) {
+            console.error('Failed to assign tax:', error);
+            toast.error('Failed to assign tax');
+        }
     };
 
     const basePrice = 1200.00;
@@ -480,17 +584,17 @@ const Page = () => {
     const vatAmount = calculateTaxAmount(basePrice, vatRate);
     const total = basePrice + parseFloat(vatAmount) + luxuryDuty;
 
-   
+
     return (
         <>
             <Navbar />
             {renderModal()}
             <div className="bg-[#043E490D] px-4 lg:px-0">
-                <div className="mx-4 lg:mx-15 py-8 lg:py-15 rounded-xl">
+                <div className="mx-0 lg:mx-15 py-8 lg:py-15 rounded-xl">
                     <div className={`p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white mb-8 rounded-2xl sticky top-0 z-40 transition-shadow duration-200 ${isScrolled ? 'shadow-lg' : ''}`}>
                         <h2 className="text-xl font-semibold mb-4 sm:mb-0">Add New Tax</h2>
                         <div className="flex gap-x-4 w-full sm:w-auto">
-                            <button className="flex-1 sm:flex-none bg-white py-2 px-3 text-black rounded-xl border border-gray-300">
+                            <button className="flex-1 sm:flex-none bg-white py-2 px-3 text-black rounded-xl border border-gray-300 cursor-pointer">
                                 Cancel
                             </button>
                             <button className="flex-1 sm:flex-none bg-[#043E49] py-2 px-3 text-white rounded-xl flex items-center justify-center gap-x-3 cursor-pointer" onClick={handleSaveTax}>
@@ -517,7 +621,7 @@ const Page = () => {
                                                     onChange={(e) => handleInputChange('name', e.target.value)}
                                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 >
-                                                    {(taxTypes?.data ?? []).map((taxType) => (
+                                                    {(taxTypes.data ?? []).map((taxType) => (
                                                         <option key={taxType.id} value={taxType.description ?? ''}>{taxType.description ?? 'Unnamed Tax Type'}</option>
                                                     ))}
                                                 </select>
@@ -539,7 +643,7 @@ const Page = () => {
                                                     onChange={(e) => handleInputChange('taxCode', e.target.value)}
                                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 >
-                                                    {(taxCodes?.data ?? []).map((taxCode) => (
+                                                    {(taxCodes.data ?? []).map((taxCode) => (
                                                         <option key={taxCode.id} value={taxCode.description ?? ''}>{taxCode.description ?? 'Unnamed Tax Code'}</option>
                                                     ))}
                                                 </select>
@@ -597,7 +701,7 @@ const Page = () => {
                                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 >
                                                     <option value="">Select Region</option>
-                                                    {(taxRegions?.data ?? []).map((region) => (
+                                                    {(taxRegions.data ?? []).map((region) => (
                                                         <option key={region.id} value={region.code}>{region.name}</option>
                                                     ))}
                                                 </select>
@@ -617,7 +721,6 @@ const Page = () => {
                                                 type="date"
                                                 value={formData.effective_From}
                                                 onChange={(e) => handleInputChange('effective_From', e.target.value)}
-                                                placeholder="e.g. 7.5"
                                                 placeholder="e.g. 7.5"
                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                             />
@@ -802,9 +905,9 @@ const Page = () => {
                                                             className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
                                                             onClick={() => selectCustomer(customer)}
                                                         >
-                                                            <div className="font-medium">{customer.name}</div>
+                                                            <div className="font-medium">{customer.customerName}</div>
                                                             {customer.customerMail && (
-                                                                <div className="text-sm text-gray-500">{customer.customerName}</div>
+                                                                <div className="text-sm text-gray-500">{customer.customerMail}</div>
                                                             )}
                                                         </div>
                                                     )) || (!isCustomerSearching && debouncedCustomerSearchTerm && (
@@ -816,7 +919,7 @@ const Page = () => {
                                         <div className="flex flex-wrap gap-2">
                                             {formData.selectedCustomers.map((customer, index) => (
                                                 <span key={index} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm flex items-center">
-                                                    {customer}
+                                                    {customer.name}
                                                     <button
                                                         onClick={() => removeSelectedItem(customer, 'selectedCustomers')}
                                                         className="ml-2 text-gray-500 hover:text-gray-700"
@@ -894,13 +997,39 @@ const Page = () => {
                                     <div className="mb-4">
                                         <label className="block text-sm font-medium text-gray-700 mb-2">Test Product</label>
                                         <div className="relative">
+                                            {/* <select
+                                                value={previewProduct}
+                                                onChange={(e) => setPreviewProduct(e.target.value)}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            >
+                                                {formData.selectedProducts.map((product, index) => (
+                                                <span key={index} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm flex items-center">
+                                                    {product}
+                                                    <button
+                                                        onClick={() => removeSelectedItem(product, 'selectedProducts')}
+                                                        className="ml-2 text-gray-500 hover:text-gray-700"
+                                                    >
+                                                    </button>
+                                                </span>
+                                            ))}
+
+                                            </select> */}
                                             <select
                                                 value={previewProduct}
                                                 onChange={(e) => setPreviewProduct(e.target.value)}
                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                             >
-                                                <option value="iPhone 15">iPhone 15</option>
-                                                <option value="MacBook Pro">MacBook Pro</option>
+                                                {formData.selectedProducts.length === 0 ? (
+                                                    <option value="" disabled>
+                                                        No product selected
+                                                    </option>   
+                                                ) : (
+                                                    formData.selectedProducts.map((product, index) => (
+                                                        <option key={index} value={product}>
+                                                            {product}
+                                                        </option>
+                                                    ))
+                                                )}
                                             </select>
                                             <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                                         </div>
@@ -954,7 +1083,14 @@ const Page = () => {
                                         </div>
                                     </div>
                                     <div className="flex gap-x-4 w-full sm:w-auto justify-end">
-                                        <button className="flex-1 sm:flex-none bg-[#043E49] py-2 px-3 text-white rounded-xl flex items-center justify-center gap-x-3 cursor-pointer">Assign Tax</button></div>
+                                        <button
+                                            className="flex-1 sm:flex-none bg-[#043E49] py-2 px-3 text-white rounded-xl flex items-center justify-center gap-x-3 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                            onClick={handleAssignTax}
+                                            disabled={isAssigning || !createdTaxRateId}
+                                        >
+                                            {isAssigning ? 'Assigning...' : 'Assign Tax'}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -964,35 +1100,6 @@ const Page = () => {
         </>
     );
 };
-
-function Input({ label, placeholder, value, onChange }: { label: string; placeholder: string; value?: string; onChange?: (value: string) => void }) {
-    return (
-        <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-            <input
-                type="text"
-                placeholder={placeholder}
-                value={value || ''}
-                onChange={e => onChange ? onChange(e.target.value) : undefined}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-        </div>
-    );
-}
-
-function ModalActions({ onClose, onSave }: { onClose: () => void; onSave?: () => void }) {
-    return (
-        <div className="flex gap-x-4 justify-end">
-            <button className="bg-white py-2 px-3 text-black rounded-xl pr-4 border border-gray-300" onClick={onClose}>
-                Cancel
-            </button>
-            <button className="bg-[#043E49] py-2 px-3 text-white rounded-xl" onClick={onSave}>
-                Save
-            </button>
-        </div>
-    );
-}
-
 
 
 export default Page;
