@@ -2,12 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { FaPlus, FaTrash, FaArrowLeft } from "react-icons/fa";
+import toast from "react-hot-toast";
 import Header from "../../components/Header";
 import { SpecialButton } from "../../components/buttons";
-import type { Transaction } from "../../services/salesService";
 import { fetchProducts } from "../../store/slices/productsSlice";
-import type { RootState } from "../../store";
+import { createSale } from "../../store/slices/salesSlice";
+import { fetchUser } from "../../store/slices/userSlice";
+import useRequireStore from "../../hooks/useRequireStore";
+import type { RootState, AppDispatch } from "../../store";
 import type { Product } from "../../data/inventoryData";
+import type { SaleRequestData, SaleItem } from "../../store/slices/salesSlice";
 
 interface ProductItem {
   id: string;
@@ -22,18 +26,26 @@ interface ProductItem {
 
 const AddNewSale: React.FC = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-
+  const dispatch = useDispatch<AppDispatch>();
+  
+  // Get current store and user data
+  const currentStore = useRequireStore();
+  const { user } = useSelector((state: RootState) => state.user);
+  
   // Redux state
   const {
     products: availableProducts,
     loading: productsLoading,
     error: productsError,
   } = useSelector((state: RootState) => state.products);
+  
+  // Sales state
+  const { loading: salesLoading } = useSelector((state: RootState) => state.sales);
 
-  // Fetch products on component mount
+  // Fetch products and user on component mount
   useEffect(() => {
     dispatch(fetchProducts() as any);
+    dispatch(fetchUser());
   }, [dispatch]);
 
   // Form state
@@ -60,12 +72,6 @@ const AddNewSale: React.FC = () => {
   const subtotal = products.reduce((sum, product) => sum + product.total, 0);
   const discountAmount =
     discountType === "percentage" ? (subtotal * discount) / 100 : discount;
-  const discountPercentage =
-    discountType === "amount"
-      ? subtotal > 0
-        ? (discount / subtotal) * 100
-        : 0
-      : discount;
   const taxAmount = ((subtotal - discountAmount) * taxRate) / 100;
   const finalTotal = subtotal - discountAmount + taxAmount;
 
@@ -215,73 +221,118 @@ const AddNewSale: React.FC = () => {
     console.log("Save as draft");
   };
 
-  const handleCreateSale = () => {
+  const handleCreateSale = async () => {
     // Validate form
     if (!customerName.trim()) {
-      alert("Customer name is required");
+      toast.error("Customer name is required");
       return;
     }
 
     if (!phoneNumber.trim()) {
-      alert("Phone number is required");
+      toast.error("Phone number is required");
       return;
     }
 
     // Validate address fields (except street which is optional)
     if (!city.trim()) {
-      alert("City is required");
+      toast.error("City is required");
       return;
     }
 
     if (!state.trim()) {
-      alert("State/Province is required");
+      toast.error("State/Province is required");
       return;
     }
 
     if (!postalCode.trim()) {
-      alert("Postal code is required");
+      toast.error("Postal code is required");
       return;
     }
 
     if (!country.trim()) {
-      alert("Country is required");
+      toast.error("Country is required");
       return;
     }
 
     if (products.some((p) => !p.name.trim() || p.price <= 0)) {
-      alert("Please fill in all product details");
+      toast.error("Please fill in all product details");
       return;
     }
 
-    // Create sale transaction
-    const newTransaction: Omit<Transaction, "id"> = {
-      transactionId: `TXN-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      dateTime: new Date().toLocaleString(),
-      customer: customerName.trim(),
-      items: products.length,
-      total: finalTotal,
-      tax: taxAmount,
-      payment: paymentMethod as "Cash" | "Card" | "Digital",
-      status: "Completed",
-      cashier: "Current User",
-    };
+    if (!currentStore?.id) {
+      toast.error("Store information is missing");
+      return;
+    }
 
-    // Add the combined address to transaction data for future use
-    const transactionWithAddress = {
-      ...newTransaction,
-      customerDetails: {
-        name: customerName.trim(),
-        phone: phoneNumber.trim(),
-        email: email.trim(),
-        address: getFullAddress(),
-      },
-    };
+    if (!user?.clientId) {
+      toast.error("User information is missing");
+      return;
+    }
 
-    // TODO: Implement create transaction API call
-    console.log("Creating transaction:", transactionWithAddress);
+    try {
+      // Prepare sale items
+      const saleItems: SaleItem[] = products.map((product) => {
+        // Get the PLU/UPC from the selected product or variant
+        let pluUpc = "";
+        if (product.selectedProduct) {
+          // If it's a variant, check for variant PLU/UPC first
+          if (product.variantId && product.selectedProduct.variants) {
+            const variant = product.selectedProduct.variants.find(v => v.id === product.variantId);
+            pluUpc = variant?.pluUpc || product.selectedProduct.plu || product.selectedProduct.sku || "";
+          } else {
+            // For regular products, use pluUpc, plu, or sku as fallback
+            pluUpc = (product.selectedProduct as any).pluUpc || product.selectedProduct.plu || product.selectedProduct.sku || "";
+          }
+        }
 
-    // Navigate back to sales page
-    navigate(-1);
+        return {
+          productId: product.productId || product.selectedProduct?.id || "",
+          productName: product.selectedProduct?.name || product.name,
+          quantity: product.quantity,
+          sellingPrice: product.price,
+          totalPrice: product.total,
+          pluUpc: pluUpc,
+        };
+      });
+
+      // Prepare sale data according to API format
+      const saleData: SaleRequestData = {
+        customerPhone: phoneNumber.trim(),
+        customerData: {
+          customerName: customerName.trim(),
+          customerAddress: getFullAddress(),
+          phoneNumber: phoneNumber.trim(),
+          telephoneNumber: phoneNumber.trim(),
+          customerMail: email.trim(),
+          storeId: currentStore.id,
+          clientId: user.clientId,
+        },
+        storeId: currentStore.id,
+        clientId: user.clientId,
+        paymentMethod: paymentMethod.toUpperCase() as "CASH" | "CARD" | "DIGITAL",
+        totalAmount: Math.round(finalTotal * 100) / 100, // Ensure proper number format
+        tax: Math.round(taxAmount * 100) / 100, // Ensure proper number format
+        cashierName: user.firstName && user.lastName 
+          ? `${user.firstName} ${user.lastName}` 
+          : user.email || "Current User",
+        generateInvoice: false, // Default to false as specified
+        source: "manual", // Default source as manual
+        saleItems,
+      };
+
+      console.log("📦 Prepared sale data:", JSON.stringify(saleData, null, 2));
+
+      // Dispatch create sale action
+      await dispatch(createSale(saleData)).unwrap();
+      
+      toast.success("Sale created successfully!");
+      
+      // Navigate back to sales page
+      navigate(-1);
+    } catch (error: any) {
+      console.error("Error creating sale:", error);
+      toast.error(`Failed to create sale: ${error}`);
+    }
   };
 
   const handleCancel = () => {
@@ -610,7 +661,7 @@ const AddNewSale: React.FC = () => {
                               {typeof product.selectedProduct.category ===
                               "string"
                                 ? product.selectedProduct.category
-                                : product.selectedProduct.category?.name ||
+                                : (product.selectedProduct.category as any)?.name ||
                                   "Uncategorized"}
                             </div>
                           </div>
@@ -622,7 +673,7 @@ const AddNewSale: React.FC = () => {
                               {typeof product.selectedProduct.supplier ===
                               "string"
                                 ? product.selectedProduct.supplier
-                                : product.selectedProduct.supplier?.name ||
+                                : (product.selectedProduct.supplier as any)?.name ||
                                   "N/A"}
                             </div>
                           </div>
@@ -843,8 +894,9 @@ const AddNewSale: React.FC = () => {
                   variant="primary"
                   onClick={handleCreateSale}
                   className="w-full bg-[#03414C] hover:bg-[#025561] text-white py-3"
+                  disabled={salesLoading}
                 >
-                  Create Sale
+                  {salesLoading ? "Creating Sale..." : "Create Sale"}
                 </SpecialButton>
 
                 <SpecialButton

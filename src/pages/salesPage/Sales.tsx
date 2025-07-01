@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
 import Header from "../../components/Header";
 import SalesHeader from "../../components/SalesComponents/SalesHeader";
 import StatsGrid from "../../components/SalesComponents/StatsGrid";
@@ -10,19 +11,46 @@ import EditTransactionModal from "../../components/SalesComponents/EditTransacti
 import ViewTransactionModal from "../../components/SalesComponents/ViewTransactionModal";
 import DeleteConfirmModal from "../../components/SalesComponents/DeleteConfirmModal";
 import type { Transaction } from "../../services/salesService";
-import { useSalesData } from "../../hooks/useSalesData";
+import { fetchSales } from "../../store/slices/salesSlice";
+import type { RootState, AppDispatch } from "../../store";
+import useRequireStore from "../../hooks/useRequireStore";
 
 const SalesPage: React.FC = () => {
-  // Use the custom hook for sales data management
-  const {
-    transactions,
-    stats,
-    loading,
-    error,
-    updateTransaction,
-    deleteTransaction,
-    printTransaction,
-  } = useSalesData();
+  const dispatch = useDispatch<AppDispatch>();
+  const currentStore = useRequireStore();
+  
+  // Redux state
+  const { sales, loading, error } = useSelector((state: RootState) => state.sales);
+  
+  // Convert Redux sales data to Transaction format for compatibility
+  const transactions: Transaction[] = sales.map(sale => ({
+    id: sale.id,
+    transactionId: sale.transactionId,
+    dateTime: new Date(sale.createdAt).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }),
+    customer: sale.customerData?.customerName || 'Unknown Customer',
+    items: sale.saleItems.length,
+    total: sale.totalAmount,
+    tax: sale.tax,
+    payment: sale.paymentMethod as 'Cash' | 'Card' | 'Digital',
+    status: 'Completed' as 'Completed',
+    cashier: sale.cashierName
+  }));
+
+  // Calculate stats from sales data
+  const stats = {
+    todaysSales: sales.reduce((sum, sale) => sum + sale.totalAmount, 0),
+    transactions: sales.length,
+    customers: new Set(sales.map(sale => sale.customerPhone)).size,
+    avgTransaction: sales.length > 0 ? sales.reduce((sum, sale) => sum + sale.totalAmount, 0) / sales.length : 0,
+    productsAvailable: 0, // This would need to come from inventory
+    lowStockItems: 0 // This would need to come from inventory
+  };
 
   // Local state for UI
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,6 +61,41 @@ const SalesPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // Fetch sales data function
+  const fetchSalesData = useCallback(() => {
+    if (currentStore?.id) {
+      // Convert frontend filter values to backend format
+      const params: any = {
+        storeId: currentStore.id,
+        page: currentPage,
+        limit: rowsPerPage
+      };
+      console.log("type of page:", typeof params.page);
+      console.log("type of limit:", typeof params.limit);
+      // Add filters if they're not "All"
+      if (statusFilter !== "All") {
+        params.status = statusFilter;
+      }
+      if (paymentFilter !== "All") {
+        params.paymentMethod = paymentFilter;
+      }
+      
+      // Handle date filter - convert to actual dates
+      if (dateFilter !== "Today") {
+        // You can implement date range logic here based on your dateFilter values
+        // For now, we'll skip date filtering unless it's a specific date range
+      }
+
+      console.log("Fetching sales with filters:", params);
+      dispatch(fetchSales(params));
+    }
+  }, [currentStore?.id, currentPage, rowsPerPage, statusFilter, paymentFilter, dateFilter, dispatch]);
+
+  // Fetch data when dependencies change
+  useEffect(() => {
+    fetchSalesData();
+  }, [fetchSalesData]);
+
   // Modal states
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -40,37 +103,31 @@ const SalesPage: React.FC = () => {
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
 
-  // Filter transactions based on filters
-  const getFilteredTransactions = () => {
+  // Server-side filtering is handled by backend for status, payment, etc.
+  // But we still do client-side search filtering since search term is not sent to backend
+  const getDisplayTransactions = () => {
+    if (!searchTerm) {
+      return transactions; // No search term, return all transactions from backend
+    }
+    
+    // Apply search filter on the server-filtered results
     return transactions.filter((transaction) => {
       const matchesSearch =
         transaction.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
         transaction.transactionId
           .toLowerCase()
           .includes(searchTerm.toLowerCase());
-      const matchesStatus =
-        statusFilter === "All" || transaction.status === statusFilter;
-      const matchesPayment =
-        paymentFilter === "All" ||
-        transaction.payment === paymentFilter;
-
-      return matchesSearch && matchesStatus && matchesPayment;
+      return matchesSearch;
     });
   };
 
-  const filteredTransactions = getFilteredTransactions();
-
-  // Pagination
-  const totalPages = Math.ceil(filteredTransactions.length / rowsPerPage);
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const endIndex = Math.min(
-    startIndex + rowsPerPage,
-    filteredTransactions.length
-  );
-  const paginatedTransactions = filteredTransactions.slice(
-    startIndex,
-    startIndex + rowsPerPage
-  );
+  const displayTransactions = getDisplayTransactions();
+  const paginatedTransactions = displayTransactions;
+  
+  // For pagination display
+  const totalPages = Math.ceil(displayTransactions.length > 0 ? displayTransactions.length / rowsPerPage : 1);
+  const startIndex = (currentPage - 1) * rowsPerPage + 1;
+  const endIndex = Math.min(currentPage * rowsPerPage, displayTransactions.length);
 
   // Action handlers
   const handleSalesReport = () => {
@@ -101,21 +158,51 @@ const SalesPage: React.FC = () => {
   };
   const handleEditSave = async (updatedTransaction: Transaction) => {
     try {
-      await updateTransaction(updatedTransaction.id, updatedTransaction);
+      // TODO: Implement update transaction API call
+      console.log("Update transaction:", updatedTransaction);
+      toast.success("Transaction update functionality will be implemented");
       setIsEditModalOpen(false);
       setSelectedTransaction(null);
     } catch (error) {
       console.error("Failed to update transaction:", error);
-      // Handle error (show toast, etc.)
+      toast.error("Failed to update transaction");
     }
   };
 
   const handlePrint = async (transaction: Transaction) => {
     try {
-      await printTransaction(transaction.id);
+      // Create print content
+      const printContent = `
+        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 400px;">
+          <h2 style="color: #03414C; text-align: center; margin-bottom: 20px;">Transaction Receipt</h2>
+          <hr style="border: 1px solid #03414C;" />
+          <div style="margin: 15px 0;">
+            <p><strong>Transaction ID:</strong> ${transaction.transactionId}</p>
+            <p><strong>Date & Time:</strong> ${transaction.dateTime}</p>
+            <p><strong>Customer:</strong> ${transaction.customer}</p>
+            <p><strong>Items:</strong> ${transaction.items}</p>
+            <p><strong>Subtotal:</strong> $${(transaction.total - transaction.tax).toFixed(2)}</p>
+            <p><strong>Tax:</strong> $${transaction.tax.toFixed(2)}</p>
+            <p style="font-size: 16px;"><strong>Total:</strong> $${transaction.total.toFixed(2)}</p>
+            <p><strong>Payment Method:</strong> ${transaction.payment}</p>
+            <p><strong>Status:</strong> ${transaction.status}</p>
+            <p><strong>Cashier:</strong> ${transaction.cashier}</p>
+          </div>
+          <hr style="border: 1px solid #03414C;" />
+          <p style="text-align: center; color: #666; margin-top: 20px;">Thank you for your business!</p>
+        </div>
+      `;
+      
+      // Open print window
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.print();
+      }
     } catch (error) {
       console.error("Failed to print transaction:", error);
-      // Handle error (show toast, etc.)
+      toast.error("Failed to print transaction");
     }
   };
 
@@ -127,12 +214,13 @@ const SalesPage: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (selectedTransaction) {
       try {
-        await deleteTransaction(selectedTransaction.id);
+        // TODO: Implement delete transaction API call
+        toast.success("Transaction delete functionality will be implemented");
         setIsDeleteModalOpen(false);
         setSelectedTransaction(null);
       } catch (error) {
         console.error("Failed to delete transaction:", error);
-        // Handle error (show toast, etc.)
+        toast.error("Failed to delete transaction");
       }
     }
   };
@@ -177,7 +265,7 @@ const SalesPage: React.FC = () => {
           {/* Table Section */}
           <div className="bg-white rounded-lg p-6 mb-6">
             {/* Table */}
-            {filteredTransactions.length === 0 ? (
+            {displayTransactions.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-gray-500">
                   <svg
@@ -212,13 +300,13 @@ const SalesPage: React.FC = () => {
             )}
             
             {/* Pagination */}
-            {filteredTransactions.length > 0 && (
+            {displayTransactions.length > 0 && (
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
                 startIndex={startIndex}
                 endIndex={endIndex}
-                totalItems={filteredTransactions.length}
+                totalItems={displayTransactions.length}
                 rowsPerPage={rowsPerPage}
                 onPageChange={setCurrentPage}
                 onRowsPerPageChange={setRowsPerPage}
