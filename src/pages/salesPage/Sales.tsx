@@ -23,6 +23,7 @@ const SalesPage: React.FC = () => {
   const { sales, loading, error } = useSelector((state: RootState) => state.sales);
   
   // Convert Redux sales data to Transaction format for compatibility
+  console.log("Sales data from Redux:", sales);
   const transactions: Transaction[] = sales.map(sale => ({
     id: sale.id,
     transactionId: sale.transactionId,
@@ -33,12 +34,15 @@ const SalesPage: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     }),
-    customer: sale.customerData?.customerName || 'Unknown Customer',
+    customer: {
+      customerName: sale.customerData?.customerName || 'Unknown Customer',
+      phoneNumber: sale.customerPhone || 'N/A'
+    },
     items: sale.saleItems.length,
     total: sale.totalAmount,
     tax: sale.tax,
     payment: sale.paymentMethod as 'Cash' | 'Card' | 'Digital',
-    status: 'Completed' as 'Completed',
+    status: 'Completed' as 'Completed' | 'Pending' | 'Refunded' | 'Shipped' | 'Delivered',
     cashier: sale.cashierName
   }));
 
@@ -113,7 +117,7 @@ const SalesPage: React.FC = () => {
     // Apply search filter on the server-filtered results
     return transactions.filter((transaction) => {
       const matchesSearch =
-        transaction.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.customer.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         transaction.transactionId
           .toLowerCase()
           .includes(searchTerm.toLowerCase());

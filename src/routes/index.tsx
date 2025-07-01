@@ -127,6 +127,9 @@ const AppRoutes = () => {
         <Route path="/edit-employee" element={<EditEmployeePage />} /> */}
       <Route path="/supplier" element={<Supplier />} />{" "}
       <Route path="/employee" element={<EmployeePage />} />
+
+      {/*Invoice Routes*/}
+      <Route path="/store/:id/invoice" element={<CreateInvoice/>} />
     
     </Routes>
   );

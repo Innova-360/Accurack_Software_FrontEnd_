@@ -78,13 +78,13 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
           {transactions.map((transaction, index) => (
             <tr key={transaction.id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-gray-100`}>
               <td className="px-4 py-3 text-sm font-medium text-teal-600">
-                {transaction.transactionId}
+                {transaction.id}
               </td>
               <td className="px-4 py-3 text-sm text-gray-900">
-                {transaction.customer}
+                {transaction.customer.customerName}
               </td>
               <td className="px-4 py-3 text-sm text-gray-600">
-                N/A
+                {transaction.customer.phoneNumber}
               </td>
               <td className="px-4 py-3 text-sm text-gray-900 text-center">
                 {transaction.items}
