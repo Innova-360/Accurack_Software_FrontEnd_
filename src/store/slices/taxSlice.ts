@@ -30,6 +30,16 @@ export interface CreateTaxRateRequest {
   taxCodeId: string;
 }
 
+export interface TaxAssignment {
+  entityType: 'PRODUCT' | 'CATEGORY' | 'CUSTOMER' | 'STORE';
+  entityId: string;
+  taxRateId: string;
+}
+
+export interface BulkTaxAssignmentRequest {
+  assignments: TaxAssignment[];
+}
+
 // Async thunk for fetching countries
 export const fetchCountriesThunk = createAsyncThunk(
   'tax/fetchCountries',
@@ -165,6 +175,14 @@ export const taxApi = createApi({
       }),
       invalidatesTags: ['TaxRate'],
     }),
+    bulkAssignTax: builder.mutation<any, BulkTaxAssignmentRequest>({
+      query: (data) => ({
+        url: '/assign/bulk',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['TaxRate'],
+    }),
   }),
 });
 
@@ -177,4 +195,5 @@ export const {
   useCreateTaxCodeMutation,
   useCreateTaxRegionMutation,
   useCreateTaxRateMutation,
+  useBulkAssignTaxMutation,
 } = taxApi;

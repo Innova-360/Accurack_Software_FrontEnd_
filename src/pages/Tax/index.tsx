@@ -1,4 +1,4 @@
-// import {useState }from "react";
+import { useState, useMemo } from "react";
 import Pencil from "/edit.png"
 import Trash from "/bin.png"
 import Copy from "/eye.png"
@@ -6,70 +6,50 @@ import Navbar from "../../components/Header";
 import { ChevronDown, Plus } from 'lucide-react';
 // import { Link } from "react-router-dom";
 import { useParams, useNavigate } from 'react-router-dom'
+import { useGetTaxRatesQuery } from '../../store/slices/taxSlice';
 
 const Tax = () => {
-    const taxes = [
-        {
-            name: "VAT",
-            description: "Value Added Tax",
-            rate: "7.5%",
-            type: "Percentage",
-            status: "Active",
-            assigned: "All Products",
-            date: "Jun 12, 2023",
-            time: "10:23 AM"
-        },
-        {
-            name: "Luxury Duty",
-            description: "Special tax for luxury items",
-            rate: "$100.00",
-            type: "Fixed",
-            status: "Active",
-            assigned: "Luxury Category",
-            date: "May 28, 2023",
-            time: "3:45 PM"
-        },
-        {
-            name: "State Tax",
-            description: "State-specific tax",
-            rate: "4.25%",
-            type: "Percentage",
-            status: "Active",
-            assigned: "Downtown Store, Mall Store",
-            date: "Jun 5, 2023",
-            time: "9:10 AM"
-        },
-        {
-            name: "Environmental Fee",
-            description: "Recycling fee",
-            rate: "$5.00",
-            type: "Fixed",
-            status: "Inactive",
-            assigned: "Electronics",
-            date: "Apr 18, 2023",
-            time: "2:30 PM"
-        },
-        {
-            name: "Import Duty",
-            description: "Tax on imported goods",
-            rate: "2.5%",
-            type: "Percentage",
-            status: "Active",
-            assigned: "Imported Goods",
-            date: "Jun 10, 2023",
-            time: "11:15 AM"
-        },
-        {
-            name: "Special Tax",
-            description: "Holiday season tax",
-            rate: "1.75%",
-            type: "Percentage",
-            status: "Inactive",
-            assigned: "Seasonal, Gift items",
-            date: "May 15, 2023",
-            time: "4:20 PM"
-        }
-    ];
+    const { data: taxRatesData, isLoading, error } = useGetTaxRatesQuery();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [typeFilter, setTypeFilter] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
+    
+    // Transform API data to match component structure
+    const allTaxes = taxRatesData?.data?.map((taxRate: any) => ({
+        id: taxRate.id,
+        name: taxRate.taxType?.name || 'Unknown',
+        description: taxRate.taxType?.description || 'No description',
+        rate: taxRate.rateType === 'PERCENTAGE' ? `${(taxRate.rate * 100).toFixed(2)}%` : `$${taxRate.rate.toFixed(2)}`,
+        type: taxRate.rateType === 'PERCENTAGE' ? 'Percentage' : 'Fixed',
+        status: 'Active', // API doesn't provide status, defaulting to Active
+        assigned: 'Not Assigned', // Placeholder until assignment data is available
+        date: new Date(taxRate.createdAt).toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        }),
+        time: new Date(taxRate.createdAt).toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit', 
+            hour12: true 
+        }),
+        region: taxRate.region?.name,
+        taxCode: taxRate.taxCode?.code
+    })) || [];
+
+    // Filter and search logic
+    const taxes = useMemo(() => {
+        return allTaxes.filter(tax => {
+            const matchesSearch = searchTerm === '' || 
+                tax.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                tax.description.toLowerCase().includes(searchTerm.toLowerCase());
+            
+            const matchesType = typeFilter === '' || tax.type === typeFilter;
+            const matchesStatus = statusFilter === '' || tax.status === statusFilter;
+            
+            return matchesSearch && matchesType && matchesStatus;
+        });
+    }, [allTaxes, searchTerm, typeFilter, statusFilter]);
 
     const { id } = useParams(); // gets store ID from the URL
     const navigate = useNavigate();
@@ -77,6 +57,28 @@ const Tax = () => {
     const handleClick = () => {
         navigate(`/store/${id}/add-tax`);
     };
+
+    if (isLoading) {
+        return (
+            <>
+                <Navbar />
+                <div className="flex items-center justify-center min-h-screen">
+                    <div className="text-lg">Loading tax rates...</div>
+                </div>
+            </>
+        );
+    }
+
+    if (error) {
+        return (
+            <>
+                <Navbar />
+                <div className="flex items-center justify-center min-h-screen">
+                    <div className="text-lg text-red-600">Error loading tax rates</div>
+                </div>
+            </>
+        );
+    }
 
 
     return (
@@ -93,7 +95,13 @@ const Tax = () => {
                         <div className="w-full md:w-1/2">
                             <div className="relative">
                                 <img src="/search.png" alt="" className="absolute top-1/2 left-[10px] transform -translate-y-1/2 w-5" />
-                                <input type="text" placeholder="Search Tax Name.." className="w-full md:w-3/4 border-[#E5E7EB] border-2 p-3 rounded-xl pl-12" />
+                                <input 
+                                    type="text" 
+                                    placeholder="Search Tax Name.." 
+                                    className="w-full md:w-3/4 border-[#E5E7EB] border-2 p-3 rounded-xl pl-12"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
                             </div>
 
                         </div>
@@ -105,12 +113,12 @@ const Tax = () => {
                                 </div>
                                 <select
                                     className="block w-full pl-3 pr-4 py-2 text-sm border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    defaultValue=""
+                                    value={typeFilter}
+                                    onChange={(e) => setTypeFilter(e.target.value)}
                                 >
-                                    <option value="" disabled>Type: ALL </option>
-                                    <option value="option1">Option One</option>
-                                    <option value="option2">Option Two</option>
-                                    <option value="option3">Option Three</option>
+                                    <option value="">Type: ALL</option>
+                                    <option value="Percentage">Percentage</option>
+                                    <option value="Fixed">Fixed</option>
                                 </select>
                             </div>
                             {/* Status Dropdpwn */}
@@ -120,12 +128,12 @@ const Tax = () => {
                                 </div>
                                 <select
                                     className="block w-full pl-3 pr-4 py-2 text-sm border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    defaultValue=""
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
                                 >
-                                    <option value="" disabled>Status: ALL </option>
-                                    <option value="option1">Option One</option>
-                                    <option value="option2">Option Two</option>
-                                    <option value="option3">Option Three</option>
+                                    <option value="">Status: ALL</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
                                 </select>
                             </div>
                             <button className="w-full sm:w-auto bg-[#043E49] py-2 px-3 text-white rounded-xl pr-4 flex items-center justify-center gap-x-3" onClick={handleClick}>
@@ -153,7 +161,7 @@ const Tax = () => {
                                 </tr>
                             </thead>
                             <tbody className="text-sm text-gray-700">
-                                {taxes.map((tax, idx) => (
+                                {taxes.map((tax, idx: number) => (
                                     <tr key={idx} className="hover:bg-gray-50">
                                         <td className="px-4 py-3">
                                             <div className="font-medium">{tax.name}</div>
@@ -255,13 +263,13 @@ const Tax = () => {
                             </div>
                         ))}
                     </div>
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-4 border-t text-sm border-[#E5E7EB] gap-4">
-                        {/* Left: Entry Count */}
+                   {/* <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-4 border-t text-sm border-[#E5E7EB] gap-4">
+                         Left: Entry Count 
                         <div className="text-center sm:text-left">
                             Showing <span className="font-medium">1</span> to <span className="font-medium">6</span> of <span className="font-medium">12</span> entries
                         </div>
 
-                        {/* Right: Pagination Controls */}
+                         Right: Pagination Controls
                         <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
                             <div className="flex items-center space-x-2">
                                 <span className="text-gray-600">Rows per page:</span>
@@ -272,7 +280,7 @@ const Tax = () => {
                                 </select>
                             </div>
 
-                            {/* Pagination buttons */}
+                             Pagination buttons 
                             <div className="flex items-center space-x-1">
                                 <button className="px-2 py-1 border rounded-md text-gray-500 hover:bg-gray-100">&lt;</button>
                                 <button className="px-3 py-1 rounded-md text-white bg-teal-900 shadow">1</button>
@@ -281,6 +289,7 @@ const Tax = () => {
                             </div>
                         </div>
                     </div>
+                    */}
                 </div>
             </div>
         </>
