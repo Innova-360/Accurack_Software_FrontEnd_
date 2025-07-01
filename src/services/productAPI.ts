@@ -158,8 +158,140 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
 export type Product = BaseProduct;
 export type { Variant };
 
+// Pagination and search parameters interface
+export interface ProductSearchParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+export interface PaginatedProductsResponse {
+  products: Product[];
+  totalProducts: number;
+  totalPages: number;
+  currentPage: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
 // API service
 export const productAPI = {
+  // Fetch products with pagination and search
+  async getProductsPaginated(
+    params: ProductSearchParams = {}
+  ): Promise<PaginatedProductsResponse> {
+    try {
+      const queryParams = new URLSearchParams();
+
+      if (params.page) queryParams.append("page", params.page.toString());
+      if (params.limit) queryParams.append("limit", params.limit.toString());
+      if (params.search) queryParams.append("search", params.search);
+
+      const url = `/product/list${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`;
+      const response = await apiClient.get(url);
+
+      console.log("Paginated API Response:", response.data);
+
+      // Handle different possible response structures for paginated data
+      let apiProducts: ApiProduct[];
+      let totalProducts = 0;
+      let totalPages = 1;
+      let currentPage = params.page || 1;
+
+      if (
+        response.data?.data?.products &&
+        Array.isArray(response.data.data.products)
+      ) {
+        apiProducts = response.data.data.products;
+        totalProducts =
+          response.data.data.totalProducts ||
+          response.data.data.total ||
+          apiProducts.length;
+        totalPages =
+          response.data.data.totalPages ||
+          Math.ceil(totalProducts / (params.limit || 50));
+        currentPage = response.data.data.currentPage || currentPage;
+      } else if (response.data?.products && Array.isArray(response.data.products)) {
+        apiProducts = response.data.products;
+        totalProducts =
+          response.data.totalProducts ||
+          response.data.total ||
+          apiProducts.length;
+        totalPages =
+          response.data.totalPages ||
+          Math.ceil(totalProducts / (params.limit || 50));
+        currentPage = response.data.currentPage || currentPage;
+      } else {
+        // Fallback to original method if pagination not supported by backend
+        console.log("Backend doesn't support pagination, using client-side pagination");
+        const allProducts = await this.getProducts();
+        console.log("Total products from getProducts:", allProducts.length);
+        
+        const limit = params.limit || 50;
+        const page = params.page || 1;
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        
+        console.log("Pagination params:", { limit, page, startIndex, endIndex });
+
+        // Apply search filter if provided
+        let filteredProducts = allProducts;
+        if (params.search) {
+          const searchTerm = params.search.toLowerCase();
+          console.log("Applying search filter:", searchTerm);
+          filteredProducts = allProducts.filter(
+            (product) =>
+              product.name.toLowerCase().includes(searchTerm) ||
+              (product.sku && product.sku.toLowerCase().includes(searchTerm)) ||
+              (product.plu && product.plu.toLowerCase().includes(searchTerm)) ||
+              (typeof product.category === "string" &&
+                product.category.toLowerCase().includes(searchTerm))
+          );
+          console.log("Filtered products count:", filteredProducts.length);
+        }
+
+        totalProducts = filteredProducts.length;
+        totalPages = Math.ceil(totalProducts / limit);
+        const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+        
+        console.log("Pagination result:", {
+          totalProducts,
+          totalPages,
+          currentPage: page,
+          paginatedProductsCount: paginatedProducts.length,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1
+        });
+        
+        return {
+          products: paginatedProducts,
+          totalProducts,
+          totalPages,
+          currentPage: page,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1,
+        };
+      }
+
+      // Transform API products to frontend format
+      const transformedProducts: Product[] = apiProducts.map((apiProduct) => transformApiProduct(apiProduct));
+
+      return {
+        products: transformedProducts,
+        totalProducts,
+        totalPages,
+        currentPage,
+        hasNextPage: currentPage < totalPages,
+        hasPreviousPage: currentPage > 1,
+      };
+    } catch (error: any) {
+      console.error("Error fetching paginated products:", error);
+      throw new Error(error.response?.data?.message || "Failed to fetch products");
+    }
+  },
+
   // Fetch all products
   async getProducts(): Promise<Product[]> {
     try {

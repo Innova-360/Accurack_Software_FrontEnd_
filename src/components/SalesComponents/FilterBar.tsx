@@ -71,9 +71,11 @@ const FilterBar: React.FC<FilterBarProps> = ({
             className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
           >
             <option>All</option>
-            <option>Cash</option>
-            <option>Card</option>
-            <option>Bank Transfer</option>
+            <option>CASH</option>
+            <option>CARD</option>
+            <option>BANK_TRANSFER</option>
+            <option>CHECK</option>
+            <option>DIGITAL_WALLET</option>
           </select>
         </div>
 

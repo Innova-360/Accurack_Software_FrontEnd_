@@ -15,7 +15,8 @@ import CreateInvoice from "../pages/salesPage/CreateInvoice";
 import GoogleAuthCallback from "../components/GoogleAuthCallback";
 import Supplier from "../pages/Supplier/Supplier";
 import StoresPage from "../pages/Stores/Stores";
-import EmployeePage from "../pages/Employee/EmployeePage";
+import EmployeePage from "../pages/Employee/EmployeeManagementPage";
+import Employee from "../pages/Employee/EmployeePage";
 
 // import RolePage from "../pages/RolePage/RolePage"; 
 // import Srole from "../pages/RolePage/RolePermissionsPage"
@@ -59,7 +60,8 @@ const AppRoutes = () => {
       <Route path="/store/:id/expenses" element={<ExpensePage />} />
       <Route path="/store/:id/supplier" element={<Supplier />} />
       {/* Employee Management Routes */}
-      <Route path="/store/:id/employee/create" element={<EmployeePage />} />
+      <Route path="/store/:id/employee" element={<EmployeePage />} />
+      <Route path="/store/:id/employee/create" element={<Employee />} />
   
       {/* Legacy/Global Routes */}
       <Route path="/inventory" element={<Inventory />} />
@@ -126,7 +128,7 @@ const AppRoutes = () => {
         <Route path="/permissions" element={<PermissionsPage />} />
         <Route path="/edit-employee" element={<EditEmployeePage />} /> */}
       <Route path="/supplier" element={<Supplier />} />{" "}
-      <Route path="/employee" element={<EmployeePage />} />
+      {/* <Route path="/employee" element={<EmployeePage />} /> */}
 
       {/*Invoice Routes*/}
       <Route path="/store/:id/invoice" element={<CreateInvoice/>} />

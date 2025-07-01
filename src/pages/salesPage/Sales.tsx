@@ -10,7 +10,6 @@ import Pagination from "../../components/SalesComponents/Pagination";
 import EditTransactionModal from "../../components/SalesComponents/EditTransactionModal";
 import ViewTransactionModal from "../../components/SalesComponents/ViewTransactionModal";
 import DeleteConfirmModal from "../../components/SalesComponents/DeleteConfirmModal";
-import type { Transaction } from "../../services/salesService";
 import { fetchSales } from "../../store/slices/salesSlice";
 import type { RootState, AppDispatch } from "../../store";
 import useRequireStore from "../../hooks/useRequireStore";
@@ -24,9 +23,21 @@ const SalesPage: React.FC = () => {
   
   // Convert Redux sales data to Transaction format for compatibility
   console.log("Sales data from Redux:", sales);
-  const transactions: Transaction[] = sales.map(sale => ({
+  
+  // Debug: Log each sale's status
+  sales.forEach((sale: any, index: number) => {
+    console.log(`🔍 Processing sale ${index + 1}:`, {
+      id: sale.id,
+      status: sale.status,
+      statusType: typeof sale.status,
+      paymentMethod: sale.paymentMethod,
+      customer: sale.customer?.customerName || sale.customerData?.customerName
+    });
+  });
+  
+  const transactions: any = sales.map((sale: any) => ({
     id: sale.id,
-    transactionId: sale.transactionId,
+    transactionId: sale.transactionId || sale.id,
     dateTime: new Date(sale.createdAt).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -34,23 +45,24 @@ const SalesPage: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     }),
-    customer: {
-      customerName: sale.customerData?.customerName || 'Unknown Customer',
-      phoneNumber: sale.customerPhone || 'N/A'
-    },
-    items: sale.saleItems.length,
+    customerName: sale.customer?.customerName || sale.customerData?.customerName || 'Unknown Customer',
+    phoneNumber: sale.customer?.phoneNumber || sale.customer?.phone || sale.customerPhone || 'N/A',
+    items: sale.saleItems?.length || 0,
     total: sale.totalAmount,
     tax: sale.tax,
-    payment: sale.paymentMethod as 'Cash' | 'Card' | 'Digital',
-    status: 'Completed' as 'Completed' | 'Pending' | 'Refunded' | 'Shipped' | 'Delivered',
+    payment: sale.paymentMethod || 'CASH',
+    status: sale.status || 'Pending',
     cashier: sale.cashierName
   }));
+  console.log("Converted transactions:", transactions);
 
   // Calculate stats from sales data
   const stats = {
     todaysSales: sales.reduce((sum, sale) => sum + sale.totalAmount, 0),
     transactions: sales.length,
-    customers: new Set(sales.map(sale => sale.customerPhone)).size,
+    customers: new Set(sales.map((sale: any) => 
+      sale.customer?.phoneNumber || sale.customer?.phone || sale.customerPhone || 'unknown'
+    ).filter(phone => phone !== 'unknown')).size,
     avgTransaction: sales.length > 0 ? sales.reduce((sum, sale) => sum + sale.totalAmount, 0) / sales.length : 0,
     productsAvailable: 0, // This would need to come from inventory
     lowStockItems: 0 // This would need to come from inventory
@@ -105,7 +117,7 @@ const SalesPage: React.FC = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] =
-    useState<Transaction | null>(null);
+    useState<any | null>(null);
 
   // Server-side filtering is handled by backend for status, payment, etc.
   // But we still do client-side search filtering since search term is not sent to backend
@@ -115,9 +127,9 @@ const SalesPage: React.FC = () => {
     }
     
     // Apply search filter on the server-filtered results
-    return transactions.filter((transaction) => {
+    return transactions.filter((transaction: any) => {
       const matchesSearch =
-        transaction.customer.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         transaction.transactionId
           .toLowerCase()
           .includes(searchTerm.toLowerCase());
@@ -151,16 +163,16 @@ const SalesPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const handleView = (transaction: Transaction) => {
+  const handleView = (transaction: any) => {
     setSelectedTransaction(transaction);
     setIsViewModalOpen(true);
   };
 
-  const handleEdit = (transaction: Transaction) => {
+  const handleEdit = (transaction: any) => {
     setSelectedTransaction(transaction);
     setIsEditModalOpen(true);
   };
-  const handleEditSave = async (updatedTransaction: Transaction) => {
+  const handleEditSave = async (updatedTransaction: any) => {
     try {
       // TODO: Implement update transaction API call
       console.log("Update transaction:", updatedTransaction);
@@ -173,7 +185,7 @@ const SalesPage: React.FC = () => {
     }
   };
 
-  const handlePrint = async (transaction: Transaction) => {
+  const handlePrint = async (transaction: any) => {
     try {
       // Create print content
       const printContent = `
@@ -183,7 +195,7 @@ const SalesPage: React.FC = () => {
           <div style="margin: 15px 0;">
             <p><strong>Transaction ID:</strong> ${transaction.transactionId}</p>
             <p><strong>Date & Time:</strong> ${transaction.dateTime}</p>
-            <p><strong>Customer:</strong> ${transaction.customer}</p>
+            <p><strong>Customer:</strong> ${transaction.customerName}</p>
             <p><strong>Items:</strong> ${transaction.items}</p>
             <p><strong>Subtotal:</strong> $${(transaction.total - transaction.tax).toFixed(2)}</p>
             <p><strong>Tax:</strong> $${transaction.tax.toFixed(2)}</p>
@@ -210,7 +222,7 @@ const SalesPage: React.FC = () => {
     }
   };
 
-  const handleDelete = (transaction: Transaction) => {
+  const handleDelete = (transaction: any) => {
     setSelectedTransaction(transaction);
     setIsDeleteModalOpen(true);
   };

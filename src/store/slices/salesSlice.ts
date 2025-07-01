@@ -24,12 +24,13 @@ export interface SaleRequestData {
   };
   storeId: string;
   clientId: string;
-  paymentMethod: "CASH" | "CARD" | "DIGITAL";
+  paymentMethod: "CASH" | "CARD" | "BANK_TRANSFER" | "CHECK" | "DIGITAL_WALLET";
   totalAmount: number;
   tax: number;
   cashierName: string;
   generateInvoice: boolean;
   source: string;
+  status?: string;
   saleItems: SaleItem[];
 }
 
@@ -38,6 +39,7 @@ export interface SaleResponseData {
   transactionId: string;
   customerPhone: string;
   customerData: any;
+  customer?: any;
   storeId: string;
   clientId: string;
   paymentMethod: string;
@@ -46,6 +48,7 @@ export interface SaleResponseData {
   cashierName: string;
   generateInvoice: boolean;
   source: string;
+  status?: string;
   saleItems: SaleItem[];
   createdAt: string;
   updatedAt: string;
@@ -74,12 +77,12 @@ export const createSale = createAsyncThunk<
   { rejectValue: string }
 >("sales/createSale", async (saleData, { rejectWithValue }) => {
   try {
-    console.log("Sending sale data:", saleData);
+    console.log("🚀 Sending sale data to backend:", JSON.stringify(saleData, null, 2));
     const response = await apiClient.post("/sales/create", saleData);
-    console.log("Sale response:", response);
+    console.log("✅ Sale creation response:", JSON.stringify(response.data, null, 2));
     return response.data.data || response.data;
   } catch (error: any) {
-    console.error("Sale creation error:", error);
+    console.error("❌ Sale creation error:", error);
     return rejectWithValue(
       error.response?.data?.message || "Failed to create sale"
     );
@@ -129,10 +132,17 @@ export const fetchSales = createAsyncThunk<
     const response = await apiClient.get("/sales/list", {
       params
     });
-    console.log("Sales API response:", response.data);
+    console.log("📊 Sales API response:", JSON.stringify(response.data, null, 2));
     // Handle the new response format: extract sales array from data.sales
     const salesData = response.data?.data?.sales || response.data?.sales || response.data?.data || response.data;
-    return Array.isArray(salesData) ? salesData : [];
+    const salesArray = Array.isArray(salesData) ? salesData : [];
+    
+    // Debug: Log the status of each sale
+    salesArray.forEach((sale: any, index: number) => {
+      console.log(`🔍 Sale ${index + 1} status:`, sale.status, `(type: ${typeof sale.status})`);
+    });
+    
+    return salesArray;
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message || "Failed to fetch sales"

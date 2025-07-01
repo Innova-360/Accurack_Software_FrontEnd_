@@ -1,12 +1,11 @@
 import React from 'react';
-import type { Transaction } from '../../services/salesService';
 
 interface TransactionTableProps {
-  transactions: Transaction[];
-  onView: (transaction: Transaction) => void;
-  onEdit: (transaction: Transaction) => void;
-  onPrint: (transaction: Transaction) => void;
-  onDelete: (transaction: Transaction) => void;
+  transactions: any[]; // Using any to support both old and new transaction formats
+  onView: (transaction: any) => void;
+  onEdit: (transaction: any) => void;
+  onPrint: (transaction: any) => void;
+  onDelete: (transaction: any) => void;
 }
 
 const TransactionTable: React.FC<TransactionTableProps> = ({
@@ -15,21 +14,49 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   const formatCurrency = (amount: number): string => {
     return `$${amount.toFixed(2)}`;
   };
-  const getStatusBadge = (status: Transaction['status']) => {
-    const statusConfig = {
-      'Completed': { color: 'bg-green-500', text: 'Paid' },
-      'Pending': { color: 'bg-yellow-500', text: 'Pending' },
-      'Refunded': { color: 'bg-red-500', text: 'Refunded' },
-      'Shipped': { color: 'bg-blue-500', text: 'Paid' },
-      'Delivered': { color: 'bg-green-500', text: 'Paid' }
+  const getStatusBadge = (status: string) => {
+    const statusConfig: { [key: string]: { color: string; text: string } } = {
+      'completed': { color: 'bg-green-500', text: 'Completed' },
+      'pending': { color: 'bg-yellow-500', text: 'Pending' },
+      'refunded': { color: 'bg-red-500', text: 'Refunded' },
+      'shipped': { color: 'bg-blue-500', text: 'Shipped' },
+      'delivered': { color: 'bg-green-500', text: 'Delivered' },
+      'cancelled': { color: 'bg-gray-500', text: 'Cancelled' }
     };
     
-    const config = statusConfig[status];
+    const normalizedStatus = status?.toLowerCase() || 'pending';
+    const config = statusConfig[normalizedStatus] || { color: 'bg-gray-500', text: status || 'Unknown' };
     
     return (
       <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">
         <div className={`w-2 h-2 rounded-full mr-1 ${config.color}`}></div>
         {config.text}
+      </span>
+    );
+  };
+
+  const getPaymentMethodBadge = (paymentMethod: string) => {
+    const paymentConfig: { [key: string]: { color: string; icon: string } } = {
+      'cash': { color: 'bg-green-500', icon: '' },
+      'card': { color: 'bg-blue-500', icon: '' },
+      'bank_transfer': { color: 'bg-teal-500', icon: '' },
+      'check': { color: 'bg-orange-500', icon: '' },
+      'digital_wallet': { color: 'bg-purple-500', icon: '' }
+    };
+    
+    const normalizedMethod = paymentMethod?.toLowerCase() || 'cash';
+    const config = paymentConfig[normalizedMethod] || { color: 'bg-gray-500', icon: '💰' };
+    
+    // Format display name
+    const displayName = paymentMethod ? 
+      paymentMethod.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 
+      'Cash';
+    
+    return (
+      <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">
+        <span className="mr-1">{config.icon}</span>
+        <div className={`w-2 h-2 rounded-full mr-1 ${config.color}`}></div>
+        {displayName}
       </span>
     );
   };
@@ -81,10 +108,10 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                 {transaction.id}
               </td>
               <td className="px-4 py-3 text-sm text-gray-900">
-                {transaction.customer.customerName}
+                {transaction.customerName || transaction.customer?.customerName || 'Unknown Customer'}
               </td>
               <td className="px-4 py-3 text-sm text-gray-600">
-                {transaction.customer.phoneNumber}
+                {transaction.phoneNumber || transaction.customer?.phoneNumber || 'N/A'}
               </td>
               <td className="px-4 py-3 text-sm text-gray-900 text-center">
                 {transaction.items}
@@ -96,10 +123,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                 {formatCurrency(transaction.tax)}
               </td>
               <td className="px-4 py-3 text-center">
-                <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">
-                  <div className={`w-2 h-2 rounded-full mr-1 bg-teal-500`}></div>
-                  {transaction.payment}
-                </span>
+                {getPaymentMethodBadge(transaction.payment)}
               </td>
               <td className="px-4 py-3 text-center">
                 {getStatusBadge(transaction.status)}
