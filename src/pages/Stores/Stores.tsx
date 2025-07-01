@@ -158,6 +158,7 @@ const StoresPage: React.FC = () => {
             </p>{" "}
             <SpecialButton
               variant="inventory-primary"
+              className="mx-auto"
               onClick={handleCreateStore}
               icon={<FaPlus />}
             >

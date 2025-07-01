@@ -101,7 +101,13 @@ const AppRoutes = () => {
       <Route path="/store/:id/role/create" element={<RolePage />} />
       <Route path="/store/:id/role/edit" element={<EditRolePage />} />
       <Route path="/store/:id/supplier" element={<Supplier />} />     
-       <Route path="/store/:id/employee" element={<EmployeePage />} />
+      <Route path="/store/:id/employee" element={<EmployeePage />} />
+      
+      {/* Customer Management Routes */}
+      <Route path="/store/:id/customer" element={<CustomerPage />} />
+      <Route path="/store/:id/customer/create" element={<CreateCustomer />} />
+      <Route path="/store/:id/customer/edit/:customerId" element={<CreateCustomer />} />
+      <Route path="/store/:id/customer/balance/:customerId" element={<CustomerBalanceSheet />} />
   
       <Route path="/inventory" element={<Inventory />} />
       <Route path="/inventory/create" element={<CreateInventory />} />
