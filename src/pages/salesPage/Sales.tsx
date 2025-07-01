@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
 import Header from "../../components/Header";
 import SalesHeader from "../../components/SalesComponents/SalesHeader";
 import StatsGrid from "../../components/SalesComponents/StatsGrid";
@@ -17,6 +18,8 @@ import useRequireStore from "../../hooks/useRequireStore";
 
 const SalesPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const { id: storeId } = useParams<{ id: string }>();
   const currentStore = useRequireStore();
   
   // Redux state
@@ -152,8 +155,14 @@ const SalesPage: React.FC = () => {
   };
 
   const handleView = (transaction: Transaction) => {
-    setSelectedTransaction(transaction);
-    setIsViewModalOpen(true);
+    // Navigate to SalesId page instead of opening modal
+    if (storeId) {
+      navigate(`/store/${storeId}/sales/${transaction.id}`);
+    } else {
+      // Fallback to modal if no store context
+      setSelectedTransaction(transaction);
+      setIsViewModalOpen(true);
+    }
   };
 
   const handleEdit = (transaction: Transaction) => {

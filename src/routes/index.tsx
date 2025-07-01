@@ -34,6 +34,7 @@ import BusinessForm from "../components/InvoiceComponents/businessform";
 import CustomerPage from "../pages/Customer/Customer";
 import CreateCustomer from "../pages/Customer/CreateCustomer";
 import CustomerBalanceSheet from "../pages/Customer/CustomerBalanceSheet";
+import SalesId from "../pages/salesPage/SalesId";
 const AppRoutes = () => {
   return (
     <Routes>
@@ -55,6 +56,7 @@ const AppRoutes = () => {
         element={<ProductDetails />}
       />
       <Route path="/store/:id/sales" element={<SalesPage />} />
+       <Route path="/store/:id/sales/:saleid" element={<SalesId />} />
       <Route path="/store/:id/sales/new" element={<AddNewSale />} />
       <Route path="/store/:id/expenses" element={<ExpensePage />} />
       <Route path="/store/:id/supplier" element={<Supplier />} />

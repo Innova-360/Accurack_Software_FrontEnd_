@@ -3,12 +3,30 @@ import apiClient from "../../services/api";
 
 // Types for the sales API
 export interface SaleItem {
+  id?: string;
+  saleId?: string;
   productId: string;
   productName: string;
   quantity: number;
   sellingPrice: number;
   totalPrice: number;
   pluUpc: string;
+  createdAt?: string;
+  updatedAt?: string;
+  product?: {
+    id: string;
+    name: string;
+    sku: string;
+    category: {
+      id: string;
+      name: string;
+      code: string;
+      description: string;
+      parentId: string | null;
+      createdAt: string;
+      updatedAt: string;
+    };
+  };
 }
 
 export interface SaleRequestData {
@@ -33,22 +51,55 @@ export interface SaleRequestData {
   saleItems: SaleItem[];
 }
 
+export interface Customer {
+  id: string;
+  customerName: string;
+  customerAddress: string;
+  phoneNumber: string;
+  telephoneNumber: string;
+  customerMail: string;
+  website: string | null;
+  threshold: number;
+  storeId: string;
+  clientId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
 export interface SaleResponseData {
   id: string;
-  transactionId: string;
-  customerPhone: string;
-  customerData: any;
+  customerId: string;
+  userId: string;
   storeId: string;
   clientId: string;
   paymentMethod: string;
   totalAmount: number;
-  tax: number;
-  cashierName: string;
-  generateInvoice: boolean;
+  confirmation: string;
+  quantitySend: number;
+  allowance: number;
   source: string;
-  saleItems: SaleItem[];
+  tax: number;
+  status: string;
+  generateInvoice: boolean;
+  cashierName: string;
   createdAt: string;
   updatedAt: string;
+  fileUploadSalesId: string | null;
+  customer: Customer;
+  saleItems: SaleItem[];
+  user: User;
+  invoices: any[];
+  returns: any[];
+  // Legacy fields for backward compatibility
+  transactionId?: string;
+  customerPhone?: string;
+  customerData?: any;
 }
 
 interface SalesState {
