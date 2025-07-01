@@ -3,15 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { FaPlus, FaTrash, FaArrowLeft } from "react-icons/fa";
 import toast from "react-hot-toast";
-import Header from "../../components/Header";
-import { SpecialButton } from "../../components/buttons";
-import { fetchProducts } from "../../store/slices/productsSlice";
 import { createSale } from "../../store/slices/salesSlice";
 import { fetchUser } from "../../store/slices/userSlice";
 import useRequireStore from "../../hooks/useRequireStore";
 import type { RootState, AppDispatch } from "../../store";
 import type { Product } from "../../data/inventoryData";
 import type { SaleRequestData, SaleItem } from "../../store/slices/salesSlice";
+import Header from "../../components/Header";
+import { SpecialButton } from "../../components/buttons";
+import { fetchProducts } from "../../store/slices/productsSlice";
 
 interface ProductItem {
   id: string;
@@ -43,6 +43,9 @@ const AddNewSale: React.FC = () => {
   const { loading: salesLoading } = useSelector((state: RootState) => state.sales);
 
   // Fetch products and user on component mount
+    
+
+  // Fetch products on component mount
   useEffect(() => {
     dispatch(fetchProducts() as any);
     dispatch(fetchUser());
@@ -72,6 +75,12 @@ const AddNewSale: React.FC = () => {
   const subtotal = products.reduce((sum, product) => sum + product.total, 0);
   const discountAmount =
     discountType === "percentage" ? (subtotal * discount) / 100 : discount;
+  // const discountPercentage =
+  //   discountType === "amount"
+  //     ? subtotal > 0
+  //       ? (discount / subtotal) * 100
+  //       : 0
+  //     : discount;
   const taxAmount = ((subtotal - discountAmount) * taxRate) / 100;
   const finalTotal = subtotal - discountAmount + taxAmount;
 
@@ -650,7 +659,6 @@ const AddNewSale: React.FC = () => {
                             </div>
                           </div>
                         </div>
-
                         {/* Additional product information row */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mt-3 pt-3 border-t border-blue-200">
                           <div>
@@ -694,7 +702,6 @@ const AddNewSale: React.FC = () => {
                             </div>
                           </div>
                         </div>
-
                         {product.variantId && (
                           <div className="mt-3 pt-2 border-t border-blue-200">
                             <div className="text-xs text-blue-700">

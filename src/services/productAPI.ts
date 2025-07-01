@@ -219,7 +219,80 @@ export const productAPI = {
       }
 
       // Transform API products to match the existing Product interface
-      return apiProducts.map((apiProduct) => transformApiProduct(apiProduct));
+      // return apiProducts.map((apiProduct) => transformApiProduct(apiProduct));
+          //   variants:
+          //     apiProduct.variants?.map((variant) => ({
+          //       id: variant.id,
+          //       name: variant.name || "Unknown Variant",
+          //       price: variant.price || 0,
+          //       sku: variant.sku || "",
+          //       pluUpc: variant.pluUpc || "",
+          //       quantity: variant.quantity || 0,
+          //       msrpPrice: variant.msrpPrice,
+          //       discountAmount: variant.discountAmount,
+          //       percentDiscount: variant.percentDiscount,
+          //       supplierId: variant.supplierId,
+          //       packIds: variant.packIds || [],
+          //       packs: variant.packs || [],
+          //     })) || [],
+          // };
+
+          return {
+            id: apiProduct.id || "",
+            name: apiProduct.name || "Unknown Product",
+            quantity: apiProduct.itemQuantity || 0,
+            plu: apiProduct.pluUpc || "plu not found",
+            sku: apiProduct.sku || "sku not found",
+            description: apiProduct.description || "this is description",
+            price: `$${(apiProduct.singleItemSellingPrice || 0).toFixed(2)}`,
+            category: apiProduct.category || "Uncategorized",
+            itemsPerUnit: 1, 
+            supplier:
+              apiProduct.supplier ||
+              "-",
+            createdAt:
+              apiProduct.createdAt || new Date().toISOString().split("T")[0],
+            hasVariants: apiProduct.hasVariants || false,
+            variants:
+              apiProduct.variants?.map((variant) => ({
+                id: variant.id,
+                name: variant.name || "Unknown Variant",
+                price: variant.price || 0,
+                sku: variant.sku || variant.id || "",
+                pluUpc: variant.pluUpc || "",
+                quantity: variant.quantity || 0,
+                msrpPrice: variant.msrpPrice,
+                discountAmount: variant.discountAmount,
+                percentDiscount: variant.percentDiscount,
+                supplierId: variant.supplierId,
+                packIds: variant.packIds || [],
+                packs: variant.packs || [],
+              })) || [],
+          };
+        } catch (transformError) {
+          console.error(
+            "Error transforming product:",
+            apiProduct,
+            transformError
+          );
+          // Return a basic product structure for failed transformations
+          return {
+            id: apiProduct.id || Math.random().toString(),
+            name: apiProduct.name || "Unknown Product",
+            quantity: 0,
+            plu: "",
+            sku: "",
+            description: "Error loading product details",
+            price: "$0.00",
+            category: "Uncategorized",
+            itemsPerUnit: 1,
+            supplier: "",
+            createdAt: new Date().toISOString().split("T")[0],
+            hasVariants: false,
+            variants: [],
+          };
+        }
+      });
     } catch (error) {
       console.error("Error fetching products:", error);
       throw error;

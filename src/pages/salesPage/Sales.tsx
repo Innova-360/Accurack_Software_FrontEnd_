@@ -58,6 +58,16 @@ const SalesPage: React.FC = () => {
     productsAvailable: 0, // This would need to come from inventory
     lowStockItems: 0 // This would need to come from inventory
   };
+  // Use the custom hook for sales data management
+  // const {
+  //   transactions,
+  //   stats,
+  //   loading,
+  //   error,
+  //   updateTransaction,
+  //   deleteTransaction,
+  //   printTransaction,
+  // } = useSalesData();
 
   // Local state for UI
   const [searchTerm, setSearchTerm] = useState("");
@@ -124,7 +134,13 @@ const SalesPage: React.FC = () => {
         transaction.transactionId
           .toLowerCase()
           .includes(searchTerm.toLowerCase());
-      return matchesSearch;
+      const matchesStatus =
+        statusFilter === "All" || transaction.status === statusFilter;
+      const matchesPayment =
+        paymentFilter === "All" ||
+        transaction.payment === paymentFilter;
+
+      return matchesSearch && matchesStatus && matchesPayment;
     });
   };
 

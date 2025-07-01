@@ -49,7 +49,12 @@ const OtpPage = () => {
         // Clear success message after 3 seconds
         setTimeout(() => setSuccessMessage(""), 3000);
       } else {
-        console.error("Failed to send initial OTP", resultAction.payload);
+        console.error("❌ Failed to send initial OTP", resultAction.payload);
+        toast.error(
+          typeof resultAction.payload === "string"
+            ? resultAction.payload
+            : "Failed to send OTP"
+        );
       }
     } catch (error) {
       console.error("💥 Error sending initial OTP", error);

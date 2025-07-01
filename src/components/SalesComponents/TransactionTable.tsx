@@ -86,6 +86,9 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               <td className="px-4 py-3 text-sm text-gray-600">
                 {transaction.customer.phoneNumber}
               </td>
+              <td className="px-4 py-3 text-sm text-gray-600">
+                N/A
+              </td>
               <td className="px-4 py-3 text-sm text-gray-900 text-center">
                 {transaction.items}
               </td>

@@ -160,6 +160,18 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                 </div>
               </th>
               <th
+<<<<<<< HEAD
+=======
+                className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100 min-w-[100px]"
+                onClick={() => onSort("supplier")}
+              >
+                <div className="flex items-center justify-between">
+                  Supplier
+                  {getSortIcon("supplier")}
+                </div>
+              </th>
+              <th
+>>>>>>> 5137476f306cf8f1c1de815392e522de25cc8554
                 className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100 min-w-[100px]"
                 onClick={() => onSort("category")}
               >
@@ -289,6 +301,8 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                           {typeof product.category === "string"
                             ? product.category
                             : product.category?.name || "Uncategorized"}
+                          {/* Show the main product supplier name */}
+                          {product.supplier || "-"}
                         </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
@@ -546,7 +560,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
             ) : (
               <tr>
                 <td
-                  colSpan={10}
+                  colSpan={11}
                   className="px-2 sm:px-4 py-8 text-center text-gray-500 border-b border-gray-300 text-xs sm:text-sm"
                 >
                   No products found matching your search criteria.
