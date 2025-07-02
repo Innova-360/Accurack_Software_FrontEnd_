@@ -15,6 +15,10 @@ import GoogleAuthCallback from "../components/GoogleAuthCallback";
 import Supplier from "../pages/Supplier/Supplier";
 import StoresPage from "../pages/Stores/Stores";
 import EmployeePage from "../pages/Employee/EmployeePage";
+import CreateInvoice from "../pages/salesPage/CreateInvoice";
+import SalesId from "../pages/salesPage/SalesId";
+import Employee from "../pages/Employee/EmployeePage";
+
 import RolePage from "../pages/RolePage/RolePage";
 import Srole from "../pages/RolePage/RolePermissionsPage";
 import EditRolePage from "../pages/RolePage/EditRolePage";
@@ -25,6 +29,10 @@ import CreateCustomer from "../pages/Customer/CreateCustomer";
 import CustomerBalanceSheet from "../pages/Customer/CustomerBalanceSheet";
 import ProtectedRoute from "../components/ProtectedRoute";
 import ReturnPage from "../pages/Return/Return";
+import Tax from "../pages/Tax/index"
+import AddTax from "../pages/Tax/AddTax"
+
+
 
 const AppRoutes = () => {
   return (
@@ -102,6 +110,15 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      
+       <Route path="/store/:id/sales/:saleid" element={<SalesId />} />
+      <Route path="/store/:id/sales/new" element={<AddNewSale />} />
+      <Route path="/store/:id/expenses" element={<ExpensePage />} />
+      <Route path="/store/:id/supplier" element={<Supplier />} />
+      {/* Employee Management Routes */}
+      <Route path="/store/:id/employee" element={<EmployeePage />} />
+      <Route path="/store/:id/employee/create" element={<Employee />} />
+  
       <Route
         path="/store/:id/sales"
         element={
@@ -110,6 +127,28 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+
+      <Route path="/expenses" element={<ExpensePage />} />
+  
+      {/* Utility Routes */}
+      <Route path="/" element={<Home />} />
+      <Route path="/term" element={<Terms />} />
+      <Route path="/Form" element={<StoreForm />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/otp" element={<OtpPage />} />
+      <Route path="/Form" element={<StoreForm />} />
+      <Route path="/stores" element={<StoresPage />} />
+      <Route path="/store/create" element={<StoreForm />} />
+      <Route path="/store/edit/:id" element={<StoreForm />} />      
+      <Route path="/store/edit/:id" element={<StoreForm />} />
+      <Route path="/store/:id" element={<Home />} />
+      <Route path="/store/:id/inventory" element={<Inventory />} />
+      <Route path="/store/:id/inventory/create" element={<CreateInventory />} />
+      
+      
+      
       <Route
         path="/store/:id/sales/new"
         element={
@@ -134,6 +173,8 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route path="/store/:id/expenses" element={<ExpensePage />} />
+      <Route path="/store/:id/supplier" element={<Supplier />} />
       <Route
         path="/store/:id/supplier/assign-products"
         element={
@@ -142,6 +183,21 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route path="/store/:id/employee/create" element={<EmployeePage />} />
+      <Route path="/store/:id/role" element={<Srole />} />
+      <Route path="/store/:id/role/create" element={<RolePage />} />
+      <Route path="/store/:id/role/edit" element={<EditRolePage />} />
+      <Route path="/store/:id/supplier" element={<Supplier />} />     
+      <Route path="/store/:id/employee" element={<EmployeePage />} />
+      <Route path="/store/:id/tax" element={<Tax />} />
+      <Route path="/store/:id/add-tax" element={<AddTax />} />
+      
+      {/* Customer Management Routes */}
+      <Route path="/store/:id/customer" element={<CustomerPage />} />
+      <Route path="/store/:id/customer/create" element={<CreateCustomer />} />
+      <Route path="/store/:id/customer/edit/:customerId" element={<CreateCustomer />} />
+      <Route path="/store/:id/customer/balance/:customerId" element={<CustomerBalanceSheet />} />
+  
       <Route
         path="/store/:id/employee"
         element={
@@ -230,6 +286,17 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+      <Route path="/" element={<Home />} />
+      <Route path="/store/:id/term" element={<Terms />} />
+      <Route path="/store/:id/expenses" element={<ExpensePage />} />
+     
+      <Route path="/store/:id/sale/:saleId" element={<SalesPage />} />
+      <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
+      <Route path="/store/:id/invoice/create" element={<BusinessForm />} />
+
+      <Route path="/store/:id/invoice" element={<CreateInvoice/>} />
+    
     </Routes>
   );
 };

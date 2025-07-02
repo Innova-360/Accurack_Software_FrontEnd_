@@ -1,11 +1,11 @@
 import {
   createSlice,
   createAsyncThunk,
-  type PayloadAction,
 } from "@reduxjs/toolkit";
 import apiClient from "../../services/api";
-import { productAPI } from "../../services/productAPI";
+import { productAPI, type ProductSearchParams } from "../../services/productAPI";
 import type { Product } from "../../data/inventoryData";
+import { createApi } from "@reduxjs/toolkit/query/react";
 
 // Define the payload type for product creation
 
@@ -68,6 +68,22 @@ export const fetchProducts = createAsyncThunk(
   }
 );
 
+// Async thunk for fetching products with pagination and search
+export const fetchProductsPaginated = createAsyncThunk(
+  "products/fetchProductsPaginated",
+  async (params: ProductSearchParams, { rejectWithValue }) => {
+    try {
+      const paginatedData = await productAPI.getProductsPaginated(params);
+      return paginatedData;
+    } catch (error: any) {
+      console.error("Error fetching paginated products:", error);
+      return rejectWithValue(
+        error.message || "Failed to fetch products"
+      );
+    }
+  }
+);
+
 // Async thunk for creating a product
 export const createProduct = createAsyncThunk(
   "products/createProduct",
@@ -92,8 +108,27 @@ const productsSlice = createSlice({
     products: [] as Product[],
     loading: false,
     error: null as string | null,
+    // Pagination state
+    totalProducts: 0,
+    totalPages: 0,
+    currentPage: 1,
+    hasNextPage: false,
+    hasPreviousPage: false,
+    searchQuery: "",
   },
-  reducers: {},
+  reducers: {
+    setSearchQuery: (state, action) => {
+      state.searchQuery = action.payload;
+    },
+    clearProducts: (state) => {
+      state.products = [];
+      state.totalProducts = 0;
+      state.totalPages = 0;
+      state.currentPage = 1;
+      state.hasNextPage = false;
+      state.hasPreviousPage = false;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchProducts.pending, (state) => {
@@ -109,6 +144,25 @@ const productsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         console.error("Fetch products failed:", state.error);
+      })
+      .addCase(fetchProductsPaginated.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchProductsPaginated.fulfilled, (state, action) => {
+        state.loading = false;
+        state.products = action.payload.products;
+        state.totalProducts = action.payload.totalProducts;
+        state.totalPages = action.payload.totalPages;
+        state.currentPage = action.payload.currentPage;
+        state.hasNextPage = action.payload.hasNextPage;
+        state.hasPreviousPage = action.payload.hasPreviousPage;
+        state.error = null;
+      })
+      .addCase(fetchProductsPaginated.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        console.error("Fetch paginated products failed:", state.error);
       })
       .addCase(createProduct.pending, (state) => {
         state.loading = true;
@@ -127,4 +181,75 @@ const productsSlice = createSlice({
   },
 });
 
+
+const customBaseQuery = async (args: any) => {
+
+  try {
+
+    const result = await apiClient({
+
+      url: typeof args === 'string' ? args : args.url,
+
+      method: args.method || 'GET',
+
+      data: args.body,
+
+      params: args.params,
+
+    });
+
+    return { data: result.data };
+
+  } catch (axiosError: any) {
+
+    return {
+
+      error: {
+
+        status: axiosError.response?.status,
+
+        data: axiosError.response?.data || axiosError.message,
+
+      },
+
+    };
+
+  }
+
+};
+
+
+
+export const productsApi = createApi({
+
+  reducerPath: 'productsApi',
+
+  baseQuery: customBaseQuery,
+
+  tagTypes: ['Product'],
+
+  endpoints: (builder) => ({
+
+    searchProducts: builder.query<{ data: Product[] }, { q: string; storeId: string }>({
+
+      query: ({ q, storeId }) => ({
+
+        url: '/product/search',
+
+        params: { q, storeId },
+
+      }),
+
+      providesTags: ['Product'],
+
+    }),
+
+  }),
+
+});
+
+
+export const { useSearchProductsQuery } = productsApi;
+
+export const { setSearchQuery, clearProducts } = productsSlice.actions;
 export default productsSlice.reducer;

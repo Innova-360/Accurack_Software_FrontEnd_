@@ -70,21 +70,25 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };const handleSubmit = async (e: React.FormEvent) => {
+  };
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!validateForm()) {
       return;
     }
-      try {
-      const supplierData = {
-        supplier_id: formData.name.toLowerCase().replace(/\s+/g, '-'), // Generate a simple ID from name
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        storeId: currentStore?.id || formData.storeId
-      };
-      await dispatch(createSupplier(supplierData)).unwrap();
+    try {
+      await dispatch(
+        createSupplier({
+          supplier_id: formData.name.toLowerCase().replace(/\s+/g, "-"), // Generate a simple ID from name
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          storeId: currentStore?.id || formData.storeId,
+        })
+      ).unwrap();
+
       // Reset form and close modal
       setFormData({
         supplier_id: "",
@@ -109,7 +113,7 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
           : "Failed to create supplier. Please try again.";
       toast.error(errorMessage);
     }
-  };  const handleClose = () => {
+  }; const handleClose = () => {
     setFormData({
       supplier_id: "",
       name: "",
@@ -146,10 +150,10 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
           >
             <FaTimes className="text-gray-400" size={18} />
           </button>
-        </div>        {/* Form */}
-        <form onSubmit={(e)=>handleSubmit(e)} className="p-6 space-y-4">
-          {/* Supplier Name */}
-          <div>
+        </div > {/* Form */ }
+  < form onSubmit = {(e)=> handleSubmit(e)} className = "p-6 space-y-4" >
+    {/* Supplier Name */ }
+    < div >
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Supplier Name *
             </label>
@@ -163,12 +167,14 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               placeholder="Enter supplier name (e.g., ABC Suppliers Ltd)"
               disabled={loading}
             />
-            {errors.name && (
-              <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-            )}
-          </div>
-          {/* Email */}
-          <div>
+{
+  errors.name && (
+    <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+  )
+}
+          </div >
+  {/* Email */ }
+  < div >
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Email *
             </label>
@@ -182,12 +188,14 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               placeholder="Enter email address (e.g., supplier@example.com)"
               disabled={loading}
             />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-            )}
-          </div>
-          {/* Phone */}
-          <div>
+{
+  errors.email && (
+    <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+  )
+}
+          </div >
+  {/* Phone */ }
+  < div >
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Phone Number *
             </label>
@@ -201,12 +209,14 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               placeholder="Enter phone number (e.g., +1-555-123-4567)"
               disabled={loading}
             />
-            {errors.phone && (
-              <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
-            )}
-          </div>
-          {/* Address */}
-          <div>
+{
+  errors.phone && (
+    <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+  )
+}
+          </div >
+  {/* Address */ }
+  < div >
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Address *
             </label>
@@ -220,36 +230,38 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               rows={3}
               disabled={loading}
             />
-            {errors.address && (
-              <p className="mt-1 text-sm text-red-600">{errors.address}</p>
-            )}
-          </div>
-          {/* Store Information */}
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
-            <SpecialButton
-              variant="modal-cancel"
-              type="button"
-              onClick={handleClose}
-              disabled={loading}
-            >
-              Cancel
-            </SpecialButton>{" "}
-            <SpecialButton
-              variant="modal-confirm"
-              type="button"
-              onClick={async () => {
-                const event = new Event("submit") as unknown as React.FormEvent;
-                await handleSubmit(event);
-              }}
-              disabled={loading}
-            >
-              {loading ? "Adding..." : "Add Supplier"}
-            </SpecialButton>
-          </div>
-          </form>
-      </div>
-    </div>
+{
+  errors.address && (
+    <p className="mt-1 text-sm text-red-600">{errors.address}</p>
+  )
+}
+          </div >
+  {/* Store Information */ }
+{/* Action Buttons */ }
+<div className="flex gap-3 pt-4">
+  <SpecialButton
+    variant="modal-cancel"
+    type="button"
+    onClick={handleClose}
+    disabled={loading}
+  >
+    Cancel
+  </SpecialButton>{" "}
+  <SpecialButton
+    variant="modal-confirm"
+    type="button"
+    onClick={async () => {
+      const event = new Event("submit") as unknown as React.FormEvent;
+      await handleSubmit(event);
+    }}
+    disabled={loading}
+  >
+    {loading ? "Adding..." : "Add Supplier"}
+  </SpecialButton>
+</div>
+          </form >
+      </div >
+    </div >
   );
 };
 export default AddSupplierModal;

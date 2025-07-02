@@ -12,7 +12,7 @@ const CreateCustomer: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const location = useLocation();
-  const { id } = useParams<{ id: string }>();
+  const { id, customerId } = useParams<{ id: string; customerId?: string }>();
   
   // Get user and authentication state
   const userSliceUser = useAppSelector((state) => state.user.user);

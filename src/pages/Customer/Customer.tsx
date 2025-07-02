@@ -47,70 +47,6 @@ const CustomerPage: React.FC = () => {
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
 
-  // Hardcoded customers for display (while keeping API functionality)
-  const hardcodedCustomers: Customer[] = [
-    {
-      id: "hardcoded-1",
-      customerName: "John Smith",
-      customerMail: "john.smith@email.com",
-      phoneNumber: "+1-555-0123",
-      telephoneNumber: "+1-555-0124",
-      customerAddress: "123 Main St, New York, NY, 10001, USA",
-      storeId: storeId || "",
-      clientId: "demo-client",
-      createdAt: "2024-12-01T10:00:00Z",
-      updatedAt: "2024-12-01T10:00:00Z"
-    },
-    {
-      id: "hardcoded-2",
-      customerName: "Sarah Johnson",
-      customerMail: "sarah.johnson@email.com",
-      phoneNumber: "+1-555-0125",
-      telephoneNumber: "",
-      customerAddress: "456 Oak Ave, Los Angeles, CA, 90210, USA",
-      storeId: storeId || "",
-      clientId: "demo-client",
-      createdAt: "2024-12-02T14:30:00Z",
-      updatedAt: "2024-12-02T14:30:00Z"
-    },
-    {
-      id: "hardcoded-3",
-      customerName: "Michael Brown",
-      customerMail: "michael.brown@email.com",
-      phoneNumber: "+1-555-0126",
-      telephoneNumber: "+1-555-0127",
-      customerAddress: "789 Pine Rd, Chicago, IL, 60601, USA",
-      storeId: storeId || "",
-      clientId: "demo-client",
-      createdAt: "2024-12-03T09:15:00Z",
-      updatedAt: "2024-12-03T09:15:00Z"
-    },
-    {
-      id: "hardcoded-4",
-      customerName: "Emily Davis",
-      customerMail: "emily.davis@email.com",
-      phoneNumber: "+1-555-0128",
-      telephoneNumber: "",
-      customerAddress: "321 Elm St, Houston, TX, 77001, USA",
-      storeId: storeId || "",
-      clientId: "demo-client",
-      createdAt: "2024-12-04T16:45:00Z",
-      updatedAt: "2024-12-04T16:45:00Z"
-    },
-    {
-      id: "hardcoded-5",
-      customerName: "David Wilson",
-      customerMail: "david.wilson@email.com",
-      phoneNumber: "+1-555-0129",
-      telephoneNumber: "+1-555-0130",
-      customerAddress: "654 Maple Dr, Phoenix, AZ, 85001, USA",
-      storeId: storeId || "",
-      clientId: "demo-client",
-      createdAt: "2024-12-05T11:20:00Z",
-      updatedAt: "2024-12-05T11:20:00Z"
-    }
-  ];
-
   useEffect(() => {
     if (storeId) {
       dispatch(fetchCustomers({ storeId, page: pagination.page, limit: pagination.limit }));
@@ -124,7 +60,7 @@ const CustomerPage: React.FC = () => {
     }
   }, [error, dispatch]);
 
-  const filteredCustomers = [...customers, ...hardcodedCustomers].filter(
+  const filteredCustomers = [...customers].filter(
     (customer) =>
       customer.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.customerMail.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -234,11 +170,11 @@ const CustomerPage: React.FC = () => {
 
     return (
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-6 gap-4">
-        <div className="text-sm text-gray-700 text-center sm:text-left">
+        <div className="p-2 text-sm text-gray-700 text-center sm:text-left">
           Showing {Math.min((page - 1) * pagination.limit + 1, pagination.total)} to{" "}
           {Math.min(page * pagination.limit, pagination.total)} of {pagination.total} customers
         </div>
-        <div className="flex items-center justify-center space-x-1 sm:space-x-2">
+        <div className="flex items-center justify-center space-x-1 sm:space-x-2 p-2">
           <button
             onClick={() => handlePageChange(page - 1)}
             disabled={page === 1}
@@ -335,7 +271,7 @@ const CustomerPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Customers</p>
-                <p className="text-2xl font-bold text-gray-900">{customers.length + hardcodedCustomers.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{customers.length}</p>
               </div>
               <div className="p-3 bg-blue-100 rounded-lg">
                 <FaUsers className="text-blue-600" size={20} />
@@ -346,7 +282,7 @@ const CustomerPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Customers</p>
-                <p className="text-2xl font-bold text-gray-900">{customers.length + hardcodedCustomers.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{customers.length}</p>
               </div>
               <div className="p-3 bg-green-100 rounded-lg">
                 <FaUsers className="text-green-600" size={20} />
@@ -358,7 +294,7 @@ const CustomerPage: React.FC = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">New This Month</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {[...customers, ...hardcodedCustomers].filter(c => new Date(c.createdAt || '').getMonth() === new Date().getMonth()).length}
+                  {[...customers].filter(c => new Date(c.createdAt || '').getMonth() === new Date().getMonth()).length}
                 </p>
               </div>
               <div className="p-3 bg-purple-100 rounded-lg">

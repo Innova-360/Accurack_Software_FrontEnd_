@@ -11,6 +11,10 @@ const initialState: StoreState = {
   currentStore: null,
   loading: false,
   error: null,
+  // Search-related state
+  searchResults: [],
+  searchLoading: false,
+  searchError: null,
 };
 
 // Async thunks for API calls
@@ -79,6 +83,23 @@ export const deleteStore = createAsyncThunk(
   }
 );
 
+// Search stores async thunk
+export const searchStores = createAsyncThunk(
+  "stores/searchStores",
+  async (query: string, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.get("/store/search", {
+        params: { q: query }
+      });
+      return response.data.data; // Extract stores from response
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to search stores"
+      );
+    }
+  }
+);
+
 export const storeSlice = createSlice({
   name: "stores",
   initialState,
@@ -93,6 +114,10 @@ export const storeSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
+    },
+    clearSearchResults: (state) => {
+      state.searchResults = [];
+      state.searchError = null;
     },
     loadCurrentStoreFromStorage: (state) => {
       const storedStore = localStorage.getItem("selectedStore");
@@ -177,15 +202,34 @@ export const storeSlice = createSlice({
       .addCase(deleteStore.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      // Search stores
+      .addCase(searchStores.pending, (state) => {
+        state.searchLoading = true;
+        state.searchError = null;
+      })
+      .addCase(searchStores.fulfilled, (state, action) => {
+        state.searchLoading = false;
+        state.searchResults = action.payload;
+      })
+      .addCase(searchStores.rejected, (state, action) => {
+        state.searchLoading = false;
+        state.searchError = action.payload as string;
       });
   },
 });
+
+
+
+
+
 
 export const {
   setCurrentStore,
   clearCurrentStore,
   clearError,
   loadCurrentStoreFromStorage,
+  clearSearchResults,
 } = storeSlice.actions;
 
 export default storeSlice.reducer;

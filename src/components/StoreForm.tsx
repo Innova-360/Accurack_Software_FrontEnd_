@@ -114,7 +114,7 @@ const StoreForm: React.FC = () => {
       setLogoPreview(imageUrl);
       toast.success("Logo uploaded successfully");
     } catch (error) {
-      toast.error("Failed to upload logoUrl");
+      toast.error("Failed to upload logoUrl", error);
     } finally {
       setUploading(false);
     }

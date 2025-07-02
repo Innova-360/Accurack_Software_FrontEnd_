@@ -45,8 +45,8 @@ export interface ApiProduct {
     id: string;
     name: string;
   };
-  sales?: any[];
-  purchaseOrders?: any[];
+  sales?: unknown[];
+  purchaseOrders?: unknown[];
   packIds?: string[];
   packs: Array<{
     id?: string;
@@ -190,6 +190,22 @@ interface PaginationParams {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   category?: string;
+}
+
+// Pagination and search parameters interface
+export interface ProductSearchParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+export interface PaginatedProductsResponse {
+  products: Product[];
+  totalProducts: number;
+  totalPages: number;
+  currentPage: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
 }
 
 // API service
@@ -448,8 +464,8 @@ export const productAPI = {
   // Update a product
   async updateProduct(
     id: string,
-    productData: any
-  ): Promise<{ success: boolean; message: string; data?: any }> {
+    productData: Partial<ApiProduct>
+  ): Promise<{ success: boolean; message: string; data?: ApiProduct }> {
     try {
       const response = await apiClient.put(`/product/${id}`, productData);
       return response.data;

@@ -16,6 +16,7 @@ import { useAppSelector } from "../../store/hooks";
 import { selectCurrentStore } from "../../store/selectors";
 import useSuppliers from "../../hooks/useSuppliers";
 import { fetchUser } from "../../store/slices/userSlice";
+// import { fetchProductCategories } from "../../store/slices/productCategoriesSlice";
 import { useProductCategories } from "../../hooks/useProductCategories";
 
 const CreateInventory: React.FC = () => {

@@ -161,6 +161,15 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
               </th>
               <th
                 className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100 min-w-[100px]"
+                onClick={() => onSort("supplier")}
+              >
+                <div className="flex items-center justify-between">
+                  Supplier
+                  {getSortIcon("supplier")}
+                </div>
+              </th>
+              <th
+                className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100 min-w-[100px]"
                 onClick={() => onSort("category")}
               >
                 <div className="flex items-center justify-between">
@@ -510,7 +519,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
             ) : (
               <tr>
                 <td
-                  colSpan={10}
+                  colSpan={11}
                   className="px-2 sm:px-4 py-8 text-center text-gray-500 border-b border-gray-300 text-xs sm:text-sm"
                 >
                   No products found matching your search criteria.

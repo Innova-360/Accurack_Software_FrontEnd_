@@ -29,6 +29,10 @@ export interface StoreState {
   currentStore: Store | null;
   loading: boolean;
   error: string | null;
+  // Search-related state
+  searchResults: Store[];
+  searchLoading: boolean;
+  searchError: string | null;
 }
 
 export const TIMEZONES = [

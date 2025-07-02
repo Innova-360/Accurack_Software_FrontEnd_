@@ -41,10 +41,16 @@ export const useFilteredProducts = (
         return (
           product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          product.plu.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          categoryString.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      });
+
+
+      //     product.plu.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      //     categoryString.toLowerCase().includes(searchTerm.toLowerCase())
+      //   );
+      // });
+      
+          product.plu.toLowerCase().includes(searchTerm.toLowerCase()) 
+          // product.category.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
 
     // Apply sorting

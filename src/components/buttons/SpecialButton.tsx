@@ -48,7 +48,8 @@ const SpecialButton: React.FC<SpecialButtonProps> = ({
     'focus:outline-none',
     'focus:ring-2',
     'focus:ring-offset-2',
-    'p-2'
+    'px-[7px]',
+    'py-[5px]',
   ] : [];
 
   // Add min-width for specific variants

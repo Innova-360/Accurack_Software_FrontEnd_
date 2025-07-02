@@ -31,6 +31,8 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
             onClick={() => {
               if (card.title === "Suppliers") {
                 navigate(`/store/${activeStoreId}/supplier`);
+              } else if (card.title === "Customers") {
+                navigate(`/store/${activeStoreId}/customer`);
               } else if (card.title === "View\nExpenses") {
                 navigate(
                   activeStoreId
