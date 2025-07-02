@@ -222,14 +222,6 @@ const CreateInventory: React.FC = () => {
         navigate("/store/:id/inventory");
       }
     });
-
-    // Example POST request (uncomment and adjust as needed)
-    // fetch("/products/create", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify(payload),
-    // }).then(() => navigate("/inventory"));
-
     const inventoryData = {
       ...formData,
       price: parseFloat(formData.price) || 0,
@@ -242,8 +234,7 @@ const CreateInventory: React.FC = () => {
         parseFloat(formData.orderValueDiscountValue) || 0,
     };
 
-    // navigate("/stores/" + storeId + "/inventory");
-    navigate("/inventory");
+    navigate(-1);
   };
 
   const handleNext = () => {
@@ -333,7 +324,7 @@ const CreateInventory: React.FC = () => {
             <div className="flex items-center space-x-3 sm:space-x-6">
               <button
                 onClick={() =>
-                  showVariations ? handleBack() : navigate("/inventory")
+                  showVariations ? handleBack() : navigate(-1)
                 }
                 className="group p-2 sm:p-3 text-gray-600 hover:text-[#0f4d57] hover:bg-gray-100/80 rounded-full transition-all duration-300 transform hover:scale-110 hover:shadow-lg"
               >
@@ -668,7 +659,7 @@ const CreateInventory: React.FC = () => {
                 >
                   <button
                     type="button"
-                    onClick={() => navigate("/inventory")}
+                    onClick={() => navigate(-1)}
                     className="group w-full sm:w-auto px-6 sm:px-8 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 transform hover:scale-105 hover:shadow-md flex items-center justify-center space-x-2"
                   >
                     <svg
@@ -849,7 +840,7 @@ const CreateInventory: React.FC = () => {
                   <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
                     <button
                       type="button"
-                      onClick={() => navigate("/inventory")}
+                      onClick={() => navigate(-1)}
                       className="w-full sm:w-auto px-6 sm:px-8 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 transform hover:scale-105 hover:shadow-md"
                     >
                       <span className="text-sm sm:text-base">Cancel</span>
