@@ -9,7 +9,7 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { useSearchProductsQuery } from '../../store/slices/productsSlice';
 import { useSearchCustomersQuery } from '../../store/slices/customerSlice';
 import { searchStores } from '../../store/slices/storeSlice';
-import { useDebounce } from '../../hooks/useDebounce';
+import { useDebounce } from '../../components/TaxComponents/useDebounce';
 import ModalActions from '../../components/TaxComponents/ModalActions';
 import Modal from '../../components/TaxComponents/Modal';
 import Input from '../../components/TaxComponents/TaxInput';

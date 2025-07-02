@@ -160,8 +160,6 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                 </div>
               </th>
               <th
-<<<<<<< HEAD
-=======
                 className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100 min-w-[100px]"
                 onClick={() => onSort("supplier")}
               >
@@ -171,7 +169,6 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                 </div>
               </th>
               <th
->>>>>>> 5137476f306cf8f1c1de815392e522de25cc8554
                 className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100 min-w-[100px]"
                 onClick={() => onSort("category")}
               >

@@ -12,29 +12,25 @@ import CreateInventory from "../pages/Inventory/CreateInventory";
 import ProductDetails from "../pages/Inventory/ProductDetails";
 import AddNewSale from "../pages/salesPage/AddNewSale";
 import CreateInvoice from "../pages/salesPage/CreateInvoice";
+import SalesId from "../pages/salesPage/SalesId";
 import GoogleAuthCallback from "../components/GoogleAuthCallback";
 import Supplier from "../pages/Supplier/Supplier";
 import StoresPage from "../pages/Stores/Stores";
 import EmployeePage from "../pages/Employee/EmployeePage";
 
-// import RolePage from "../pages/RolePage/RolePage"; 
-// import Srole from "../pages/RolePage/RolePermissionsPage"
-// import EditRolePage from "../pages/RolePage/EditRolePage";
-// import AssignProductsPage from "../pages/Supplier/AssignProductsPage";
-// import BusinessForm from "../components/InvoiceComponents/businessform";
-// import PermissionsPage from "../pages/Employee/PermissionsPage";
-// import EditEmployeePage from "../pages/Employee/EditEmployeePage";
 import RolePage from "../pages/RolePage/RolePage";
 import Srole from "../pages/RolePage/RolePermissionsPage";
 import EditRolePage from "../pages/RolePage/EditRolePage";
 import AssignProductsPage from "../pages/Supplier/AssignProductsPage";
 import BusinessForm from "../components/InvoiceComponents/businessform";
+import Tax from "../pages/Tax/index"
+import AddTax from "../pages/Tax/AddTax"
 
 
 import CustomerPage from "../pages/Customer/Customer";
 import CreateCustomer from "../pages/Customer/CreateCustomer";
 import CustomerBalanceSheet from "../pages/Customer/CustomerBalanceSheet";
-import SalesId from "../pages/salesPage/SalesId";
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -70,7 +66,6 @@ const AppRoutes = () => {
         element={<ProductDetails />}
       />
       <Route path="/expenses" element={<ExpensePage />} />
-      <Route path="/sales" element={<SalesPage />} />
   
       {/* Utility Routes */}
       <Route path="/" element={<Home />} />
@@ -91,7 +86,6 @@ const AppRoutes = () => {
         path="/store/:id/inventory/product/:productId"
         element={<ProductDetails />}
       />
-      <Route path="/store/:id/sales" element={<SalesPage />} />
       <Route path="/store/:id/expenses" element={<ExpensePage />} />
       <Route path="/store/:id/supplier" element={<Supplier />} />
       <Route
@@ -104,6 +98,8 @@ const AppRoutes = () => {
       <Route path="/store/:id/role/edit" element={<EditRolePage />} />
       <Route path="/store/:id/supplier" element={<Supplier />} />     
       <Route path="/store/:id/employee" element={<EmployeePage />} />
+      <Route path="/store/:id/tax" element={<Tax />} />
+      <Route path="/store/:id/add-tax" element={<AddTax />} />
       
       {/* Customer Management Routes */}
       <Route path="/store/:id/customer" element={<CustomerPage />} />
@@ -120,7 +116,8 @@ const AppRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/store/:id/term" element={<Terms />} />
       <Route path="/store/:id/expenses" element={<ExpensePage />} />
-      <Route path="/store/:id/sales" element={<SalesPage />} />
+     
+      <Route path="/store/:id/sale/:saleId" element={<SalesPage />} />
       <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
       <Route path="/store/:id/invoice/create" element={<BusinessForm />} />
         {/* <Route path="/supplier" element={<Supplier />} />      
@@ -129,6 +126,7 @@ const AppRoutes = () => {
         <Route path="/edit-employee" element={<EditEmployeePage />} /> */}
       <Route path="/supplier" element={<Supplier />} />{" "}
       <Route path="/employee" element={<EmployeePage />} />
+      
 
       {/*Invoice Routes*/}
       <Route path="/store/:id/invoice" element={<CreateInvoice/>} />

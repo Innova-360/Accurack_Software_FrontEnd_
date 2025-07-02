@@ -7,15 +7,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-<<<<<<< HEAD
-
-
-=======
-<<<<<<< HEAD
-=======
-
->>>>>>> ea2e6722f7b78e6e2fffa616868866518ad77f5f
->>>>>>> 5137476f306cf8f1c1de815392e522de25cc8554
 node_modules
 dist
 dist-ssr
@@ -31,12 +22,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-<<<<<<< HEAD
-.env
 
-=======
-<<<<<<< HEAD
 .env
-=======
->>>>>>> ea2e6722f7b78e6e2fffa616868866518ad77f5f
->>>>>>> 5137476f306cf8f1c1de815392e522de25cc8554

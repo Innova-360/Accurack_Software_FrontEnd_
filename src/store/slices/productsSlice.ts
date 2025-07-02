@@ -3,7 +3,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import apiClient from "../../services/api";
 import { productAPI } from "../../services/productAPI";
 import type { Product } from "../../data/inventoryData";
-import { createApi } from "@reduxjs/toolkit/query";
+import { createApi } from "@reduxjs/toolkit/query/react";
 
 // Define the payload type for product creation
 

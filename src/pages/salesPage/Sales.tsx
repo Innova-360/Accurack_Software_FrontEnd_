@@ -19,7 +19,7 @@ import useRequireStore from "../../hooks/useRequireStore";
 const SalesPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { id: storeId } = useParams<{ id: string }>();
+  const { id: storeId } = useParams<{ id?: string }>();
   const currentStore = useRequireStore();
   
   // Redux state
@@ -27,27 +27,34 @@ const SalesPage: React.FC = () => {
   
   // Convert Redux sales data to Transaction format for compatibility
   console.log("Sales data from Redux:", sales);
-  const transactions: Transaction[] = sales.map(sale => ({
-    id: sale.id,
-    transactionId: sale.transactionId,
-    dateTime: new Date(sale.createdAt).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }),
-    customer: {
-      customerName: sale.customerData?.customerName || 'Unknown Customer',
-      phoneNumber: sale.customerPhone || 'N/A'
-    },
-    items: sale.saleItems.length,
-    total: sale.totalAmount,
-    tax: sale.tax,
-    payment: sale.paymentMethod as 'Cash' | 'Card' | 'Digital',
-    status: 'Completed' as 'Completed' | 'Pending' | 'Refunded' | 'Shipped' | 'Delivered',
-    cashier: sale.cashierName
-  }));
+  const transactions: Transaction[] = Array.isArray(sales)
+    ? sales.map((sale) => {
+        return {
+          id: sale.id,
+          transactionId: sale.transactionId,
+          dateTime:
+            sale.createdAt
+              ? new Date(sale.createdAt).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : '',
+          customer: {
+            customerName: sale.customerData?.customerName || 'Unknown Customer',
+            phoneNumber: sale.customerPhone || 'N/A',
+          },
+          items: Array.isArray(sale.saleItems) ? sale.saleItems.length : 0,
+          total: sale.totalAmount,
+          tax: sale.tax,
+          payment: (sale.paymentMethod as 'Cash' | 'Card' | 'Digital') || 'Cash',
+          status: 'Completed' as 'Completed' | 'Pending' | 'Refunded' | 'Shipped' | 'Delivered',
+          cashier: sale.cashierName || '',
+        };
+      })
+    : [];
 
   // Calculate stats from sales data
   const stats = {
