@@ -620,7 +620,6 @@ const Inventory: React.FC = () => {
                     onSort={handleSort}
                     onProductEdited={handleEditProduct}
                     onProductViewed={handleViewProduct}
-                    onProductDeleted={refetch}
                   />
                 )}
               </div>
@@ -644,7 +643,6 @@ const Inventory: React.FC = () => {
                 onSelectAll={handleSelectAll}
                 onSelectItem={handleSelectItem}
                 onSort={handleSort}
-                onProductDeleted={refetch}
                 onProductEdited={handleEditProduct}
                 onProductViewed={handleViewProduct}
               />

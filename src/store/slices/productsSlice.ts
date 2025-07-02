@@ -1,9 +1,9 @@
-import {
-  createSlice,
-  createAsyncThunk,
-} from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import apiClient from "../../services/api";
-import { productAPI, type ProductSearchParams } from "../../services/productAPI";
+import {
+  productAPI,
+  type ProductSearchParams,
+} from "../../services/productAPI";
 import type { Product } from "../../data/inventoryData";
 import { createApi } from "@reduxjs/toolkit/query/react";
 
@@ -73,13 +73,22 @@ export const fetchProductsPaginated = createAsyncThunk(
   "products/fetchProductsPaginated",
   async (params: ProductSearchParams, { rejectWithValue }) => {
     try {
-      const paginatedData = await productAPI.getProductsPaginated(params);
-      return paginatedData;
+      // Corrected function call from getProductsPaginated to getProducts
+      const paginatedData = await productAPI.getProducts(params);
+
+      // We need to transform the data to match what the slice expects.
+      return {
+        products: paginatedData.products,
+        totalProducts: paginatedData.pagination.total,
+        totalPages: paginatedData.pagination.totalPages,
+        currentPage: paginatedData.pagination.page,
+        hasNextPage:
+          paginatedData.pagination.page < paginatedData.pagination.totalPages,
+        hasPreviousPage: paginatedData.pagination.page > 1,
+      };
     } catch (error: any) {
       console.error("Error fetching paginated products:", error);
-      return rejectWithValue(
-        error.message || "Failed to fetch products"
-      );
+      return rejectWithValue(error.message || "Failed to fetch products");
     }
   }
 );
@@ -181,73 +190,52 @@ const productsSlice = createSlice({
   },
 });
 
-
 const customBaseQuery = async (args: any) => {
-
   try {
-
     const result = await apiClient({
+      url: typeof args === "string" ? args : args.url,
 
-      url: typeof args === 'string' ? args : args.url,
-
-      method: args.method || 'GET',
+      method: args.method || "GET",
 
       data: args.body,
 
       params: args.params,
-
     });
 
     return { data: result.data };
-
   } catch (axiosError: any) {
-
     return {
-
       error: {
-
         status: axiosError.response?.status,
 
         data: axiosError.response?.data || axiosError.message,
-
       },
-
     };
-
   }
-
 };
 
-
-
 export const productsApi = createApi({
-
-  reducerPath: 'productsApi',
+  reducerPath: "productsApi",
 
   baseQuery: customBaseQuery,
 
-  tagTypes: ['Product'],
+  tagTypes: ["Product"],
 
   endpoints: (builder) => ({
-
-    searchProducts: builder.query<{ data: Product[] }, { q: string; storeId: string }>({
-
+    searchProducts: builder.query<
+      { data: Product[] },
+      { q: string; storeId: string }
+    >({
       query: ({ q, storeId }) => ({
-
-        url: '/product/search',
+        url: "/product/search",
 
         params: { q, storeId },
-
       }),
 
-      providesTags: ['Product'],
-
+      providesTags: ["Product"],
     }),
-
   }),
-
 });
-
 
 export const { useSearchProductsQuery } = productsApi;
 

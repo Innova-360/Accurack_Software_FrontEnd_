@@ -7,16 +7,17 @@ import storeReducer from "./slices/storeSlice";
 import supplierReducer from "./slices/supplierSlice";
 import employeeReducer from "./slices/employeeSlice";
 // import productCategoriesReducer from "./slices/productCategoriesSlice";
-// import customerReducer from "./slices/customerSlice";
 import salesReducer from "./slices/salesSlice";
 import userReducer from "./slices/userSlice";
 import inventorySupplierReducer from "./slices/inventorySupplierSlice";
 import productsReducer, { productsApi } from "./slices/productsSlice";
 import { customerApi } from "./slices/customerSlice";
 import roleReducer from "./slices/roleSlice";
-import { taxApi} from "./slices/taxSlice";
+import { taxApi } from "./slices/taxSlice";
 import { categoryApi } from "./slices/categorySlice";
-import {taxReducer} from "./slices/taxSlice";
+import { taxReducer } from "./slices/taxSlice";
+import customerReducer from "./slices/customerSlice";
+import productCategoriesReducer from "./slices/productCategoriesSlice";
 
 export const store = configureStore({
   reducer: {
@@ -33,6 +34,8 @@ export const store = configureStore({
     roles: roleReducer,
     tax: taxReducer,
     sales: salesReducer,
+    customers: customerReducer,
+    productCategories: productCategoriesReducer,
     [taxApi.reducerPath]: taxApi.reducer,
     [categoryApi.reducerPath]: categoryApi.reducer,
     [productsApi.reducerPath]: productsApi.reducer,
@@ -43,7 +46,12 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: ["persist/PERSIST"],
       },
-    }).concat(taxApi.middleware, categoryApi.middleware, productsApi.middleware, customerApi.middleware),
+    }).concat(
+      taxApi.middleware,
+      categoryApi.middleware,
+      productsApi.middleware,
+      customerApi.middleware
+    ),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

@@ -55,7 +55,7 @@ export const getAllCards = (): CardSection[] => {
       sectionTitle: 'Cost',
       cards: [
         { title: 'Store\nStats' },
-        { title: 'Tax\nReports' },
+        { title: 'Tax ' },
         { title: 'Custom\nBuilder' },
         { title: 'Report\nBuilder' },
         { title: 'Settings' },

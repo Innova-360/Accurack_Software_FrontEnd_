@@ -1,6 +1,7 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAppSelector } from "../store/hooks";
+import Cookies from "js-cookie";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -12,9 +13,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // Check if user is authenticated
   const authToken = localStorage.getItem("authToken");
+  const accessToken = Cookies.get("accessToken");
   const isUserAuthenticated =
     isAuthenticated ||
-    (authToken && authToken !== "undefined" && authToken !== "null");
+    (authToken && authToken !== "undefined" && authToken !== "null") ||
+    (accessToken && accessToken !== "undefined" && accessToken !== "null");
 
   // Check if user is in the middle of OTP verification flow
   const userEmail = localStorage.getItem("userEmail");

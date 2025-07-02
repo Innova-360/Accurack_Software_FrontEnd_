@@ -470,19 +470,14 @@ const AddNewSale: React.FC = () => {
         status: "PENDING", // Default status as pending (uppercase)
         saleItems,
       };
-
       console.log("📦 Prepared sale data:", JSON.stringify(saleData, null, 2));
-
-      // Dispatch create sale action
       await dispatch(createSale(saleData)).unwrap();
-      
       toast.success("Sale created successfully!");
-      
-      // Navigate back to sales page
-      navigate(-1);
+
+      navigate(-1)
     } catch (error: any) {
       console.error("Error creating sale:", error);
-      toast.error(`Failed to create sale: ${error}`);
+      toast.error(`Failed to create sale: ${error.message || "An unexpected error occurred."}`);
     }
   };
 

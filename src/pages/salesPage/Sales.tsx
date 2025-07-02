@@ -20,13 +20,15 @@ const SalesPage: React.FC = () => {
   const navigate = useNavigate();
   const { id: storeId } = useParams<{ id?: string }>();
   const currentStore = useRequireStore();
-  
+
   // Redux state
-  const { sales, loading, error } = useSelector((state: RootState) => state.sales);
-  
+  const { sales, loading, error } = useSelector(
+    (state: RootState) => state.sales
+  );
+
   // Convert Redux sales data to Transaction format for compatibility
   console.log("Sales data from Redux:", sales);
-  
+
   // Debug: Log each sale's status
   sales.forEach((sale: any, index: number) => {
     console.log(`🔍 Processing sale ${index + 1}:`, {
@@ -34,28 +36,35 @@ const SalesPage: React.FC = () => {
       status: sale.status,
       statusType: typeof sale.status,
       paymentMethod: sale.paymentMethod,
-      customer: sale.customer?.customerName || sale.customerData?.customerName
+      customer: sale.customer?.customerName || sale.customerData?.customerName,
     });
   });
-  
+
   const transactions: any = sales.map((sale: any) => ({
     id: sale.id,
     transactionId: sale.transactionId || sale.id,
-    dateTime: new Date(sale.createdAt).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    dateTime: new Date(sale.createdAt).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }),
-    customerName: sale.customer?.customerName || sale.customerData?.customerName || 'Unknown Customer',
-    phoneNumber: sale.customer?.phoneNumber || sale.customer?.phone || sale.customerPhone || 'N/A',
+    customerName:
+      sale.customer?.customerName ||
+      sale.customerData?.customerName ||
+      "Unknown Customer",
+    phoneNumber:
+      sale.customer?.phoneNumber ||
+      sale.customer?.phone ||
+      sale.customerPhone ||
+      "N/A",
     items: sale.saleItems?.length || 0,
     total: sale.totalAmount,
     tax: sale.tax,
-    payment: sale.paymentMethod || 'CASH',
-    status: sale.status || 'Pending',
-    cashier: sale.cashierName
+    payment: sale.paymentMethod || "CASH",
+    status: sale.status || "Pending",
+    cashier: sale.cashierName,
   }));
   console.log("Converted transactions:", transactions);
 
@@ -63,12 +72,23 @@ const SalesPage: React.FC = () => {
   const stats = {
     todaysSales: sales.reduce((sum, sale) => sum + sale.totalAmount, 0),
     transactions: sales.length,
-    customers: new Set(sales.map((sale: any) => 
-      sale.customer?.phoneNumber || sale.customer?.phone || sale.customerPhone || 'unknown'
-    ).filter(phone => phone !== 'unknown')).size,
-    avgTransaction: sales.length > 0 ? sales.reduce((sum, sale) => sum + sale.totalAmount, 0) / sales.length : 0,
+    customers: new Set(
+      sales
+        .map(
+          (sale: any) =>
+            sale.customer?.phoneNumber ||
+            sale.customer?.phone ||
+            sale.customerPhone ||
+            "unknown"
+        )
+        .filter((phone) => phone !== "unknown")
+    ).size,
+    avgTransaction:
+      sales.length > 0
+        ? sales.reduce((sum, sale) => sum + sale.totalAmount, 0) / sales.length
+        : 0,
     productsAvailable: 0, // This would need to come from inventory
-    lowStockItems: 0 // This would need to come from inventory
+    lowStockItems: 0, // This would need to come from inventory
   };
   // Use the custom hook for sales data management
   // const {
@@ -97,7 +117,7 @@ const SalesPage: React.FC = () => {
       const params: any = {
         storeId: currentStore.id,
         page: currentPage,
-        limit: rowsPerPage
+        limit: rowsPerPage,
       };
       console.log("type of page:", typeof params.page);
       console.log("type of limit:", typeof params.limit);
@@ -108,7 +128,7 @@ const SalesPage: React.FC = () => {
       if (paymentFilter !== "All") {
         params.paymentMethod = paymentFilter;
       }
-      
+
       // Handle date filter - convert to actual dates
       if (dateFilter !== "Today") {
         // You can implement date range logic here based on your dateFilter values
@@ -118,7 +138,15 @@ const SalesPage: React.FC = () => {
       console.log("Fetching sales with filters:", params);
       dispatch(fetchSales(params));
     }
-  }, [currentStore?.id, currentPage, rowsPerPage, statusFilter, paymentFilter, dateFilter, dispatch]);
+  }, [
+    currentStore?.id,
+    currentPage,
+    rowsPerPage,
+    statusFilter,
+    paymentFilter,
+    dateFilter,
+    dispatch,
+  ]);
 
   // Fetch data when dependencies change
   useEffect(() => {
@@ -129,8 +157,9 @@ const SalesPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] =
-    useState<any | null>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<any | null>(
+    null
+  );
 
   // Server-side filtering is handled by backend for status, payment, etc.
   // But we still do client-side search filtering since search term is not sent to backend
@@ -138,19 +167,20 @@ const SalesPage: React.FC = () => {
     if (!searchTerm) {
       return transactions; // No search term, return all transactions from backend
     }
-    
+
     // Apply search filter on the server-filtered results
     return transactions.filter((transaction: any) => {
       const matchesSearch =
-        transaction.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.customerName
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
         transaction.transactionId
           .toLowerCase()
           .includes(searchTerm.toLowerCase());
       const matchesStatus =
         statusFilter === "All" || transaction.status === statusFilter;
       const matchesPayment =
-        paymentFilter === "All" ||
-        transaction.payment === paymentFilter;
+        paymentFilter === "All" || transaction.payment === paymentFilter;
 
       return matchesSearch && matchesStatus && matchesPayment;
     });
@@ -158,11 +188,18 @@ const SalesPage: React.FC = () => {
 
   const displayTransactions = getDisplayTransactions();
   const paginatedTransactions = displayTransactions;
-  
+
   // For pagination display
-  const totalPages = Math.ceil(displayTransactions.length > 0 ? displayTransactions.length / rowsPerPage : 1);
+  const totalPages = Math.ceil(
+    displayTransactions.length > 0
+      ? displayTransactions.length / rowsPerPage
+      : 1
+  );
   const startIndex = (currentPage - 1) * rowsPerPage + 1;
-  const endIndex = Math.min(currentPage * rowsPerPage, displayTransactions.length);
+  const endIndex = Math.min(
+    currentPage * rowsPerPage,
+    displayTransactions.length
+  );
 
   // Action handlers
   const handleSalesReport = () => {
@@ -185,6 +222,12 @@ const SalesPage: React.FC = () => {
   const handleView = (transaction: any) => {
     setSelectedTransaction(transaction);
     setIsViewModalOpen(true);
+  };
+
+  const handleNavigateToSale = (transaction: any) => {
+    if (storeId && transaction.id) {
+      navigate(`/store/${storeId}/sales/${transaction.id}`);
+    }
   };
 
   const handleEdit = (transaction: any) => {
@@ -227,9 +270,9 @@ const SalesPage: React.FC = () => {
           <p style="text-align: center; color: #666; margin-top: 20px;">Thank you for your business!</p>
         </div>
       `;
-      
+
       // Open print window
-      const printWindow = window.open('', '_blank');
+      const printWindow = window.open("", "_blank");
       if (printWindow) {
         printWindow.document.write(printContent);
         printWindow.document.close();
@@ -259,6 +302,7 @@ const SalesPage: React.FC = () => {
       }
     }
   };
+
   return (
     <>
       <Header />
@@ -271,15 +315,13 @@ const SalesPage: React.FC = () => {
               <p>{error}</p>
             </div>
           )}
-
-          {/* Header Section */}        <SalesHeader
-          onSalesReport={handleSalesReport}
-          onAnalytics={handleAnalytics}
-        />
-
+          {/* Header Section */}{" "}
+          <SalesHeader
+            onSalesReport={handleSalesReport}
+            onAnalytics={handleAnalytics}
+          />
           {/* Stats Grid */}
           <StatsGrid stats={stats} loading={loading} />
-
           {/* Filters Section */}
           <div className="bg-white rounded-lg p-6 mb-6">
             <FilterBar
@@ -296,7 +338,6 @@ const SalesPage: React.FC = () => {
               onClearFilters={handleClearFilters}
             />
           </div>
-
           {/* Table Section */}
           <div className="bg-white rounded-lg p-6 mb-6">
             {/* Table */}
@@ -327,13 +368,13 @@ const SalesPage: React.FC = () => {
             ) : (
               <TransactionTable
                 transactions={paginatedTransactions}
-                onView={handleView}
+                onView={handleNavigateToSale}
                 onEdit={handleEdit}
                 onPrint={handlePrint}
                 onDelete={handleDelete}
               />
             )}
-            
+
             {/* Pagination */}
             {displayTransactions.length > 0 && (
               <Pagination
@@ -348,7 +389,6 @@ const SalesPage: React.FC = () => {
               />
             )}
           </div>
-
           {/* Additional Action Buttons */}
         </div>
       </div>

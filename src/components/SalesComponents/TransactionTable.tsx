@@ -1,4 +1,5 @@
-import React from 'react';
+import { Eye } from "lucide-react";
+import React from "react";
 
 interface TransactionTableProps {
   transactions: any[]; // Using any to support both old and new transaction formats
@@ -9,24 +10,31 @@ interface TransactionTableProps {
 }
 
 const TransactionTable: React.FC<TransactionTableProps> = ({
-  transactions
+  transactions,
+  onView,
 }) => {
   const formatCurrency = (amount: number): string => {
+    if (typeof amount !== "number" || isNaN(amount)) {
+      return "$0.00";
+    }
     return `$${amount.toFixed(2)}`;
   };
   const getStatusBadge = (status: string) => {
     const statusConfig: { [key: string]: { color: string; text: string } } = {
-      'completed': { color: 'bg-green-500', text: 'Completed' },
-      'pending': { color: 'bg-yellow-500', text: 'Pending' },
-      'refunded': { color: 'bg-red-500', text: 'Refunded' },
-      'shipped': { color: 'bg-blue-500', text: 'Shipped' },
-      'delivered': { color: 'bg-green-500', text: 'Delivered' },
-      'cancelled': { color: 'bg-gray-500', text: 'Cancelled' }
+      completed: { color: "bg-green-500", text: "Completed" },
+      pending: { color: "bg-yellow-500", text: "Pending" },
+      refunded: { color: "bg-red-500", text: "Refunded" },
+      shipped: { color: "bg-blue-500", text: "Shipped" },
+      delivered: { color: "bg-green-500", text: "Delivered" },
+      cancelled: { color: "bg-gray-500", text: "Cancelled" },
     };
-    
-    const normalizedStatus = status?.toLowerCase() || 'pending';
-    const config = statusConfig[normalizedStatus] || { color: 'bg-gray-500', text: status || 'Unknown' };
-    
+
+    const normalizedStatus = status?.toLowerCase() || "pending";
+    const config = statusConfig[normalizedStatus] || {
+      color: "bg-gray-500",
+      text: status || "Unknown",
+    };
+
     return (
       <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">
         <div className={`w-2 h-2 rounded-full mr-1 ${config.color}`}></div>
@@ -37,21 +45,26 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
   const getPaymentMethodBadge = (paymentMethod: string) => {
     const paymentConfig: { [key: string]: { color: string; icon: string } } = {
-      'cash': { color: 'bg-green-500', icon: '' },
-      'card': { color: 'bg-blue-500', icon: '' },
-      'bank_transfer': { color: 'bg-teal-500', icon: '' },
-      'check': { color: 'bg-orange-500', icon: '' },
-      'digital_wallet': { color: 'bg-purple-500', icon: '' }
+      cash: { color: "bg-green-500", icon: "" },
+      card: { color: "bg-blue-500", icon: "" },
+      bank_transfer: { color: "bg-teal-500", icon: "" },
+      check: { color: "bg-orange-500", icon: "" },
+      digital_wallet: { color: "bg-purple-500", icon: "" },
     };
-    
-    const normalizedMethod = paymentMethod?.toLowerCase() || 'cash';
-    const config = paymentConfig[normalizedMethod] || { color: 'bg-gray-500', icon: '💰' };
-    
+
+    const normalizedMethod = paymentMethod?.toLowerCase() || "cash";
+    const config = paymentConfig[normalizedMethod] || {
+      color: "bg-gray-500",
+      icon: "💰",
+    };
+
     // Format display name
-    const displayName = paymentMethod ? 
-      paymentMethod.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 
-      'Cash';
-    
+    const displayName = paymentMethod
+      ? paymentMethod
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (l) => l.toUpperCase())
+      : "Cash";
+
     return (
       <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">
         <span className="mr-1">{config.icon}</span>
@@ -78,6 +91,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
               Products
             </th>
+
             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
               Total Amount
             </th>
@@ -99,22 +113,29 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
               Return
             </th>
+            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {transactions.map((transaction, index) => (
-            <tr key={transaction.id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-gray-100`}>
+            <tr
+              key={transaction.id}
+              className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100`}
+            >
               <td className="px-4 py-3 text-sm font-medium text-teal-600">
                 {transaction.id}
               </td>
               <td className="px-4 py-3 text-sm text-gray-900">
-                {transaction.customerName || transaction.customer?.customerName || 'Unknown Customer'}
+                {transaction.customerName ||
+                  transaction.customer?.customerName ||
+                  "Unknown Customer"}
               </td>
               <td className="px-4 py-3 text-sm text-gray-600">
-                {transaction.phoneNumber || transaction.customer?.phoneNumber || 'N/A'}
-              </td>
-              <td className="px-4 py-3 text-sm text-gray-600">
-                N/A
+                {transaction.phoneNumber ||
+                  transaction.customer?.phoneNumber ||
+                  "N/A"}
               </td>
               <td className="px-4 py-3 text-sm text-gray-900 text-center">
                 {transaction.items}
@@ -139,6 +160,14 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               </td>
               <td className="px-4 py-3 text-center">
                 <span className="text-sm text-gray-500">N/A</span>
+              </td>
+              <td className="px-4 py-3 text-center">
+                <span
+                  className="text-sm text-gray-500 cursor-pointer"
+                  onClick={() => onView(transaction)}
+                >
+                  <Eye />
+                </span>
               </td>
             </tr>
           ))}
