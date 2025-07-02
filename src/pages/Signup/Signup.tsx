@@ -40,6 +40,9 @@ const Signup = () => {
       lastName: formData.lastName,
       email: formData.email,
       companyName: formData.companyName,
+      companyEmail: formData.companyEmail,
+      companyPhone: formData.companyPhone,
+      companyAddress: formData.companyAddress,
     });
 
     // Validate form fields
