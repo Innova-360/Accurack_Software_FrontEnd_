@@ -47,8 +47,6 @@ export interface Variation {
   discount: number;
   customSku: string;
   supplierId: string;
-  imageFile: File | null;
-  imagePreview: string;
   hasPackSettings: boolean;
   packDiscounts: PackDiscount[];
   hasDiscountTiers: boolean;
@@ -74,8 +72,6 @@ export interface ProductFormData {
   orderValueDiscountValue: string;
   quantity: string;
   description: string;
-  imageFile: File | null;
-  imagePreview: string;
   hasPackSettings: boolean;
   packDiscounts: PackDiscount[];
   hasDiscountSettings: boolean;

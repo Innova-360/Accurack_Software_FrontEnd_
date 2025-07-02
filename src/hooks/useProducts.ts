@@ -1,47 +1,88 @@
-import { useState, useEffect } from "react";
-import { productAPI, type Product } from "../services/productAPI";
-import { products as mockProducts } from "../data/inventoryData";
+import { useState, useEffect, useCallback } from "react";
+import {
+  productAPI,
+  type Product,
+  type PaginatedProductsResponse,
+} from "../services/productAPI";
 
-export const useProducts = () => {
+interface PaginationParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  category?: string;
+}
+
+interface UseProductsResult {
+  products: Product[];
+  loading: boolean;
+  error: any;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  fetchWithParams: (params: PaginationParams) => Promise<void>;
+  refetch: () => Promise<void>;
+}
+
+export const useProducts = (
+  initialParams: PaginationParams = {}
+): UseProductsResult => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const fetchProducts = async () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<any>(null);
+  const [currentParams, setCurrentParams] =
+    useState<PaginationParams>(initialParams);
+  const [pagination, setPagination] = useState({
+    page: initialParams.page || 1,
+    limit: initialParams.limit || 10,
+    total: 0,
+    totalPages: 0,
+  });
+
+  const fetchWithParams = useCallback(async (params: PaginationParams) => {
+    setLoading(true);
+    setError(null);
+    setCurrentParams(params);
+
     try {
-      setLoading(true);
-      setError(null);
-      const fetchedProducts = await productAPI.getProducts();
-
-      // Use API data regardless of whether it's empty or not
-      setProducts(fetchedProducts);
-
-      if (fetchedProducts.length === 0) {
-        console.warn("No products returned from API");
-      } else {
-        console.log(
-          `Successfully loaded ${fetchedProducts.length} products from API`
-        );
-      }
+      const response: PaginatedProductsResponse =
+        await productAPI.getProducts(params);
+      setProducts(response.products);
+      setPagination(response.pagination);
     } catch (err) {
       console.error("Error fetching products:", err);
-      setError(err instanceof Error ? err.message : "Failed to fetch products");
-
-      // Only use mock data on actual API errors, not empty responses
-      console.warn("Using mock data due to API error");
-      setProducts(mockProducts);
+      setError(err);
+      setProducts([]);
+      setPagination({
+        page: params.page || 1,
+        limit: params.limit || 10,
+        total: 0,
+        totalPages: 0,
+      });
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchProducts();
   }, []);
+
+  const refetch = useCallback(async () => {
+    await fetchWithParams(currentParams);
+  }, [fetchWithParams, currentParams]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchWithParams(initialParams);
+  }, []); // Remove initialParams from dependency to prevent infinite re-renders
 
   return {
     products,
     loading,
     error,
-    refetch: fetchProducts,
+    pagination,
+    fetchWithParams,
+    refetch,
   };
 };

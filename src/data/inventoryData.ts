@@ -1,20 +1,3 @@
-// export interface Variant {
-//   id?: string;
-//   name: string;
-//   price: number;
-//   sku: string;
-//   msrpPrice?: number;
-//   discountAmount?: number;
-//   percentDiscount?: number;
-//   packs: Array<{
-//     minimumSellingQuantity: number;
-//     totalPacksQuantity: number;
-//     orderedPacksPrice: number;
-//     percentDiscount: number;
-//     discountAmount?: number;
-//   }>;
-// }
-
 export interface Variant {
   id?: string;
   name: string;
@@ -27,6 +10,8 @@ export interface Variant {
   percentDiscount?: number;
   supplierId?: string;
   packIds?: string[];
+  color?: string;
+  origin?: string;
   packs?: Array<{
     minimumSellingQuantity: number;
     totalPacksQuantity: number;
@@ -40,12 +25,14 @@ export interface Product {
   id?: string;
   name: string;
   quantity: number;
+  itemQuantity?: number; // Alternative quantity field used in the component
   plu: string;
+  pluUpc?: string; // Add pluUpc field
   sku: string;
   ean?: string; // Add EAN field
   description: string;
   price: string;
-  category: string;
+  category: string | { name: string; id?: string }; // Allow both string and object
   itemsPerUnit: number;
   supplier:
     | string
@@ -61,15 +48,35 @@ export interface Product {
   variants?: Variant[];
   // Additional fields for detailed product view
   costPrice?: number;
+  singleItemCostPrice?: number; // Add cost price field used in component
+  singleItemSellingPrice?: number; // Add selling price field used in component
   msrpPrice?: number;
   profitAmount?: number;
   profitMargin?: number;
+  percentDiscount?: number; // Add discount percentage field
+  discountAmount?: number; // Add discount amount field
   store?: {
     id: string;
     name: string;
   };
   sales?: any[];
-  purchaseOrders?: any[];
+  purchaseOrders?: Array<{
+    id: string;
+    quantity: number;
+    total?: number;
+    status: string;
+  }>;
+  productSuppliers?: Array<{
+    id?: string;
+    costPrice?: number;
+    state: string;
+    supplier?: {
+      id: string;
+      name: string;
+      email?: string;
+      phone?: string;
+    };
+  }>;
   packs?: Array<{
     id?: string;
     productId?: string;

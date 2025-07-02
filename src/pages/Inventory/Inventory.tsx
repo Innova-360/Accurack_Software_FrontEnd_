@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useStoreFromUrl } from "../../hooks/useStoreFromUrl";
@@ -23,7 +23,6 @@ import type { Product } from "../../data/inventoryData";
 import type { EditProductFormData } from "../../components/InventoryComponents/EditProductModal";
 import {
   useInventoryStats,
-  useFilteredProducts,
   useGroupedProducts,
   useLowStockProducts,
 } from "../../hooks/useInventory";
@@ -103,20 +102,27 @@ const Inventory: React.FC = () => {
   const navigate = useNavigate();
   const { storeId } = useStoreFromUrl(); // Handle store selection from URL
 
-  // Fetch products from API
-  const { products, loading, error, refetch } = useProducts();
-
-  // State for main inventory pagination
+  // State for main inventory pagination and filters
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
-  const [groupBy, setGroupBy] = useState("");
-  const [selectedItems, setSelectedItems] = useState<number[]>([]);
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "asc" | "desc";
   } | null>(null);
+
+  // Fetch products from API with pagination and filters
+  const { products, loading, error, pagination, fetchWithParams, refetch } =
+    useProducts({
+      page: currentPage,
+      limit: rowsPerPage,
+      search: searchTerm,
+      sortBy: sortConfig?.key,
+      sortOrder: sortConfig?.direction,
+    });
+  const [groupBy, setGroupBy] = useState("");
+  const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
   // State for low stock pagination
   const [lowStockCurrentPage, setLowStockCurrentPage] = useState(1);
@@ -137,15 +143,43 @@ const Inventory: React.FC = () => {
   const [isDeletingAllProducts, setIsDeletingAllProducts] = useState(false);
   const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
 
-  // Use custom hooks for data processing - MUST be called before any early returns
+  // Use custom hooks for data processing
   const inventoryStats = useInventoryStats(products);
-  const filteredProducts = useFilteredProducts(
-    products,
-    searchTerm,
-    sortConfig
-  );
-  const groupedProducts = useGroupedProducts(filteredProducts, groupBy);
+  // Server-side pagination - use products directly from API
+  const groupedProducts = useGroupedProducts(products, groupBy);
   const lowStockProducts = useLowStockProducts(products);
+
+  // Debounced search state
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Fetch data when search term changes
+  useEffect(() => {
+    if (debouncedSearchTerm !== searchTerm) return;
+
+    fetchWithParams({
+      page: 1, // Reset to first page on search
+      limit: rowsPerPage,
+      search: debouncedSearchTerm,
+      sortBy: sortConfig?.key,
+      sortOrder: sortConfig?.direction,
+    });
+    setCurrentPage(1);
+  }, [
+    debouncedSearchTerm,
+    rowsPerPage,
+    sortConfig?.key,
+    sortConfig?.direction,
+    fetchWithParams,
+  ]);
 
   // Show loading state
   if (loading) {
@@ -201,17 +235,15 @@ const Inventory: React.FC = () => {
       </div>
     );
   }
-  // Calculate pagination for main inventory
-  const totalItems = filteredProducts.length;
-  const totalPages = Math.ceil(totalItems / rowsPerPage);
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-  const currentProducts =
-    groupBy === "category"
-      ? filteredProducts
-      : filteredProducts.slice(startIndex, endIndex);
 
-  // Calculate pagination for low stock products
+  // Server-side pagination - use pagination data from API
+  const totalItems = pagination.total;
+  const totalPages = pagination.totalPages;
+  const startIndex = (pagination.page - 1) * pagination.limit;
+  const endIndex = Math.min(startIndex + pagination.limit, totalItems);
+  const currentProducts = products; // All products returned from API for current page
+
+  // Calculate pagination for low stock products (client-side for now)
   const totalLowStockItems = lowStockProducts.length;
   const totalLowStockPages = Math.ceil(
     totalLowStockItems / lowStockRowsPerPage
@@ -231,19 +263,26 @@ const Inventory: React.FC = () => {
         : [...prev, category]
     );
   };
-  // Pagination handlers for main inventory
+  // Pagination handlers for main inventory - now triggers server-side fetch
   const handlePageChange = async (newPage: number) => {
     if (newPage === currentPage || isPageChanging) return;
 
     setIsPageChanging(true);
-
-    // Add a small delay for smooth transition
-    await new Promise((resolve) => setTimeout(resolve, 150));
-
     setCurrentPage(newPage);
 
-    // Reset animation state
-    setTimeout(() => setIsPageChanging(false), 300);
+    try {
+      await fetchWithParams({
+        page: newPage,
+        limit: rowsPerPage,
+        search: searchTerm,
+        sortBy: sortConfig?.key,
+        sortOrder: sortConfig?.direction,
+      });
+    } catch (error) {
+      console.error("Error fetching page:", error);
+    } finally {
+      setTimeout(() => setIsPageChanging(false), 300);
+    }
   };
 
   // Pagination handlers for low stock products
@@ -265,15 +304,27 @@ const Inventory: React.FC = () => {
     setLowStockRowsPerPage(newRowsPerPage);
     setLowStockCurrentPage(1); // Reset to first page when changing rows per page
   };
-
-  const handleRowsPerPageChange = (newRowsPerPage: number) => {
+  const handleRowsPerPageChange = async (newRowsPerPage: number) => {
     setRowsPerPage(newRowsPerPage);
     setCurrentPage(1); // Reset to first page when changing rows per page
+
+    try {
+      await fetchWithParams({
+        page: 1,
+        limit: newRowsPerPage,
+        search: searchTerm,
+        sortBy: sortConfig?.key,
+        sortOrder: sortConfig?.direction,
+      });
+    } catch (error) {
+      console.error("Error changing rows per page:", error);
+    }
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
     setCurrentPage(1); // Reset to first page when searching
+    // Search will be triggered by the useEffect with debounced search term
   };
   const handleGroupByChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
@@ -287,8 +338,7 @@ const Inventory: React.FC = () => {
       setExpandedCategories([]);
     }
   };
-
-  // Sorting function
+  // Server-side sorting function
   const handleSort = (key: string) => {
     let direction: "asc" | "desc" = "asc";
     if (
@@ -298,13 +348,19 @@ const Inventory: React.FC = () => {
     ) {
       direction = "desc";
     }
+
     setSortConfig({ key, direction });
+    setCurrentPage(1); // Reset to first page when sorting
+    // Sorting will be triggered by the useEffect
   };
 
   // Checkbox handlers
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const allIds = currentProducts.map((_, index) => startIndex + index);
+      // Use product IDs instead of array indices for server-side pagination
+      const allIds = currentProducts.map(
+        (product: Product, index: number) => index
+      );
       setSelectedItems(allIds);
     } else {
       setSelectedItems([]);
@@ -312,11 +368,10 @@ const Inventory: React.FC = () => {
   };
 
   const handleSelectItem = (index: number, checked: boolean) => {
-    const actualIndex = startIndex + index;
     if (checked) {
-      setSelectedItems([...selectedItems, actualIndex]);
+      setSelectedItems([...selectedItems, index]);
     } else {
-      setSelectedItems(selectedItems.filter((id) => id !== actualIndex));
+      setSelectedItems(selectedItems.filter((id) => id !== index));
     }
   }; // Modal handlers
   const handleAddInventoryClick = () => {

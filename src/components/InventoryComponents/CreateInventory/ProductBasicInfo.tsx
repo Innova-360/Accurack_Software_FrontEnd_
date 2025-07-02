@@ -12,7 +12,6 @@ import {
 interface ProductBasicInfoProps {
   formData: ProductFormData;
   onFormDataChange: (field: keyof ProductFormData, value: any) => void;
-  fileInputRef: React.RefObject<HTMLInputElement>;
   showOptionalFields: boolean;
   isVariantMode?: boolean;
   // Add suppliers as props to avoid duplicate API calls
@@ -27,7 +26,6 @@ interface ProductBasicInfoProps {
 const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
   formData,
   onFormDataChange,
-  fileInputRef,
   showOptionalFields,
   isVariantMode = false,
   suppliers: propSuppliers,
@@ -58,6 +56,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
   // State for managing create category
   const [isCreatingCategory, setIsCreatingCategory] = React.useState(false);
   const [newCategoryName, setNewCategoryName] = React.useState("");
+  const [loadingTimeout, setLoadingTimeout] = React.useState(false);
 
   // Use prop suppliers if available, otherwise use Redux suppliers
   const suppliers = propSuppliers || reduxSuppliers;
@@ -66,21 +65,66 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
 
   // Use prop categories if available, otherwise use Redux categories
   const categories = propCategories || reduxCategories;
-  const categoriesLoading = propCategoriesLoading ?? reduxCategoriesLoading;
+  // Handle loading state - if no categories loading is explicitly provided, assume not loading
+  const categoriesLoading =
+    propCategoriesLoading !== undefined
+      ? propCategoriesLoading
+      : reduxCategoriesLoading || false;
+
+  // Timeout for stuck loading state
+  React.useEffect(() => {
+    if (categoriesLoading) {
+      const timer = setTimeout(() => {
+        setLoadingTimeout(true);
+        console.warn("Categories loading timeout - allowing interaction");
+      }, 5000); // 5 second timeout
+
+      return () => clearTimeout(timer);
+    } else {
+      setLoadingTimeout(false);
+    }
+  }, [categoriesLoading]);
+
+  // Use effective loading state (false if timeout occurred)
+  const effectiveCategoriesLoading = categoriesLoading && !loadingTimeout;
+
+  // Debug logging to see categories state
+  React.useEffect(() => {
+    console.log("🔍 ProductBasicInfo - Categories data:", {
+      propCategories: propCategories?.length || 0,
+      reduxCategories: reduxCategories?.length || 0,
+      finalCategories: categories?.length || 0,
+      propCategoriesLoading,
+      reduxCategoriesLoading,
+      finalCategoriesLoading: categoriesLoading,
+      effectiveCategoriesLoading,
+      loadingTimeout,
+      categoriesData: categories?.slice(0, 2),
+    });
+  }, [
+    propCategories,
+    reduxCategories,
+    categories,
+    propCategoriesLoading,
+    reduxCategoriesLoading,
+    categoriesLoading,
+    effectiveCategoriesLoading,
+    loadingTimeout,
+  ]);
 
   // Debug logging to see supplier state
   React.useEffect(() => {
-    console.log("🔍 ProductBasicInfo - Suppliers data:", {
-      propSuppliers: propSuppliers?.length || 0,
-      reduxSuppliers: reduxSuppliers?.length || 0,
-      finalSuppliers: suppliers?.length || 0,
-      loading: suppliersLoading,
-      error: suppliersError,
-      isVariantMode,
-      propSuppliersData: propSuppliers?.slice(0, 2),
-      reduxSuppliersData: reduxSuppliers?.slice(0, 2),
-      finalSuppliersData: suppliers?.slice(0, 2),
-    });
+    // console.log("🔍 ProductBasicInfo - Suppliers data:", {
+    //   propSuppliers: propSuppliers?.length || 0,
+    //   reduxSuppliers: reduxSuppliers?.length || 0,
+    //   finalSuppliers: suppliers?.length || 0,
+    //   loading: suppliersLoading,
+    //   error: suppliersError,
+    //   isVariantMode,
+    //   propSuppliersData: propSuppliers?.slice(0, 2),
+    //   reduxSuppliersData: reduxSuppliers?.slice(0, 2),
+    //   finalSuppliersData: suppliers?.slice(0, 2),
+    // });
   }, [
     propSuppliers,
     reduxSuppliers,
@@ -111,8 +155,8 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
       storeId = inventoryMatch[1];
     }
 
-    console.log("🔍 Current pathname:", pathname);
-    console.log("📦 Extracted storeId:", storeId);
+    // console.log("🔍 Current pathname:", pathname);
+    // console.log("📦 Extracted storeId:", storeId);
 
     // Only fetch if we have a storeId and suppliers haven't been loaded yet
     if (
@@ -121,10 +165,10 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
       suppliers.length === 0 &&
       !suppliersError
     ) {
-      console.log(
-        "📦 Fetching suppliers for store (ProductBasicInfo):",
-        storeId
-      );
+      // console.log(
+      //   "📦 Fetching suppliers for store (ProductBasicInfo):",
+      //   storeId
+      // );
       dispatch(fetchInventorySuppliers({ storeId, page: 1, limit: 50 }) as any);
     }
   }, [
@@ -142,18 +186,11 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
     const minQuantity = parseInt(formData.minSellingQuantity) || 1;
     const calculatedMinOrder = sellingCost * minQuantity;
 
+    // Always update MOV when selling price or quantity changes
     if (calculatedMinOrder > 0) {
-      const currentMinOrder = parseFloat(formData.minOrderValue) || 0;
-      if (currentMinOrder < calculatedMinOrder) {
-        onFormDataChange("minOrderValue", calculatedMinOrder.toFixed(2));
-      }
+      onFormDataChange("minOrderValue", calculatedMinOrder.toFixed(2));
     }
-  }, [
-    formData.itemSellingCost,
-    formData.minSellingQuantity,
-    formData.minOrderValue,
-    onFormDataChange,
-  ]);
+  }, [formData.itemSellingCost, formData.minSellingQuantity, onFormDataChange]);
 
   // Calculate discounted order value
   const calculateDiscountedValue = () => {
@@ -208,18 +245,6 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
     onFormDataChange,
   ]);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      onFormDataChange("imageFile", file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        onFormDataChange("imagePreview", e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   // Handle category creation
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) return;
@@ -250,11 +275,11 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 hover:shadow-xl transition-all duration-300">
-      <div className="flex items-center space-x-3 mb-8">
+    <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 border border-gray-200 hover:shadow-xl transition-all duration-300">
+      <div className="flex items-center space-x-3 mb-6 sm:mb-8">
         <div className="p-2 bg-[#0f4d57] rounded-lg">
           <svg
-            className="w-6 h-6 text-white"
+            className="w-5 h-5 sm:w-6 sm:h-6 text-white"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -268,31 +293,31 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
           </svg>
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
             Product Information
           </h2>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             Enter the basic details of your product
           </p>
         </div>
       </div>{" "}
       {/* Primary Fields - Always Visible */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-700">
+          <label className="block text-xs sm:text-sm font-semibold text-gray-700">
             Product Name *
           </label>
           <input
             type="text"
             value={formData.productName}
             onChange={(e) => onFormDataChange("productName", e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
             placeholder="Enter product name"
             required
           />
         </div>
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-700">
+          <label className="block text-xs sm:text-sm font-semibold text-gray-700">
             Category *
           </label>
           <select
@@ -307,20 +332,80 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                 onFormDataChange("category", value);
               }
             }}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
             required
-            disabled={categoriesLoading || isCreatingCategory}
+            disabled={isCreatingCategory}
           >
             <option value="">
-              {categoriesLoading ? "Loading categories..." : "Select Category"}
+              {effectiveCategoriesLoading
+                ? "Loading categories..."
+                : !categories || categories.length === 0
+                  ? "Select an option below"
+                  : "Select Category"}
             </option>
             <option value="create_new">+ Create New Category</option>
-            {categories?.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
+            {categories && categories.length > 0 && (
+              <>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </>
+            )}
           </select>
+
+          {/* Show helpful message when no categories exist with direct action */}
+          {!effectiveCategoriesLoading &&
+            (!categories || categories.length === 0) &&
+            !isCreatingCategory && (
+              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 text-blue-800 text-sm">
+                    <svg
+                      className="w-4 h-4"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>
+                      No categories found. Create your first category.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsCreatingCategory(true)}
+                    className="px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors duration-200"
+                  >
+                    Create Category
+                  </button>
+                </div>
+              </div>
+            )}
+
+          {/* Helper text when categories exist */}
+          {!effectiveCategoriesLoading &&
+            categories &&
+            categories.length > 0 &&
+            !isCreatingCategory && (
+              <div className="mt-1 text-xs text-gray-500">
+                Don't see your category? Select "+ Create New Category" from the
+                dropdown above.
+              </div>
+            )}
+
+          {/* Show loading timeout warning */}
+          {loadingTimeout && categoriesLoading && (
+            <div className="mt-1 text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
+              Categories took too long to load. You can still create new
+              categories.
+            </div>
+          )}
 
           {isCreatingCategory && (
             <div className="mt-2 space-y-2">
@@ -427,9 +512,12 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                 </div>
                 {newCategoryName.trim() && (
                   <div className="text-gray-500">
-                    Code: {" "}
+                    Code:{" "}
                     <span className="font-mono text-gray-700">
-                      {newCategoryName.trim().toUpperCase().replace(/\s+/g, "_")}
+                      {newCategoryName
+                        .trim()
+                        .toUpperCase()
+                        .replace(/\s+/g, "_")}
                     </span>
                   </div>
                 )}
@@ -483,16 +571,29 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                   const selectedSupplierId = e.target.value;
                   onFormDataChange("supplierId", selectedSupplierId);
                 }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
-                required
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400 ${
+                  !suppliersLoading &&
+                  !suppliersError &&
+                  (!suppliers || suppliers.length === 0)
+                    ? "bg-gray-100 cursor-not-allowed text-gray-500"
+                    : ""
+                }`}
+                required={suppliers && suppliers.length > 0}
+                disabled={
+                  !suppliersLoading &&
+                  !suppliersError &&
+                  (!suppliers || suppliers.length === 0)
+                }
               >
-                <option value="">Select Vendor</option>
-                {suppliersLoading && (
-                  <option disabled>Loading suppliers...</option>
-                )}
-                {suppliersError && (
-                  <option disabled>Error loading suppliers</option>
-                )}
+                <option value="">
+                  {suppliersLoading
+                    ? "Loading suppliers..."
+                    : suppliersError
+                      ? "Error loading suppliers"
+                      : !suppliers || suppliers.length === 0
+                        ? "No suppliers available"
+                        : "Select Vendor"}
+                </option>
                 {suppliers &&
                   suppliers.length > 0 &&
                   suppliers.map((supplier) => (
@@ -511,6 +612,30 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                   {suppliersError}
                 </div>
               )}
+              {/* Show helpful message when no suppliers exist */}
+              {!suppliersLoading &&
+                !suppliersError &&
+                (!suppliers || suppliers.length === 0) && (
+                  <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-center space-x-2 text-yellow-800 text-sm">
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <span>
+                        No suppliers found. Please add suppliers first to
+                        continue.
+                      </span>
+                    </div>
+                  </div>
+                )}
             </div>
 
             <div className="space-y-2">
@@ -675,20 +800,32 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
             </div>
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">
-                MSRP Price
+                MSRP Price{" "}
+                <span className="text-gray-400 text-xs font-normal">
+                  (Optional)
+                </span>
               </label>
-              <input
-                type="number"
-                value={formData.msrpPrice}
-                onChange={(e) => onFormDataChange("msrpPrice", e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                placeholder="e.g. 29.99"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-3 text-gray-500">$</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.msrpPrice}
+                  onChange={(e) =>
+                    onFormDataChange("msrpPrice", e.target.value)
+                  }
+                  className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                  placeholder="0.00"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">
                 Minimum Order Value *
+                <span className="text-gray-400 text-xs font-normal ml-1">
+                  (Auto-calculated: Selling Price × Min Quantity)
+                </span>
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-3 text-gray-500">$</span>
@@ -727,7 +864,23 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                     (parseInt(formData.minSellingQuantity) || 1)
                   ).toFixed(2)}
                 </p>
-              )}{" "}
+              )}
+              <p className="text-blue-600 text-xs mt-1 flex items-center">
+                <svg
+                  className="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Automatically updates when selling price or quantity changes
+              </p>{" "}
             </div>
           </div>
         </div>
@@ -869,75 +1022,18 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
 
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">
-                Product Image (Optional)
+                Description
               </label>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
+              <textarea
+                value={formData.description}
+                onChange={(e) =>
+                  onFormDataChange("description", e.target.value)
+                }
+                rows={4}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400 resize-none"
+                placeholder="Enter product description..."
               />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-[#0f4d57] transition-all duration-200 text-sm text-gray-600 hover:text-[#0f4d57] hover:bg-gray-50"
-              >
-                <div className="flex items-center justify-center space-x-2">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
-                  <span>
-                    {formData.imageFile ? "Change Image" : "Upload Image"}
-                  </span>
-                </div>
-              </button>
             </div>
-          </div>
-
-          {formData.imagePreview && (
-            <div className="mb-6">
-              <div className="w-32 h-32 relative">
-                <img
-                  src={formData.imagePreview}
-                  alt="Product preview"
-                  className="w-full h-full object-cover rounded-lg border-2 border-gray-200 shadow-md"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    onFormDataChange("imageFile", null);
-                    onFormDataChange("imagePreview", "");
-                  }}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              Description
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => onFormDataChange("description", e.target.value)}
-              rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400 resize-none"
-              placeholder="Enter product description..."
-            />
           </div>
         </div>
       )}
