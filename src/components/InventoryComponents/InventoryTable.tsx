@@ -196,7 +196,6 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
 
                 return (
                   <React.Fragment key={productKey}>
-                    {" "}
                     {/* Main product row */}
                     <tr className="hover:bg-gray-50">
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
@@ -233,7 +232,9 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                           )}
                           <div className="min-w-0 flex-1">
                             <div className="font-medium truncate">
-                              {product.name}
+                              {typeof product.name === "string"
+                                ? product.name
+                                : String(product.name || "Unknown Product")}
                             </div>
                             {hasVariantsToShow && (
                               <div className="text-xs text-gray-500">
@@ -268,35 +269,55 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                         </span>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-blue-600 border-b border-gray-300">
-                        <div className="truncate">{product.plu}</div>
+                        <div className="truncate">
+                          {typeof product.plu === "string"
+                            ? product.plu
+                            : String(product.plu || "N/A")}
+                        </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-blue-600 border-b border-gray-300">
-                        <div className="truncate">{product.sku}</div>
+                        <div className="truncate">
+                          {typeof product.sku === "string"
+                            ? product.sku
+                            : String(product.sku || "N/A")}
+                        </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <div
                           className="truncate max-w-[120px] sm:max-w-none"
-                          title={product.description}
+                          title={
+                            typeof product.description === "string"
+                              ? product.description
+                              : ""
+                          }
                         >
-                          {product.description}
+                          {typeof product.description === "string"
+                            ? product.description
+                            : String(product.description || "No description")}
                         </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                        {product.price}
+                        {typeof product.price === "string"
+                          ? product.price
+                          : typeof product.price === "number"
+                            ? `$${(product.price as number).toFixed(2)}`
+                            : "$0.00"}
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <div className="truncate">
                           {typeof product.category === "string"
                             ? product.category
-                            : product.category?.name || "Uncategorized"}
+                            : (product.category as any)?.name ||
+                              "Uncategorized"}
                         </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                        {product.itemsPerUnit}
-                      </td>{" "}
+                        {typeof product.itemsPerUnit === "number"
+                          ? product.itemsPerUnit
+                          : String(product.itemsPerUnit || "1")}
+                      </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <div className="flex items-center gap-2">
-                          {" "}
                           {/* View Button */}
                           <button
                             onClick={() => handleViewProduct(product)}
@@ -322,7 +343,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                 d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                               />
                             </svg>
-                          </button>{" "}
+                          </button>
                           {/* Edit Button */}
                           <button
                             onClick={() => handleEditProduct(product)}
@@ -343,7 +364,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                               />
                             </svg>
-                          </button>{" "}
+                          </button>
                           {/* Delete Button */}
                           <button
                             onClick={() => {
@@ -386,49 +407,6 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                     {hasVariantsToShow &&
                       isExpanded &&
                       product.variants?.map((variant, variantIndex) => (
-                        // <tr
-                        //   key={`${productKey}-variant-${variantIndex}`}
-                        //   className="bg-gray-50 hover:bg-gray-100"
-                        // >
-                        //   <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                        //     {/* Empty checkbox column for variants */}
-                        //   </td>
-                        //   <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                        //     <div className="pl-4 sm:pl-6 flex items-center gap-1 sm:gap-2">
-                        //       <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full flex-shrink-0"></div>
-                        //       <span className="text-gray-700 truncate">
-                        //         {variant.name}
-                        //       </span>
-                        //     </div>
-                        //   </td>
-                        //   <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300 text-gray-600">
-                        //     -
-                        //   </td>
-                        //   <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-blue-600 border-b border-gray-300">
-                        //     -
-                        //   </td>
-                        //   <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-blue-600 border-b border-gray-300">
-                        //     <div className="truncate">{variant.sku}</div>
-                        //   </td>
-                        //   <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300 text-gray-600">
-                        //     <div className="truncate max-w-[120px] sm:max-w-none">
-                        //       Variant of {product.name}
-                        //     </div>
-                        //   </td>
-                        //   <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                        //     ${variant.price.toFixed(2)}
-                        //   </td>
-                        //   <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                        //     <div className="truncate">{product.supplier}</div>
-                        //   </td>
-                        //   <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                        //     <div className="truncate">{product.category}</div>
-                        //   </td>
-                        //   <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                        //     {product.itemsPerUnit}
-                        //   </td>
-                        // </tr>
-
                         <tr
                           key={`${productKey}-variant-${variantIndex}`}
                           className="bg-gray-50 hover:bg-gray-100"
@@ -440,7 +418,9 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                             <div className="pl-4 sm:pl-6 flex items-center gap-1 sm:gap-2">
                               <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full flex-shrink-0"></div>
                               <span className="text-gray-700 truncate">
-                                {variant.name}
+                                {typeof variant.name === "string"
+                                  ? variant.name
+                                  : String(variant.name || "Variant")}
                               </span>
                             </div>
                           </td>
@@ -465,34 +445,13 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                               {variant.sku || variant.id?.slice(0, 8) || "-"}
                             </div>
                           </td>
-                          {/* <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300 text-gray-600">
-                            <div className="truncate max-w-[120px] sm:max-w-none">
-                              Variant of {product.name}
-                              {variant.discountAmount > 0 && (
-                                <div className="text-xs text-green-600">
-                                  ${variant.discountAmount} discount
-                                </div>
-                              )}
-                              {variant.percentDiscount > 0 && (
-                                <div className="text-xs text-green-600">
-                                  {variant.percentDiscount}% off
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                            <div className="flex flex-col">
-                              <span>${variant.price.toFixed(2)}</span>
-                              {variant.msrpPrice && variant.msrpPrice > 0 && (
-                                <span className="text-xs text-gray-500 line-through">
-                                  MSRP: ${variant.msrpPrice.toFixed(2)}
-                                </span>
-                              )}
-                            </div>
-                          </td> */}
+
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300 text-gray-600">
                             <div className="truncate max-w-[120px] sm:max-w-none">
-                              Variant of {product.name}
+                              Variant of{" "}
+                              {typeof product.name === "string"
+                                ? product.name
+                                : String(product.name || "Product")}
                               {variant.discountAmount &&
                                 variant.discountAmount > 0 && (
                                   <div className="text-xs text-green-600">
@@ -521,12 +480,17 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                             <div className="truncate">
                               {typeof product.category === "string"
                                 ? product.category
-                                : product.category?.name || "Uncategorized"}
+                                : (product.category as any)?.name ||
+                                  "Uncategorized"}
                             </div>
-                          </td>{" "}
+                          </td>
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                             <div className="flex flex-col text-xs">
-                              <span>{product.itemsPerUnit}</span>
+                              <span>
+                                {typeof product.itemsPerUnit === "number"
+                                  ? product.itemsPerUnit
+                                  : String(product.itemsPerUnit || "1")}
+                              </span>
                               {variant.packIds &&
                                 variant.packIds.length > 0 && (
                                   <span className="text-blue-600">

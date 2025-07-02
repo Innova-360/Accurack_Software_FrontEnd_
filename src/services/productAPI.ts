@@ -4,7 +4,17 @@ import type { Product as BaseProduct, Variant } from "../data/inventoryData";
 export interface ApiProduct {
   id: string;
   name: string;
-  category: string;
+  category:
+    | string
+    | {
+        id: string;
+        name: string;
+        code?: string;
+        description?: string;
+        parentId?: string;
+        createdAt?: string;
+        updatedAt?: string;
+      };
   ean: string;
   pluUpc: string;
   supplierId: string;
@@ -100,7 +110,10 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
       ean: apiProduct.ean || "", // Add EAN field
       description: apiProduct.description || "this is description",
       price: `$${(apiProduct.singleItemSellingPrice || 0).toFixed(2)}`,
-      category: apiProduct.category || "Uncategorized",
+      category:
+        typeof apiProduct.category === "string"
+          ? apiProduct.category
+          : (apiProduct.category as any)?.name || "Uncategorized",
       itemsPerUnit: 1,
       supplier: supplierInfo,
       supplierId: apiProduct.supplierId, // Add supplier ID
@@ -156,16 +169,73 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
 
 // Export the Product type for use in other components
 export type Product = BaseProduct;
-export type { Variant };
+export type { Variant, PaginatedProductsResponse, PaginationParams };
+
+// Add interface for pagination response
+interface PaginatedProductsResponse {
+  products: Product[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+// Add interface for pagination parameters
+interface PaginationParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  category?: string;
+}
 
 // API service
 export const productAPI = {
-  // Fetch all products
-  async getProducts(): Promise<Product[]> {
+  // Fetch products with pagination
+  async getProducts(
+    params: PaginationParams = {}
+  ): Promise<PaginatedProductsResponse> {
     try {
-      const response = await apiClient.get("/product/list");
-      console.log("API Response:", response.data); // Debug log      // Handle different possible response structures
+      // Set default pagination parameters
+      const page = params.page || 1;
+      const limit = params.limit || 10;
+
+      const searchParams = new URLSearchParams();
+      searchParams.append("page", page.toString());
+      searchParams.append("limit", limit.toString());
+
+      // Add search parameter if provided
+      if (params.search && params.search.trim()) {
+        searchParams.append("search", params.search.trim());
+      }
+
+      // Add sorting parameters if provided
+      if (params.sortBy) {
+        searchParams.append("sortBy", params.sortBy);
+        searchParams.append("sortOrder", params.sortOrder || "asc");
+      }
+
+      // Add category filter if provided
+      if (params.category && params.category !== "all") {
+        searchParams.append("category", params.category);
+      }
+
+      const url = `/product/list?${searchParams.toString()}`;
+      console.log("Making API request to:", url); // Debug log
+      const response = await apiClient.get(url);
+      console.log("API Response:", response.data); // Debug log
+
+      // Handle different possible response structures
       let apiProducts: ApiProduct[];
+      let pagination = {
+        page: page,
+        limit: limit,
+        total: 0,
+        totalPages: 0,
+      };
 
       // First check if response.data.data exists and has products
       if (
@@ -173,15 +243,40 @@ export const productAPI = {
         Array.isArray(response.data.data.products)
       ) {
         apiProducts = response.data.data.products;
+        // Check if pagination info exists
+        if (response.data.data.pagination) {
+          pagination = { ...pagination, ...response.data.data.pagination };
+        } else {
+          pagination.total = apiProducts.length;
+          pagination.totalPages = Math.ceil(
+            apiProducts.length / pagination.limit
+          );
+        }
       } else if (response.data?.data && Array.isArray(response.data.data)) {
         apiProducts = response.data.data;
+        pagination.total = apiProducts.length;
+        pagination.totalPages = Math.ceil(
+          apiProducts.length / pagination.limit
+        );
       } else if (Array.isArray(response.data)) {
         apiProducts = response.data;
+        pagination.total = apiProducts.length;
+        pagination.totalPages = Math.ceil(
+          apiProducts.length / pagination.limit
+        );
       } else if (
         response.data?.products &&
         Array.isArray(response.data.products)
       ) {
         apiProducts = response.data.products;
+        if (response.data.pagination) {
+          pagination = { ...pagination, ...response.data.pagination };
+        } else {
+          pagination.total = apiProducts.length;
+          pagination.totalPages = Math.ceil(
+            apiProducts.length / pagination.limit
+          );
+        }
       } else if (
         response.data?.data &&
         typeof response.data.data === "object"
@@ -202,26 +297,72 @@ export const productAPI = {
 
         if (foundArray) {
           apiProducts = foundArray;
+          pagination.total = apiProducts.length;
+          pagination.totalPages = Math.ceil(
+            apiProducts.length / pagination.limit
+          );
         } else {
           console.error("No array found in data object:", response.data.data);
-          return [];
+          return {
+            products: [],
+            pagination: {
+              page: params.page || 1,
+              limit: params.limit || 10,
+              total: 0,
+              totalPages: 0,
+            },
+          };
         }
       } else {
         console.error("Unexpected API response structure:", response.data);
-        // Return empty array if we can't find products
-        return [];
+        // Return empty response with correct pagination structure
+        return {
+          products: [],
+          pagination: {
+            page: page,
+            limit: limit,
+            total: 0,
+            totalPages: 0,
+          },
+        };
       }
 
       // Validate that we have an array
       if (!Array.isArray(apiProducts)) {
         console.error("API products is not an array:", apiProducts);
-        return [];
+        return {
+          products: [],
+          pagination: {
+            page: page,
+            limit: limit,
+            total: 0,
+            totalPages: 0,
+          },
+        };
       }
 
       // Transform API products to match the existing Product interface
-      return apiProducts.map((apiProduct) => transformApiProduct(apiProduct));
+      const transformedProducts = apiProducts.map((apiProduct) =>
+        transformApiProduct(apiProduct)
+      );
+
+      return {
+        products: transformedProducts,
+        pagination,
+      };
     } catch (error) {
       console.error("Error fetching products:", error);
+      throw error;
+    }
+  },
+
+  // Legacy method for backward compatibility - fetches all products without pagination
+  async getAllProducts(): Promise<Product[]> {
+    try {
+      const response = await this.getProducts({ page: 1, limit: 1000 }); // Get a large number to simulate "all"
+      return response.products;
+    } catch (error) {
+      console.error("Error fetching all products:", error);
       throw error;
     }
   },
@@ -259,8 +400,8 @@ export const productAPI = {
 
       // Fallback: Get all products and find the one with matching ID
       try {
-        const allProducts = await this.getProducts();
-        const product = allProducts.find(
+        const allProductsResponse = await this.getAllProducts();
+        const product = allProductsResponse.find(
           (p) => p.id === id || p.sku === id || p.plu === id
         );
 

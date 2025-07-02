@@ -22,8 +22,8 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  token: localStorage.getItem('authToken'),
-  isAuthenticated: !!localStorage.getItem('authToken'),
+  token: localStorage.getItem("authToken"),
+  isAuthenticated: !!localStorage.getItem("authToken"),
   loading: false,
   error: null,
 };
@@ -182,7 +182,7 @@ export const googleAuthCallback = createAsyncThunk(
     try {
       // Create a one-time axios instance without credentials for the callback
       const baseUrl =
-        import.meta.env.VITE_API_URL || "http://localhost:4000/api/v1";
+        import.meta.env.VITE_API_URL;
       const response = await axios.post(
         `${baseUrl}/auth/google/callback`,
         callbackData,
@@ -203,41 +203,30 @@ export const googleAuthCallback = createAsyncThunk(
   }
 );
 
-export const sendOtp = createAsyncThunk(
-  "/auth/send-otp",
-  async (email: string, { rejectWithValue }) => {
-    try {
-      console.log("📤 Sending OTP to email:", email);
-      const response = await apiClient.post("/auth/send-otp", { email });
-      console.log("✅ OTP sent successfully:", response.data);
-      return response.data;
-    } catch (error: any) {
-      console.error("❌ Failed to send OTP:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        error.message ||
-        "Failed to send OTP";
-      return rejectWithValue(errorMessage);
-    }
-  }
-);
-
 export const verifyOtp = createAsyncThunk(
   "/auth/verify-otp",
-  async (otpData: { email: string; otp: string }, { rejectWithValue }) => {
+  async (otpData: { email: string; otp?: string }, { rejectWithValue }) => {
     try {
-      console.log("🔐 Verifying OTP for email:", otpData.email);
-      const response = await apiClient.post("/auth/verify-otp", otpData);
-      console.log("✅ OTP verified successfully:", response.data);
+      const requestData: { email: string; otp?: string } = {
+        email: otpData.email,
+      };
+
+      if (otpData.otp) {
+        console.log("🔐 Verifying OTP for email:", otpData.email);
+        requestData.otp = otpData.otp;
+      } else {
+        console.log("📤 Sending OTP to email:", otpData.email);
+      }
+      const response = await apiClient.post("/auth/verify-otp", requestData);
+      console.log("✅ OTP operation successful:", response.data);
       return response.data;
     } catch (error: any) {
-      console.error("❌ OTP verification failed:", error);
+      console.error("❌ OTP operation failed:", error);
       const errorMessage =
         error.response?.data?.message ||
         error.response?.data?.error ||
         error.message ||
-        "OTP verification failed";
+        "OTP operation failed";
       return rejectWithValue(errorMessage);
     }
   }
@@ -323,10 +312,12 @@ export const authSlice = createSlice({
       })
       .addCase(createClientWithAdmin.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
-        state.isAuthenticated = true;
-        localStorage.setItem("authToken", action.payload.token);
+        // Don't authenticate user immediately after signup
+        // User needs to verify OTP first
+        // Just store user email for OTP verification
+        if (action.payload.user && action.payload.user.email) {
+          localStorage.setItem("userEmail", action.payload.user.email);
+        }
       })
       .addCase(createClientWithAdmin.rejected, (state, action) => {
         state.loading = false;
@@ -377,18 +368,6 @@ export const authSlice = createSlice({
         localStorage.setItem("authToken", action.payload.token);
       })
       .addCase(googleAuthCallback.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      // Send OTP
-      .addCase(sendOtp.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(sendOtp.fulfilled, (state) => {
-        state.loading = false;
-      })
-      .addCase(sendOtp.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

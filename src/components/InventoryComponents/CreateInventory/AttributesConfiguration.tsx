@@ -79,12 +79,12 @@ const AttributesConfiguration: React.FC<AttributesConfigurationProps> = ({
     onAttributesChange(attributes.filter((attr) => attr.id !== id));
   };
   return (
-    <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 hover:shadow-xl transition-all duration-300">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 border border-gray-200 hover:shadow-xl transition-all duration-300">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-purple-100 rounded-lg">
             <svg
-              className="w-6 h-6 text-purple-600"
+              className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -98,10 +98,10 @@ const AttributesConfiguration: React.FC<AttributesConfigurationProps> = ({
             </svg>
           </div>
           <div>
-            <h3 className="text-xl font-bold text-gray-900">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900">
               Product Attributes
             </h3>
-            <p className="text-gray-600 text-sm">
+            <p className="text-gray-600 text-xs sm:text-sm">
               Define product variations like color, size, etc.
             </p>
           </div>
@@ -113,14 +113,14 @@ const AttributesConfiguration: React.FC<AttributesConfigurationProps> = ({
             onChange={(e) => onToggle(e.target.checked)}
             className="sr-only peer"
           />
-          <div className="w-12 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600 shadow-lg"></div>
+          <div className="w-11 h-5 sm:w-12 sm:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:transition-all peer-checked:bg-purple-600 shadow-lg"></div>
         </label>
       </div>
 
       {hasAttributes && (
-        <div className="space-y-6 border-t pt-6 animate-fadeIn">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="font-semibold text-gray-900 flex items-center">
+        <div className="space-y-4 sm:space-y-6 border-t pt-4 sm:pt-6 animate-fadeIn">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 space-y-2 sm:space-y-0">
+            <h4 className="text-sm sm:text-base font-semibold text-gray-900 flex items-center">
               <svg
                 className="w-4 h-4 mr-2 text-purple-600"
                 fill="none"

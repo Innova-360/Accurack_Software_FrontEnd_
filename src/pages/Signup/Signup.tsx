@@ -114,7 +114,6 @@ const Signup = () => {
     }
 
     try {
-      console.log("📤 Dispatching createClientWithAdmin...");
       const resultAction = await dispatch(
         createClientWithAdmin({
           firstName: formData.firstName.trim(),
@@ -128,14 +127,9 @@ const Signup = () => {
         })
       );
 
-      console.log("📥 Signup response:", resultAction);
-
       if (createClientWithAdmin.fulfilled.match(resultAction)) {
-        console.log("✅ Signup successful", resultAction.payload);
         toast.success("Account created successfully!");
-        // Save email to localStorage
         localStorage.setItem("userEmail", formData.email);
-        // Redirect to OTP page - OTP will be sent from there
         navigate("/otp");
       } else {
         console.error("❌ Signup failed", resultAction.payload);

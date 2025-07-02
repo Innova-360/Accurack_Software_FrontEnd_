@@ -32,13 +32,19 @@ export const useFilteredProducts = (
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(
-        (product) =>
+      filtered = filtered.filter((product) => {
+        const categoryString =
+          typeof product.category === "string"
+            ? product.category
+            : (product.category as any)?.name || "";
+
+        return (
           product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
           product.plu.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          product.category.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+          categoryString.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      });
     }
 
     // Apply sorting
@@ -75,10 +81,15 @@ export const useGroupedProducts = (
     if (groupBy === "category") {
       const grouped: { [key: string]: Product[] } = {};
       filteredProducts.forEach((product) => {
-        if (!grouped[product.category]) {
-          grouped[product.category] = [];
+        const categoryKey =
+          typeof product.category === "string"
+            ? product.category
+            : (product.category as any)?.name || "Uncategorized";
+
+        if (!grouped[categoryKey]) {
+          grouped[categoryKey] = [];
         }
-        grouped[product.category].push(product);
+        grouped[categoryKey].push(product);
       });
       return grouped;
     }

@@ -16,14 +16,11 @@ const ProductDetails: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        console.log("Fetching product with ID:", productId);
 
         // Try to fetch product from API
         const productData = await productAPI.getProductById(productId!);
-        console.log("Fetched product data:", productData);
         setProduct(productData);
       } catch (err) {
-        console.error("Error fetching product:", err);
         setError("Product not found");
       } finally {
         setLoading(false);
@@ -43,20 +40,13 @@ const ProductDetails: React.FC = () => {
     navigate(`/inventory/edit/${productId}`);
   };
 
-  const handleUpdateInventory = () => {
-    console.log("Update inventory for product:", productId);
-  };
+  const handleUpdateInventory = () => {};
 
-  const handleCreatePurchaseOrder = () => {
-    console.log("Create purchase order for product:", productId);
-  };
+  const handleCreatePurchaseOrder = () => {};
 
-  const handleViewSalesReport = () => {
-    console.log("View sales report for product:", productId);
-  };
+  const handleViewSalesReport = () => {};
 
   const handlePrintBarcode = () => {
-    console.log("Print barcode for product:", product?.sku || productId);
     if (product) {
       const printWindow = window.open("", "_blank");
       if (printWindow) {
@@ -73,10 +63,10 @@ const ProductDetails: React.FC = () => {
             <body>
               <h2>${product.name}</h2>
               <div class="product-info">SKU: ${product.sku}</div>
-              <div class="product-info">PLU: ${product.pluUpc || product.plu}</div>
+              <div class="product-info">PLU: ${product.pluUpc}</div>
               ${product.ean ? `<div class="product-info">EAN: ${product.ean}</div>` : ""}
-              <div class="barcode">||||| ${product.ean || product.pluUpc || product.plu} |||||</div>
-              <div class="product-info">Price: $${product.singleItemSellingPrice?.toFixed(2) || "0.00"}</div>
+              <div class="barcode">${product.ean}</div>
+              <div class="product-info">Price: $${product.singleItemSellingPrice || "0.00"}</div>
             </body>
           </html>
         `);
@@ -248,7 +238,7 @@ const ProductDetails: React.FC = () => {
                       <div className="text-md text-gray-800 font-semibold">
                         {typeof product.category === "string"
                           ? product.category
-                          : product.category?.name || "Uncategorized"}
+                          : product.category?.name || "Not specified"}
                       </div>
                     </div>
                     <div>
@@ -256,7 +246,9 @@ const ProductDetails: React.FC = () => {
                         Subcategory
                       </label>
                       <div className="text-md text-gray-800 font-semibold">
-                        {product.category || "Not specified"}
+                        {typeof product.category === "object" && product.category !== null 
+                          ? product.category.name || "Not specified" 
+                          : "Not specified"}
                       </div>
                     </div>
                   </div>
@@ -320,7 +312,7 @@ const ProductDetails: React.FC = () => {
                         Selling Price
                       </label>
                       <div className="text-md text-gray-800 font-semibold">
-                        ${product.singleItemSellingPrice?.toFixed(2) || "0.00"}
+                        ${product.singleItemSellingPrice || "0.00"}
                       </div>
                     </div>
                   </div>
@@ -434,96 +426,6 @@ const ProductDetails: React.FC = () => {
 
             {/* Right Column - 60% width (3/5) */}
             <div className="lg:col-span-3 space-y-6">
-              {/* old code, don't remove it */}
-              {/* <div className="bg-white rounded-lg">
-                <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-5 p-5">
-                  Inventory & Restocking
-                </h2>
-
-                <div className="space-y-6 p-6">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-md font-medium text-gray-500 mb-2">
-                        Current Stock
-                      </label>
-                      <div className="text-md text-gray-800 font-semibold">
-                        {product.quantity} units
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-md font-medium text-gray-500 mb-2">
-                        Minimum Stock
-                      </label>
-                      <div className="text-md text-gray-800 font-semibold">
-                        20 units
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-md font-medium text-gray-500 mb-2">
-                        Reserve Stock
-                      </label>
-                      <div className="text-md text-gray-800 font-semibold">
-                        5 units
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-md font-medium text-gray-500 mb-2">
-                        Last Restocked
-                      </label>
-                      <div className="text-md text-gray-800 font-semibold">
-                        Jun 15, 2025
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-md font-medium text-gray-500 mb-2">
-                        Store
-                      </label>
-                      <div className="text-md text-gray-800 font-semibold">
-                        {product.store?.name || "Main Store"}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-md font-medium text-gray-500 mb-2">
-                        Warehouse
-                      </label>
-                      <div className="text-md text-gray-800 font-semibold">
-                        Warehouse A
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-md font-medium text-gray-500 mb-2">
-                        Online Stock
-                      </label>
-                      <div className="text-md text-gray-800 font-semibold">
-                        15 units
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-md font-medium text-gray-500 mb-2">
-                        Offline Stock
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <div className="text-md text-gray-800 font-semibold">
-                          5 units
-                        </div>
-                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 border border-red-200">
-                          Low
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div> */}
-
               {/* Inventory & Restocking */}
               <div className="bg-white rounded-lg">
                 <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-5 p-5">
@@ -910,7 +812,7 @@ const ProductDetails: React.FC = () => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2v-4a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                   />
                 </svg>
                 View Sales Report

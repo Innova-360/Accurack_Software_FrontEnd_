@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import React Icons
 import toast from "react-hot-toast";
 import { useAppDispatch } from "../../store/hooks";
@@ -16,7 +16,11 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
 
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
+
+  // Get the intended destination from location state, default to /stores
+  const from = location.state?.from?.pathname || "/stores";
   // Load saved credentials on component mount
   useEffect(() => {
     const savedCredentials = loadSavedCredentials();
@@ -54,8 +58,8 @@ const Login = () => {
           clearSavedCredentials();
         }
 
-        // Navigate to stores page after successful login
-        navigate("/stores");
+        // Navigate to the intended destination or stores page
+        navigate(from, { replace: true });
       } else {
         console.error("Login failed", resultAction.payload);
         toast.error(
@@ -231,7 +235,11 @@ const Login = () => {
           </div>
           <p className="text-center text-xs text-gray-500 mt-5">
             Don’t have an account?{" "}
-            <a href="#" className="text-[#0b5c5a] font-semibold" onClick={() => navigate("/signup")}>
+            <a
+              href="#"
+              className="text-[#0b5c5a] font-semibold"
+              onClick={() => navigate("/signup")}
+            >
               Register Here
             </a>
           </p>

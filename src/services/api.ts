@@ -1,7 +1,7 @@
-import axios from 'axios';
+import axios from "axios";
 
 // Base URL for your API
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api/v1";
 
 // Create axios instance with basic configuration
 axios.defaults.withCredentials = true; // Enable cookies for cross-origin requests
@@ -10,15 +10,15 @@ const apiClient = axios.create({
   timeout: 50000,
   withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    "Content-Type": "application/json",
+    Accept: "application/json",
   },
 });
 
 // Simple request interceptor to add token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem("authToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -31,10 +31,20 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Basic error handling - just clean up on 401
+    // Handle 401 Unauthorized responses
     if (error.response?.status === 401) {
-      localStorage.removeItem('authToken');
+      // Clear authentication data
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("clientId");
+
+      // Only redirect if we're not already on the login page
+      if (!window.location.pathname.includes("/login")) {
+        // Redirect to login page
+        window.location.href = "/login";
+      }
     }
+
     return Promise.reject(error);
   }
 );

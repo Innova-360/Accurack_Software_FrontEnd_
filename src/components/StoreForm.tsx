@@ -147,10 +147,6 @@ const StoreForm: React.FC = () => {
         await dispatch(createStore(formData)).unwrap();
       }
 
-      console.log(
-        isEditing ? "Store updated successfully" : "Store created successfully"
-      );
-
       // Navigate to stores page after successful submission
       navigate("/stores");
     } catch (error) {
