@@ -34,6 +34,17 @@ const Signup = () => {
   };
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    console.log("🚀 Starting signup process with data:", {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      companyName: formData.companyName,
+      companyEmail: formData.companyEmail,
+      companyPhone: formData.companyPhone,
+      companyAddress: formData.companyAddress,
+    });
+
     // Validate form fields
     if (!formData.firstName.trim()) {
       toast.error("First Name is required");
