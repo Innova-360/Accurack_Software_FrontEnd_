@@ -1,17 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { FaPlus, FaTrash, FaArrowLeft } from "react-icons/fa";
+import { FaPlus, FaTrash, FaArrowLeft, FaSearch, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import toast from "react-hot-toast";
+import { SpecialButton } from "../../components/buttons";
+import SaleCreationModal from "../../components/modals/SaleCreationModal";
+import { fetchProductsPaginated, setSearchQuery } from "../../store/slices/productsSlice";
 import { createSale } from "../../store/slices/salesSlice";
 import { fetchUser } from "../../store/slices/userSlice";
+import { fetchCustomers } from "../../store/slices/customerSlice";
 import useRequireStore from "../../hooks/useRequireStore";
 import type { RootState, AppDispatch } from "../../store";
 import type { Product } from "../../data/inventoryData";
 import type { SaleRequestData, SaleItem } from "../../store/slices/salesSlice";
 import Header from "../../components/Header";
-import { SpecialButton } from "../../components/buttons";
-import { fetchProducts } from "../../store/slices/productsSlice";
+
 
 interface ProductItem {
   id: string;
@@ -37,21 +40,89 @@ const AddNewSale: React.FC = () => {
     products: availableProducts,
     loading: productsLoading,
     error: productsError,
+    totalProducts,
+    totalPages,
+    currentPage,
+    hasNextPage,
   } = useSelector((state: RootState) => state.products);
   
   // Sales state
   const { loading: salesLoading } = useSelector((state: RootState) => state.sales);
 
-  // Fetch products and user on component mount
-    
+  // Customers state
+  const { customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
 
-  // Fetch products on component mount
+  // Local state for pagination and search
+  const [currentPageLocal, setCurrentPageLocal] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const productsPerPage = 50;
+
+  // Debounce search term
   useEffect(() => {
-    dispatch(fetchProducts() as any);
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPageLocal(1); // Reset to first page when searching
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Fetch products with pagination and search
+  const fetchProductsData = useCallback(() => {
+    console.log("Fetching products with params:", {
+      page: currentPageLocal,
+      limit: productsPerPage,
+      search: debouncedSearchTerm || undefined,
+    });
+    dispatch(fetchProductsPaginated({
+      page: currentPageLocal,
+      limit: productsPerPage,
+      search: debouncedSearchTerm || undefined,
+    }));
+  }, [dispatch, currentPageLocal, debouncedSearchTerm]);
+
+  // Initial fetch on component mount
+  useEffect(() => {
     dispatch(fetchUser());
-  }, [dispatch]);
+    // Fetch customers for the dropdown
+    if (currentStore?.id) {
+      dispatch(fetchCustomers({ storeId: currentStore.id, page: 1, limit: 100 }));
+    }
+  }, [dispatch, currentStore?.id]);
+
+  // Fetch products when page changes or search term changes
+  useEffect(() => {
+    fetchProductsData();
+  }, [fetchProductsData]);
+
+  // Update search query in redux store
+  useEffect(() => {
+    dispatch(setSearchQuery(debouncedSearchTerm));
+  }, [dispatch, debouncedSearchTerm]);
+
+  // Handle page changes
+  const handlePageChange = (newPage: number) => {
+    console.log("Changing page from", currentPageLocal, "to", newPage);
+    setCurrentPageLocal(newPage);
+  };
+
+  // Handle search clear
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    setDebouncedSearchTerm("");
+    setCurrentPageLocal(1);
+  };
+  
+  // Handle refresh products
+  const handleRefreshProducts = () => {
+    fetchProductsData();
+    toast.success("Products refreshed");
+  };
 
   // Form state
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [customerName, setCustomerName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
@@ -63,7 +134,7 @@ const AddNewSale: React.FC = () => {
   const [products, setProducts] = useState<ProductItem[]>([
     { id: "1", name: "", quantity: 1, price: 0, total: 0 },
   ]);
-  const [paymentMethod, setPaymentMethod] = useState("Cash");
+  const [paymentMethod, setPaymentMethod] = useState("CASH");
   const [notes, setNotes] = useState("");
   const [discount, setDiscount] = useState(0);
   const [discountType, setDiscountType] = useState<"percentage" | "amount">(
@@ -90,6 +161,76 @@ const AddNewSale: React.FC = () => {
       (part) => part.trim() !== ""
     );
     return addressParts.join(", ");
+  };
+
+  // Handle customer selection from dropdown
+  const handleCustomerSelect = (customerId: string) => {
+    setSelectedCustomerId(customerId);
+    
+    if (customerId === "new") {
+      // Clear all fields for new customer
+      setCustomerName("");
+      setPhoneNumber("");
+      setEmail("");
+      setStreet("");
+      setCity("");
+      setState("");
+      setPostalCode("");
+      setCountry("");
+      return;
+    }
+
+    if (customerId === "") {
+      return; // No selection
+    }
+
+    // Find the selected customer and auto-fill the form
+    const selectedCustomer = customers.find(customer => customer.id === customerId);
+    if (selectedCustomer) {
+      setCustomerName(selectedCustomer.customerName);
+      setPhoneNumber(selectedCustomer.phoneNumber);
+      setEmail(selectedCustomer.customerMail || "");
+      
+      // Parse the address string back into components
+      if (selectedCustomer.customerAddress) {
+        const addressParts = selectedCustomer.customerAddress.split(", ").filter(part => part.trim());
+        
+        // Reset all address fields first
+        setStreet("");
+        setCity("");
+        setState("");
+        setPostalCode("");
+        setCountry("");
+        
+        // Try to intelligently assign address parts
+        if (addressParts.length >= 5) {
+          // Full address: street, city, state, postal, country
+          setStreet(addressParts[0]);
+          setCity(addressParts[1]);
+          setState(addressParts[2]);
+          setPostalCode(addressParts[3]);
+          setCountry(addressParts[4]);
+        } else if (addressParts.length === 4) {
+          // Missing street: city, state, postal, country
+          setCity(addressParts[0]);
+          setState(addressParts[1]);
+          setPostalCode(addressParts[2]);
+          setCountry(addressParts[3]);
+        } else if (addressParts.length === 3) {
+          // city, state, country (assuming no postal code)
+          setCity(addressParts[0]);
+          setState(addressParts[1]);
+          setCountry(addressParts[2]);
+        } else if (addressParts.length === 2) {
+          // city, country
+          setCity(addressParts[0]);
+          setCountry(addressParts[1]);
+        } else if (addressParts.length === 1) {
+          // Just put it in city field
+          setCity(addressParts[0]);
+        }
+      }
+    }
   };
 
   // Create flattened product list including variants
@@ -318,7 +459,7 @@ const AddNewSale: React.FC = () => {
         },
         storeId: currentStore.id,
         clientId: user.clientId,
-        paymentMethod: paymentMethod.toUpperCase() as "CASH" | "CARD" | "DIGITAL",
+        paymentMethod: paymentMethod as "CASH" | "CARD" | "BANK_TRANSFER" | "CHECK" | "DIGITAL_WALLET",
         totalAmount: Math.round(finalTotal * 100) / 100, // Ensure proper number format
         tax: Math.round(taxAmount * 100) / 100, // Ensure proper number format
         cashierName: user.firstName && user.lastName 
@@ -326,6 +467,7 @@ const AddNewSale: React.FC = () => {
           : user.email || "Current User",
         generateInvoice: false, // Default to false as specified
         source: "manual", // Default source as manual
+        status: "PENDING", // Default status as pending (uppercase)
         saleItems,
       };
 
@@ -347,10 +489,29 @@ const AddNewSale: React.FC = () => {
   const handleCancel = () => {
     navigate(-1);
   };
+  
+  const handleManualCreate = () => {
+    setIsModalOpen(false);
+    // The rest of the form is already visible, so no need to do anything else
+  };
+  
+  // Check if we should show modal on initial load
+  useEffect(() => {
+    setIsModalOpen(true);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
+
+      {/* Sale Creation Modal */}
+      <SaleCreationModal
+        isOpen={isModalOpen}
+        onClose={() => navigate(-1)} // Go back when closing without selecting an option
+        onManualCreate={handleManualCreate}
+        storeId={currentStore?.id}
+        clientId={user?.clientId}
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
@@ -378,6 +539,45 @@ const AddNewSale: React.FC = () => {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Customer Information
               </h2>
+              
+              {/* Customer Selection Dropdown */}
+              <div className="mb-6 p-4 rounded-lg">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Existing Customer
+                </label>
+                <select
+                  value={selectedCustomerId}
+                  onChange={(e) => handleCustomerSelect(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                  disabled={customersLoading}
+                >
+                  <option value="" className="text-gray-500">
+                    {customersLoading 
+                      ? "Loading customers..." 
+                      : customers.length > 0 
+                        ? `Select from ${customers.length} existing customers or enter new details below`
+                        : "No existing customers found - enter new details below"
+                    }
+                  </option>
+                  {customers.map((customer) => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.customerName} - {customer.phoneNumber}
+                    </option>
+                  ))}
+                {customers.length > 0 && <option className="text-gray-700 py-1.5" value="new">Add New Customer</option>}
+                </select>
+                {selectedCustomerId === "new" && (
+                  <p className="mt-2 text-sm text-green-700">
+                    Ready to enter new customer details below.
+                  </p>
+                )}
+                {!customersLoading && customers.length === 0 && (
+                  <p className="mt-2 text-sm text-orange-700">
+                    No existing customers found. Please enter customer details below.
+                  </p>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -494,13 +694,80 @@ const AddNewSale: React.FC = () => {
                 <h2 className="text-lg font-semibold text-gray-900">
                   Products Purchased
                 </h2>
+                <button
+                  onClick={handleRefreshProducts}
+                  className="text-[#03414C] hover:text-[#025561] text-sm flex items-center gap-1"
+                  disabled={productsLoading}
+                >
+                  <FaSearch size={12} />
+                  Refresh Products
+                </button>
               </div>
+
+              {/* Product Search Bar */}
+              <div className="mb-4">
+                <div className="relative">
+                  <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                    placeholder="Search products by name, SKU, PLU, or category..."
+                  />
+                </div>
+                {debouncedSearchTerm && (
+                  <div className="mt-2 flex items-center justify-between text-sm text-gray-600">
+                    <span>
+                      {totalProducts} product{totalProducts !== 1 ? 's' : ''} found
+                      {debouncedSearchTerm && ` for "${debouncedSearchTerm}"`}
+                    </span>
+                    <button
+                      onClick={handleClearSearch}
+                      className="text-[#03414C] hover:text-[#025561] underline"
+                    >
+                      Clear search
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Pagination Controls - Top */}
+              {availableProducts.length > 0 && (
+                <div className="mb-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                  <div className="text-sm text-gray-600">
+                    Page {currentPage || currentPageLocal} of {totalPages || Math.ceil(totalProducts / productsPerPage) || 1} 
+                    ({totalProducts} total products)
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handlePageChange(Math.max(1, currentPageLocal - 1))}
+                      disabled={currentPageLocal <= 1 || productsLoading}
+                      className="p-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <FaChevronLeft size={14} />
+                    </button>
+                    <span className="px-3 py-1 bg-white border border-gray-300 rounded-lg text-sm">
+                      {currentPageLocal}
+                    </span>
+                    <button
+                      onClick={() => handlePageChange(currentPageLocal + 1)}
+                      disabled={!hasNextPage || productsLoading}
+                      className="p-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <FaChevronRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Products loading/error state */}
               {productsLoading && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                   <p className="text-blue-700 text-sm">
-                    Loading available products...
+                    {debouncedSearchTerm 
+                      ? `Searching for "${debouncedSearchTerm}"...` 
+                      : "Loading products..."}
                   </p>
                 </div>
               )}
@@ -509,6 +776,14 @@ const AddNewSale: React.FC = () => {
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
                   <p className="text-red-700 text-sm">
                     Error loading products: {productsError}
+                  </p>
+                </div>
+              )}
+
+              {!productsLoading && !productsError && availableProducts.length === 0 && debouncedSearchTerm && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                  <p className="text-yellow-700 text-sm">
+                    No products found for "{debouncedSearchTerm}". Try a different search term.
                   </p>
                 </div>
               )}
@@ -534,8 +809,8 @@ const AddNewSale: React.FC = () => {
                         >
                           <option value="">
                             {productsLoading
-                              ? "Loading products..."
-                              : "Select product..."}
+                              ? (debouncedSearchTerm ? `Searching "${debouncedSearchTerm}"...` : "Loading products...")
+                              : `Select from ${totalProducts} products${debouncedSearchTerm ? ` (filtered)` : ''}...`}
                           </option>
                           {flattenedProducts.map((flatProduct) => (
                             <option
@@ -760,6 +1035,34 @@ const AddNewSale: React.FC = () => {
                   Add Another Product
                 </button>
               </div>
+
+              {/* Pagination Controls - Bottom */}
+              {availableProducts.length > 0 && (
+                <div className="mt-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                  <div className="text-sm text-gray-600">
+                    Showing {((currentPageLocal - 1) * productsPerPage) + 1}-{Math.min(currentPageLocal * productsPerPage, totalProducts || availableProducts.length)} of {totalProducts || availableProducts.length} products
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handlePageChange(Math.max(1, currentPageLocal - 1))}
+                      disabled={currentPageLocal <= 1 || productsLoading}
+                      className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    >
+                      Previous
+                    </button>
+                    <span className="px-3 py-1 bg-white border border-gray-300 rounded-lg text-sm">
+                      {currentPageLocal} / {totalPages || Math.ceil((totalProducts || availableProducts.length) / productsPerPage)}
+                    </span>
+                    <button
+                      onClick={() => handlePageChange(currentPageLocal + 1)}
+                      disabled={!hasNextPage || productsLoading}
+                      className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Payment & Additional Details */}
@@ -777,9 +1080,11 @@ const AddNewSale: React.FC = () => {
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                   >
-                    <option value="Cash">Cash</option>
-                    <option value="Card">Card</option>
-                    <option value="Digital">Digital</option>
+                    <option value="CASH">Cash</option>
+                    <option value="CARD">Card</option>
+                    <option value="BANK_TRANSFER">Bank Transfer</option>
+                    <option value="CHECK">Check</option>
+                    <option value="DIGITAL_WALLET">Digital Wallet</option>
                   </select>
                 </div>
                 <div>

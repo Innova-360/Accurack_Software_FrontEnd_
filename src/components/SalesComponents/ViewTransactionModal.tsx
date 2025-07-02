@@ -14,7 +14,7 @@ const ViewTransactionModal: React.FC<ViewTransactionModalProps> = ({
   onClose,
 }) => {
   if (!isOpen || !transaction) return null;
-
+  console.log("Transaction Details:", transaction);
   const formatCurrency = (amount: number): string => {
     return `$${amount.toFixed(2)}`;
   };
@@ -61,7 +61,7 @@ const ViewTransactionModal: React.FC<ViewTransactionModalProps> = ({
                 Customer
               </label>
               <p className="text-sm text-gray-900 font-medium">
-                {transaction.customer}
+                {transaction.customer?.customerName || "Unknown Customer"}
               </p>
             </div>
 
