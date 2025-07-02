@@ -24,6 +24,8 @@ import CustomerPage from "../pages/Customer/Customer";
 import CreateCustomer from "../pages/Customer/CreateCustomer";
 import CustomerBalanceSheet from "../pages/Customer/CustomerBalanceSheet";
 import ProtectedRoute from "../components/ProtectedRoute";
+import ReturnPage from "../pages/Return/Return";
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -196,84 +198,8 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
-      {/* Global Protected Routes (Legacy support) */}
       <Route
-        path="/inventory"
-        element={
-          <ProtectedRoute>
-            <Inventory />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/inventory/create"
-        element={
-          <ProtectedRoute>
-            <CreateInventory />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/inventory/product/:productId"
-        element={
-          <ProtectedRoute>
-            <ProductDetails />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/expenses"
-        element={
-          <ProtectedRoute>
-            <ExpensePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/sales"
-        element={
-          <ProtectedRoute>
-            <SalesPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/supplier"
-        element={
-          <ProtectedRoute>
-            <Supplier />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/employee"
-        element={
-          <ProtectedRoute>
-            <EmployeePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/term"
-        element={
-          <ProtectedRoute>
-            <Terms />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/Form"
-        element={
-          <ProtectedRoute>
-            <StoreForm />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Customer Management Protected Routes */}
-      <Route
-        path="/customers"
+        path="/store/:id/customer"
         element={
           <ProtectedRoute>
             <CustomerPage />
@@ -281,7 +207,7 @@ const AppRoutes = () => {
         }
       />
       <Route
-        path="/customers/create"
+        path="/store/:id/customer/create"
         element={
           <ProtectedRoute>
             <CreateCustomer />
@@ -289,10 +215,18 @@ const AppRoutes = () => {
         }
       />
       <Route
-        path="/customers/balance"
+        path="/store/:id/customer/balance/:customerId"
         element={
           <ProtectedRoute>
             <CustomerBalanceSheet />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/return"
+        element={
+          <ProtectedRoute>
+            <ReturnPage />
           </ProtectedRoute>
         }
       />

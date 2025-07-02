@@ -207,12 +207,17 @@ export const verifyOtp = createAsyncThunk(
   "/auth/verify-otp",
   async (otpData: { email: string; otp?: string }, { rejectWithValue }) => {
     try {
+      const requestData: { email: string; otp?: string } = {
+        email: otpData.email,
+      };
+
       if (otpData.otp) {
         console.log("🔐 Verifying OTP for email:", otpData.email);
+        requestData.otp = otpData.otp;
       } else {
         console.log("📤 Sending OTP to email:", otpData.email);
       }
-      const response = await apiClient.post("/auth/verify-otp", otpData);
+      const response = await apiClient.post("/auth/verify-otp", requestData);
       console.log("✅ OTP operation successful:", response.data);
       return response.data;
     } catch (error: any) {

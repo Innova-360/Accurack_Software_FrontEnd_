@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, token } = useAppSelector((state) => state.auth);
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
   const location = useLocation();
 
   // Check if user is authenticated
@@ -21,7 +21,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const isInOtpFlow = userEmail && !isUserAuthenticated;
 
   // If user is in OTP verification flow, redirect to OTP page
-  if (isInOtpFlow) {
+  if (isInOtpFlow && location.pathname !== "/otp") {
     return <Navigate to="/otp" state={{ from: location }} replace />;
   }
 
