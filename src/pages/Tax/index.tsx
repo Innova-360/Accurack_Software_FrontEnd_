@@ -7,46 +7,89 @@ import { ChevronDown, Plus } from 'lucide-react';
 // import { Link } from "react-router-dom";
 import { useParams, useNavigate } from 'react-router-dom'
 import { useGetTaxRatesQuery } from '../../store/slices/taxSlice';
+import Loading from "../../components/Loading";
+
+
+
+
+interface TaxItem {
+    id: string;
+    name: string;
+    description: string;
+    rate: string;
+    type: string;
+    status: string;
+    assigned: string;
+    date: string;
+    time: string;
+    region?: string;
+    taxCode?: string;
+}
 
 const Tax = () => {
     const { data: taxRatesData, isLoading, error } = useGetTaxRatesQuery();
     const [searchTerm, setSearchTerm] = useState('');
     const [typeFilter, setTypeFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
-    
-    // Transform API data to match component structure
-    const allTaxes = taxRatesData?.data?.map((taxRate: any) => ({
-        id: taxRate.id,
-        name: taxRate.taxType?.name || 'Unknown',
-        description: taxRate.taxType?.description || 'No description',
-        rate: taxRate.rateType === 'PERCENTAGE' ? `${(taxRate.rate * 100).toFixed(2)}%` : `$${taxRate.rate.toFixed(2)}`,
-        type: taxRate.rateType === 'PERCENTAGE' ? 'Percentage' : 'Fixed',
-        status: 'Active', // API doesn't provide status, defaulting to Active
-        assigned: 'Not Assigned', // Placeholder until assignment data is available
-        date: new Date(taxRate.createdAt).toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
-        }),
-        time: new Date(taxRate.createdAt).toLocaleTimeString('en-US', { 
-            hour: 'numeric', 
-            minute: '2-digit', 
-            hour12: true 
-        }),
-        region: taxRate.region?.name,
-        taxCode: taxRate.taxCode?.code
-    })) || [];
 
+
+    // Define a type for the taxRate object from API
+    interface TaxRateApi {
+        id: string;
+        taxType?: {
+            name?: string;
+            description?: string;
+        };
+        rate: number;
+        rateType: 'PERCENTAGE' | 'FIXED';
+        createdAt: string;
+        region?: {
+            name?: string;
+        };
+        taxCode?: {
+            code?: string;
+        };
+    }
+
+    console.log('taxratesdata', taxRatesData);
+    
+
+    // Transform API data to match component structure, memoized
+    const allTaxes = useMemo<TaxItem[]>(() => {
+        return (
+            taxRatesData?.data?.map((taxRate: TaxRateApi) => ({
+                id: taxRate.id,
+                name: taxRate.taxType?.name || 'Unknown',
+                description: taxRate.taxType?.description || 'No description',
+                rate: taxRate.rateType === 'PERCENTAGE' ? `${(taxRate.rate * 100).toFixed(2)}%` : `$${taxRate.rate.toFixed(2)}`,
+                type: taxRate.rateType === 'PERCENTAGE' ? 'Percentage' : 'Fixed',
+                status: 'Active', // API doesn't provide status, defaulting to Active
+                assigned: 'Not Assigned', // Placeholder until assignment data is available
+                date: new Date(taxRate.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                }),
+                time: new Date(taxRate.createdAt).toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                }),
+                region: taxRate.region?.name,
+                taxCode: taxRate.taxCode?.code
+            })) || []
+        );
+    }, [taxRatesData]);
     // Filter and search logic
     const taxes = useMemo(() => {
         return allTaxes.filter(tax => {
-            const matchesSearch = searchTerm === '' || 
+            const matchesSearch = searchTerm === '' ||
                 tax.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 tax.description.toLowerCase().includes(searchTerm.toLowerCase());
-            
+
             const matchesType = typeFilter === '' || tax.type === typeFilter;
             const matchesStatus = statusFilter === '' || tax.status === statusFilter;
-            
+
             return matchesSearch && matchesType && matchesStatus;
         });
     }, [allTaxes, searchTerm, typeFilter, statusFilter]);
@@ -62,9 +105,7 @@ const Tax = () => {
         return (
             <>
                 <Navbar />
-                <div className="flex items-center justify-center min-h-screen">
-                    <div className="text-lg">Loading tax rates...</div>
-                </div>
+                <Loading label="Tax Rates" />
             </>
         );
     }
@@ -91,13 +132,13 @@ const Tax = () => {
                 </div>
 
                 <div className="overflow-x-auto border-[#E5E7EB] border-2 rounded-3xl">
-                    <div className="p-4 lg:p-8 flex flex-col md:flex-row gap-4">
+                    <div className="p-4 lg:p-8 flex flex-col md:flex-row gap-4 items-center">
                         <div className="w-full md:w-1/2">
                             <div className="relative">
                                 <img src="/search.png" alt="" className="absolute top-1/2 left-[10px] transform -translate-y-1/2 w-5" />
-                                <input 
-                                    type="text" 
-                                    placeholder="Search Tax Name.." 
+                                <input
+                                    type="text"
+                                    placeholder="Search Tax Name.."
                                     className="w-full md:w-3/4 border-[#E5E7EB] border-2 p-3 rounded-xl pl-12"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -137,10 +178,10 @@ const Tax = () => {
                                 </select>
                             </div>
                             <button className="w-full sm:w-auto bg-[#043E49] py-2 px-3 text-white rounded-xl pr-4 flex items-center justify-center gap-x-3" onClick={handleClick}>
-                                
-                                    <Plus />
-                                    Add  New Tax
-                               
+
+                                <Plus />
+                                Add  New Tax
+
 
                             </button>
 
@@ -157,11 +198,13 @@ const Tax = () => {
                                     <th className="px-4 py-3 text-left">Status</th>
                                     <th className="px-4 py-3 text-left">Assigned To</th>
                                     <th className="px-4 py-3 text-left">Last Updated</th>
-                                    <th className="px-4 py-3 text-center">Actions</th>
+                                    {/* <th className="px-4 py-3 text-center">Actions</th> */}
                                 </tr>
                             </thead>
                             <tbody className="text-sm text-gray-700">
-                                {taxes.map((tax, idx: number) => (
+
+
+                                {taxes.map((tax: TaxItem, idx: number) => (
                                     <tr key={idx} className="hover:bg-gray-50">
                                         <td className="px-4 py-3">
                                             <div className="font-medium">{tax.name}</div>
@@ -185,7 +228,7 @@ const Tax = () => {
                                             <div>{tax.date}</div>
                                             <div className="text-xs text-gray-400">{tax.time}</div>
                                         </td>
-                                        <td className="px-4 py-3 text-center space-x-2">
+                                        {/* <td className="px-4 py-3 text-center space-x-2">
                                             <button className="text-gray-500 hover:text-blue-600" title="Copy">
                                                 <img src={Copy} alt="" />
                                             </button>
@@ -195,16 +238,27 @@ const Tax = () => {
                                             <button className="text-gray-500 hover:text-red-600" title="Delete">
                                                 <img src={Trash} alt="" />
                                             </button>
-                                        </td>
+                                        </td> */}
                                     </tr>
                                 ))}
                             </tbody>
+                            {
+                                taxes.length === 0 && (
+                                    <tbody>
+                                        <tr>
+                                            <td colSpan={7} className="text-center py-4 text-gray-500">
+                                                No tax rates found
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                )
+                            }
                         </table>
                     </div>
 
                     {/* Mobile Cards */}
                     <div className="block md:hidden">
-                        {taxes.map((tax, idx) => (
+                        {taxes.map((tax, idx: number) => (
                             <div key={idx} className="bg-white border-b border-gray-200 p-4">
                                 <div className="flex justify-between items-start mb-3">
                                     <div>
@@ -263,33 +317,6 @@ const Tax = () => {
                             </div>
                         ))}
                     </div>
-                   {/* <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-4 border-t text-sm border-[#E5E7EB] gap-4">
-                         Left: Entry Count 
-                        <div className="text-center sm:text-left">
-                            Showing <span className="font-medium">1</span> to <span className="font-medium">6</span> of <span className="font-medium">12</span> entries
-                        </div>
-
-                         Right: Pagination Controls
-                        <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
-                            <div className="flex items-center space-x-2">
-                                <span className="text-gray-600">Rows per page:</span>
-                                <select className="border border-gray-300 rounded-md text-sm px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                    <option value="6">6</option>
-                                    <option value="10">10</option>
-                                    <option value="25">25</option>
-                                </select>
-                            </div>
-
-                             Pagination buttons 
-                            <div className="flex items-center space-x-1">
-                                <button className="px-2 py-1 border rounded-md text-gray-500 hover:bg-gray-100">&lt;</button>
-                                <button className="px-3 py-1 rounded-md text-white bg-teal-900 shadow">1</button>
-                                <button className="px-3 py-1 border rounded-md text-gray-600 hover:bg-gray-100">2</button>
-                                <button className="px-2 py-1 border rounded-md text-gray-500 hover:bg-gray-100">&gt;</button>
-                            </div>
-                        </div>
-                    </div>
-                    */}
                 </div>
             </div>
         </>

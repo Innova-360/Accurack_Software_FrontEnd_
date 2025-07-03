@@ -7,6 +7,7 @@ import type {
   Customer,
   CustomerFormData,
   CustomerState,
+  SearchCustomersResponse,
 } from "../../types/customer";
 import apiClient from "../../services/api";
 
@@ -393,7 +394,7 @@ export const customerApi = createApi({
   baseQuery: customBaseQuery,
   tagTypes: ['Customer'],
   endpoints: (builder) => ({
-    searchCustomers: builder.query<{ data: any[] }, { search: string; storeId: string }>({
+    searchCustomers: builder.query<SearchCustomersResponse, { search: string; storeId: string }>({
       query: ({ search, storeId }) => ({
         url: '/sales/customers',
         params: { search, storeId },
