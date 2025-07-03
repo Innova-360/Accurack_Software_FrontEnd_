@@ -234,7 +234,7 @@ const Signup = () => {
                   placeholder="First Name"
                   value={formData.firstName}
                   onChange={handleChange}
-                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-left placeholder:text-left placeholder:font-normal flex items-center justify-center"
                 />
                 <input
                   type="text"
@@ -242,7 +242,7 @@ const Signup = () => {
                   placeholder="Last Name"
                   value={formData.lastName}
                   onChange={handleChange}
-                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-left placeholder:text-left placeholder:font-normal flex items-center justify-center"
                 />
                 <input
                   type="email"
@@ -250,7 +250,7 @@ const Signup = () => {
                   placeholder="Email Address"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-left placeholder:text-left placeholder:font-normal flex items-center justify-center"
                 />
               </div>
             </div>
@@ -267,7 +267,7 @@ const Signup = () => {
                     placeholder="Create Password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center pr-10"
+                    className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-left placeholder:text-left placeholder:font-normal flex items-center justify-center pr-10"
                   />
                   <span
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
@@ -288,7 +288,7 @@ const Signup = () => {
                     placeholder="Confirm Password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center pr-10"
+                    className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-left placeholder:text-left placeholder:font-normal flex items-center justify-center pr-10"
                   />
                   <span
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
@@ -316,7 +316,7 @@ const Signup = () => {
                   placeholder="Company Name"
                   value={formData.companyName}
                   onChange={handleChange}
-                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-left placeholder:text-left placeholder:font-normal flex items-center justify-center"
                 />
                 <input
                   type="email"
@@ -324,7 +324,7 @@ const Signup = () => {
                   placeholder="Company Email"
                   value={formData.companyEmail}
                   onChange={handleChange}
-                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-left placeholder:text-left placeholder:font-normal flex items-center justify-center"
                 />
                 <input
                   type="tel"
@@ -332,7 +332,7 @@ const Signup = () => {
                   placeholder="Company Phone"
                   value={formData.companyPhone}
                   onChange={handleChange}
-                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal flex items-center justify-center"
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-left placeholder:text-left placeholder:font-normal flex items-center justify-center"
                 />
                 <textarea
                   name="companyAddress"
@@ -340,7 +340,7 @@ const Signup = () => {
                   value={formData.companyAddress}
                   onChange={handleChange}
                   rows={3}
-                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-center placeholder:text-center placeholder:font-normal resize-none"
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] text-xs sm:text-sm text-left placeholder:text-left placeholder:font-normal resize-none"
                 />
               </div>
             </div>{" "}
@@ -379,9 +379,7 @@ const Signup = () => {
                   className="h-6 w-6"
                 />
               </span>
-              <span className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 cursor-pointer">
-                <img src="/apple.png" alt="Apple" className="h-6 w-6" />
-              </span>
+              
             </div>
             <span className="flex items-center justify-center cursor-pointer mt-4">
               Already have an account?

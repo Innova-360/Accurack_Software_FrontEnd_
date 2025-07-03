@@ -228,9 +228,7 @@ const Login = () => {
                   className="h-6 w-6"
                 />
               </span>
-              <span className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 cursor-pointer">
-                <img src="/apple.png" alt="Apple" className="h-6 w-6" />
-              </span>
+              
             </div>
           </div>
           <p className="text-center text-xs text-gray-500 mt-5">

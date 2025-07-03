@@ -94,6 +94,7 @@ const AddNewSale: React.FC = () => {
   // Form state
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [customerName, setCustomerName] = useState("");
+  const [countryCode, setCountryCode] = useState("+1"); // Added country code state
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [street, setStreet] = useState("");
@@ -132,8 +133,9 @@ const AddNewSale: React.FC = () => {
     setSelectedCustomerId(customerId);
     
     if (customerId === "new") {
-      // Clear all fields for new customer
+      // Clear all fields for a new customer
       setCustomerName("");
+      setCountryCode("+1");
       setPhoneNumber("");
       setEmail("");
       setStreet("");
@@ -145,53 +147,51 @@ const AddNewSale: React.FC = () => {
     }
 
     if (customerId === "") {
-      return; // No selection
+      // Clear all fields when no customer is selected
+      setCustomerName("");
+      setCountryCode("+1");
+      setPhoneNumber("");
+      setEmail("");
+      setStreet("");
+      setCity("");
+      setState("");
+      setPostalCode("");
+      setCountry("");
+      return;
     }
 
     // Find the selected customer and auto-fill the form
     const selectedCustomer = customers.find(customer => customer.id === customerId);
     if (selectedCustomer) {
-      setCustomerName(selectedCustomer.customerName);
-      setPhoneNumber(selectedCustomer.phoneNumber);
+      setCustomerName(selectedCustomer.customerName || "");
+      
+      // Extract country code from phone number or set default
+      const phoneStr = selectedCustomer.phoneNumber || "";
+      const phoneRegex = /^(\+\d+)(.*)$/;
+      const match = phoneStr.match(phoneRegex);
+      
+      if (match) {
+        setCountryCode(match[1]);
+        setPhoneNumber(match[2]);
+      } else {
+        setCountryCode("+1");
+        setPhoneNumber(phoneStr);
+      }
+      
       setEmail(selectedCustomer.customerMail || "");
       
-      // Parse the address string back into components
       if (selectedCustomer.customerAddress) {
-        const addressParts = selectedCustomer.customerAddress.split(", ").filter(part => part.trim());
-        
-        // Reset all address fields first
-        setStreet("");
-        setCity("");
-        setState("");
-        setPostalCode("");
-        setCountry("");
-        
-        // Try to intelligently assign address parts
+        // Split address into components if available
+        const addressParts = selectedCustomer.customerAddress.split(', ');
         if (addressParts.length >= 5) {
-          // Full address: street, city, state, postal, country
           setStreet(addressParts[0]);
           setCity(addressParts[1]);
           setState(addressParts[2]);
           setPostalCode(addressParts[3]);
-          setCountry(addressParts[4]);
-        } else if (addressParts.length === 4) {
-          // Missing street: city, state, postal, country
-          setCity(addressParts[0]);
-          setState(addressParts[1]);
-          setPostalCode(addressParts[2]);
-          setCountry(addressParts[3]);
-        } else if (addressParts.length === 3) {
-          // city, state, country (assuming no postal code)
-          setCity(addressParts[0]);
-          setState(addressParts[1]);
-          setCountry(addressParts[2]);
-        } else if (addressParts.length === 2) {
-          // city, country
-          setCity(addressParts[0]);
-          setCountry(addressParts[1]);
-        } else if (addressParts.length === 1) {
-          // Just put it in city field
-          setCity(addressParts[0]);
+          setCountry(addressParts.slice(4).join(', '));
+        } else {
+          // If address format is unexpected, just set the full address to street
+          setStreet(selectedCustomer.customerAddress);
         }
       }
     }
@@ -342,10 +342,24 @@ const AddNewSale: React.FC = () => {
       return;
     }
 
+    if (!countryCode.trim()) {
+      toast.error("Country code is required");
+      return;
+    }
+
     if (!phoneNumber.trim()) {
       toast.error("Phone number is required");
       return;
     }
+    
+    // Make sure country code is in proper format
+    if (!countryCode.startsWith('+')) {
+      toast.error("Country code must start with '+' (e.g., +1)");
+      return;
+    }
+
+    // Combine country code and phone number
+    const fullPhoneNumber = `${countryCode}${phoneNumber}`;
 
     // Validate address fields (except street which is optional)
     if (!city.trim()) {
@@ -411,12 +425,12 @@ const AddNewSale: React.FC = () => {
 
       // Prepare sale data according to API format
       const saleData: SaleRequestData = {
-        customerPhone: phoneNumber.trim(),
+        customerPhone: fullPhoneNumber,
         customerData: {
           customerName: customerName.trim(),
           customerAddress: getFullAddress(),
-          phoneNumber: phoneNumber.trim(),
-          telephoneNumber: phoneNumber.trim(),
+          phoneNumber: fullPhoneNumber,
+          telephoneNumber: fullPhoneNumber,
           customerMail: email.trim(),
           storeId: currentStore.id,
           clientId: user.clientId,
@@ -540,13 +554,23 @@ const AddNewSale: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Phone Number <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-                    placeholder="Enter phone number"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={countryCode}
+                      onChange={(e) => setCountryCode(e.target.value)}
+                      className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                      placeholder="+1"
+                      aria-label="Country Code"
+                    />
+                    <input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                      placeholder="Enter phone number"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
