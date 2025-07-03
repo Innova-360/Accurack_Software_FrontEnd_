@@ -4,6 +4,7 @@ import axios from "axios";
 import React, { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
+import { BASE_URL } from "../../services/api";
 
 interface UploadInventoryModalProps {
   isOpen: boolean;
@@ -90,7 +91,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
       const formData = new FormData();
       formData.append("file", selectedFile);
       await axios.post(
-        `${import.meta.env.BASE_URL}/product/uploadsheet?storeId=${id}`,
+        `${BASE_URL}/product/uploadsheet?storeId=${id}`,
         formData,
         {
           headers: {
