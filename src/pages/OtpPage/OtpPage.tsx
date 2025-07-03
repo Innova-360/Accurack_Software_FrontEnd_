@@ -8,7 +8,7 @@ const OtpPage = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [userEmail, setUserEmail] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [initialOtpSent, setInitialOtpSent] = useState(false);
+  // const [initialOtpSent, setInitialOtpSent] = useState(false);
   const inputs = [
     useRef(null),
     useRef(null),
@@ -22,44 +22,51 @@ const OtpPage = () => {
   const navigate = useNavigate();
   const { loading, error } = useAppSelector((state) => state.auth);
 
-  // Get user email from localStorage and send initial OTP
   useEffect(() => {
     const email = localStorage.getItem("userEmail");
     if (email) {
       setUserEmail(email);
-      // Send initial OTP request when component mounts
-      sendInitialOtp(email);
     }
   }, []);
 
-  // Send initial OTP when user lands on OTP page
-  const sendInitialOtp = async (email: string) => {
-    try {
-      const resultAction = await dispatch(
-        verifyOtp({
-          email: email,
-          // Don't include otp parameter to trigger OTP sending
-        })
-      );
+  // Get user email from localStorage and send initial OTP
+  // useEffect(() => {
+  //   const email = localStorage.getItem("userEmail");
+  //   if (email) {
+  //     setUserEmail(email);
+  //     // Send initial OTP request when component mounts
+  //     sendInitialOtp(email);
+  //   }
+  // }, []);
 
-      if (verifyOtp.fulfilled.match(resultAction)) {
-        setSuccessMessage("OTP has been sent to your email");
-        setInitialOtpSent(true);
-        // Focus on first input
-        setTimeout(() => {
-          (inputs[0].current as any)?.focus();
-        }, 100);
-        // Clear success message after 3 seconds
-        setTimeout(() => setSuccessMessage(""), 3000);
-      } else {
-        console.error("Failed to send OTP", resultAction.payload);
-        toast.error("Failed to send OTP. Please try again.");
-      }
-    } catch (error) {
-      console.error("💥 Error sending OTP", error);
-      toast.error("An error occurred while sending OTP. Please try again.");
-    }
-  };
+  // Send initial OTP when user lands on OTP page
+  // const sendInitialOtp = async (email: string) => {
+  //   try {
+  //     const resultAction = await dispatch(
+  //       verifyOtp({
+  //         email: email,
+  //         // Don't include otp parameter to trigger OTP sending
+  //       })
+  //     );
+
+  //     if (verifyOtp.fulfilled.match(resultAction)) {
+  //       setSuccessMessage("OTP has been sent to your email");
+  //       setInitialOtpSent(true);
+  //       // Focus on first input
+  //       setTimeout(() => {
+  //         (inputs[0].current as any)?.focus();
+  //       }, 100);
+  //       // Clear success message after 3 seconds
+  //       setTimeout(() => setSuccessMessage(""), 3000);
+  //     } else {
+  //       console.error("Failed to send OTP", resultAction.payload);
+  //       toast.error("Failed to send OTP. Please try again.");
+  //     }
+  //   } catch (error) {
+  //     console.error("💥 Error sending OTP", error);
+  //     toast.error("An error occurred while sending OTP. Please try again.");
+  //   }
+  // };
 
   // Handle OTP input change
   const handleChange = (
@@ -72,6 +79,7 @@ const OtpPage = () => {
     newOtp[idx] = val;
     setOtp(newOtp);
     if (val && idx < 5) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (inputs[idx + 1].current as any)?.focus();
     }
   };
@@ -82,6 +90,7 @@ const OtpPage = () => {
     idx: number
   ) => {
     if (e.key === "Backspace" && !otp[idx] && idx > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (inputs[idx - 1].current as any)?.focus();
     }
   };
@@ -139,6 +148,18 @@ const OtpPage = () => {
       toast.error(
         "An error occurred during OTP verification. Please try again."
       );
+    }
+  };
+
+  // Add this function inside your component
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const paste = e.clipboardData.getData("text").replace(/\D/g, "");
+    if (paste.length === 6) {
+      setOtp(paste.split(""));
+      // Optionally, focus the last input
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (inputs[5].current as any)?.focus();
+      e.preventDefault();
     }
   };
 
@@ -219,12 +240,13 @@ const OtpPage = () => {
               {userEmail || "your email"}
             </span>
           </p>
-          {/* Loading message for initial OTP sending */}
+          {/* Loading message for initial OTP sending 
           {!initialOtpSent && loading && (
             <div className="text-blue-500 text-sm text-center mb-3 bg-blue-50 p-2 rounded">
               Sending OTP to your email...
             </div>
           )}
+            */}
           {/* Error message */}
           {error && (
             <div className="text-red-500 text-sm text-center mb-3 bg-red-50 p-2 rounded">
@@ -253,6 +275,7 @@ const OtpPage = () => {
                   maxLength={1}
                   value={digit}
                   onChange={(e) => handleChange(e, idx)}
+                  onPaste={idx === 0 ? handlePaste : undefined} // <-- Add this line
                   onKeyDown={(e) => handleKeyDown(e, idx)}
                   className="w-10 h-10 sm:w-12 sm:h-12 text-center border border-gray-200 rounded-lg text-lg font-bold focus:outline-none focus:ring-2 focus:ring-[#0b5c5a] bg-[#f5f6fa]"
                   autoFocus={idx === 0}
