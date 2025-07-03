@@ -19,7 +19,14 @@ export const useSuppliers = (storeId: string): UseSupplierReturn => {
       const response = await supplierAPI.getSuppliers(storeId);
 
       if (response.success) {
-        setSuppliers(response.data.suppliers);
+        // Filter suppliers by active status
+        const activeSuppliers = response.data.suppliers.filter(
+          (supplier) => supplier.status !== "inactive"
+        );
+        console.log(
+          `useSuppliers hook: ${activeSuppliers.length} active suppliers out of ${response.data.suppliers.length} total`
+        );
+        setSuppliers(activeSuppliers);
       } else {
         setError(response.message || "Failed to fetch suppliers");
       }

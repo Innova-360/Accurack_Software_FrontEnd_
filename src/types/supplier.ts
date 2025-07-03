@@ -6,6 +6,7 @@ export interface Supplier {
   phone: string;
   address: string;
   storeId: string;
+  status?: "active" | "inactive"; // Added status field
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -17,6 +18,7 @@ export interface SupplierFormData {
   phone: string;
   address: string;
   storeId: string;
+  status?: "active" | "inactive"; // Default should be 'active'
 }
 
 export interface SupplierPagination {

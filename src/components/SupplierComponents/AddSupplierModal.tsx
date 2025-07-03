@@ -1,11 +1,11 @@
 import toast from "react-hot-toast";
-import React, { useState } from 'react';
-import { FaPlus, FaTimes } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
-import { SpecialButton } from '../buttons';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { createSupplier } from '../../store/slices/supplierSlice';
-import type { SupplierFormData } from '../../types/supplier';
+import React, { useState } from "react";
+import { FaPlus, FaTimes } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { SpecialButton } from "../buttons";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { createSupplier } from "../../store/slices/supplierSlice";
+import type { SupplierFormData } from "../../types/supplier";
 interface AddSupplierModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -19,12 +19,13 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
   const { currentStore } = useAppSelector((state) => state.stores);
   const { loading } = useAppSelector((state) => state.suppliers);
   const [formData, setFormData] = useState<SupplierFormData>({
-    supplier_id: '',
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    storeId: currentStore?.id || ''
+    supplier_id: "",
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    storeId: currentStore?.id || "",
+    status: "active", // Set status to active by default
   });
   // Update storeId when currentStore changes
   React.useEffect(() => {
@@ -103,7 +104,7 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
       onClose();
       // Navigate to assign products page
       navigate(`/store/${currentStore?.id}/supplier/assign-products`, {
-        state: { supplier: supplierData }
+        state: { supplier: formData },
       });
     } catch (error) {
       console.error("Error creating supplier:", error);
@@ -113,7 +114,8 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
           : "Failed to create supplier. Please try again.";
       toast.error(errorMessage);
     }
-  }; const handleClose = () => {
+  };
+  const handleClose = () => {
     setFormData({
       supplier_id: "",
       name: "",
@@ -150,10 +152,11 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
           >
             <FaTimes className="text-gray-400" size={18} />
           </button>
-        </div > {/* Form */ }
-  < form onSubmit = {(e)=> handleSubmit(e)} className = "p-6 space-y-4" >
-    {/* Supplier Name */ }
-    < div >
+        </div>{" "}
+        {/* Form */}
+        <form onSubmit={(e) => handleSubmit(e)} className="p-6 space-y-4">
+          {/* Supplier Name */}
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Supplier Name *
             </label>
@@ -167,14 +170,12 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               placeholder="Enter supplier name (e.g., ABC Suppliers Ltd)"
               disabled={loading}
             />
-{
-  errors.name && (
-    <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-  )
-}
-          </div >
-  {/* Email */ }
-  < div >
+            {errors.name && (
+              <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+            )}
+          </div>
+          {/* Email */}
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Email *
             </label>
@@ -188,14 +189,12 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               placeholder="Enter email address (e.g., supplier@example.com)"
               disabled={loading}
             />
-{
-  errors.email && (
-    <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-  )
-}
-          </div >
-  {/* Phone */ }
-  < div >
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+            )}
+          </div>
+          {/* Phone */}
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Phone Number *
             </label>
@@ -209,14 +208,63 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               placeholder="Enter phone number (e.g., +1-555-123-4567)"
               disabled={loading}
             />
-{
-  errors.phone && (
-    <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
-  )
-}
-          </div >
-  {/* Address */ }
-  < div >
+            {errors.phone && (
+              <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+            )}
+          </div>
+
+          {/* Status */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Supplier Status
+            </label>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  id="status-active"
+                  name="status"
+                  value="active"
+                  checked={formData.status !== "inactive"}
+                  onChange={() => handleInputChange("status", "active")}
+                  className="h-4 w-4 text-[#03414C] focus:ring-[#03414C] border-gray-300"
+                  disabled={loading}
+                />
+                <label
+                  htmlFor="status-active"
+                  className="ml-2 text-sm text-gray-700"
+                >
+                  Active
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  id="status-inactive"
+                  name="status"
+                  value="inactive"
+                  checked={formData.status === "inactive"}
+                  onChange={() => handleInputChange("status", "inactive")}
+                  className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300"
+                  disabled={loading}
+                />
+                <label
+                  htmlFor="status-inactive"
+                  className="ml-2 text-sm text-gray-700"
+                >
+                  Inactive
+                </label>
+              </div>
+            </div>
+            <p className="mt-1 text-xs text-gray-500">
+              {formData.status === "inactive"
+                ? "Inactive suppliers will not appear in supplier lists throughout the application."
+                : "Active suppliers will be visible in all supplier lists."}
+            </p>
+          </div>
+
+          {/* Address */}
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Address *
             </label>
@@ -230,48 +278,36 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               rows={3}
               disabled={loading}
             />
-{
-  errors.address && (
-    <p className="mt-1 text-sm text-red-600">{errors.address}</p>
-  )
-}
-          </div >
-  {/* Store Information */ }
-{/* Action Buttons */ }
-<div className="flex gap-3 pt-4">
-  <SpecialButton
-    variant="modal-cancel"
-    type="button"
-    onClick={handleClose}
-    disabled={loading}
-  >
-    Cancel
-  </SpecialButton>{" "}
-  <SpecialButton
-    variant="modal-confirm"
-    type="button"
-    onClick={async () => {
-      const event = new Event("submit") as unknown as React.FormEvent;
-      await handleSubmit(event);
-    }}
-    disabled={loading}
-  >
-    {loading ? "Adding..." : "Add Supplier"}
-  </SpecialButton>
-</div>
-          </form >
-      </div >
-    </div >
+            {errors.address && (
+              <p className="mt-1 text-sm text-red-600">{errors.address}</p>
+            )}
+          </div>
+          {/* Store Information */}
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4">
+            <SpecialButton
+              variant="modal-cancel"
+              type="button"
+              onClick={handleClose}
+              disabled={loading}
+            >
+              Cancel
+            </SpecialButton>{" "}
+            <SpecialButton
+              variant="modal-confirm"
+              type="button"
+              onClick={async () => {
+                const event = new Event("submit") as unknown as React.FormEvent;
+                await handleSubmit(event);
+              }}
+              disabled={loading}
+            >
+              {loading ? "Adding..." : "Add Supplier"}
+            </SpecialButton>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };
 export default AddSupplierModal;
-
-
-
-
-
-
-
-
-
-

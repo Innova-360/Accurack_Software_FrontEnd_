@@ -46,7 +46,12 @@ export interface ApiProduct {
     name: string;
   };
   sales?: unknown[];
-  purchaseOrders?: unknown[];
+  purchaseOrders?: Array<{
+    id: string;
+    quantity: number;
+    total?: number;
+    status: string;
+  }>;
   packIds?: string[];
   packs: Array<{
     id?: string;
@@ -71,6 +76,7 @@ export interface ApiProduct {
     percentDiscount?: number;
     supplierId?: string;
     packIds?: string[];
+    purchaseOrders: string;
     packs?: Array<{
       id?: string;
       productId?: string;
@@ -103,12 +109,12 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
 
     return {
       id: apiProduct.id || "",
-      name: apiProduct.name || "Unknown Product",
+      name: apiProduct.name || "-",
       quantity: apiProduct.itemQuantity || 0,
-      plu: apiProduct.pluUpc || "plu not found",
-      sku: apiProduct.sku || "sku not found",
-      ean: apiProduct.ean || "", // Add EAN field
-      description: apiProduct.description || "this is description",
+      plu: apiProduct.pluUpc || "-",
+      sku: apiProduct.sku || "-",
+      ean: apiProduct.ean || "-", // Add EAN field
+      description: apiProduct.description || "-",
       price: `$${(apiProduct.singleItemSellingPrice || 0).toFixed(2)}`,
       category:
         typeof apiProduct.category === "string"
@@ -143,7 +149,13 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
       profitMargin: apiProduct.profitMargin,
       store: apiProduct.store,
       sales: apiProduct.sales || [],
-      purchaseOrders: apiProduct.purchaseOrders || [],
+      purchaseOrders:
+        (apiProduct.purchaseOrders as Array<{
+          id: string;
+          quantity: number;
+          total?: number;
+          status: string;
+        }>) || [],
       packs: apiProduct.packs || [],
     };
   } catch (transformError) {
@@ -182,6 +194,15 @@ interface PaginatedProductsResponse {
   };
 }
 
+// export interface PaginatedProductsResponse {
+//   products: Product[];
+//   totalProducts: number;
+//   totalPages: number;
+//   currentPage: number;
+//   hasNextPage: boolean;
+//   hasPreviousPage: boolean;
+// }
+
 // Add interface for pagination parameters
 interface PaginationParams {
   page?: number;
@@ -197,15 +218,6 @@ export interface ProductSearchParams {
   page?: number;
   limit?: number;
   search?: string;
-}
-
-export interface PaginatedProductsResponse {
-  products: Product[];
-  totalProducts: number;
-  totalPages: number;
-  currentPage: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
 }
 
 // API service

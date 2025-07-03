@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { FaPlus, FaTrash, FaArrowLeft, FaSearch, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import toast from "react-hot-toast";
+import Header from "../../components/Header";
 import { SpecialButton } from "../../components/buttons";
-import SaleCreationModal from "../../components/modals/SaleCreationModal";
 import { fetchProductsPaginated, setSearchQuery } from "../../store/slices/productsSlice";
 import { createSale } from "../../store/slices/salesSlice";
 import { fetchUser } from "../../store/slices/userSlice";
@@ -13,8 +13,6 @@ import useRequireStore from "../../hooks/useRequireStore";
 import type { RootState, AppDispatch } from "../../store";
 import type { Product } from "../../data/inventoryData";
 import type { SaleRequestData, SaleItem } from "../../store/slices/salesSlice";
-import Header from "../../components/Header";
-
 
 interface ProductItem {
   id: string;
@@ -44,6 +42,7 @@ const AddNewSale: React.FC = () => {
     totalPages,
     currentPage,
     hasNextPage,
+    hasPreviousPage,
   } = useSelector((state: RootState) => state.products);
   
   // Sales state
@@ -56,7 +55,6 @@ const AddNewSale: React.FC = () => {
   const [currentPageLocal, setCurrentPageLocal] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const productsPerPage = 50;
 
   // Debounce search term
@@ -71,11 +69,6 @@ const AddNewSale: React.FC = () => {
 
   // Fetch products with pagination and search
   const fetchProductsData = useCallback(() => {
-    console.log("Fetching products with params:", {
-      page: currentPageLocal,
-      limit: productsPerPage,
-      search: debouncedSearchTerm || undefined,
-    });
     dispatch(fetchProductsPaginated({
       page: currentPageLocal,
       limit: productsPerPage,
@@ -83,43 +76,20 @@ const AddNewSale: React.FC = () => {
     }));
   }, [dispatch, currentPageLocal, debouncedSearchTerm]);
 
-  // Initial fetch on component mount
+  // Fetch products, user, and customers on component mount
   useEffect(() => {
+    fetchProductsData();
     dispatch(fetchUser());
     // Fetch customers for the dropdown
     if (currentStore?.id) {
       dispatch(fetchCustomers({ storeId: currentStore.id, page: 1, limit: 100 }));
     }
-  }, [dispatch, currentStore?.id]);
-
-  // Fetch products when page changes or search term changes
-  useEffect(() => {
-    fetchProductsData();
-  }, [fetchProductsData]);
+  }, [fetchProductsData, dispatch, currentStore?.id]);
 
   // Update search query in redux store
   useEffect(() => {
     dispatch(setSearchQuery(debouncedSearchTerm));
   }, [dispatch, debouncedSearchTerm]);
-
-  // Handle page changes
-  const handlePageChange = (newPage: number) => {
-    console.log("Changing page from", currentPageLocal, "to", newPage);
-    setCurrentPageLocal(newPage);
-  };
-
-  // Handle search clear
-  const handleClearSearch = () => {
-    setSearchTerm("");
-    setDebouncedSearchTerm("");
-    setCurrentPageLocal(1);
-  };
-  
-  // Handle refresh products
-  const handleRefreshProducts = () => {
-    fetchProductsData();
-    toast.success("Products refreshed");
-  };
 
   // Form state
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
@@ -146,12 +116,6 @@ const AddNewSale: React.FC = () => {
   const subtotal = products.reduce((sum, product) => sum + product.total, 0);
   const discountAmount =
     discountType === "percentage" ? (subtotal * discount) / 100 : discount;
-  // const discountPercentage =
-  //   discountType === "amount"
-  //     ? subtotal > 0
-  //       ? (discount / subtotal) * 100
-  //       : 0
-  //     : discount;
   const taxAmount = ((subtotal - discountAmount) * taxRate) / 100;
   const finalTotal = subtotal - discountAmount + taxAmount;
 
@@ -470,43 +434,29 @@ const AddNewSale: React.FC = () => {
         status: "PENDING", // Default status as pending (uppercase)
         saleItems,
       };
-      console.log("📦 Prepared sale data:", JSON.stringify(saleData, null, 2));
-      await dispatch(createSale(saleData)).unwrap();
-      toast.success("Sale created successfully!");
 
-      navigate(-1)
+      console.log("📦 Prepared sale data:", JSON.stringify(saleData, null, 2));
+
+      // Dispatch create sale action
+      await dispatch(createSale(saleData)).unwrap();
+      
+      toast.success("Sale created successfully!");
+      
+      // Navigate back to sales page
+      navigate(-1);
     } catch (error: any) {
       console.error("Error creating sale:", error);
-      toast.error(`Failed to create sale: ${error.message || "An unexpected error occurred."}`);
+      toast.error(`Failed to create sale: ${error}`);
     }
   };
 
   const handleCancel = () => {
     navigate(-1);
   };
-  
-  const handleManualCreate = () => {
-    setIsModalOpen(false);
-    // The rest of the form is already visible, so no need to do anything else
-  };
-  
-  // Check if we should show modal on initial load
-  useEffect(() => {
-    setIsModalOpen(true);
-  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-
-      {/* Sale Creation Modal */}
-      <SaleCreationModal
-        isOpen={isModalOpen}
-        onClose={() => navigate(-1)} // Go back when closing without selecting an option
-        onManualCreate={handleManualCreate}
-        storeId={currentStore?.id}
-        clientId={user?.clientId}
-      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
@@ -689,14 +639,6 @@ const AddNewSale: React.FC = () => {
                 <h2 className="text-lg font-semibold text-gray-900">
                   Products Purchased
                 </h2>
-                <button
-                  onClick={handleRefreshProducts}
-                  className="text-[#03414C] hover:text-[#025561] text-sm flex items-center gap-1"
-                  disabled={productsLoading}
-                >
-                  <FaSearch size={12} />
-                  Refresh Products
-                </button>
               </div>
 
               {/* Product Search Bar */}
@@ -718,7 +660,10 @@ const AddNewSale: React.FC = () => {
                       {debouncedSearchTerm && ` for "${debouncedSearchTerm}"`}
                     </span>
                     <button
-                      onClick={handleClearSearch}
+                      onClick={() => {
+                        setSearchTerm("");
+                        setDebouncedSearchTerm("");
+                      }}
                       className="text-[#03414C] hover:text-[#025561] underline"
                     >
                       Clear search
@@ -728,25 +673,24 @@ const AddNewSale: React.FC = () => {
               </div>
 
               {/* Pagination Controls - Top */}
-              {availableProducts.length > 0 && (
+              {totalPages > 1 && (
                 <div className="mb-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                   <div className="text-sm text-gray-600">
-                    Page {currentPage || currentPageLocal} of {totalPages || Math.ceil(totalProducts / productsPerPage) || 1} 
-                    ({totalProducts} total products)
+                    Page {currentPage} of {totalPages} ({totalProducts} total products)
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handlePageChange(Math.max(1, currentPageLocal - 1))}
-                      disabled={currentPageLocal <= 1 || productsLoading}
+                      onClick={() => setCurrentPageLocal(prev => Math.max(1, prev - 1))}
+                      disabled={!hasPreviousPage || productsLoading}
                       className="p-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <FaChevronLeft size={14} />
                     </button>
                     <span className="px-3 py-1 bg-white border border-gray-300 rounded-lg text-sm">
-                      {currentPageLocal}
+                      {currentPage}
                     </span>
                     <button
-                      onClick={() => handlePageChange(currentPageLocal + 1)}
+                      onClick={() => setCurrentPageLocal(prev => prev + 1)}
                       disabled={!hasNextPage || productsLoading}
                       className="p-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -929,6 +873,7 @@ const AddNewSale: React.FC = () => {
                             </div>
                           </div>
                         </div>
+
                         {/* Additional product information row */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mt-3 pt-3 border-t border-blue-200">
                           <div>
@@ -972,6 +917,7 @@ const AddNewSale: React.FC = () => {
                             </div>
                           </div>
                         </div>
+
                         {product.variantId && (
                           <div className="mt-3 pt-2 border-t border-blue-200">
                             <div className="text-xs text-blue-700">
@@ -1032,24 +978,24 @@ const AddNewSale: React.FC = () => {
               </div>
 
               {/* Pagination Controls - Bottom */}
-              {availableProducts.length > 0 && (
+              {totalPages > 1 && (
                 <div className="mt-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                   <div className="text-sm text-gray-600">
-                    Showing {((currentPageLocal - 1) * productsPerPage) + 1}-{Math.min(currentPageLocal * productsPerPage, totalProducts || availableProducts.length)} of {totalProducts || availableProducts.length} products
+                    Showing {((currentPage - 1) * productsPerPage) + 1}-{Math.min(currentPage * productsPerPage, totalProducts)} of {totalProducts} products
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handlePageChange(Math.max(1, currentPageLocal - 1))}
-                      disabled={currentPageLocal <= 1 || productsLoading}
+                      onClick={() => setCurrentPageLocal(prev => Math.max(1, prev - 1))}
+                      disabled={!hasPreviousPage || productsLoading}
                       className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                     >
                       Previous
                     </button>
                     <span className="px-3 py-1 bg-white border border-gray-300 rounded-lg text-sm">
-                      {currentPageLocal} / {totalPages || Math.ceil((totalProducts || availableProducts.length) / productsPerPage)}
+                      {currentPage} / {totalPages}
                     </span>
                     <button
-                      onClick={() => handlePageChange(currentPageLocal + 1)}
+                      onClick={() => setCurrentPageLocal(prev => prev + 1)}
                       disabled={!hasNextPage || productsLoading}
                       className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                     >

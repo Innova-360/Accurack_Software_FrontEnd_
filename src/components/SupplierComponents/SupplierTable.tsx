@@ -45,7 +45,7 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
           <FaBars className="text-white" size={28} />
         </div>
         <h3 className="text-2xl font-bold text-gray-800 mb-3">
-          No Suppliers Found
+          No Active Suppliers Found
         </h3>
         <p className="text-gray-600 mb-8 max-w-md mx-auto">
           You haven't added any suppliers yet. Start by adding your first
@@ -79,7 +79,8 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
         </div>
         {/* Table Content */}
         <div className="divide-y divide-gray-200">
-          {currentSuppliers?.map((supplier, index) => (            <div
+          {currentSuppliers?.map((supplier, index) => (
+            <div
               // key={supplier.supplier_id}
               className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150 group"
             >
@@ -95,6 +96,11 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
                     {!isValidSupplier(supplier) && (
                       <span className="px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-full">
                         Sample Data
+                      </span>
+                    )}
+                    {supplier.status === "inactive" && (
+                      <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                        Inactive
                       </span>
                     )}
                   </div>

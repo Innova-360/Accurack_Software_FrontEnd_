@@ -11,6 +11,7 @@ import Pagination from "../../components/SalesComponents/Pagination";
 import EditTransactionModal from "../../components/SalesComponents/EditTransactionModal";
 import ViewTransactionModal from "../../components/SalesComponents/ViewTransactionModal";
 import DeleteConfirmModal from "../../components/SalesComponents/DeleteConfirmModal";
+import SaleCreationModal from "../../components/modals/SaleCreationModal";
 import { fetchSales } from "../../store/slices/salesSlice";
 import type { RootState, AppDispatch } from "../../store";
 import useRequireStore from "../../hooks/useRequireStore";
@@ -157,6 +158,7 @@ const SalesPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSaleCreationModalOpen, setIsSaleCreationModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any | null>(
     null
   );
@@ -303,6 +305,21 @@ const SalesPage: React.FC = () => {
     }
   };
 
+  const handleOpenSaleCreationModal = () => {
+    setIsSaleCreationModalOpen(true);
+  };
+
+  const handleManualSaleCreate = () => {
+    // Navigate to the existing manual sale creation page
+    if (storeId) {
+      navigate(`/store/${storeId}/sales/new`);
+    } else {
+      navigate("/sales/new");
+    }
+    // Close the modal
+    setIsSaleCreationModalOpen(false);
+  };
+
   return (
     <>
       <Header />
@@ -315,10 +332,11 @@ const SalesPage: React.FC = () => {
               <p>{error}</p>
             </div>
           )}
-          {/* Header Section */}{" "}
+          {/* Header Section */}
           <SalesHeader
             onSalesReport={handleSalesReport}
             onAnalytics={handleAnalytics}
+            onCreateSale={handleOpenSaleCreationModal}
           />
           {/* Stats Grid */}
           <StatsGrid stats={stats} loading={loading} />
@@ -412,6 +430,13 @@ const SalesPage: React.FC = () => {
         transaction={selectedTransaction}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteConfirm}
+      />
+
+      <SaleCreationModal
+        isOpen={isSaleCreationModalOpen}
+        onClose={() => setIsSaleCreationModalOpen(false)}
+        onManualCreate={handleManualSaleCreate}
+        storeId={storeId}
       />
     </>
   );

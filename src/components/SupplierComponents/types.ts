@@ -8,6 +8,7 @@ export interface Supplier {
   storeId: string;
   createdAt?: Date;
   updatedAt?: Date;
+  status?: 'active' | 'inactive'; // Added status field
 }
 
 export interface SupplierFormData {

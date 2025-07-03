@@ -3,30 +3,12 @@ import apiClient from "../../services/api";
 
 // Types for the sales API
 export interface SaleItem {
-  id?: string;
-  saleId?: string;
   productId: string;
   productName: string;
   quantity: number;
   sellingPrice: number;
   totalPrice: number;
   pluUpc: string;
-  createdAt?: string;
-  updatedAt?: string;
-  product?: {
-    id: string;
-    name: string;
-    sku: string;
-    category: {
-      id: string;
-      name: string;
-      code: string;
-      description: string;
-      parentId: string | null;
-      createdAt: string;
-      updatedAt: string;
-    };
-  };
 }
 
 export interface SaleRequestData {
@@ -52,57 +34,24 @@ export interface SaleRequestData {
   saleItems: SaleItem[];
 }
 
-export interface Customer {
-  id: string;
-  customerName: string;
-  customerAddress: string;
-  phoneNumber: string;
-  telephoneNumber: string;
-  customerMail: string;
-  website: string | null;
-  threshold: number;
-  storeId: string;
-  clientId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-}
-
 export interface SaleResponseData {
   id: string;
   transactionId: string;
   customerPhone: string;
-  customerData: {
-    customerName: string;
-    customerAddress: string;
-    phoneNumber: string;
-    telephoneNumber: string;
-    customerMail: string;
-    storeId: string;
-    clientId: string;
-  };
-  // customer?: any;
+  customerData: any;
+  customer?: any;
   storeId: string;
   clientId: string;
   paymentMethod: string;
   totalAmount: number;
-  confirmation: string;
-  quantitySend: number;
-  allowance: number;
+  tax: number;
+  cashierName: string;
+  generateInvoice: boolean;
   source: string;
   status?: string;
   saleItems: SaleItem[];
   createdAt: string;
   updatedAt: string;
-  fileUploadSalesId: string | null;
-  user: User;
-  // invoices: any[];
-  // returns: any[];
 }
 
 interface SalesState {
@@ -139,6 +88,7 @@ export const createSale = createAsyncThunk<
     );
   }
 });
+
 
 // Async thunk for fetching sales
 export const fetchSales = createAsyncThunk<

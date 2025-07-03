@@ -271,7 +271,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-blue-600 border-b border-gray-300">
                         <div className="truncate">
                           {typeof product.plu === "string"
-                            ? product.plu
+                            ? product.plu.split("/")[0]
                             : String(product.plu || "N/A")}
                         </div>
                       </td>
@@ -437,7 +437,9 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                           </td>
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-blue-600 border-b border-gray-300">
                             <div className="truncate">
-                              {variant.pluUpc || "-"}
+                              {variant.pluUpc
+                                ? variant.pluUpc.split("/")[0]
+                                : "-"}
                             </div>
                           </td>
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-blue-600 border-b border-gray-300">
