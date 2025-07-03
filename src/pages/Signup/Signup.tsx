@@ -35,7 +35,7 @@ const Signup = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    console.log("🚀 Starting signup process with data:", {
+    console.log("🚀 Starting signup process with data: ", {
       firstName: formData.firstName,
       lastName: formData.lastName,
       email: formData.email,
