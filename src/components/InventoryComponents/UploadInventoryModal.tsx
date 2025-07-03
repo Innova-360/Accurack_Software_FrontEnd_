@@ -90,7 +90,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
       const formData = new FormData();
       formData.append("file", selectedFile);
       await axios.post(
-        `http://localhost:4000/api/v1/product/uploadsheet?storeId=${id}`,
+        `${import.meta.env.BASE_URL}/product/uploadsheet?storeId=${id}`,
         formData,
         {
           headers: {
@@ -103,7 +103,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
       // Dismiss processing toast and show success
       toast.dismiss(processingToast);
       toast.success("Inventory uploaded successfully!");
-      
+
       // Call the success callback to refetch products
       onUploadSuccess?.();
     } catch (error) {
