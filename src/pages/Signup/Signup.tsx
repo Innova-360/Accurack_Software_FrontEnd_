@@ -35,7 +35,7 @@ const Signup = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    console.log("🚀 Starting signup p rocess with data: ", {
+    console.log("🚀 Starting signup process with data: ", {
       firstName: formData.firstName,
       lastName: formData.lastName,
       email: formData.email,
@@ -379,7 +379,6 @@ const Signup = () => {
                   className="h-6 w-6"
                 />
               </span>
-              
             </div>
             <span className="flex items-center justify-center cursor-pointer mt-4">
               Already have an account?
