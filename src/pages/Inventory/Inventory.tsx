@@ -144,7 +144,7 @@ const Inventory: React.FC = () => {
   const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
 
   // Use custom hooks for data processing
-  const inventoryStats = useInventoryStats(products);
+  const inventoryStats = useInventoryStats(products, pagination);
   // Server-side pagination - use products directly from API
   const groupedProducts = useGroupedProducts(products, groupBy);
   const lowStockProducts = useLowStockProducts(products);
