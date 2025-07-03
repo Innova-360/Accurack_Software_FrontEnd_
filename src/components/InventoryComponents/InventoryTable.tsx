@@ -161,19 +161,10 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
               </th>
               <th
                 className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100 min-w-[100px]"
-                onClick={() => onSort("supplier")}
-              >
-                <div className="flex items-center justify-between">
-                  Supplier
-                  {getSortIcon("supplier")}
-                </div>
-              </th>
-              <th
-                className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100 min-w-[100px]"
                 onClick={() => onSort("category")}
               >
                 <div className="flex items-center justify-between">
-                  <span className="hidden sm:inline">MSA Category</span>
+                  <span className="hidden sm:inline">Category</span>
                   <span className="sm:hidden">Category</span>
                   {getSortIcon("category")}
                 </div>
