@@ -86,20 +86,23 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
       }
     );
 
+    const url = `${BASE_URL}/product/uploadsheet?storeId=${id}`;
+    console.log("Uploading inventory file:", {
+      fileName: selectedFile.name,
+      fileType: selectedFile.type,
+      fileSize: selectedFile.size,
+      storeId: id,
+    });
     try {
       // Send as multipart/form-data for multer
       const formData = new FormData();
       formData.append("file", selectedFile);
-      await axios.post(
-        `${BASE_URL}/product/uploadsheet?storeId=${id}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          withCredentials: true,
-        }
-      );
+      await axios.post(url, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        withCredentials: true,
+      });
 
       // Dismiss processing toast and show success
       toast.dismiss(processingToast);
