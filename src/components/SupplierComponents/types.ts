@@ -8,7 +8,17 @@ export interface Supplier {
   storeId: string;
   createdAt?: Date;
   updatedAt?: Date;
-  status?: 'active' | 'inactive'; // Added status field
+  productSuppliers?: ProductSupplier[];
+}
+
+export interface ProductSupplier {
+  id: string;
+  productId: string;
+  supplierId: string;
+  costPrice: number;
+  categoryId?: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface SupplierFormData {

@@ -100,9 +100,14 @@ export const createEmployee = createAsyncThunk(
   "employees/createEmployee",
   async (employeeData: EmployeeFormData, { rejectWithValue }) => {
     try {
+      console.log("Creating employee with data:", employeeData);
       const response = await apiClient.post("/employees", employeeData);
+      console.log("Employee creation response:", response);
+      console.log("Employee creation response data:", response.data);
       return response.data;
     } catch (error: any) {
+      console.error("Employee creation failed:", error);
+      console.error("Error response:", error.response);
       return rejectWithValue(
         error.response?.data?.message || "Failed to create employee"
       );

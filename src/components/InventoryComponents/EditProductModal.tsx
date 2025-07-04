@@ -11,6 +11,12 @@ interface EditProductModalProps {
 }
 
 export interface EditProductFormData {
+  purchaseOrders?: Array<{
+    id: string;
+    quantity: number;
+    total?: number;
+    status: string;
+  }>;
   name: string;
   category: string;
   ean: string;
@@ -87,7 +93,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     if (product) {
       setFormData({
         name: product.name || "",
-        category: product.category || "",
+        category: product.category.name || "",
         ean: "",
         pluUpc: product.plu || "",
         productSuppliers: [

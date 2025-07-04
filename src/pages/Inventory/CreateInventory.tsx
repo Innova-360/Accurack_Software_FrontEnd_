@@ -186,6 +186,8 @@ const CreateInventory: React.FC = () => {
     orderValueDiscountValue: "",
     quantity: "",
     description: "",
+    imageFile: null,
+    imagePreview: "",
     hasPackSettings: false,
     packDiscounts: [],
     hasDiscountSettings: false,
@@ -324,9 +326,7 @@ const CreateInventory: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between h-auto sm:h-24 py-4 sm:py-0 gap-4 sm:gap-0">
             <div className="flex items-center space-x-3 sm:space-x-6">
               <button
-                onClick={() =>
-                  showVariations ? handleBack() : navigate(-1)
-                }
+                onClick={() => (showVariations ? handleBack() : navigate(-1))}
                 className="group p-2 sm:p-3 text-gray-600 hover:text-[#0f4d57] hover:bg-gray-100/80 rounded-full transition-all duration-300 transform hover:scale-110 hover:shadow-lg"
               >
                 <svg

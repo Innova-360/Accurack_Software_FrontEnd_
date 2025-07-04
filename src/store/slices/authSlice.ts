@@ -182,7 +182,7 @@ export const googleAuthCallback = createAsyncThunk(
     try {
       // Create a one-time axios instance without credentials for the callback
       const baseUrl =
-        import.meta.env.VITE_API_URL;
+        import.meta.env.VITE_API_URL || "http://localhost:4000/api/v1";
       const response = await axios.post(
         `${baseUrl}/auth/google/callback`,
         callbackData,

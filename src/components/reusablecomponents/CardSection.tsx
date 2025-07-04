@@ -55,8 +55,7 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
                     ? `/store/${activeStoreId}/employee`
                     : "/employee"
                 );
-              }
-               else if (card.title === "EmployeeRoles") {
+              } else if (card.title === "EmployeeRoles") {
                 navigate(
                   activeStoreId
                     ? `/store/${activeStoreId}/permissions`

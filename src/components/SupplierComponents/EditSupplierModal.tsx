@@ -67,7 +67,6 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
         phone: supplier.phone,
         address: supplier.address,
         storeId: supplier.storeId,
-        status: supplier.status || "active", // Preserve status or default to active
       });
     }
   }, [supplier]);
@@ -177,7 +176,6 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
         phone: supplier.phone,
         address: supplier.address,
         storeId: supplier.storeId,
-        status: supplier.status || "active", // Preserve status or default to active
       });
     }
     setErrors({});
@@ -279,57 +277,6 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
               <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
             )}
           </div>
-
-          {/* Status */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Supplier Status
-            </label>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center">
-                <input
-                  type="radio"
-                  id="status-active"
-                  name="status"
-                  value="active"
-                  checked={formData.status !== "inactive"}
-                  onChange={() => handleInputChange("status", "active")}
-                  className="h-4 w-4 text-[#03414C] focus:ring-[#03414C] border-gray-300"
-                  disabled={loading}
-                />
-                <label
-                  htmlFor="status-active"
-                  className="ml-2 text-sm text-gray-700"
-                >
-                  Active
-                </label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="radio"
-                  id="status-inactive"
-                  name="status"
-                  value="inactive"
-                  checked={formData.status === "inactive"}
-                  onChange={() => handleInputChange("status", "inactive")}
-                  className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300"
-                  disabled={loading}
-                />
-                <label
-                  htmlFor="status-inactive"
-                  className="ml-2 text-sm text-gray-700"
-                >
-                  Inactive
-                </label>
-              </div>
-            </div>
-            <p className="mt-1 text-xs text-gray-500">
-              {formData.status === "inactive"
-                ? "Inactive suppliers will not appear in supplier lists throughout the application."
-                : "Active suppliers will be visible in all supplier lists."}
-            </p>
-          </div>
-
           {/* Address */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

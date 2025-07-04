@@ -14,6 +14,7 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const [isLoading, setIsLoading] = useState(false); // State to manage loading
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,6 +40,7 @@ const Login = () => {
   };
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true); // Set loading state to true
     try {
       const resultAction = await dispatch(
         loginUser({ email: formData.email, password: formData.password })
@@ -58,9 +60,13 @@ const Login = () => {
           clearSavedCredentials();
         }
 
+        setIsLoading(false); // Reset loading state
+        toast.success("Login successful!");
         // Navigate to the intended destination or stores page
+
         navigate(from, { replace: true });
       } else {
+        setIsLoading(false); // Reset loading state
         console.error("Login failed", resultAction.payload);
         toast.error(
           typeof resultAction.payload === "string"
@@ -69,6 +75,7 @@ const Login = () => {
         );
       }
     } catch (error) {
+      setIsLoading(false); // Reset loading state
       console.error("Error during login", error);
       toast.error("An error occurred during login. Please try again.");
     }
@@ -209,7 +216,7 @@ const Login = () => {
               type="submit"
               className="w-full bg-[#0b5c5a] text-white py-2 rounded-lg font-semibold hover:bg-[#094543] transition text-xs sm:text-sm mt-2"
             >
-              Login
+              {isLoading ? "Logging in..." : "Login"}
             </button>
           </form>
           {/* Social login section as per reference */}
@@ -228,7 +235,6 @@ const Login = () => {
                   className="h-6 w-6"
                 />
               </span>
-              
             </div>
           </div>
           <p className="text-center text-xs text-gray-500 mt-5">

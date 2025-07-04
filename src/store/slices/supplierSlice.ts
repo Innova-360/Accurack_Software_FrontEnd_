@@ -98,29 +98,13 @@ export const fetchSuppliers = createAsyncThunk(
         }
       }
 
-      // Filter suppliers by active status
-      if (suppliers && Array.isArray(suppliers)) {
-        const activeSuppliers = suppliers.filter(
-          (supplier) => supplier.status !== "inactive"
-        );
+      console.log("suppliers:", suppliers);
+      console.log("pagination:", pagination);
 
-        // Log filtering information
-        console.log(
-          `Filtered suppliers: ${activeSuppliers.length} active out of ${suppliers.length} total`
-        );
-
-        // Update pagination if we're filtering out inactive suppliers
-        if (pagination) {
-          pagination.total = activeSuppliers.length;
-          pagination.totalPages = Math.ceil(activeSuppliers.length / limit);
-        }
-
-        // Return only active suppliers
-        suppliers = activeSuppliers;
-      }
-
-      console.log("suppliers after filtering:", suppliers);
-      console.log("pagination after filtering:", pagination);
+      console.log("=== fetchSuppliers Debug ===");
+      console.log("Raw API response:", response.data);
+      console.log("Parsed suppliers:", suppliers);
+      console.log("First supplier structure:", suppliers[0]);
 
       return { suppliers, pagination };
     } catch (error: any) {
@@ -152,11 +136,27 @@ export const createSupplier = createAsyncThunk(
   "suppliers/createSupplier",
   async (supplierData: SupplierFormData, { rejectWithValue, dispatch }) => {
     try {
-      await apiClient.post("/supplier/create", supplierData);
+      console.log("=== Creating supplier ===");
+      console.log("Sending data:", supplierData);
+
+      const response = await apiClient.post("/supplier/create", supplierData);
+
+      console.log("=== Backend Response ===");
+      console.log("Full response:", response);
+      console.log("response.data:", response.data);
+
+      // Get the created supplier from response
+      const createdSupplier = response.data?.data || response.data;
+      console.log("Extracted createdSupplier:", createdSupplier);
+
       // Refresh suppliers list after creation
       await dispatch(fetchSuppliers({ storeId: supplierData.storeId }));
 
-      return { success: true, message: "Supplier created successfully" };
+      return {
+        success: true,
+        message: "Supplier created successfully",
+        supplier: createdSupplier,
+      };
     } catch (error: any) {
       console.error("Create supplier error:", error);
       return rejectWithValue(

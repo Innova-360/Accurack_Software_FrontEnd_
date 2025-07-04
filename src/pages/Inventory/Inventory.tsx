@@ -18,7 +18,7 @@ import {
   EditProductModal,
   DeleteAllInventoryModal,
 } from "../../components/InventoryComponents";
-import { productAPI } from "../../services/productAPI";
+import { productAPI, type ApiProduct } from "../../services/productAPI";
 import type { Product } from "../../data/inventoryData";
 import type { EditProductFormData } from "../../components/InventoryComponents/EditProductModal";
 import {

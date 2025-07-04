@@ -40,12 +40,6 @@ const ProductDetails: React.FC = () => {
     navigate(`/inventory/edit/${productId}`);
   };
 
-  const handleUpdateInventory = () => {};
-
-  const handleCreatePurchaseOrder = () => {};
-
-  const handleViewSalesReport = () => {};
-
   const handlePrintBarcode = () => {
     if (product) {
       const printWindow = window.open("", "_blank");
@@ -74,6 +68,21 @@ const ProductDetails: React.FC = () => {
         printWindow.print();
       }
     }
+  };
+
+  const handleUpdateInventory = () => {
+    // TODO: Implement update inventory functionality
+    console.log("Update inventory clicked");
+  };
+
+  const handleCreatePurchaseOrder = () => {
+    // TODO: Implement create purchase order functionality
+    console.log("Create purchase order clicked");
+  };
+
+  const handleViewSalesReport = () => {
+    // TODO: Implement view sales report functionality
+    console.log("View sales report clicked");
   };
 
   if (loading) {
@@ -246,8 +255,9 @@ const ProductDetails: React.FC = () => {
                         Subcategory
                       </label>
                       <div className="text-md text-gray-800 font-semibold">
-                        {typeof product.category === "object" && product.category !== null 
-                          ? product.category.name || "Not specified" 
+                        {typeof product.category === "object" &&
+                        product.category !== null
+                          ? product.category.name || "Not specified"
                           : "Not specified"}
                       </div>
                     </div>
@@ -711,8 +721,8 @@ const ProductDetails: React.FC = () => {
                             <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
                               $
                               {(
-                                product.singleItemCostPrice *
-                                product.itemQuantity
+                                Number(product.singleItemCostPrice) *
+                                Number(product.itemQuantity)
                               ).toFixed(2)}
                             </td>
                             <td className="py-3 px-4 text-sm">
@@ -721,7 +731,7 @@ const ProductDetails: React.FC = () => {
                               </span>
                             </td>
                             <td className="py-3 px-4 text-sm text-gray-900 font-mono">
-                              PROD-{product.id.slice(-3)}
+                              PROD-{product.id?.substring(0, 5)}
                             </td>
                           </tr>
                         </>

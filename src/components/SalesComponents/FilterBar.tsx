@@ -1,5 +1,5 @@
-import React from 'react';
-import { FaSearch } from 'react-icons/fa';
+import React from "react";
+import { FaSearch } from "react-icons/fa";
 
 interface FilterBarProps {
   searchTerm: string;
@@ -26,14 +26,17 @@ const FilterBar: React.FC<FilterBarProps> = ({
   onPaymentChange,
   onCashierChange,
   onDateChange,
-  onClearFilters
+  onClearFilters,
 }) => {
   return (
     <div className="p-0">
       {/* Search Input */}
       <div className="mb-4">
         <div className="relative">
-          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
+          <FaSearch
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={14}
+          />
           <input
             type="text"
             placeholder="Search sales by name, ID, phone..."
@@ -41,7 +44,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
             onChange={(e) => onSearchChange(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
           />
-        </div> 
+        </div>
       </div>
 
       {/* Filter Dropdowns */}

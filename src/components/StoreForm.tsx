@@ -134,7 +134,6 @@ const StoreForm: React.FC = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -146,6 +145,10 @@ const StoreForm: React.FC = () => {
       } else {
         await dispatch(createStore(formData)).unwrap();
       }
+
+      console.log(
+        isEditing ? "Store updated successfully" : "Store created successfully"
+      );
 
       // Navigate to stores page after successful submission
       navigate("/stores");

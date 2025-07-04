@@ -1,21 +1,22 @@
 import toast from "react-hot-toast";
 import React, { useState } from "react";
 import { FaPlus, FaTimes } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
 import { SpecialButton } from "../buttons";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { createSupplier } from "../../store/slices/supplierSlice";
 import type { SupplierFormData } from "../../types/supplier";
+
 interface AddSupplierModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSupplierCreated?: (supplier: any) => void;
 }
 const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
   isOpen,
   onClose,
+  onSupplierCreated,
 }) => {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const { currentStore } = useAppSelector((state) => state.stores);
   const { loading } = useAppSelector((state) => state.suppliers);
   const [formData, setFormData] = useState<SupplierFormData>({
@@ -25,7 +26,6 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
     phone: "",
     address: "",
     storeId: currentStore?.id || "",
-    status: "active", // Set status to active by default
   });
   // Update storeId when currentStore changes
   React.useEffect(() => {
@@ -74,21 +74,21 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) {
       return;
     }
     try {
-      await dispatch(
-        createSupplier({
-          supplier_id: formData.name.toLowerCase().replace(/\s+/g, "-"), // Generate a simple ID from name
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          storeId: currentStore?.id || formData.storeId,
-        })
-      ).unwrap();
+      const supplierData = {
+        supplier_id: formData.name.toLowerCase().replace(/\s+/g, "-"), // Generate a simple ID from name
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        storeId: currentStore?.id || formData.storeId,
+      };
+
+      // Create supplier and get the response
+      const result = await dispatch(createSupplier(supplierData)).unwrap();
 
       // Reset form and close modal
       setFormData({
@@ -102,10 +102,27 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
       setErrors({});
       toast.success("Supplier created successfully!");
       onClose();
-      // Navigate to assign products page
-      navigate(`/store/${currentStore?.id}/supplier/assign-products`, {
-        state: { supplier: formData },
-      });
+
+      // Trigger the popup with the created supplier data
+      if (onSupplierCreated) {
+        // Extract supplier data from the Redux action result
+        // Handle nested data structure or use the supplied data as fallback
+        console.log("Full result:", result);
+        let createdSupplierData: any = supplierData;
+
+        // Check if result has supplier data in different possible structures
+        if (result && typeof result === "object") {
+          const resultObj = result as any;
+          if (resultObj.supplier) {
+            createdSupplierData = resultObj.supplier;
+          } else if (resultObj.data) {
+            createdSupplierData = resultObj.data;
+          }
+        }
+
+        console.log("Final supplier data for modal:", createdSupplierData);
+        onSupplierCreated(createdSupplierData);
+      }
     } catch (error) {
       console.error("Error creating supplier:", error);
       const errorMessage =
@@ -167,7 +184,7 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
                 errors.name ? "border-red-500" : "border-gray-300"
               }`}
-              placeholder="Enter supplier name (e.g., ABC Suppliers Ltd)"
+              placeholder="Enter supplier name"
               disabled={loading}
             />
             {errors.name && (
@@ -186,7 +203,7 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
                 errors.email ? "border-red-500" : "border-gray-300"
               }`}
-              placeholder="Enter email address (e.g., supplier@example.com)"
+              placeholder="Enter email address "
               disabled={loading}
             />
             {errors.email && (
@@ -205,64 +222,13 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
                 errors.phone ? "border-red-500" : "border-gray-300"
               }`}
-              placeholder="Enter phone number (e.g., +1-555-123-4567)"
+              placeholder="Enter phone number "
               disabled={loading}
             />
             {errors.phone && (
               <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
             )}
           </div>
-
-          {/* Status */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Supplier Status
-            </label>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center">
-                <input
-                  type="radio"
-                  id="status-active"
-                  name="status"
-                  value="active"
-                  checked={formData.status !== "inactive"}
-                  onChange={() => handleInputChange("status", "active")}
-                  className="h-4 w-4 text-[#03414C] focus:ring-[#03414C] border-gray-300"
-                  disabled={loading}
-                />
-                <label
-                  htmlFor="status-active"
-                  className="ml-2 text-sm text-gray-700"
-                >
-                  Active
-                </label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="radio"
-                  id="status-inactive"
-                  name="status"
-                  value="inactive"
-                  checked={formData.status === "inactive"}
-                  onChange={() => handleInputChange("status", "inactive")}
-                  className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300"
-                  disabled={loading}
-                />
-                <label
-                  htmlFor="status-inactive"
-                  className="ml-2 text-sm text-gray-700"
-                >
-                  Inactive
-                </label>
-              </div>
-            </div>
-            <p className="mt-1 text-xs text-gray-500">
-              {formData.status === "inactive"
-                ? "Inactive suppliers will not appear in supplier lists throughout the application."
-                : "Active suppliers will be visible in all supplier lists."}
-            </p>
-          </div>
-
           {/* Address */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -274,7 +240,7 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
                 errors.address ? "border-red-500" : "border-gray-300"
               }`}
-              placeholder="Enter supplier address (e.g., 123 Main St, City, State 12345)"
+              placeholder="Enter supplier address"
               rows={3}
               disabled={loading}
             />

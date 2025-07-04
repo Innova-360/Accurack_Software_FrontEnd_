@@ -91,7 +91,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
               Products
             </th>
-
             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
               Total Amount
             </th>
