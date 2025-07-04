@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { FaArrowLeft, FaCheck, FaSearch } from "react-icons/fa";
 import { useAppSelector } from "../../store/hooks";
 import apiClient from "../../services/api";
+import Pagination from "../../components/InventoryComponents/Pagination";
 // import { getProductsBySupplierId, getProducts } from '../../services/productAPI'
 import toast from "react-hot-toast";
 
@@ -135,49 +136,96 @@ const AssignProductsPage: React.FC = () => {
   >({});
   const [assigning, setAssigning] = useState(false);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage] = useState(50);
+  const [isPageChanging, setIsPageChanging] = useState(false);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+
   // Fetch products from inventory
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const finalStoreId = currentStore?.id || storeId;
+
+      const response = await apiClient.get("/product/list", {
+        params: {
+          storeId: finalStoreId,
+          // Remove pagination params to get all products
+        },
+      });
+
+      console.log(
+        "Products fetched:",
+        response.data?.data?.products?.length || 0
+      );
+
+      const productList = response.data?.data?.products || [];
+      setAllProducts(productList);
+      setProducts(productList);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      toast.error("Failed to load products");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const finalStoreId = currentStore?.id || storeId;
-
-        const response = await apiClient.get("/product/list", {
-          params: { storeId: finalStoreId },
-        });
-
-        console.log(
-          "Products fetched:",
-          response.data?.data?.products?.length || 0
-        );
-
-        const productList = response.data?.data?.products || [];
-        setProducts(productList);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-        toast.error("Failed to load products");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (currentStore?.id || storeId) {
       fetchProducts();
     }
   }, [currentStore?.id, storeId]);
 
-  // Filter products based on search
-  const filteredProducts = products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (typeof product.category === "string"
-        ? product.category.toLowerCase()
-        : product.category?.name?.toLowerCase() ||
-          product.category?.code?.toLowerCase() ||
-          ""
-      ).includes(searchTerm.toLowerCase()) ||
-      product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Search functionality with debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchTerm.trim() === "") {
+        setProducts(allProducts);
+      } else {
+        const filtered = allProducts.filter(
+          (product) =>
+            product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (typeof product.category === "string"
+              ? product.category.toLowerCase()
+              : product.category?.name?.toLowerCase() ||
+                product.category?.code?.toLowerCase() ||
+                ""
+            ).includes(searchTerm.toLowerCase()) ||
+            product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setProducts(filtered);
+      }
+      setCurrentPage(1); // Reset to first page when searching
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, allProducts]);
+
+  // Handle page change
+  const handlePageChange = async (newPage: number) => {
+    if (newPage === currentPage || isPageChanging) return;
+
+    setIsPageChanging(true);
+
+    // Add a small delay for smooth transition
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    setCurrentPage(newPage);
+
+    // Reset animation state
+    setTimeout(() => setIsPageChanging(false), 300);
+  };
+
+  // Calculate pagination
+  const totalItems = products.length;
+  const totalPages = Math.ceil(totalItems / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const currentProducts = products.slice(startIndex, endIndex);
+
+  // Filter products based on search (for client-side filtering if needed)
+  const filteredProducts = currentProducts;
 
   const handleProductSelect = (productId: string) => {
     const newSelected = new Set(selectedProducts);
@@ -418,9 +466,9 @@ const AssignProductsPage: React.FC = () => {
           </div>
         </div>
         {selectedProducts.size > 0 && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
             <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 lg:p-8">
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 mb-4">
                 <div className="w-8 h-8 bg-[#45814798] rounded-lg flex items-center justify-center">
                   <FaCheck className="text-white" size={16} />
                 </div>
@@ -476,6 +524,17 @@ const AssignProductsPage: React.FC = () => {
                   <p className="text-sm text-gray-600">
                     Find and select products to assign to this supplier
                   </p>
+                  <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
+                    <span>
+                      Showing {totalItems === 0 ? 0 : startIndex + 1} to{" "}
+                      {Math.min(endIndex, totalItems)} of {totalItems} products
+                    </span>
+                    {totalPages > 1 && (
+                      <span>
+                        • Page {currentPage} of {totalPages}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="relative w-full sm:w-80">
                   <FaSearch
@@ -751,6 +810,18 @@ const AssignProductsPage: React.FC = () => {
               </table>
             </div>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              startIndex={startIndex}
+              endIndex={endIndex}
+              onPageChange={handlePageChange}
+            />
+          )}
 
           {/* Summary */}
         </div>

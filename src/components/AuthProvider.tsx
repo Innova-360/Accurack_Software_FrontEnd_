@@ -29,7 +29,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         navigate("/login", { replace: true });
       });
     }
-  }, [dispatch, isAuthenticated, token, user, loading, navigate]);
+  }, [dispatch, isAuthenticated, token, user]);
 
   return <>{children}</>;
 };

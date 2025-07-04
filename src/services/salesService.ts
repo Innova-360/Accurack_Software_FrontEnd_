@@ -5,7 +5,7 @@ export interface Transaction {
   id: string;
   transactionId: string;
   dateTime: string;
-  customer: string;
+  customer: { customerName: string } | string; // Can be a string for guest transactions
   items: number;
   total: number;
   tax: number;

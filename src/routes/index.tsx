@@ -150,7 +150,7 @@ const AppRoutes = () => {
         }
       />
       <Route
-        path="/store/:id/supplier/assign-products"
+        path="/store/:id/supplier/:supplierId/assign-products"
         element={
           <ProtectedRoute>
             <AssignProductsPage />
