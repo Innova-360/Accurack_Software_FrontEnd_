@@ -4,8 +4,8 @@ import axios from "axios";
 import React, { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
-import { BASE_URL } from "../../services/api";
 
+import { BASE_URL } from "../../services/api";
 interface UploadInventoryModalProps {
   isOpen: boolean;
   onClose: () => void;
