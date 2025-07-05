@@ -14,7 +14,7 @@ import AddNewSale from "../pages/salesPage/AddNewSale";
 import GoogleAuthCallback from "../components/GoogleAuthCallback";
 import Supplier from "../pages/Supplier/Supplier";
 import StoresPage from "../pages/Stores/Stores";
-import EmployeePage from "../pages/Employee/EmployeePage";
+import EmployeePage from "../pages/Employee/EmployeeManagementPage";
 import CreateInvoice from "../pages/salesPage/CreateInvoice";
 import SalesId from "../pages/salesPage/SalesId";
 import Employee from "../pages/Employee/EmployeePage";

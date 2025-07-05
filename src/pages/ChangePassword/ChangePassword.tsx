@@ -36,15 +36,23 @@ const ChangePassword: React.FC = () => {
 
   const validateForm = () => {
     if (!formData.oldPassword) {
-      toast.error("Please enter your current password");
+      toast.error("Current password is required");
       return false;
     }
     if (!formData.newPassword) {
-      toast.error("Please enter a new password");
+      toast.error("New password is required");
+      return false;
+    }
+    if (!formData.confirmPassword) {
+      toast.error("Confirm password is required");
       return false;
     }
     if (formData.newPassword.length < 8) {
       toast.error("New password must be at least 8 characters long");
+      return false;
+    }
+    if (formData.confirmPassword.length < 8) {
+      toast.error("Confirm password must be at least 8 characters long");
       return false;
     }
     if (formData.newPassword !== formData.confirmPassword) {
@@ -66,21 +74,35 @@ const ChangePassword: React.FC = () => {
     try {
       setLoading(true);
       const response = await apiClient.post("/auth/change-password", {
-        oldPassword: formData.oldPassword,
+        currentPassword: formData.oldPassword,
         newPassword: formData.newPassword,
+        confirmPassword: formData.confirmPassword,
       });
       
       if (response.data.success) {
         toast.success("Password changed successfully");
+        // Clear the form
+        setFormData({
+          oldPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
         navigate(-1);
       }
     } catch (error: any) {
       if (error.response?.status === 401) {
         toast.error("Current password is incorrect");
       } else if (error.response?.status === 400) {
-        toast.error("New password does not meet requirements");
+        // Handle validation errors from API
+        const errorMessage = error.response?.data?.message;
+        if (Array.isArray(errorMessage)) {
+          // Show the first validation error
+          toast.error(errorMessage[0] || "Invalid input data");
+        } else {
+          toast.error(errorMessage || "New password does not meet requirements");
+        }
       } else {
-        toast.error("Failed to change password");
+        toast.error(error.response?.data?.message || "Failed to change password");
       }
       console.error("Password change error:", error);
     } finally {

@@ -11,17 +11,46 @@ import { useAppSelector, useAppDispatch } from "../store/hooks";
 import { logoutUser } from "../store/slices/authSlice";
 import { updateLastUpdated } from "../utils/lastUpdatedUtils";
 import toast from "react-hot-toast";
+import apiClient from "../services/api";
 
 interface ProfileDropdownProps {
   className?: string;
 }
 
+interface UserProfile {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  role: string;
+  status: string;
+}
+
 const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ className = "" }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
+
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await apiClient.get("/users/me");
+        console.log("Profile API Response:", response.data);
+        if (response.data.success) {
+          setProfile(response.data.data);
+          console.log("Profile data set:", response.data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+      }
+    };
+    fetchProfile();
+  }, []); // Remove dependency on user since it's null
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -62,13 +91,12 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ className = "" }) => 
     setIsOpen(false);
   };
 
-  const getInitials = (name?: string, email?: string) => {
-    if (name) {
-      const nameParts = name.split(" ");
-      if (nameParts.length >= 2) {
-        return nameParts[0].charAt(0).toUpperCase() + nameParts[1].charAt(0).toUpperCase();
-      }
-      return name.charAt(0).toUpperCase();
+  const getInitials = (firstName?: string, lastName?: string, email?: string) => {
+    if (firstName && lastName) {
+      return firstName.charAt(0).toUpperCase() + lastName.charAt(0).toUpperCase();
+    }
+    if (firstName) {
+      return firstName.charAt(0).toUpperCase();
     }
     if (email) {
       return email.charAt(0).toUpperCase();
@@ -76,7 +104,15 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ className = "" }) => 
     return "U";
   };
 
-  const displayName = user?.name || user?.email || "User";
+  const displayName = profile?.firstName || profile?.lastName || "User";
+  const userRole = profile?.role || "User";
+  const userEmail = profile?.email || "";
+
+  // Debug logging
+  console.log("Profile:", profile);
+  console.log("User:", user);
+  console.log("Display Name:", displayName);
+  console.log("User Role:", userRole);
 
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
@@ -87,7 +123,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ className = "" }) => 
       >
         {/* Avatar */}
         <div className="w-8 h-8 bg-gradient-to-br from-[#03414C] to-[#0f4d57] rounded-full flex items-center justify-center text-white text-sm font-medium">
-          <span>{getInitials(user?.name, user?.email)}</span>
+          <span>{getInitials(profile?.firstName, profile?.lastName, userEmail)}</span>
         </div>
         
         {/* User Info */}
@@ -95,9 +131,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ className = "" }) => 
           <p className="text-sm font-medium text-gray-900 truncate max-w-[150px]">
             {displayName}
           </p>
-          <p className="text-xs text-gray-500 truncate max-w-[150px]">
-            {user?.email}
-          </p>
+         
         </div>
 
         {/* Dropdown Arrow */}
@@ -115,13 +149,13 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ className = "" }) => 
           <div className="px-4 py-3 border-b border-gray-100">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-br from-[#03414C] to-[#0f4d57] rounded-full flex items-center justify-center text-white text-sm font-medium">
-                <span>{getInitials(user?.name, user?.email)}</span>
+                <span>{getInitials(profile?.firstName, profile?.lastName, userEmail)}</span>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-900">{displayName}</p>
-                <p className="text-xs text-gray-500">{user?.email}</p>
+                <p className="text-xs text-gray-500">{userEmail}</p>
                 <p className="text-xs text-[#03414C] font-medium capitalize">
-                  User
+                  {userRole}
                 </p>
               </div>
             </div>
