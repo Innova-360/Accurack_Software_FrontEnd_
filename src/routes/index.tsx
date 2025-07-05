@@ -31,6 +31,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import ReturnPage from "../pages/Return/Return";
 import Tax from "../pages/Tax/index";
 import AddTax from "../pages/Tax/AddTax";
+import StoreDetails from "../pages/Stores/StoreDetails";
 
 const AppRoutes = () => {
   return (
@@ -72,6 +73,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <StoreForm />
+          </ProtectedRoute>
+        }
+      />
+
+       <Route
+        path="/store/details/:id"
+        element={
+          <ProtectedRoute>
+            <StoreDetails />
           </ProtectedRoute>
         }
       />
