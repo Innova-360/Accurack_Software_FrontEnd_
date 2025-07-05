@@ -1,6 +1,6 @@
 interface CardItem {
   title: string;
-  icon?: string;
+  iconComponent?: string; // For React Icons component names
 }
 
 interface CardSection {
@@ -44,35 +44,73 @@ export const filterCardsBySearch = (
 export const getAllCards = (): CardSection[] => {
   return [
     {
-      sectionTitle: "Liabilities",
+      sectionTitle: "Inventory",
       cards: [
-        { title: "Suppliers" },
-        { title: "Customers" },
-        { title: "Inventory" },
-        // { title: "View\nExpenses" },
-        { title: "Sales\nDashboard" },
-        { title: "Employee" },
+        { title: "Upload Inventory", iconComponent: "FiUpload" },
+        { title: "Create Inventory", iconComponent: "FiPlus" },
+        { title: "View Inventory", iconComponent: "FiPackage" },
+        { title: "Update Inventory", iconComponent: "FiEdit3" },
+        { title: "Inventory Dashboard", iconComponent: "FiBarChart3" },
       ],
     },
-    // {
-    //   sectionTitle: 'Cost',
-    //   cards: [
-    //     { title: 'Store\nStats' },
-    //     { title: 'Tax ' },
-    //     { title: 'Custom\nBuilder' },
-    //     { title: 'Report\nBuilder' },
-    //     { title: 'Settings' },
-    //   ]
-    // },
-    // {
-    //   sectionTitle: 'Bank',
-    //   cards: [
-    //     { title: 'User\nLogs' },
-    //     { title: 'Access\nControl' },
-    //     { title: 'Report\nBuilder' },
-    //     { title: 'Settings' },
-    //     { title: 'Tax\nReports' },
-    //   ]
-    // }
+     {
+      sectionTitle: "Sales",
+      cards: [
+        { title: "Upload Sales", iconComponent: "FiUpload" },
+        { title: "Create Sales", iconComponent: "FiShoppingCart" },
+        { title: "View Sales", iconComponent: "FiEye" },
+        { title: "Update Sales", iconComponent: "FiEdit3" },
+        { title: "Sales Dashboard", iconComponent: "FiTrendingUp" },
+      ],
+    },
+     {
+      sectionTitle: "Invoice",
+      cards: [
+        { title: "Upload Invoice", iconComponent: "FiUpload" },
+        { title: "Create Invoice", iconComponent: "FiFileText" },
+        { title: "View Invoice", iconComponent: "FiFile" },
+        { title: "Update Invoice", iconComponent: "FiEdit3" },
+        { title: "Invoice Dashboard", iconComponent: "FiPieChart" },
+      ],
+    },
+    {
+      sectionTitle: "Customers",
+      cards: [
+        { title: "Add Customer", iconComponent: "FiUserPlus" },
+        { title: "View Customers", iconComponent: "FiUsers" },
+        { title: "Update Customer", iconComponent: "FiEdit3" },
+        { title: "Customer Reports", iconComponent: "FiFileText" },
+        { title: "Customer Dashboard", iconComponent: "FiBarChart2" },
+      ],
+    },
+    {
+      sectionTitle: "Supplier",
+      cards: [
+        { title: "Add Supplier", iconComponent: "FiTruck" },
+        { title: "Assign Supplier", iconComponent: "FiLink" },
+        { title: "View Supplier", iconComponent: "FiEye" },
+        { title: "Update Supplier", iconComponent: "FiEdit3" },
+        { title: "Supplier Dashboard", iconComponent: "FiBarChart3" },
+      ],
+    },
+     {
+      sectionTitle: "Employee",
+      cards: [
+        { title: "Add Employee", iconComponent: "FiUserPlus" },
+        { title: "Assign Role", iconComponent: "FiUserCheck" },
+        { title: "View Employee", iconComponent: "FiUsers" },
+        { title: "Update Employee", iconComponent: "FiEdit3" },
+        { title: "Employee Dashboard", iconComponent: "FiBarChart2" },
+      ],
+    },
+    {
+      sectionTitle: "Tax Management",
+      cards: [
+        { title: "Add Tax", iconComponent: "FiPercent" },
+        { title: "View Tax", iconComponent: "FiEye" },
+        { title: "Update Tax", iconComponent: "FiEdit3" },
+        { title: "Tax Dashboard", iconComponent: "FiPieChart" },
+      ],
+    },
   ];
 };
