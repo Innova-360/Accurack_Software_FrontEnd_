@@ -134,6 +134,14 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/create-invoice"
+        element={
+          <ProtectedRoute>
+            <CreateInvoice />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/store/:id/expenses"
         element={
           <ProtectedRoute>

@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import { FaArrowLeft, FaCheck, FaDownload, FaPrint } from 'react-icons/fa';
+import toast from 'react-hot-toast';
 import Header from '../../components/Header';
 import { SpecialButton } from '../../components/buttons';
+import { createSale } from '../../store/slices/salesSlice';
+import type { RootState, AppDispatch } from '../../store';
+import type { SaleRequestData, SaleItem } from '../../store/slices/salesSlice';
+import useRequireStore from '../../hooks/useRequireStore';
+import apiClient from '../../services/api';
 
 interface BusinessDetails {
   companyName: string;
@@ -35,6 +42,10 @@ interface InvoiceData {
     quantity: number;
     price: number;
     total: number;
+    productId?: string;
+    pluUpc?: string;
+    plu?: string;
+    sku?: string;
   }>;
   subtotal: number;
   discount: number;
@@ -50,9 +61,16 @@ interface InvoiceData {
 const CreateInvoice: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch<AppDispatch>();
+  const currentStore = useRequireStore();
+  const { user } = useSelector((state: RootState) => state.user);
+  const { loading: salesLoading } = useSelector((state: RootState) => state.sales);
+  
   const invoiceData = location.state?.invoiceData as InvoiceData;
-
+  console.log('Invoice Data:', invoiceData);
+  
   const [currentStep, setCurrentStep] = useState(1);
+  const [isCreatingSale, setIsCreatingSale] = useState(false);
   const invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
   // Business details state
@@ -108,13 +126,115 @@ const CreateInvoice: React.FC = () => {
     setCurrentStep(3);
   };
 
-  const handleCustomerDetailsNext = () => {
+  const handleCustomerDetailsNext = async () => {
     // Validate customer details
     if (!customerDetails.name.trim() || !customerDetails.phone.trim()) {
-      alert('Customer name and phone are required');
+      toast.error('Customer name and phone are required');
       return;
     }
-    setCurrentStep(4);
+
+    // First create the sale, then generate invoice
+    await handleCreateSaleAndInvoice();
+  };
+
+  const handleCreateSaleAndInvoice = async () => {
+    if (!currentStore?.id || !user?.clientId) {
+      toast.error('Store or user information is missing');
+      return;
+    }
+
+    setIsCreatingSale(true);
+    try {
+      // Prepare sale items from invoice data
+      const saleItems: SaleItem[] = invoiceData.products.map((product) => ({
+        productId: product.productId,
+        productName: product.name,
+        quantity: product.quantity,
+        sellingPrice: product.price,
+        totalPrice: product.total,
+        pluUpc: product.pluUpc || product.plu || product.sku || '',
+      }));
+      
+      console.log('Sale items with pluUpc:', JSON.stringify(saleItems, null, 2));
+
+      // Prepare sale data - ONLY sale-related fields
+      const saleData: SaleRequestData = {
+        customerPhone: customerDetails.phone.trim(),
+        customerData: {
+          customerName: customerDetails.name.trim(),
+          customerAddress: customerDetails.address.trim(),
+          phoneNumber: customerDetails.phone.trim(),
+          telephoneNumber: customerDetails.phone.trim(),
+          customerMail: customerDetails.email.trim(),
+          storeId: currentStore.id,
+          clientId: user.clientId,
+        },
+        storeId: currentStore.id,
+        clientId: user.clientId,
+        paymentMethod: invoiceData.paymentMethod as "CASH" | "CARD" | "BANK_TRANSFER" | "CHECK" | "DIGITAL_WALLET",
+        totalAmount: Math.round(invoiceData.finalTotal * 100) / 100,
+        tax: Math.round(invoiceData.taxAmount * 100) / 100,
+        cashierName: user.firstName && user.lastName
+          ? `${user.firstName} ${user.lastName}`
+          : user.email || "Current User",
+        generateInvoice: false,
+        source: "manual",
+        status: "PENDING",
+        saleItems,
+      };
+
+      console.log('Creating sale for invoice:', saleData);
+      const saleResponse = await dispatch(createSale(saleData)).unwrap();
+      console.log('Sale response:', saleResponse);
+      toast.success('Sale created successfully!');
+
+      // Extract sale ID from response structure
+      const saleId = saleResponse?.sale?.id || saleResponse?.data?.sale?.id || saleResponse?.id;
+      
+      if (!saleId) {
+        throw new Error('Sale ID not found in response');
+      }
+
+      // Generate invoice with sale ID
+      const invoicePayload = {
+        saleId: String(saleId),
+        customFields: [
+          {
+            name: "VAT Number",
+            value: businessDetails.taxId || ""
+          },
+          {
+            name: "PO Number",
+            value: `PO-${Date.now()}`
+          },
+          {
+            name: "Invoice Type",
+            value: "Sale Invoice"
+          },
+          {
+            name: "Due Date",
+            value: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          }
+        ]
+      };
+
+      // Call invoice generation API
+      try {
+        const response = await apiClient.post('/invoice', invoicePayload);
+        console.log('Invoice generated:', response.data);
+        toast.success('Invoice generated successfully!');
+      } catch (invoiceError: any) {
+        console.error('Error generating invoice:', invoiceError);
+        toast.error(`Invoice generation failed: ${invoiceError.response?.data?.message || invoiceError.message}`);
+      }
+
+      setCurrentStep(4);
+    } catch (error: any) {
+      console.error('Error creating sale:', error);
+      toast.error(`Failed to create sale: ${error.message || 'An unexpected error occurred.'}`);
+    } finally {
+      setIsCreatingSale(false);
+    }
   };
 
   const handleDownloadPDF = () => {
@@ -444,7 +564,7 @@ const CreateInvoice: React.FC = () => {
           />
         </div>
         
-        <div className="border-t border-gray-200 pt-4 mt-6">
+        {/* <div className="border-t border-gray-200 pt-4 mt-6">
           <h3 className="text-md font-medium text-gray-900 mb-4">Company Information (Optional)</h3>
           <div className="space-y-4">
             <div>
@@ -498,7 +618,7 @@ const CreateInvoice: React.FC = () => {
               />
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
       
       <div className="flex justify-between mt-6">
@@ -513,8 +633,9 @@ const CreateInvoice: React.FC = () => {
           variant="primary"
           onClick={handleCustomerDetailsNext}
           className="px-6 py-2 bg-[#03414C] hover:bg-[#025561] text-white"
+          disabled={isCreatingSale}
         >
-          Generate Invoice
+          {isCreatingSale ? 'Creating Sale & Invoice...' : 'Generate Invoice'}
         </SpecialButton>
       </div>
     </div>

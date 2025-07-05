@@ -458,10 +458,101 @@ const AddNewSale: React.FC = () => {
       
       // Navigate back to sales page
       navigate(-1);
-    } catch (error: any) {
+    } catch (error: axios.AxiosError) {
       console.error("Error creating sale:", error);
       toast.error(`Failed to create sale: ${error}`);
     }
+  };
+
+   const handleCreateInvoice = () => {
+    // Validate form before proceeding to invoice creation
+    if (!customerName.trim()) {
+      alert('Customer name is required');
+      return;
+    }
+
+    if (!phoneNumber.trim()) {
+      alert('Phone number is required');
+      return;
+    }
+
+    // Validate address fields (except street which is optional)
+    if (!city.trim()) {
+      alert('City is required');
+      return;
+    }
+
+    if (!state.trim()) {
+      alert('State/Province is required');
+      return;
+    }
+
+    if (!postalCode.trim()) {
+      alert('Postal code is required');
+      return;
+    }
+
+    if (!country.trim()) {
+      alert('Country is required');
+      return;
+    }
+
+    if (products.some(p => !p.name.trim() || p.price <= 0)) {
+      alert('Please fill in all product details');
+      return;
+    }
+
+    
+
+    // Prepare invoice data
+    const invoiceData = {
+      customerDetails: {
+        name: customerName.trim(),
+        phone: phoneNumber.trim(),
+        email: email.trim(),
+        address: getFullAddress(),
+        street,
+        city,
+        state,
+        postalCode,
+        country
+      },
+      products: products.filter(p => p.name.trim() && p.price > 0).map(product => {
+        // Get the PLU/UPC from the selected product or variant
+        let pluUpc = "";
+        if (product.selectedProduct) {
+          // If it's a variant, check for variant PLU/UPC first
+          if (product.variantId && product.selectedProduct.variants) {
+            const variant = product.selectedProduct.variants.find(v => v.id === product.variantId);
+            pluUpc = variant?.pluUpc || product.selectedProduct.plu || product.selectedProduct.sku || "";
+          } else {
+            // For regular products, use pluUpc, plu, or sku as fallback
+            pluUpc = (product.selectedProduct as any).pluUpc || product.selectedProduct.plu || product.selectedProduct.sku || "";
+          }
+        }
+        return {
+          ...product,
+          pluUpc,
+          plu: product.selectedProduct?.plu || "",
+          sku: product.selectedProduct?.sku || ""
+        };
+      }),
+      subtotal,
+      discount,
+      discountType,
+      discountAmount,
+      taxRate,
+      taxAmount,
+      finalTotal,
+      paymentMethod,
+      notes
+    };
+
+    console.log("Products for invoice:", products);
+    
+
+    // Navigate to invoice creation with data
+    navigate('/create-invoice', { state: { invoiceData } });
   };
 
   const handleCancel = () => {
@@ -500,7 +591,7 @@ const AddNewSale: React.FC = () => {
               </h2>
               
               {/* Customer Selection Dropdown */}
-              <div className="mb-6 p-4 rounded-lg">
+              <div className="mb-6 py-4 rounded-lg">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Select Existing Customer
                 </label>
@@ -1174,6 +1265,14 @@ const AddNewSale: React.FC = () => {
                   disabled={salesLoading}
                 >
                   {salesLoading ? "Creating Sale..." : "Create Sale"}
+                </SpecialButton>
+
+                <SpecialButton
+                  variant="primary"
+                  onClick={handleCreateInvoice}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
+                >
+                  Create Sale and make Invoice
                 </SpecialButton>
 
                 <SpecialButton
