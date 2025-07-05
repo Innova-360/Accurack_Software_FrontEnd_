@@ -12,7 +12,8 @@ import {
     DollarSign,
     CheckCircle,
     Clock,
-    XCircle
+    XCircle,
+    ChevronRight
 } from "lucide-react";
 import Header from "../../components/Header";
 import { fetchSaleById } from "../../store/slices/salesSlice";
@@ -387,11 +388,11 @@ const SalesDetails: React.FC = () => {
                                 >
                                     Print Receipt
                                 </button>
-                                {currentSale.status === 'COMPLETED' && (
+                                {/* {currentSale.status === 'COMPLETED' && (
                                     <button className="px-6 py-2 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors font-medium">
                                         Process Return
                                     </button>
-                                )}
+                                )} */}
                             </div>
                         </div>
                     </div>

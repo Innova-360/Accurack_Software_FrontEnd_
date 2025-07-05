@@ -100,6 +100,9 @@ export const searchStores = createAsyncThunk(
   }
 );
 
+
+
+
 export const storeSlice = createSlice({
   name: "stores",
   initialState,

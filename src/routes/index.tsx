@@ -37,6 +37,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import ReturnPage from "../pages/Return/Return";
 import Tax from "../pages/Tax/index";
 import AddTax from "../pages/Tax/AddTax";
+import StoreDetails from "../pages/Stores/StoreDetails";
 import ProfileSettings from "../pages/ProfileSettings/ProfileSettings";
 import BusinessSettings from "../pages/BusinessSettings/BusinessSettings";
 import ChangePassword from "../pages/ChangePassword/ChangePassword";
@@ -165,6 +166,15 @@ const AppRoutes = () => {
         }
       />
 
+       <Route
+        path="/store/details/:id"
+        element={
+          <ProtectedRoute>
+            <StoreDetails />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Store-specific Protected Routes */}
       <Route
         path="/store/:id"
@@ -219,6 +229,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <AddNewSale />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/create-invoice"
+        element={
+          <ProtectedRoute>
+            <CreateInvoice />
           </ProtectedRoute>
         }
       />

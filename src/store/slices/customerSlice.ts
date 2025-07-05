@@ -8,6 +8,7 @@ import type {
   CustomerFormData,
   CustomerState,
   SearchCustomersResponse,
+  CustomerBalanceResponse,
 } from "../../types/customer";
 import apiClient from "../../services/api";
 
@@ -21,6 +22,11 @@ const initialState: CustomerState = {
     limit: 10,
     total: 0,
     totalPages: 0,
+  },
+  balance: {
+    balanceData: null,
+    loading: false,
+    error: null,
   },
 };
 
@@ -260,6 +266,23 @@ export const deleteAllCustomers = createAsyncThunk(
   }
 );
 
+export const fetchCustomerBalance = createAsyncThunk(
+  "customers/fetchCustomerBalance",
+  async (customerId: string, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.get<CustomerBalanceResponse>(
+        `/sales/customers/${customerId}/balance`
+      );
+      return response.data.data;
+    } catch (error: any) {
+      console.error("Fetch customer balance error:", error);
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch customer balance"
+      );
+    }
+  }
+);
+
 export const customerSlice = createSlice({
   name: "customers",
   initialState,
@@ -281,6 +304,10 @@ export const customerSlice = createSlice({
         total: 0,
         totalPages: 0,
       };
+    },
+    clearCustomerBalance: (state) => {
+      state.balance.balanceData = null;
+      state.balance.error = null;
     },
     setPage: (state, action: PayloadAction<number>) => {
       state.pagination.page = action.payload;
@@ -361,6 +388,19 @@ export const customerSlice = createSlice({
       .addCase(deleteAllCustomers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      // Fetch customer balance
+      .addCase(fetchCustomerBalance.pending, (state) => {
+        state.balance.loading = true;
+        state.balance.error = null;
+      })
+      .addCase(fetchCustomerBalance.fulfilled, (state, action) => {
+        state.balance.loading = false;
+        state.balance.balanceData = action.payload;
+      })
+      .addCase(fetchCustomerBalance.rejected, (state, action) => {
+        state.balance.loading = false;
+        state.balance.error = action.payload as string;
       });
   },
 });
@@ -371,6 +411,7 @@ export const {
   clearError,
   clearCustomers,
   setPage,
+  clearCustomerBalance,
 } = customerSlice.actions;
 
 export default customerSlice.reducer;
