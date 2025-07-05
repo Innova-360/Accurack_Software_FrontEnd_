@@ -18,6 +18,8 @@ import { categoryApi } from "./slices/categorySlice";
 import { taxReducer } from "./slices/taxSlice";
 import customerReducer from "./slices/customerSlice";
 import productCategoriesReducer from "./slices/productCategoriesSlice";
+import orderProcessingReducer from "./slices/orderProcessingSlice";
+import orderTrackingReducer from "./slices/orderTrackingSlice";
 
 export const store = configureStore({
   reducer: {
@@ -36,6 +38,8 @@ export const store = configureStore({
     sales: salesReducer,
     customers: customerReducer,
     productCategories: productCategoriesReducer,
+    orders: orderProcessingReducer,
+    orderTracking: orderTrackingReducer,
     [taxApi.reducerPath]: taxApi.reducer,
     [categoryApi.reducerPath]: categoryApi.reducer,
     [productsApi.reducerPath]: productsApi.reducer,

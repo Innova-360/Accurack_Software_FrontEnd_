@@ -18,6 +18,12 @@ import EmployeePage from "../pages/Employee/EmployeePage";
 import CreateInvoice from "../pages/salesPage/CreateInvoice";
 import SalesId from "../pages/salesPage/SalesId";
 import Employee from "../pages/Employee/EmployeePage";
+import OrderProcessingPage from "../pages/OrderProcessing/OrderProcessing";
+import CreateOrderPage from "../pages/OrderProcessing/CreateOrder";
+import ViewOrdersPage from "../pages/OrderProcessing/ViewOrders";
+import UpdateOrderPage from "../pages/OrderProcessing/UpdateOrder";
+import DriverManagementPage from "../pages/OrderProcessing/DriverManagement";
+import OrderTrackingVerification from "../pages/OrderTrackingVerification/OrderTrackingVerification";
 
 import RolePage from "../pages/RolePage/RolePage";
 import Srole from "../pages/RolePage/RolePermissionsPage";
@@ -83,6 +89,62 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <ChangePassword />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/order-processing"
+        element={
+          <ProtectedRoute>
+            <OrderProcessingPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/order-processing/create"
+        element={
+          <ProtectedRoute>
+            <CreateOrderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/order-processing/view-orders"
+        element={
+          <ProtectedRoute>
+            <ViewOrdersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/order-processing/update"
+        element={
+          <ProtectedRoute>
+            <UpdateOrderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/order-processing/update/:orderId"
+        element={
+          <ProtectedRoute>
+            <UpdateOrderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/order-processing/driver-management"
+        element={
+          <ProtectedRoute>
+            <DriverManagementPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/order-tracking-verification"
+        element={
+          <ProtectedRoute>
+            <OrderTrackingVerification />
           </ProtectedRoute>
         }
       />
@@ -293,6 +355,63 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <CreateInvoice />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/store/:id/order-processing"
+        element={
+          <ProtectedRoute>
+            <OrderProcessingPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/order-processing/create"
+        element={
+          <ProtectedRoute>
+            <CreateOrderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/order-processing/view-orders"
+        element={
+          <ProtectedRoute>
+            <ViewOrdersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/order-processing/update"
+        element={
+          <ProtectedRoute>
+            <UpdateOrderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/order-processing/update/:orderId"
+        element={
+          <ProtectedRoute>
+            <UpdateOrderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/order-processing/driver-management"
+        element={
+          <ProtectedRoute>
+            <DriverManagementPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/order-tracking-verification"
+        element={
+          <ProtectedRoute>
+            <OrderTrackingVerification />
           </ProtectedRoute>
         }
       />

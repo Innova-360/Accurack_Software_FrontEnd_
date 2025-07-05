@@ -112,5 +112,16 @@ export const getAllCards = (): CardSection[] => {
         { title: "Tax Dashboard", iconComponent: "FiPieChart" },
       ],
     },
+    {
+      sectionTitle: "Order Processing",
+      cards: [
+        { title: "Order\nProcessing", iconComponent: "FiPackage" },
+        { title: "Create Order", iconComponent: "FiPlus" },
+        { title: "View Orders", iconComponent: "FiEye" },
+        { title: "Update Order", iconComponent: "FiEdit3" },
+        { title: "Driver Management", iconComponent: "FiTruck" },
+        { title: "Order Tracking\nVerification", iconComponent: "FiCheckCircle" },
+      ],
+    },
   ];
 };

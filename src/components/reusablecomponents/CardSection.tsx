@@ -84,6 +84,42 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
                     ? `/store/${activeStoreId}/permissions`
                     : "/permissions"
                 );
+              } else if (card.title === "Order\nProcessing") {
+                navigate(
+                  activeStoreId
+                    ? `/store/${activeStoreId}/order-processing`
+                    : "/order-processing"
+                );
+              } else if (card.title === "Create Order") {
+                navigate(
+                  activeStoreId
+                    ? `/store/${activeStoreId}/order-processing/create`
+                    : "/order-processing/create"
+                );
+              } else if (card.title === "View Orders") {
+                navigate(
+                  activeStoreId
+                    ? `/store/${activeStoreId}/order-processing/view-orders`
+                    : "/order-processing/view-orders"
+                );
+              } else if (card.title === "Update Order") {
+                navigate(
+                  activeStoreId
+                    ? `/store/${activeStoreId}/order-processing/update`
+                    : "/order-processing/update"
+                );
+              } else if (card.title === "Driver Management") {
+                navigate(
+                  activeStoreId
+                    ? `/store/${activeStoreId}/order-processing/driver-management`
+                    : "/order-processing/driver-management"
+                );
+              } else if (card.title === "Order Tracking\nVerification") {
+                navigate(
+                  activeStoreId
+                    ? `/store/${activeStoreId}/order-tracking-verification`
+                    : "/order-tracking-verification"
+                );
               }
             }}
             className="group bg-white rounded-xl shadow-lg border-2 border-[#f5f4f4] shadow-[#D1D1D1] hover:shadow-xl hover:border-[#03414C]/20 transition-all duration-300 cursor-pointer
