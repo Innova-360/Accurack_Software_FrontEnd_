@@ -10,6 +10,7 @@ import {
   FaEnvelope,
   FaEdit,
   FaTrash,
+  FaEye,
 } from "react-icons/fa";
 import { SpecialButton, IconButton } from "../../components/buttons";
 import { CreateStoreModal } from "../../components/StoreComponents";
@@ -51,6 +52,10 @@ const StoresPage: React.FC = () => {
     navigate(`/store/edit/${store.id}`);
   };
 
+  const handleViewStoreDetails = (store: Store) => {
+    navigate(`/store/details/${store.id}`);
+  };
+
   const handleDeleteStore = async (storeId: string) => {
     if (
       window.confirm(
@@ -72,6 +77,7 @@ const StoresPage: React.FC = () => {
       setIsCreateModalOpen(false);
       // Show success message
       toast.success("Store created successfully!");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Failed to create store:", error);
       // Show error message
@@ -203,6 +209,13 @@ const StoresPage: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex space-x-1">
+                      <IconButton
+                        icon={<FaEye />}
+                        onClick={() => handleViewStoreDetails(store)}
+                        variant="secondary"
+                        size="sm"
+                        title="View Store details"
+                      />
                       <IconButton
                         icon={<FaEdit />}
                         onClick={() => handleEditStore(store)}

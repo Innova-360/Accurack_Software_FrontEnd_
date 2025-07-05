@@ -32,6 +32,7 @@ export interface CustomerState {
     total: number;
     totalPages: number;
   };
+  balance: CustomerBalanceState;
 }
 
 export interface CustomerResponse {
@@ -116,4 +117,40 @@ export interface SearchCustomersResponse {
   status: number;
 
   timestamp: string;
+}
+
+export interface BalanceHistoryItem {
+  id: string;
+  customerId: string;
+  saleId: string | null;
+  remainingAmount: number;
+  amountPaid: number;
+  paymentStatus: "PAID" | "UNPAID" | "PARTIALLY_PAID";
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomerBalanceData {
+  customer: Customer & {
+    website: string | null;
+    threshold: number;
+  };
+  currentBalance: number;
+  totalPaid: number;
+  balanceHistory: BalanceHistoryItem[];
+}
+
+export interface CustomerBalanceResponse {
+  success: boolean;
+  message: string;
+  data: CustomerBalanceData;
+  status: number;
+  timestamp: string;
+}
+
+export interface CustomerBalanceState {
+  balanceData: CustomerBalanceData | null;
+  loading: boolean;
+  error: string | null;
 }

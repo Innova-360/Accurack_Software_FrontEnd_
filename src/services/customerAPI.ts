@@ -1,5 +1,5 @@
 import apiClient from "./api";
-import type { Customer, CustomerFormData } from "../types/customer";
+import type { Customer, CustomerFormData, CustomerBalanceData } from "../types/customer";
 
 export const customerAPI = {
   // Fetch all customers
@@ -86,6 +86,16 @@ export const customerAPI = {
       return { success: true, message: response.data?.message || "Customers deleted successfully" };
     } catch (error: any) {
       throw new Error(error.response?.data?.message || "Failed to delete customers");
+    }
+  },
+
+  // Get customer balance sheet
+  async getCustomerBalance(customerId: string): Promise<CustomerBalanceData> {
+    try {
+      const response = await apiClient.get(`/sales/customers/${customerId}/balance`);
+      return response.data?.data || response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Failed to fetch customer balance");
     }
   },
 };
