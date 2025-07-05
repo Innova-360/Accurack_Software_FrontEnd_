@@ -31,6 +31,9 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import ReturnPage from "../pages/Return/Return";
 import Tax from "../pages/Tax/index";
 import AddTax from "../pages/Tax/AddTax";
+import ProfileSettings from "../pages/ProfileSettings/ProfileSettings";
+import BusinessSettings from "../pages/BusinessSettings/BusinessSettings";
+import ChangePassword from "../pages/ChangePassword/ChangePassword";
 
 const AppRoutes = () => {
   return (
@@ -56,6 +59,30 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <StoresPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile-settings"
+        element={
+          <ProtectedRoute>
+            <ProfileSettings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business-settings"
+        element={
+          <ProtectedRoute>
+            <BusinessSettings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/change-password"
+        element={
+          <ProtectedRoute>
+            <ChangePassword />
           </ProtectedRoute>
         }
       />
