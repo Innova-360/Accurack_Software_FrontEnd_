@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
-import Signup from "../pages/Signup/Signup";
-import Login from "../pages/Login/Login";
-import OtpPage from "../pages/OtpPage/OtpPage";
+import Signup from "../pages/Signup/Signup"; // Signup Route 
+import Login from "../pages/Login/Login"; // Login Route
+import OtpPage from "../pages/OtpPage/OtpPage"; // otp Route
 import Inventory from "../pages/Inventory/Inventory";
 import Home from "../pages/Home";
 import Terms from "../pages/Terms";
@@ -40,6 +40,7 @@ import AddTax from "../pages/Tax/AddTax";
 import ProfileSettings from "../pages/ProfileSettings/ProfileSettings";
 import BusinessSettings from "../pages/BusinessSettings/BusinessSettings";
 import ChangePassword from "../pages/ChangePassword/ChangePassword";
+import NotFound from "../pages/NotFound/NotFound";
 
 const AppRoutes = () => {
   return (
@@ -415,6 +416,9 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      
+      {/* Catch-all route for 404 errors */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };

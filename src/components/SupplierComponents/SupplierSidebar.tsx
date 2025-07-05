@@ -35,15 +35,41 @@ const SupplierSidebar: React.FC<SupplierSidebarProps> = ({
   //   return acc;
   // }, {} as Record<string, Supplier[]>);
 
+  // Auto-close sidebar on mobile after selecting a supplier
+  const handleSupplierSelect = (supplier: Supplier) => {
+    onSupplierSelect(supplier);
+    // Close sidebar on mobile after selection
+    if (window.innerWidth < 1024) {
+      onToggleSidebar();
+    }
+  };
+
+  // Auto-close sidebar on mobile after clicking "All Suppliers"
+  const handleBackToSuppliers = () => {
+    onBackToSuppliers();
+    // Close sidebar on mobile after selection
+    if (window.innerWidth < 1024) {
+      onToggleSidebar();
+    }
+  };
+
+  // Auto-close sidebar on mobile after clicking "Add New Supplier"
+  const handleAddSupplier = () => {
+    onAddSupplier();
+    // Close sidebar on mobile after selection
+    if (window.innerWidth < 1024) {
+      onToggleSidebar();
+    }
+  };
+
   return (
-    <>
-      {/* Mobile Sidebar Overlay */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0  bg-opacity-50 z-40  lg:hidden"
-          onClick={onToggleSidebar}
-        />
-      )}
+    <>        {/* Mobile Sidebar Overlay */}
+        {isSidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            onClick={onToggleSidebar}
+          />
+        )}
 
       {/* Sidebar */}
       <aside className={`
@@ -70,7 +96,7 @@ const SupplierSidebar: React.FC<SupplierSidebarProps> = ({
         <div className="p-2">
           {/* All Suppliers Option */}
           <SidebarButton
-            onClick={onBackToSuppliers}
+            onClick={handleBackToSuppliers}
             active={viewMode === 'suppliers'}
             icon={viewMode === 'suppliers' ? <FaChevronDown size={12} /> : <FaChevronRight size={12} />}
           >
@@ -81,10 +107,12 @@ const SupplierSidebar: React.FC<SupplierSidebarProps> = ({
             {/* All Suppliers List */}
           <div className="space-y-1">
             {suppliers.map((supplier) => (
-              <div key={supplier.supplier_id} className="group">                <SidebarButton
-                  onClick={() => onSupplierSelect(supplier)}
+              <div key={supplier.supplier_id} className="group">                
+                <SidebarButton
+                  onClick={() => handleSupplierSelect(supplier)}
                   active={selectedSupplier?.supplier_id === supplier.supplier_id}
                   icon={selectedSupplier?.supplier_id === supplier.supplier_id ? <FaChevronDown size={12} /> : <FaChevronRight size={12} />}
+                  className=" transition-colors duration-200"
                 >
                   {supplier.name}
                 </SidebarButton>
@@ -114,14 +142,15 @@ const SupplierSidebar: React.FC<SupplierSidebarProps> = ({
 
           {/* Add New Supplier Button */}
           <div className="border-t border-gray-200 my-2"></div>
-          <SpecialButton
-            variant="sidebar-add"
-            onClick={onAddSupplier}
-            icon={<FaPlus size={10} />}
-            className="text-teal-600 font-medium"
-          >
-            Add New Supplier
-          </SpecialButton>
+          <div className="px-2">
+            <SpecialButton
+              variant="sidebar-add"
+              onClick={handleAddSupplier}
+              icon={<FaPlus size={12} />}
+            >
+              Add New Supplier
+            </SpecialButton>
+          </div>
         </div>
       </aside>
     </>

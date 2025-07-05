@@ -47,38 +47,22 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
               {/* Name */}
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-[#03414C] bg-opacity-10 rounded-lg">
-                  <FaTag className="text-[#03414C]" size={14} />
+                  <FaTag className="text-[#03414C] text-[white] " size={14} />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-gray-600">Supplier Name</p>
                   <p className="font-semibold text-gray-900">{supplier.name}</p>
                 </div>
               </div>              {/* Supplier ID */}
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#03414C] bg-opacity-10 rounded-lg">
-                  <FaTag className="text-[#03414C]" size={14} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600">Supplier ID</p>
-                  <p className="font-semibold text-gray-900">{supplier.supplier_id}</p>
-                </div>
-              </div>
+              
 
               {/* Store ID */}
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#03414C] bg-opacity-10 rounded-lg">
-                  <FaTag className="text-[#03414C]" size={14} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600">Store ID</p>
-                  <p className="font-semibold text-gray-900">{supplier.storeId}</p>
-                </div>
-              </div>
+            
             </div>
           </div>
 
           {/* Contact Information */}
-          <div className="bg-blue-50 rounded-lg p-4">
+          <div className="bg-blue-50 rounded-lg p-4 ">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
             
             <div className="grid grid-cols-1 gap-4">
@@ -147,18 +131,7 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
               )}
             </div>
           </div>          {/* Summary Stats */}
-          <div className="bg-[#03414C] bg-opacity-5 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-[#03414C] mb-4">Supplier Summary</h3>
-            
-            <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#03414C] bg-opacity-10 mb-3">
-                <FaEye className="text-[#03414C]" size={24} />
-              </div>
-              <p className="text-lg font-semibold text-[#03414C]">{supplier.name}</p>
-              <p className="text-sm text-gray-600">Supplier ID: {supplier.supplier_id}</p>
-              <p className="text-sm text-gray-600 mt-1">Store ID: {supplier.storeId}</p>
-            </div>
-          </div>
+        
 
           {/* Close Button */}
           <div className="pt-4">
