@@ -9,6 +9,7 @@ import {
   saveCredentials,
   clearSavedCredentials,
 } from "../../utils/rememberMeUtils";
+import { updateLastUpdated } from "../../utils/lastUpdatedUtils";
 
 const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
@@ -59,6 +60,9 @@ const Login = () => {
           // Remove saved credentials if Remember Me is unchecked
           clearSavedCredentials();
         }
+
+        // Update last updated time
+        updateLastUpdated();
 
         setIsLoading(false); // Reset loading state
         toast.success("Login successful!");

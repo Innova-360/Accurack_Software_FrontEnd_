@@ -14,6 +14,7 @@ import {
 } from "react-icons/fa";
 import { SpecialButton, IconButton } from "../../components/buttons";
 import { CreateStoreModal } from "../../components/StoreComponents";
+import ProfileDropdown from "../../components/ProfileDropdown";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   fetchStores,
@@ -118,14 +119,18 @@ const StoresPage: React.FC = () => {
                   Manage your store locations and settings
                 </p>
               </div>
-            </div>{" "}
-            <SpecialButton
-              variant="inventory-primary"
-              onClick={handleCreateStore}
-              icon={<FaPlus />}
-            >
-              Create New Store
-            </SpecialButton>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <SpecialButton
+                variant="inventory-primary"
+                onClick={handleCreateStore}
+                icon={<FaPlus />}
+              >
+                Create New Store
+              </SpecialButton>
+              <ProfileDropdown />
+            </div>
           </div>
         </div>
       </div>{" "}

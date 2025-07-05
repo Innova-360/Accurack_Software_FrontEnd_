@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { FaTh, FaChartPie, FaClock, FaBars } from "react-icons/fa";
+import { FaTh , FaClock, FaBars } from "react-icons/fa";
 import { MdCampaign } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { useParams } from "react-router-dom";
+import { useAppSelector } from "../store/hooks";
+import { lastUpdatedManager } from "../utils/lastUpdatedUtils";
 
 const Navbar: React.FC = () => {
   const [currentTime, setCurrentTime] = useState("");
+  const [lastUpdatedDisplay, setLastUpdatedDisplay] = useState("");
   const navigate = useNavigate();
   const { id } = useParams();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     const updateTime = () => {
@@ -24,6 +28,32 @@ const Navbar: React.FC = () => {
     const interval = setInterval(updateTime, 1000);
 
     return () => clearInterval(interval);
+  }, []);
+
+  // Update last updated time when authentication state changes (login/logout)
+  useEffect(() => {
+    lastUpdatedManager.updateLastUpdated();
+  }, [isAuthenticated]);
+
+  // Subscribe to last updated changes and update display
+  useEffect(() => {
+    const updateDisplay = () => {
+      setLastUpdatedDisplay(lastUpdatedManager.formatLastUpdated());
+    };
+
+    // Initial update
+    updateDisplay();
+
+    // Subscribe to changes
+    const unsubscribe = lastUpdatedManager.subscribe(updateDisplay);
+
+    // Update display every minute to keep "Xm ago" current
+    const interval = setInterval(updateDisplay, 60000);
+
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
   }, []);
   return (
     <div className="w-full bg-[#03414CF0] text-white text-sm font-medium px-0 py-0">
@@ -67,7 +97,7 @@ const Navbar: React.FC = () => {
           <div className="bg-[#03414CF0] text-xs px-3 py-[2px] rounded-md flex items-center space-x-2">
             <span className="h-2 w-2 rounded-full bg-white" />
             <span>
-              Last Updated On: <strong>20/03/2025</strong>
+              Last Updated: <strong>{lastUpdatedDisplay}</strong>
             </span>
           </div>
         </div>{" "}
