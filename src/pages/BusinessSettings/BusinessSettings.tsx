@@ -35,7 +35,7 @@ const BusinessSettings: React.FC = () => {
   const fetchBusinessProfile = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get("/business");
+      const response = await apiClient.get("/api/v1/business");
       if (response.data.success) {
         setProfile(response.data.data);
         setFormData({
@@ -71,14 +71,14 @@ const BusinessSettings: React.FC = () => {
   const handleSave = async () => {
     try {
       setSaving(true);
-      const response = await apiClient.patch("/business", formData);
+      const response = await apiClient.patch("/api/v1/business", formData);
       if (response.data.success) {
         setProfile(response.data.data);
         setIsEditing(false);
         toast.success("Business profile updated successfully");
       }
     } catch (error: any) {
-      toast.error("Failed to update business profile");
+      toast.error(error.response?.data?.message || "Failed to update business profile");
       console.error("Business profile update error:", error);
     } finally {
       setSaving(false);

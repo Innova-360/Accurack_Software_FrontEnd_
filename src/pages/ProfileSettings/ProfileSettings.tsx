@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUser, FaArrowLeft, FaSave, FaEdit } from "react-icons/fa";
-import { useAppSelector, useAppDispatch } from "../../store/hooks";
 import { SpecialButton } from "../../components/buttons";
 import toast from "react-hot-toast";
 import apiClient from "../../services/api";
@@ -18,7 +17,6 @@ interface UserProfile {
 
 const ProfileSettings: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAppSelector((state) => state.auth);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -71,7 +69,7 @@ const ProfileSettings: React.FC = () => {
         toast.success("Profile updated successfully");
       }
     } catch (error: any) {
-      toast.error("Failed to update profile");
+      toast.error(error.response?.data?.message || "Failed to update profile");
       console.error("Profile update error:", error);
     } finally {
       setSaving(false);
