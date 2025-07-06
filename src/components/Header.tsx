@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { FaTh , FaClock , FaHome } from "react-icons/fa";
+import { FaTh, FaClock, FaHome, FaStore } from "react-icons/fa";
 import { MdCampaign } from "react-icons/md";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import { useAppSelector } from "../store/hooks";
 import { lastUpdatedManager } from "../utils/lastUpdatedUtils";
@@ -11,8 +11,26 @@ const Navbar: React.FC = () => {
   const [currentTime, setCurrentTime] = useState("");
   const [lastUpdatedDisplay, setLastUpdatedDisplay] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
+
+  // Check if we're on main stores page or exact store page
+  const isOnMainStoresPage = location.pathname === "/stores";
+  const isOnExactStorePage = location.pathname === `/store/${id}`;
+  const shouldShowHomeIcon = isOnMainStoresPage || isOnExactStorePage;
+
+  // Determine icon and navigation target
+  const IconComponent = shouldShowHomeIcon ? FaHome : FaStore;
+  const handleNavigation = () => {
+    if (isOnMainStoresPage) {
+      navigate(`/store/${id}`);
+    } else if (isOnExactStorePage) {
+      navigate("/stores");
+    } else {
+      navigate(`/store/${id}`);
+    }
+  };
 
   useEffect(() => {
     const updateTime = () => {
@@ -62,16 +80,16 @@ const Navbar: React.FC = () => {
         {/* Grid Icon */}
         <div
           className="flex items-center justify-center w-[56px] h-full border-r border-[#127F92]"
-          onClick={() => navigate(`/store/${id}`)}
+          onClick={handleNavigation}
           style={{ cursor: "pointer" }}
         >
-          <FaHome className="text-[20px]" />
+          <IconComponent className="text-[20px]" />
         </div>
         {/* Logo */}
         <div className="flex items-center px-4 h-full border-r border-[#127F92] space-x-2">
           <div
             className="flex items-center gap-2.5"
-            onClick={() => navigate(`/store/${id}`)}
+            onClick={handleNavigation}
             style={{ cursor: "pointer" }}
           >
             <img
