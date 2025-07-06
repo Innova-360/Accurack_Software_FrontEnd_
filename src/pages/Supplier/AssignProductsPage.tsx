@@ -176,7 +176,7 @@ const AssignProductsPage: React.FC = () => {
           return product.category.name || product.category.code || "Uncategorized";
         }
         return product.category || "Uncategorized";
-      }))];
+      }))].filter((category): category is string => typeof category === "string");
       setAvailableCategories(uniqueCategories);
       
       // Set price range based on actual product prices
