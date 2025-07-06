@@ -9,6 +9,8 @@ export interface Supplier {
   status?: "active" | "inactive"; // Added status field
   createdAt?: Date;
   updatedAt?: Date;
+  isTemporary?: boolean; // Flag for temporary suppliers (newly created)
+  _id?: string; // MongoDB ObjectId if used
 }
 
 export interface SupplierFormData {

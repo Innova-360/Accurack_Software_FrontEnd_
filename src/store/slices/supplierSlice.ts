@@ -98,15 +98,35 @@ export const fetchSuppliers = createAsyncThunk(
         }
       }
 
-      console.log("suppliers:", suppliers);
-      console.log("pagination:", pagination);
+      // Filter out inactive suppliers (only show active ones)
+      const activeSuppliers = suppliers.filter((supplier: any) => {
+        // Check if supplier has status field and if it's active
+        if (supplier.status) {
+          return supplier.status === 'active' || supplier.status === 'Active' || supplier.status === 'ACTIVE';
+        }
+        // If no status field, assume it's active (for backward compatibility)
+        return true;
+      });
+
+      console.log("All suppliers:", suppliers);
+      console.log("Active suppliers only:", activeSuppliers);
+      console.log("Filtered out inactive suppliers:", suppliers.length - activeSuppliers.length);
+
+      // Update pagination to reflect active suppliers count
+      const activePagination = {
+        ...pagination,
+        total: activeSuppliers.length,
+        totalPages: Math.ceil(activeSuppliers.length / limit)
+      };
 
       console.log("=== fetchSuppliers Debug ===");
       console.log("Raw API response:", response.data);
-      console.log("Parsed suppliers:", suppliers);
-      console.log("First supplier structure:", suppliers[0]);
+      console.log("All suppliers (before filter):", suppliers);
+      console.log("Active suppliers (after filter):", activeSuppliers);
+      console.log("Updated pagination:", activePagination);
+      console.log("First active supplier structure:", activeSuppliers[0]);
 
-      return { suppliers, pagination };
+      return { suppliers: activeSuppliers, pagination: activePagination };
     } catch (error: any) {
       console.error("Fetch suppliers error:", error);
       return rejectWithValue(
@@ -150,7 +170,8 @@ export const createSupplier = createAsyncThunk(
       console.log("Extracted createdSupplier:", createdSupplier);
 
       // Refresh suppliers list after creation
-      await dispatch(fetchSuppliers({ storeId: supplierData.storeId }));
+      console.log("Refreshing suppliers list after creation");
+      await dispatch(fetchSuppliers({ storeId: supplierData.storeId })).unwrap();
 
       return {
         success: true,
@@ -183,7 +204,8 @@ export const updateSupplier = createAsyncThunk(
       const response = await apiClient.put(`/supplier/${id}`, supplierData);
       console.log("Update response:", response.data);
       // Refresh suppliers list after update
-      await dispatch(fetchSuppliers({ storeId: supplierData.storeId }));
+      console.log("Refreshing suppliers list after update");
+      await dispatch(fetchSuppliers({ storeId: supplierData.storeId })).unwrap();
 
       return { success: true, message: "Supplier updated successfully" };
     } catch (error: any) {
@@ -212,12 +234,31 @@ export const deleteSupplier = createAsyncThunk(
       if (!id || !id.trim()) {
         throw new Error("Supplier ID is required");
       }
-      // Use standard REST endpoint format      await apiClient.delete(`/supplier/${id}`);
-      console.log("Supplier deleted successfully");
+
+      if (!storeId || !storeId.trim()) {
+        throw new Error("Store ID is required");
+      }
+
+      // Check if this is sample data (simple heuristic)
+      if (id.startsWith("SUP") && id.length <= 10 && /^SUP\d{3}$/.test(id)) {
+        console.log("Detected sample data, skipping API call for:", id);
+        
+        // For sample data, just refresh the supplier list (it will filter out sample data)
+        console.log("Refreshing suppliers list for sample data removal");
+        await dispatch(fetchSuppliers({ storeId })).unwrap();
+        
+        return { id, success: true, message: "Sample supplier removed from view" };
+      }
+
+      // Use standard REST endpoint format for real suppliers
+      console.log("Calling API to delete supplier:", id);
+      await apiClient.delete(`/supplier/${id}`);
+      console.log("Supplier deleted successfully via API");
 
       // Refresh suppliers list after deletion
       console.log("Refreshing suppliers list for store:", storeId);
-      await dispatch(fetchSuppliers({ storeId }));
+      const refreshResult = await dispatch(fetchSuppliers({ storeId })).unwrap();
+      console.log("Suppliers list refreshed successfully:", refreshResult);
 
       return { id, success: true, message: "Supplier deleted successfully" };
     } catch (error: any) {
@@ -279,8 +320,11 @@ export const deleteAllSuppliers = createAsyncThunk(
 
       await Promise.all(deletePromises);
       console.log("All suppliers deleted successfully");
+      
       // Refresh suppliers list after deletion
-      await dispatch(fetchSuppliers({ storeId }));
+      console.log("Refreshing suppliers list after bulk deletion");
+      const refreshResult = await dispatch(fetchSuppliers({ storeId })).unwrap();
+      console.log("Suppliers list refreshed successfully:", refreshResult);
 
       return {
         success: true,

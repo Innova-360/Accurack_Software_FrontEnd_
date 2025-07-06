@@ -55,13 +55,15 @@ const SupplierPage: React.FC = () => {
   const [isAssignProductPromptOpen, setIsAssignProductPromptOpen] =
     useState(false);
   const [newlyCreatedSupplier, setNewlyCreatedSupplier] =
-    useState<Supplier | null>(null); // Fetch suppliers when component mounts or store changes
+    useState<Supplier | null>(null);  // Fetch suppliers when component mounts or store changes
   useEffect(() => {
     const fetchData = async () => {
       if (currentStore?.id) {
         try {
+          console.log("Fetching suppliers for store:", currentStore.id);
           // Using unwrap() for cleaner promise handling
           await dispatch(fetchSuppliers({ storeId: currentStore.id })).unwrap();
+          console.log("Suppliers fetched successfully");
         } catch (error) {
           console.error("Failed to fetch suppliers:", error);
         }
@@ -72,6 +74,15 @@ const SupplierPage: React.FC = () => {
 
     fetchData();
   }, [dispatch, currentStore?.id]);
+
+  // Debug: Log suppliers whenever they change
+  useEffect(() => {
+    console.log("=== Supplier State Debug ===");
+    console.log("Current suppliers count:", suppliers.length);
+    console.log("Loading state:", loading);
+    console.log("Error state:", error);
+    console.log("Suppliers data:", suppliers);
+  }, [suppliers, loading, error]);
   // Handle supplier selection from sidebar
   const handleSupplierSelect = (supplier: Supplier) => {
     setSelectedSupplier(supplier);
@@ -108,18 +119,56 @@ const SupplierPage: React.FC = () => {
 
   // View products - Navigate to assign products page
   const handleViewProducts = (supplier: Supplier) => {
-    // Use the supplier_id for navigation - check both id and supplier_id
-    const supplierId = supplier.id || supplier.supplier_id;
+    // Enhanced ID validation - check multiple possible ID fields
+    let supplierId = null;
+    
+    // Check if this is a temporary supplier (newly created)
+    if (supplier.isTemporary) {
+      console.log("Temporary supplier detected, finding real supplier from list");
+      // Find the real supplier from the suppliers list by name and email
+      const realSupplier = suppliers.find(s => 
+        s.name === supplier.name && s.email === supplier.email
+      );
+      
+      if (realSupplier) {
+        console.log("Found real supplier:", realSupplier);
+        supplier = realSupplier; // Use the real supplier
+      } else {
+        console.log("Real supplier not found, refreshing list...");
+        toast.success("Please wait, refreshing supplier data...");
+        handleRefreshSuppliers();
+        return;
+      }
+    }
+    
+    // Try different ID field variations
+    if (supplier.id && supplier.id.toString().trim()) {
+      supplierId = supplier.id.toString().trim();
+    } else if (supplier.supplier_id && supplier.supplier_id.toString().trim()) {
+      supplierId = supplier.supplier_id.toString().trim();
+    } else if (supplier._id && supplier._id.toString().trim()) {
+      supplierId = supplier._id.toString().trim();
+    }
 
-    if (supplierId) {
+    console.log("handleViewProducts Debug:", {
+      supplier: supplier,
+      supplierId: supplierId,
+      supplier_id_field: supplier.id,
+      supplier_supplier_id_field: supplier.supplier_id,
+      supplier_underscore_id: supplier._id
+    });
+
+    if (supplierId && supplierId !== 'undefined' && supplierId !== 'null' && !supplierId.startsWith('temp-')) {
       const finalUrl = `/store/${currentStore?.id}/supplier/${supplierId}/assign-products`;
 
+      console.log("Navigating to:", finalUrl);
       navigate(finalUrl, {
         state: { supplier: supplier },
       });
     } else {
+      console.error("No valid supplier ID found:", supplier);
       toast.error(
-        "Invalid supplier ID format. Please refresh the page and try again."
+        "Supplier ID not found. Please refresh the page and try again."
       );
     }
   };
@@ -198,6 +247,49 @@ const SupplierPage: React.FC = () => {
   const handleCloseAssignProductPrompt = () => {
     setIsAssignProductPromptOpen(false);
     setNewlyCreatedSupplier(null);
+  };
+
+  // Force refresh suppliers list
+  const handleRefreshSuppliers = async () => {
+    if (currentStore?.id) {
+      try {
+        console.log("Force refreshing suppliers list");
+        await dispatch(fetchSuppliers({ storeId: currentStore.id })).unwrap();
+        console.log("Suppliers refreshed successfully");
+      } catch (error) {
+        console.error("Failed to refresh suppliers:", error);
+      }
+    }
+  };
+
+  // Handle delete modal close with refresh
+  const handleDeleteModalClose = () => {
+    setIsDeleteModalOpen(false);
+    setSelectedSupplier(null);
+    // Force refresh after modal close to ensure state is updated
+    handleRefreshSuppliers();
+  };
+
+  // Handle edit modal close with refresh
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setSelectedSupplier(null);
+    // Force refresh after modal close to ensure state is updated
+    handleRefreshSuppliers();
+  };
+
+  // Handle add modal close with refresh
+  const handleAddModalClose = () => {
+    setIsAddSupplierModalOpen(false);
+    // Force refresh after modal close to ensure state is updated
+    handleRefreshSuppliers();
+  };
+
+  // Handle delete all modal close with refresh
+  const handleDeleteAllModalClose = () => {
+    setIsDeleteAllModalOpen(false);
+    // Force refresh after modal close to ensure state is updated
+    handleRefreshSuppliers();
   };
 
   return (
@@ -358,28 +450,22 @@ const SupplierPage: React.FC = () => {
         {/* Modals */}
         <AddSupplierModal
           isOpen={isAddSupplierModalOpen}
-          onClose={() => setIsAddSupplierModalOpen(false)}
+          onClose={handleAddModalClose}
           onSupplierCreated={handleShowAssignProductPrompt}
         />
         <EditSupplierModal
           isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setSelectedSupplier(null);
-          }}
+          onClose={handleEditModalClose}
           supplier={selectedSupplier}
         />
         <DeleteSupplierModal
           isOpen={isDeleteModalOpen}
-          onClose={() => {
-            setIsDeleteModalOpen(false);
-            setSelectedSupplier(null);
-          }}
+          onClose={handleDeleteModalClose}
           supplier={selectedSupplier}
         />
         <DeleteSupplierModal
           isOpen={isDeleteAllModalOpen}
-          onClose={() => setIsDeleteAllModalOpen(false)}
+          onClose={handleDeleteAllModalClose}
           supplier={null}
           isDeleteAll={true}
           supplierCount={suppliers?.length}
