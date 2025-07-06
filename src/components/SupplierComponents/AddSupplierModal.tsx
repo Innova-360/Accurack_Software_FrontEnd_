@@ -24,7 +24,11 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
     name: "",
     email: "",
     phone: "",
-    address: "",
+    address: "", // This will be composed from detailed fields
+    streetAddress: "",
+    city: "",
+    state: "",
+    zipCode: "",
     storeId: currentStore?.id || "",
   });
   // Update storeId when currentStore changes
@@ -63,8 +67,17 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
     if (!formData.phone.trim()) {
       newErrors.phone = "Phone number is required";
     }
-    if (!formData.address.trim()) {
-      newErrors.address = "Address is required";
+    if (!formData.streetAddress.trim()) {
+      newErrors.streetAddress = "Street address is required";
+    }
+    if (!formData.city.trim()) {
+      newErrors.city = "City is required";
+    }
+    if (!formData.state.trim()) {
+      newErrors.state = "State/Province is required";
+    }
+    if (!formData.zipCode.toString().trim()) {
+      newErrors.zipCode = "ZIP/Postal code is required";
     }
     if (!formData.storeId) {
       newErrors.storeId = "Store ID is required";
@@ -78,12 +91,19 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
       return;
     }
     try {
+      // Compose address from detailed fields
+      const composedAddress = `${formData.streetAddress}, ${formData.city}, ${formData.state} ${formData.zipCode}`.trim();
+      
       const supplierData = {
         supplier_id: formData.name.toLowerCase().replace(/\s+/g, "-"), // Generate a simple ID from name
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        address: formData.address,
+        address: composedAddress, // Use composed address
+        streetAddress: formData.streetAddress,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
         storeId: currentStore?.id || formData.storeId,
       };
 
@@ -97,6 +117,10 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
         email: "",
         phone: "",
         address: "",
+        streetAddress: "",
+        city: "",
+        state: "",
+        zipCode: "",
         storeId: currentStore?.id || "",
       });
       setErrors({});
@@ -152,6 +176,10 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
       email: "",
       phone: "",
       address: "",
+      streetAddress: "",
+      city: "",
+      state: "",
+      zipCode: "",
       storeId: currentStore?.id || "",
     });
     setErrors({});
@@ -242,24 +270,79 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
               <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
             )}
           </div>
-          {/* Address */}
+          {/* Address Section */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
               Address *
             </label>
-            <textarea
-              value={formData.address}
-              onChange={(e) => handleInputChange("address", e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
-                errors.address ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder="Enter supplier address"
-              rows={3}
-              disabled={loading}
-            />
-            {errors.address && (
-              <p className="mt-1 text-sm text-red-600">{errors.address}</p>
-            )}
+            
+            {/* Street Address */}
+            <div className="mb-3">
+              <input
+                type="text"
+                value={formData.streetAddress}
+                onChange={(e) => handleInputChange("streetAddress", e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
+                  errors.streetAddress ? "border-red-500" : "border-gray-300"
+                }`}
+                placeholder="Street Address"
+                disabled={loading}
+              />
+              {errors.streetAddress && (
+                <p className="mt-1 text-sm text-red-600">{errors.streetAddress}</p>
+              )}
+            </div>
+
+            {/* City and State */}
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <input
+                  type="text"
+                  value={formData.city}
+                  onChange={(e) => handleInputChange("city", e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
+                    errors.city ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="City"
+                  disabled={loading}
+                />
+                {errors.city && (
+                  <p className="mt-1 text-sm text-red-600">{errors.city}</p>
+                )}
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={formData.state}
+                  onChange={(e) => handleInputChange("state", e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
+                    errors.state ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="State / Province / Region"
+                  disabled={loading}
+                />
+                {errors.state && (
+                  <p className="mt-1 text-sm text-red-600">{errors.state}</p>
+                )}
+              </div>
+            </div>
+
+            {/* ZIP Code */}
+            <div>
+              <input
+                type="text"
+                value={formData.zipCode}
+                onChange={(e) => handleInputChange("zipCode", e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
+                  errors.zipCode ? "border-red-500" : "border-gray-300"
+                }`}
+                placeholder="ZIP / Postal Code"
+                disabled={loading}
+              />
+              {errors.zipCode && (
+                <p className="mt-1 text-sm text-red-600">{errors.zipCode}</p>
+              )}
+            </div>
           </div>
           {/* Store Information */}
           {/* Action Buttons */}
