@@ -222,7 +222,8 @@ const CreateInventory: React.FC = () => {
 
     dispatch(createProduct(payload) as any).then((result: any) => {
       if (!result.error) {
-        navigate("/store/:id/inventory");
+        // Navigate to the correct inventory page using the actual storeId
+        navigate(`/store/${storeId}/inventory`);
       }
     });
     const inventoryData = {
@@ -236,8 +237,6 @@ const CreateInventory: React.FC = () => {
       orderValueDiscountValue:
         parseFloat(formData.orderValueDiscountValue) || 0,
     };
-
-    navigate(-1);
   };
 
   const handleNext = () => {
