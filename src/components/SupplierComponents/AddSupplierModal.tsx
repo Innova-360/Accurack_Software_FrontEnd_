@@ -120,6 +120,19 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
           }
         }
 
+        // If still no valid ID found, try to get it from the refreshed suppliers list
+        if (!createdSupplierData?.id && !createdSupplierData?.supplier_id && !createdSupplierData?._id) {
+          console.log("No valid ID found, using form data with temporary ID");
+          // Create a temporary supplier object with the form data
+          // The actual supplier will be available after list refresh
+          createdSupplierData = {
+            ...supplierData,
+            id: 'temp-' + Date.now(), // Temporary ID
+            supplier_id: 'temp-' + Date.now(),
+            isTemporary: true // Flag to indicate this is temporary
+          };
+        }
+
         console.log("Final supplier data for modal:", createdSupplierData);
         onSupplierCreated(createdSupplierData);
       }

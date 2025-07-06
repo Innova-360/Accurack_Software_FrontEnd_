@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { FaArrowLeft, FaCheck, FaSearch } from "react-icons/fa";
+import { FaArrowLeft, FaCheck, FaSearch, FaFilter, FaTimes } from "react-icons/fa";
 import { useAppSelector } from "../../store/hooks";
 import apiClient from "../../services/api";
 import Pagination from "../../components/InventoryComponents/Pagination";
@@ -61,7 +61,7 @@ const AssignProductsPage: React.FC = () => {
           // Try to find supplier by ID or supplier_id
           let response;
 
-          // First try direct API call
+          // First try direct API
           try {
             response = await apiClient.get(`/supplier/${supplierId}`, {
               params: { storeId: currentStore?.id || storeId },
@@ -136,6 +136,12 @@ const AssignProductsPage: React.FC = () => {
   >({});
   const [assigning, setAssigning] = useState(false);
 
+  // Filter states
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [priceRange, setPriceRange] = useState<{min: number; max: number}>({min: 0, max: 1000});
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage] = useState(50);
@@ -163,6 +169,23 @@ const AssignProductsPage: React.FC = () => {
       const productList = response.data?.data?.products || [];
       setAllProducts(productList);
       setProducts(productList);
+      
+      // Extract unique categories for filter
+      const uniqueCategories = [...new Set(productList.map((product: Product) => {
+        if (typeof product.category === "object" && product.category !== null) {
+          return product.category.name || product.category.code || "Uncategorized";
+        }
+        return product.category || "Uncategorized";
+      }))];
+      setAvailableCategories(uniqueCategories);
+      
+      // Set price range based on actual product prices
+      const prices = productList.map((p: Product) => p.singleItemSellingPrice);
+      if (prices.length > 0) {
+        const minPrice = Math.min(...prices);
+        const maxPrice = Math.max(...prices);
+        setPriceRange({ min: Math.floor(minPrice), max: Math.ceil(maxPrice) });
+      }
     } catch (error) {
       console.error("Error fetching products:", error);
       toast.error("Failed to load products");
@@ -177,13 +200,14 @@ const AssignProductsPage: React.FC = () => {
     }
   }, [currentStore?.id, storeId]);
 
-  // Search functionality with debounce
+  // Search functionality with debounce and filters
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (searchTerm.trim() === "") {
-        setProducts(allProducts);
-      } else {
-        const filtered = allProducts.filter(
+      let filtered = [...allProducts];
+      
+      // Apply search filter
+      if (searchTerm.trim() !== "") {
+        filtered = filtered.filter(
           (product) =>
             product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (typeof product.category === "string"
@@ -194,13 +218,30 @@ const AssignProductsPage: React.FC = () => {
             ).includes(searchTerm.toLowerCase()) ||
             product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
         );
-        setProducts(filtered);
       }
-      setCurrentPage(1); // Reset to first page when searching
+      
+      // Apply category filter
+      if (selectedCategory !== "all") {
+        filtered = filtered.filter((product) => {
+          const categoryName = typeof product.category === "object" && product.category !== null
+            ? product.category.name || product.category.code || "Uncategorized"
+            : product.category || "Uncategorized";
+          return categoryName === selectedCategory;
+        });
+      }
+      
+      // Apply price filter
+      filtered = filtered.filter((product) => {
+        const price = product.singleItemSellingPrice;
+        return price >= priceRange.min && price <= priceRange.max;
+      });
+      
+      setProducts(filtered);
+      setCurrentPage(1); // Reset to first page when searching/filtering
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, allProducts]);
+  }, [searchTerm, allProducts, selectedCategory, priceRange]);
 
   // Handle page change
   const handlePageChange = async (newPage: number) => {
@@ -519,7 +560,7 @@ const AssignProductsPage: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                    Product Search
+                    Product Search & Filter
                   </h3>
                   <p className="text-sm text-gray-600">
                     Find and select products to assign to this supplier
@@ -536,20 +577,114 @@ const AssignProductsPage: React.FC = () => {
                     )}
                   </div>
                 </div>
-                <div className="relative w-full sm:w-80">
-                  <FaSearch
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
-                    size={18}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Search by name, category, or SKU..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent transition-all duration-200 text-sm lg:text-base"
-                  />
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <div className="relative w-full sm:w-80">
+                    <FaSearch
+                      className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                      size={18}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Search by name, category, or SKU..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent transition-all duration-200 text-sm lg:text-base"
+                    />
+                  </div>
+                  <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-all duration-200 ${
+                      showFilters
+                        ? "bg-[#03414C] text-white border-[#03414C]"
+                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    <FaFilter size={16} />
+                    <span>Filters</span>
+                  </button>
                 </div>
               </div>
+              
+              {/* Filter Options */}
+              {showFilters && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Category Filter */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                        Filter by Category
+                      </label>
+                      <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent transition-all duration-200"
+                      >
+                        <option value="all">All Categories</option>
+                        {availableCategories.map((category) => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    {/* Price Range Filter */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                        Price Range: ${priceRange.min} - ${priceRange.max}
+                      </label>
+                      <div className="flex gap-3 items-center">
+                        <div className="flex-1">
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="Min Price"
+                            value={priceRange.min}
+                            onChange={(e) => setPriceRange(prev => ({ ...prev, min: parseFloat(e.target.value) || 0 }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent text-sm"
+                          />
+                        </div>
+                        <span className="text-gray-500">to</span>
+                        <div className="flex-1">
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="Max Price"
+                            value={priceRange.max}
+                            onChange={(e) => setPriceRange(prev => ({ ...prev, max: parseFloat(e.target.value) || 1000 }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Clear Filters Button */}
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      onClick={() => {
+                        setSelectedCategory("all");
+                        // Reset price range to original values
+                        const prices = allProducts.map((p: Product) => p.singleItemSellingPrice);
+                        if (prices.length > 0) {
+                          const minPrice = Math.min(...prices);
+                          const maxPrice = Math.max(...prices);
+                          setPriceRange({ min: Math.floor(minPrice), max: Math.ceil(maxPrice) });
+                        } else {
+                          setPriceRange({ min: 0, max: 1000 });
+                        }
+                        setSearchTerm("");
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-200"
+                    >
+                      <FaTimes size={14} />
+                      Clear All Filters
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

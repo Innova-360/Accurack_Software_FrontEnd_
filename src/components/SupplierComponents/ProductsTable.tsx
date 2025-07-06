@@ -9,17 +9,18 @@ interface AssignedProduct {
   name: string;
   sku?: string;
   category?: string;
+  categoryId?: string;
   costPrice?: number;
   sellingPrice?: number;
   quantity?: number;
   status?: string;
   assignedAt?: string;
-  categoryId?: string;
   ean?: string;
   pluUpc?: string;
   itemQuantity?: number;
   msrpPrice?: number;
   singleItemSellingPrice?: number;
+  supplierType?: 'primary' | 'secondary';
 }
 
 const formatCurrency = (amount: number | undefined) => {
@@ -38,10 +39,39 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
 }) => {
   const [products, setProducts] = useState<AssignedProduct[]>([]);
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<{[key: string]: string}>({});
+
+  // Fetch categories for mapping categoryId to category name
+  const fetchCategories = async () => {
+    try {
+      const response = await apiClient.get('/categories');
+      const categoriesMap: {[key: string]: string} = {};
+      
+      // Handle different possible response structures
+      let categoriesData = [];
+      if (response.data?.data?.data) {
+        categoriesData = response.data.data.data;
+      } else if (response.data?.data) {
+        categoriesData = response.data.data;
+      } else if (Array.isArray(response.data)) {
+        categoriesData = response.data;
+      }
+      
+      categoriesData.forEach((category: any) => {
+        categoriesMap[category.id] = category.name || category.categoryName || 'Uncategorized';
+      });
+      
+      setCategories(categoriesMap);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      // If categories fetch fails, we'll show categoryId as fallback
+    }
+  };
 
   // Fetch assigned products when component mounts
   useEffect(() => {
     if (supplier) {
+      fetchCategories(); // Fetch categories first
       fetchAssignedProducts();
     }
   }, [supplier]);
@@ -65,41 +95,67 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
       
       if (response.data?.success && response.data?.data?.data && Array.isArray(response.data.data.data)) {
         // Handle the actual API response structure
-        assignedProducts = response.data.data.data.map((product: { id: any; name: any; pluUpc: any; sku: any; categoryId: any; msrpPrice: any; singleItemSellingPrice: any; itemQuantity: any; createdAt: any; updatedAt: any; }) => ({
+        assignedProducts = response.data.data.data.map((product: any) => ({
           id: product.id,
           name: product.name,
-          sku: product.pluUpc || product.sku,
-          category: product.categoryId || 'Uncategorized',
-          costPrice: product.msrpPrice || product.singleItemSellingPrice,
-          sellingPrice: product.singleItemSellingPrice,
-          quantity: product.itemQuantity,
+          sku: product.pluUpc || product.sku || 'N/A',
+          categoryId: product.categoryId,
+          category: categories[product.categoryId] || product.categoryId || 'Uncategorized',
+          costPrice: product.msrpPrice || 0, // Cost price from supplier
+          sellingPrice: product.singleItemSellingPrice || 0, // Selling price in store
+          quantity: product.itemQuantity || 0,
           status: 'active', // Default status
+          supplierType: 'primary', // You can determine this based on your business logic
+          assignedAt: product.createdAt || product.updatedAt || new Date().toISOString(),
+          ean: product.ean,
+          pluUpc: product.pluUpc,
+          itemQuantity: product.itemQuantity,
+          msrpPrice: product.msrpPrice,
+          singleItemSellingPrice: product.singleItemSellingPrice
+        }));
+      } else if (response.data?.data?.data && Array.isArray(response.data.data.data)) {
+        // Handle nested data structure
+        assignedProducts = response.data.data.data.map((product: any) => ({
+          id: product.id,
+          name: product.name,
+          sku: product.pluUpc || product.sku || 'N/A',
+          categoryId: product.categoryId,
+          category: categories[product.categoryId] || product.categoryId || 'Uncategorized',
+          costPrice: product.msrpPrice || 0,
+          sellingPrice: product.singleItemSellingPrice || 0,
+          quantity: product.itemQuantity || 0,
+          status: 'active',
+          supplierType: 'primary',
           assignedAt: product.createdAt || product.updatedAt || new Date().toISOString()
         }));
       } else if (response.data?.data && Array.isArray(response.data.data)) {
         // Fallback for direct data array
-        assignedProducts = response.data.data.map((product: { id: any; name: any; pluUpc: any; sku: any; categoryId: any; msrpPrice: any; singleItemSellingPrice: any; itemQuantity: any; createdAt: any; updatedAt: any; }) => ({
+        assignedProducts = response.data.data.map((product: any) => ({
           id: product.id,
           name: product.name,
-          sku: product.pluUpc || product.sku,
-          category: product.categoryId || 'Uncategorized',
-          costPrice: product.msrpPrice || product.singleItemSellingPrice,
-          sellingPrice: product.singleItemSellingPrice,
-          quantity: product.itemQuantity,
+          sku: product.pluUpc || product.sku || 'N/A',
+          categoryId: product.categoryId,
+          category: categories[product.categoryId] || product.categoryId || 'Uncategorized',
+          costPrice: product.msrpPrice || 0,
+          sellingPrice: product.singleItemSellingPrice || 0,
+          quantity: product.itemQuantity || 0,
           status: 'active',
+          supplierType: 'primary',
           assignedAt: product.createdAt || product.updatedAt || new Date().toISOString()
         }));
       } else if (Array.isArray(response.data)) {
         // Fallback for direct array response
-        assignedProducts = response.data.map(product => ({
+        assignedProducts = response.data.map((product: any) => ({
           id: product.id,
           name: product.name,
-          sku: product.pluUpc || product.sku,
-          category: product.categoryId || 'Uncategorized',
-          costPrice: product.msrpPrice || product.singleItemSellingPrice,
-          sellingPrice: product.singleItemSellingPrice,
-          quantity: product.itemQuantity,
+          sku: product.pluUpc || product.sku || 'N/A',
+          categoryId: product.categoryId,
+          category: categories[product.categoryId] || product.categoryId || 'Uncategorized',
+          costPrice: product.msrpPrice || 0,
+          sellingPrice: product.singleItemSellingPrice || 0,
+          quantity: product.itemQuantity || 0,
           status: 'active',
+          supplierType: 'primary',
           assignedAt: product.createdAt || product.updatedAt || new Date().toISOString()
         }));
       }
@@ -191,7 +247,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
           <div className="col-span-1">COST PRICE</div>
           <div className="col-span-1">SELLING PRICE</div>
           <div className="col-span-1">QUANTITY</div>
-          <div className="col-span-2">STATUS</div>
+          <div className="col-span-2">SUPPLIER TYPE</div>
         </div>
       </div>
 
@@ -200,6 +256,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
         {products.map((product, index) => (
           <div
             key={product.id}
+
             className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150"
           >
             <div className="grid grid-cols-12 gap-4 items-center">
@@ -257,18 +314,18 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                 </span>
               </div>
 
-              {/* Status */}
+              {/* Supplier Type */}
               <div className="col-span-2">
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    product.status === 'active'
+                    product.supplierType === 'primary'
+                      ? "bg-blue-100 text-blue-800"
+                      : product.supplierType === 'secondary'
                       ? "bg-green-100 text-green-800"
-                      : product.status === 'inactive'
-                      ? "bg-red-100 text-red-800"
                       : "bg-gray-100 text-gray-800"
                   }`}
                 >
-                  {product.status || 'Active'}
+                  {product.supplierType === 'primary' ? 'Primary' : 'Secondary'}
                 </span>
               </div>
             </div>

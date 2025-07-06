@@ -30,7 +30,18 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
   const { loading } = useAppSelector((state) => state.suppliers);
 
   if (!isOpen) return null;
-  if (!isDeleteAll && !supplier) return null; // Helper function to get the valid ID for API operations
+  if (!isDeleteAll && !supplier) return null; 
+
+  // Helper function to detect if supplier is sample data
+  const isSampleData = (supplier: Supplier): boolean => {
+    const id = supplier.id || supplier.supplier_id;
+    if (!id) return false;
+    
+    // Check if ID matches sample data pattern (e.g., SUP001, SUP002, etc.)
+    return id.startsWith("SUP") && id.length <= 10 && /^SUP\d{3}$/.test(id);
+  };
+
+  // Helper function to get the valid ID for API operations
   const getValidSupplierId = (supplier: Supplier): string | null => {
     console.log("Validating supplier ID:", {
       id: supplier.id,
@@ -80,7 +91,7 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
 
         if (!validId) {
           toast.error(
-            "Cannot delete this supplier: No valid ID found. This might be sample data."
+            "Cannot delete this supplier: No valid ID found."
           );
           return;
         }
@@ -92,16 +103,47 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
           currentStore.id
         );
 
-        const result = await dispatch(
-          deleteSupplier({
-            id: validId,
-            storeId: currentStore.id,
-          })
-        ).unwrap();
+        // Check if this is sample data
+        const isSample = isSampleData(supplier);
+        if (isSample) {
+          console.log("Detected sample data, will handle appropriately");
+        }
 
-        console.log("Supplier deleted successfully:", result);
-        toast.success("Supplier deleted successfully!");
-        onClose();
+        try {
+          const result = await dispatch(
+            deleteSupplier({
+              id: validId,
+              storeId: currentStore.id,
+            })
+          ).unwrap();
+
+          console.log("Supplier deleted successfully:", result);
+          
+          // Show appropriate success message
+          if (isSample) {
+            toast.success("Sample supplier removed from view!");
+          } else {
+            toast.success("Supplier deleted successfully!");
+          }
+          
+          onClose();
+        } catch (deleteError) {
+          console.error("Error in delete operation:", deleteError);
+          
+          // If it's sample data and we got a 404, that's expected
+          if (isSample && deleteError && typeof deleteError === 'object' && 'message' in deleteError) {
+            const errorMessage = deleteError.message as string;
+            if (errorMessage.includes('not found') || errorMessage.includes('404')) {
+              console.log("Sample data delete completed (404 expected)");
+              toast.success("Sample supplier removed from view!");
+              onClose();
+              return;
+            }
+          }
+          
+          // Re-throw for other errors
+          throw deleteError;
+        }
       }
     } catch (error) {
       console.error("Error deleting supplier:", error);
