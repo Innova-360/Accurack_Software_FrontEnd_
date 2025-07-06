@@ -50,4 +50,19 @@ apiClient.interceptors.response.use(
   }
 );
 
+// Forgot password API function
+export const forgotPassword = async (email: string) => {
+  const response = await apiClient.post("/auth/forgot-password", { email });
+  return response.data;
+};
+
+// Reset password API function
+export const resetPassword = async (token: string, newPassword: string) => {
+  const response = await apiClient.post("/auth/reset-password", {
+    token,
+    newPassword,
+  });
+  return response.data;
+};
+
 export default apiClient;

@@ -1,7 +1,8 @@
 import { Routes, Route } from "react-router-dom";
-import Signup from "../pages/Signup/Signup"; // Signup Route 
+import Signup from "../pages/Signup/Signup"; // Signup Route
 import Login from "../pages/Login/Login"; // Login Route
 import OtpPage from "../pages/OtpPage/OtpPage"; // otp Route
+import ResetPassword from "../pages/ResetPassword/ResetPassword"; // Reset Password Route
 import Inventory from "../pages/Inventory/Inventory";
 import Home from "../pages/Home";
 import Terms from "../pages/Terms";
@@ -52,6 +53,7 @@ const AppRoutes = () => {
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
       <Route path="/otp" element={<OtpPage />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
       <Route path="/term" element={<Terms />} />
 
@@ -169,7 +171,7 @@ const AppRoutes = () => {
         }
       />
 
-       <Route
+      <Route
         path="/store/details/:id"
         element={
           <ProtectedRoute>
@@ -452,7 +454,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      
+
       {/* Catch-all route for 404 errors */}
       <Route path="*" element={<NotFound />} />
     </Routes>
