@@ -345,7 +345,6 @@ const SupplierPage: React.FC = () => {
                   ) : (
                     selectedSupplier && (
                       <ProductsTable
-                        products={[]} // TODO: Integrate with products API when available
                         supplier={selectedSupplier}
                         onBackToSuppliers={handleBackToSuppliers}
                       />

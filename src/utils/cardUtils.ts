@@ -57,7 +57,7 @@ export const getAllCards = (): CardSection[] => {
       sectionTitle: "Sales",
       cards: [
         { title: "Upload Sales", iconComponent: "FiUpload" },
-        { title: "Create Sales", iconComponent: "FiShoppingCart" },
+        { title: "Sales Orders", iconComponent: "FiShoppingCart" },
         { title: "View Sales", iconComponent: "FiEye" },
         { title: "Update Sales", iconComponent: "FiEdit3" },
         { title: "Sales Dashboard", iconComponent: "FiTrendingUp" },
@@ -87,7 +87,6 @@ export const getAllCards = (): CardSection[] => {
       sectionTitle: "Supplier",
       cards: [
         { title: "Add Supplier", iconComponent: "FiTruck" },
-        { title: "Assign Supplier", iconComponent: "FiLink" },
         { title: "View Supplier", iconComponent: "FiEye" },
         { title: "Update Supplier", iconComponent: "FiEdit3" },
         { title: "Supplier Dashboard", iconComponent: "FiBarChart3" },
