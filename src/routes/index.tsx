@@ -13,6 +13,15 @@ import GoogleAuthCallback from "../components/GoogleAuthCallback";
 import Supplier from "../pages/Supplier/Supplier";
 import StoresPage from "../pages/Stores/Stores";
 
+// Tax Management Pages
+import TaxManagementPage from "../pages/TaxManagement/TaxManagementPage";
+import CreateTaxPage from "../pages/TaxManagement/CreateTaxPage";
+import EditTaxPage from "../pages/TaxManagement/EditTaxPage";
+import EnhancedTaxManagementPage from "../pages/TaxManagement/EnhancedTaxManagementPage";
+import EnhancedCreateTaxPage from "../pages/TaxManagement/EnhancedCreateTaxPage";
+import EnhancedEditTaxPage from "../pages/TaxManagement/EnhancedEditTaxPage";
+import TaxDemoPage from "../pages/TaxManagement/TaxDemoPage";
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -25,8 +34,25 @@ const AppRoutes = () => {
       <Route path="/store/:id/inventory" element={<Inventory />} />
       <Route path="/store/:id/inventory/create" element={<CreateInventory />} />
       <Route path="/store/:id/sales" element={<SalesPage />} />
-      <Route path="/store/:id/expenses" element={<ExpensePage />} />
-      <Route path="/store/:id/supplier" element={<Supplier />} />
+      <Route path="/store/:id/expenses" element={<ExpensePage />} />      <Route path="/store/:id/supplier" element={<Supplier />} />
+      
+      {/* Tax Management Routes */}
+      <Route path="/store/:id/taxes" element={<EnhancedTaxManagementPage />} />
+      <Route path="/store/:id/taxes/create" element={<EnhancedCreateTaxPage />} />
+      <Route path="/store/:id/taxes/edit/:taxId" element={<EnhancedEditTaxPage />} />
+      <Route path="/store/:id/taxes/demo" element={<TaxDemoPage />} />
+      
+      {/* Global Tax Management Routes */}
+      <Route path="/taxes" element={<EnhancedTaxManagementPage />} />
+      <Route path="/taxes/create" element={<EnhancedCreateTaxPage />} />
+      <Route path="/taxes/edit/:taxId" element={<EnhancedEditTaxPage />} />
+      <Route path="/taxes/demo" element={<TaxDemoPage />} />
+      
+      {/* Basic Tax Management Routes (alternative) */}
+      <Route path="/taxes/basic" element={<TaxManagementPage />} />
+      <Route path="/taxes/basic/create" element={<CreateTaxPage />} />
+      <Route path="/taxes/basic/edit/:taxId" element={<EditTaxPage />} />
+      
       <Route path="/inventory" element={<Inventory />} />
       <Route path="/inventory/create" element={<CreateInventory />} />
       <Route path="/" element={<Home />} />

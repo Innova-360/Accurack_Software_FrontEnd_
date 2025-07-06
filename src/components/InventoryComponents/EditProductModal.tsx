@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaEdit } from "react-icons/fa";
 import { SpecialButton } from "../buttons";
 import type { Product } from "../../data/inventoryData";
+import { useAppSelector } from "../../store/hooks";
 
 interface EditProductModalProps {
   isOpen: boolean;
@@ -59,6 +60,10 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   onSave,
   product,
 }) => {
+  // Get current store and client information from Redux
+  const currentStore = useAppSelector((state) => state.stores.currentStore);
+  const clientId = useAppSelector((state) => state.user.user?.clientId);
+
   const [formData, setFormData] = useState<EditProductFormData>({
     name: "",
     category: "",
@@ -72,8 +77,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     singleItemSellingPrice: 0,
     discountAmount: 0,
     percentDiscount: 0,
-    clientId: "",
-    storeId: "",
+    clientId: clientId || "",
+    storeId: currentStore?.id || "",
     hasVariants: false,
     description: "",
     packs: [],
@@ -105,8 +110,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
         singleItemSellingPrice: parseFloat(product.price.replace("$", "")) || 0,
         discountAmount: 0,
         percentDiscount: 0,
-        clientId: "uuid-client-id", // This should be dynamic
-        storeId: "uuid-store-id", // This should be dynamic
+        clientId: clientId || "", // Use actual client ID from Redux
+        storeId: currentStore?.id || "", // Use actual store ID from Redux
         hasVariants: product.hasVariants || false,
         description: product.description || "",
         packs: [
