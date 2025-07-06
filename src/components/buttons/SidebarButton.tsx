@@ -36,7 +36,7 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
 
   const stateClasses = active
     ? ["bg-[#03414C]", "text-white"]
-    : ["text-gray-700", "hover:bg-gray-100"];
+    : ["text-gray-700", "hover:bg-gray-50", ];
 
   if (disabled) {
     baseClasses.push("opacity-50", "cursor-not-allowed");

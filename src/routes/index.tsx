@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
-import Signup from "../pages/Signup/Signup";
-import Login from "../pages/Login/Login";
-import OtpPage from "../pages/OtpPage/OtpPage";
+import Signup from "../pages/Signup/Signup"; // Signup Route 
+import Login from "../pages/Login/Login"; // Login Route
+import OtpPage from "../pages/OtpPage/OtpPage"; // otp Route
 import Inventory from "../pages/Inventory/Inventory";
 import Home from "../pages/Home";
 import Terms from "../pages/Terms";
@@ -13,6 +13,8 @@ import ProductDetails from "../pages/Inventory/ProductDetails";
 import AddNewSale from "../pages/salesPage/AddNewSale";
 import GoogleAuthCallback from "../components/GoogleAuthCallback";
 import Supplier from "../pages/Supplier/Supplier";
+import AddSupplierPage from "../pages/Supplier/AddSupplierPage";
+import UpdateSupplierPage from "../pages/Supplier/UpdateSupplier";
 import StoresPage from "../pages/Stores/Stores";
 import EmployeePage from "../pages/Employee/EmployeeManagementPage";
 import CreateInvoice from "../pages/salesPage/CreateInvoice";
@@ -41,6 +43,7 @@ import StoreDetails from "../pages/Stores/StoreDetails";
 import ProfileSettings from "../pages/ProfileSettings/ProfileSettings";
 import BusinessSettings from "../pages/BusinessSettings/BusinessSettings";
 import ChangePassword from "../pages/ChangePassword/ChangePassword";
+import NotFound from "../pages/NotFound/NotFound";
 
 const AppRoutes = () => {
   return (
@@ -257,6 +260,22 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/store/:id/supplier/add"
+        element={
+          <ProtectedRoute>
+            <AddSupplierPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/supplier/update"
+        element={
+          <ProtectedRoute>
+            <UpdateSupplierPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/store/:id/supplier/:supplierId/assign-products"
         element={
           <ProtectedRoute>
@@ -433,6 +452,9 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      
+      {/* Catch-all route for 404 errors */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };

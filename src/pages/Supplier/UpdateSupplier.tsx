@@ -1,34 +1,62 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { FaPlus, FaBars, FaEye, FaEdit, FaTrash, FaBox, FaLink } from "react-icons/fa";
-import { SpecialButton, IconButton } from "../buttons";
-import type { Supplier } from "./types";
-import Pagination from "./Pagination";
+import { SpecialButton, IconButton } from "../../components/buttons";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { fetchSuppliers } from "../../store/slices/supplierSlice";
+import type { Supplier } from "../../components/SupplierComponents/types";
+import Pagination from "../../components/SupplierComponents/Pagination";
+import Header from "../../components/Header";
+import toast from "react-hot-toast";
+import useRequireStore from "../../hooks/useRequireStore";
+import type { SupplierTable } from "../../components/SupplierComponents";
 
-interface SupplierTableProps {
-  suppliers: Supplier[];
-  onViewSupplier: (supplier: Supplier) => void;
-  onEditSupplier: (supplier: Supplier) => void;
-  onDeleteSupplier: (supplier: Supplier) => void;
-  onViewProducts: (supplier: Supplier) => void;
-  onViewAssignedProducts: (supplier: Supplier) => void;
-  onAddSupplier: () => void;
-}
-
-const SupplierTable: React.FC<SupplierTableProps> = ({
-  suppliers,
-  onViewSupplier,
-  onEditSupplier,
-  onDeleteSupplier,
-  onViewProducts,
-  onViewAssignedProducts,
-  onAddSupplier,
-}) => {
+const UpdateSupplierPage: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const currentStore = useRequireStore();
+  const { suppliers, loading } = useAppSelector((state) => state.suppliers);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const totalPages = Math.ceil(suppliers?.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentSuppliers = suppliers?.slice(startIndex, endIndex);
+
+  // Fetch suppliers when component mounts
+  useEffect(() => {
+    if (currentStore?.id) {
+      dispatch(fetchSuppliers({ storeId: currentStore.id }));
+    }
+  }, [dispatch, currentStore?.id]);
+
+  // Handler functions
+  const handleViewSupplier = (supplier: Supplier) => {
+    toast(`Viewing supplier: ${supplier.name}`);
+  };
+
+  const handleEditSupplier = (supplier: Supplier) => {
+    toast(`Editing supplier: ${supplier.name}`);
+  };
+
+  const handleDeleteSupplier = (supplier: Supplier) => {
+    toast(`Deleting supplier: ${supplier.name}`);
+  };
+
+  const handleViewProducts = (supplier: Supplier) => {
+    const supplierId = supplier.id || supplier.supplier_id;
+    navigate(`/store/${currentStore?.id}/supplier/${supplierId}/assign-products`, {
+      state: { supplier }
+    });
+  };
+
+  const handleViewAssignedProducts = (supplier: Supplier) => {
+    toast(`Viewing assigned products for: ${supplier.name}`);
+  };
+
+  const handleAddSupplier = () => {
+    navigate(`/store/${currentStore?.id}/supplier/add`);
+  };
 
   // Helper function to check if supplier can be edited/deleted
   const isValidSupplier = (supplier: Supplier): boolean => {
@@ -55,7 +83,7 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
         </p>
         <SpecialButton
           variant="expense-add"
-          onClick={onAddSupplier}
+          onClick={handleAddSupplier}
           className="mx-auto"
         >
           <FaPlus className="mr-2" /> Add Your First Supplier
@@ -65,11 +93,16 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
   }
 
   return (
-    <div className="bg-white overflow-x-auto">
-      <div className="min-w-[1000px]">
-        {" "}
-        {/* Table Header */}
-        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+    <>
+      <Header />
+      <br />
+      <br />
+      <br />
+      <div className="bg-white overflow-x-auto">
+        <div className="min-w-[1000px]">
+          {" "}
+          {/* Table Header */}
+          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
           <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-600 uppercase tracking-wider">
             <div className="col-span-1">#</div>
             <div className="col-span-2">SUPPLIER</div>
@@ -126,7 +159,7 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
                   <IconButton
                     icon={<FaEye />}
                     variant="info"
-                    onClick={() => onViewSupplier(supplier)}
+                    onClick={() => handleViewSupplier(supplier)}
                     title="View Details"
                   />
                   <IconButton
@@ -134,7 +167,7 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
                     variant="primary"
                     onClick={() =>
                       isValidSupplier(supplier)
-                        ? onEditSupplier(supplier)
+                        ? handleEditSupplier(supplier)
                         : null
                     }
                     title={
@@ -149,7 +182,7 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
                     variant="danger"
                     onClick={() =>
                       isValidSupplier(supplier)
-                        ? onDeleteSupplier(supplier)
+                        ? handleDeleteSupplier(supplier)
                         : null
                     }
                     title={
@@ -162,15 +195,14 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
                   <IconButton
                     icon={<FaLink />}
                     variant="warning"
-                                      onClick={() => onViewProducts(supplier)}
-
+                    onClick={() => handleViewProducts(supplier)}
                     title="Assign Products"
                     className=" ring-yellow-200 hover:ring-yellow-300"
                   />
                   <IconButton
                     icon={<FaBox />}
                     variant="secondary"
-                    onClick={() => onViewAssignedProducts(supplier)}
+                    onClick={() => handleViewAssignedProducts(supplier)}
                     title="View Assigned Products"
                     className="border-2 border-gray-400 hover:border-gray-500 bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-700"
                   />
@@ -210,7 +242,8 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
         )}
       </div>
     </div>
+    </>
   );
 };
 
-export default SupplierTable;
+export default UpdateSupplierPage;
