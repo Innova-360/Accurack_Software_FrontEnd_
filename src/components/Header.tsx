@@ -139,7 +139,7 @@ const Navbar: React.FC = () => {
       <div className="flex justify-between items-center w-full h-14 px-4 lg:hidden">
         {/* Left Icon */}
         <div className="flex items-center justify-center w-[56px]">
-          <FaTh className="text-[20px]" />
+          <FaHome className="text-[20px]" />
         </div>
 
         {/* Logo */}

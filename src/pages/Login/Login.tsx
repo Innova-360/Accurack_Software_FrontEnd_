@@ -10,12 +10,14 @@ import {
   clearSavedCredentials,
 } from "../../utils/rememberMeUtils";
 import { updateLastUpdated } from "../../utils/lastUpdatedUtils";
+import ForgotPasswordModal from "../../components/ForgotPasswordModal";
 
 const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
   const [isLoading, setIsLoading] = useState(false); // State to manage loading
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -212,6 +214,10 @@ const Login = () => {
               <a
                 href="#"
                 className="text-[#0b5c5a] font-semibold hover:underline"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowForgotPasswordModal(true);
+                }}
               >
                 Forgot Password
               </a>
@@ -275,6 +281,10 @@ const Login = () => {
           </p>
         </div>
       </div>
+      <ForgotPasswordModal
+        isOpen={showForgotPasswordModal}
+        onClose={() => setShowForgotPasswordModal(false)}
+      />
     </div>
   );
 };
