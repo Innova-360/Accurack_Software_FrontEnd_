@@ -8,7 +8,7 @@ export const BASE_URL =
 axios.defaults.withCredentials = true; // Enable cookies for cross-origin requests
 const apiClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 50000,
+  timeout: 80000,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",

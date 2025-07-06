@@ -52,19 +52,92 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
           <div
             key={idx}
             onClick={() => {
-              if (card.title === "Add Supplier") {
+              // Inventory routes
+              if (card.title === "Create Inventory") {
+                navigate(`/store/${activeStoreId}/inventory/create`);
+              } else if (card.title === "Inventory Dashboard") {
+                navigate(`/store/${activeStoreId}/inventory`);
+              } else if (card.title === "View Inventory*") {
+                navigate(`/store/${activeStoreId}/inventory`);
+              } else if (card.title === "Update Inventory*") {
+                navigate(`/store/${activeStoreId}/inventory`);
+              } else if (card.title === "Upload Inventory*") {
+                navigate(`/store/${activeStoreId}/inventory`);
+              } 
+              // Supplier routes
+              else if (card.title === "Add Supplier") {
                 navigate(`/store/${activeStoreId}/supplier/add`);
-              } else if (card.title === "View Supplier") {
+              } else if (card.title === "View Supplier*") {
                 navigate(`/store/${activeStoreId}/supplier`);
               } else if (card.title === "Update Supplier") {
                 navigate(`/store/${activeStoreId}/supplier/update`);
               } else if (card.title === "Supplier Dashboard") {
                 navigate(`/store/${activeStoreId}/supplier`);
-              } else if (card.title === "Suppliers") {
+              } else if (card.title === "Suppliers*") {
                 navigate(`/store/${activeStoreId}/supplier`);
               } else if (card.title === "Customers") {
                 navigate(`/store/${activeStoreId}/customer`);
-              } else if (card.title === "View\nExpenses") {
+              } 
+              // Sales routes
+              else if (card.title === "Upload Sales*") {
+                navigate(`/store/${activeStoreId}/sales`);
+              } else if (card.title === "Sales Orders*") {
+                navigate(`/store/${activeStoreId}/sales`);
+              } else if (card.title === "View Sales*") {
+                navigate(`/store/${activeStoreId}/sales`);
+              } else if (card.title === "Update Sales*") {
+                navigate(`/store/${activeStoreId}/sales`);
+              } else if (card.title === "Sales Dashboard") {
+                navigate(`/store/${activeStoreId}/sales`);
+              }
+              // Invoice routes
+              else if (card.title === "Upload Invoice*") {
+                navigate(`/store/${activeStoreId}/sales/create-invoice`);
+              } else if (card.title === "Create Invoice*") {
+                navigate(`/store/${activeStoreId}/sales/create-invoice`);
+              } else if (card.title === "View Invoice*") {
+                navigate(`/store/${activeStoreId}/sales`);
+              } else if (card.title === "Update Invoice*") {
+                navigate(`/store/${activeStoreId}/sales`);
+              } else if (card.title === "Invoice Dashboard") {
+                navigate(`/store/${activeStoreId}/sales`);
+              }
+              // Customer routes
+              else if (card.title === "Add Customer") {
+                navigate(`/store/${activeStoreId}/customer/create`);
+              } else if (card.title === "View Customers*") {
+                navigate(`/store/${activeStoreId}/customer`);
+              } else if (card.title === "Update Customer*") {
+                navigate(`/store/${activeStoreId}/customer`);
+              } else if (card.title === "Customer Reports*") {
+                navigate(`/store/${activeStoreId}/customer`);
+              } else if (card.title === "Customer Dashboard") {
+                navigate(`/store/${activeStoreId}/customer`);
+              }
+              // Employee routes
+              else if (card.title === "Add Employee*") {
+                navigate(`/store/${activeStoreId}/employee`);
+              } else if (card.title === "Assign Role") {
+                navigate(`/store/${activeStoreId}/permissions`);
+              } else if (card.title === "View Employee*") {
+                navigate(`/store/${activeStoreId}/employee`);
+              } else if (card.title === "Update Employee*") {
+                navigate(`/store/${activeStoreId}/employee`);
+              } else if (card.title === "Employee Dashboard") {
+                navigate(`/store/${activeStoreId}/employee`);
+              }
+              // Tax Management routes
+              else if (card.title === "Add Tax") {
+                navigate(`/store/${activeStoreId}/tax/add`);
+              } else if (card.title === "View Tax*") {
+                navigate(`/store/${activeStoreId}/tax`);
+              } else if (card.title === "Update Tax*") {
+                navigate(`/store/${activeStoreId}/tax`);
+              } else if (card.title === "Tax Dashboard") {
+                navigate(`/store/${activeStoreId}/tax`);
+              }
+              // Legacy routes (keeping for backward compatibility)
+              else if (card.title === "View\nExpenses") {
                 navigate(
                   activeStoreId
                     ? `/store/${activeStoreId}/expenses`
