@@ -52,7 +52,15 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
           <div
             key={idx}
             onClick={() => {
-              if (card.title === "Suppliers") {
+              if (card.title === "Add Supplier") {
+                navigate(`/store/${activeStoreId}/supplier/add`);
+              } else if (card.title === "View Supplier") {
+                navigate(`/store/${activeStoreId}/supplier`);
+              } else if (card.title === "Update Supplier") {
+                navigate(`/store/${activeStoreId}/supplier/update`);
+              } else if (card.title === "Supplier Dashboard") {
+                navigate(`/store/${activeStoreId}/supplier`);
+              } else if (card.title === "Suppliers") {
                 navigate(`/store/${activeStoreId}/supplier`);
               } else if (card.title === "Customers") {
                 navigate(`/store/${activeStoreId}/customer`);

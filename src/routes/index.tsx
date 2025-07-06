@@ -13,6 +13,8 @@ import ProductDetails from "../pages/Inventory/ProductDetails";
 import AddNewSale from "../pages/salesPage/AddNewSale";
 import GoogleAuthCallback from "../components/GoogleAuthCallback";
 import Supplier from "../pages/Supplier/Supplier";
+import AddSupplierPage from "../pages/Supplier/AddSupplierPage";
+import UpdateSupplierPage from "../pages/Supplier/UpdateSupplier";
 import StoresPage from "../pages/Stores/Stores";
 import EmployeePage from "../pages/Employee/EmployeeManagementPage";
 import CreateInvoice from "../pages/salesPage/CreateInvoice";
@@ -254,6 +256,22 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Supplier />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/supplier/add"
+        element={
+          <ProtectedRoute>
+            <AddSupplierPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/supplier/update"
+        element={
+          <ProtectedRoute>
+            <UpdateSupplierPage />
           </ProtectedRoute>
         }
       />
