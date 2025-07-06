@@ -107,7 +107,7 @@ export const getSpecialVariantClasses = (variant: string): string => {
     "sidebar-category-active":
       "w-full px-3 py-2 text-left rounded-md bg-[#03414C] text-white",
     "sidebar-add":
-      "w-full px-3 py-2 text-left rounded-md hover:bg-gray-100 transition-colors text-gray-700",
+      "w-full px-3 py-2 text-sm font-medium rounded-md bg-white border border-teal-200 text-teal-600 hover:bg-teal-50 hover:border-teal-300 transition-colors duration-200 flex items-center justify-center gap-2",
 
     // Action buttons (small icon buttons)
     "action-edit": "text-gray-500 hover:text-blue-600",

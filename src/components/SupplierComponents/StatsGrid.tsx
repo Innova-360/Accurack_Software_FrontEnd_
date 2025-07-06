@@ -49,34 +49,34 @@ const StatsGrid: React.FC<StatsGridProps> = ({
     );
   }
 
-  if (viewMode === 'products' && selectedSupplier) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-          <div className="text-2xl font-bold text-gray-900">{currentSupplierProducts.length}</div>
-          <div className="text-sm text-gray-600">Products Available</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-          <div className="text-2xl font-bold text-green-600">
-            {currentSupplierProducts.filter(p => p.stock > 0).length}
-          </div>
-          <div className="text-sm text-gray-600">In Stock</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-          <div className="text-2xl font-bold text-blue-600">
-            {currentSupplierProducts.reduce((sum, p) => sum + p.stock, 0)}
-          </div>
-          <div className="text-sm text-gray-600">Total Stock</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-          <div className="text-2xl font-bold text-teal-600">
-            {formatCurrency(currentSupplierProducts.reduce((sum, p) => sum + (p.price * p.stock), 0))}
-          </div>
-          <div className="text-sm text-gray-600">Total Inventory Value</div>
-        </div>
-      </div>
-    );
-  }
+  // if (viewMode === 'products' && selectedSupplier) {
+  //   return (
+  //     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+  //       <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+  //         <div className="text-2xl font-bold text-gray-900">{currentSupplierProducts.length}</div>
+  //         <div className="text-sm text-gray-600">Products Available</div>
+  //       </div>
+  //       <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+  //         <div className="text-2xl font-bold text-green-600">
+  //           {currentSupplierProducts.filter(p => p.stock > 0).length}
+  //         </div>
+  //         <div className="text-sm text-gray-600">In Stock</div>
+  //       </div>
+  //       <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+  //         <div className="text-2xl font-bold text-blue-600">
+  //           {currentSupplierProducts.reduce((sum, p) => sum + p.stock, 0)}
+  //         </div>
+  //         <div className="text-sm text-gray-600">Total Stock</div>
+  //       </div>
+  //       <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+  //         <div className="text-2xl font-bold text-teal-600">
+  //           {formatCurrency(currentSupplierProducts.reduce((sum, p) => sum + (p.price * p.stock), 0))}
+  //         </div>
+  //         <div className="text-sm text-gray-600">Total Inventory Value</div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return null;
 };

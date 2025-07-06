@@ -1,20 +1,139 @@
-import React from "react";
-// import { FaBox } from 'react-icons/fa';
-import type { Product, Supplier } from "./types";
+import React, { useState, useEffect } from "react";
+import { FaSpinner } from 'react-icons/fa';
+import apiClient from '../../services/api';
+import toast from 'react-hot-toast';
+import type { Supplier } from "./types";
 
-const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
+interface AssignedProduct {
+  id: string;
+  name: string;
+  sku?: string;
+  category?: string;
+  costPrice?: number;
+  sellingPrice?: number;
+  quantity?: number;
+  status?: string;
+  assignedAt?: string;
+  categoryId?: string;
+  ean?: string;
+  pluUpc?: string;
+  itemQuantity?: number;
+  msrpPrice?: number;
+  singleItemSellingPrice?: number;
+}
+
+const formatCurrency = (amount: number | undefined) => {
+  if (!amount) return 'N/A';
+  return `$${amount.toFixed(2)}`;
+};
 
 interface ProductsTableProps {
-  products: Product[];
   supplier: Supplier;
   onBackToSuppliers: () => void;
 }
 
 const ProductsTable: React.FC<ProductsTableProps> = ({
-  products,
   supplier,
   onBackToSuppliers,
 }) => {
+  const [products, setProducts] = useState<AssignedProduct[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch assigned products when component mounts
+  useEffect(() => {
+    if (supplier) {
+      fetchAssignedProducts();
+    }
+  }, [supplier]);
+
+  const fetchAssignedProducts = async () => {
+    if (!supplier) return;
+
+    try {
+      setLoading(true);
+      const supplierId = supplier.id || supplier.supplier_id;
+      
+      console.log('Fetching assigned products for supplier:', supplierId);
+      
+      // Using the exact API endpoint you specified
+      const response = await apiClient.get(`/supplier/${supplierId}/products`);
+      
+      console.log('Assigned products response:', response.data);
+      
+      // Handle the API response structure based on your actual response format
+      let assignedProducts = [];
+      
+      if (response.data?.success && response.data?.data?.data && Array.isArray(response.data.data.data)) {
+        // Handle the actual API response structure
+        assignedProducts = response.data.data.data.map((product: { id: any; name: any; pluUpc: any; sku: any; categoryId: any; msrpPrice: any; singleItemSellingPrice: any; itemQuantity: any; createdAt: any; updatedAt: any; }) => ({
+          id: product.id,
+          name: product.name,
+          sku: product.pluUpc || product.sku,
+          category: product.categoryId || 'Uncategorized',
+          costPrice: product.msrpPrice || product.singleItemSellingPrice,
+          sellingPrice: product.singleItemSellingPrice,
+          quantity: product.itemQuantity,
+          status: 'active', // Default status
+          assignedAt: product.createdAt || product.updatedAt || new Date().toISOString()
+        }));
+      } else if (response.data?.data && Array.isArray(response.data.data)) {
+        // Fallback for direct data array
+        assignedProducts = response.data.data.map((product: { id: any; name: any; pluUpc: any; sku: any; categoryId: any; msrpPrice: any; singleItemSellingPrice: any; itemQuantity: any; createdAt: any; updatedAt: any; }) => ({
+          id: product.id,
+          name: product.name,
+          sku: product.pluUpc || product.sku,
+          category: product.categoryId || 'Uncategorized',
+          costPrice: product.msrpPrice || product.singleItemSellingPrice,
+          sellingPrice: product.singleItemSellingPrice,
+          quantity: product.itemQuantity,
+          status: 'active',
+          assignedAt: product.createdAt || product.updatedAt || new Date().toISOString()
+        }));
+      } else if (Array.isArray(response.data)) {
+        // Fallback for direct array response
+        assignedProducts = response.data.map(product => ({
+          id: product.id,
+          name: product.name,
+          sku: product.pluUpc || product.sku,
+          category: product.categoryId || 'Uncategorized',
+          costPrice: product.msrpPrice || product.singleItemSellingPrice,
+          sellingPrice: product.singleItemSellingPrice,
+          quantity: product.itemQuantity,
+          status: 'active',
+          assignedAt: product.createdAt || product.updatedAt || new Date().toISOString()
+        }));
+      }
+
+      setProducts(assignedProducts);
+      
+      if (assignedProducts.length === 0) {
+        toast.success(`No products assigned to ${supplier.name}`);
+      } else {
+        toast.success(`Found ${assignedProducts.length} assigned products`);
+      }
+    } catch (error: any) {
+      console.error('Error fetching assigned products:', error);
+      if (error.response?.status === 404) {
+        setProducts([]);
+        toast.error('No products found for this supplier');
+      } else {
+        toast.error('Failed to load assigned products');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="flex items-center gap-3">
+          <FaSpinner className="animate-spin text-[#043E49] w-6 h-6" />
+          <span className="text-gray-600">Loading assigned products...</span>
+        </div>
+      </div>
+    );
+  }
   if (products.length === 0) {
     return (
       <div className="text-center py-16 bg-white">
@@ -36,6 +155,32 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
   }
   return (
     <div className="bg-white">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-gray-50 border-b border-gray-200">
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="text-2xl font-bold text-gray-900">{products.length}</div>
+          <div className="text-sm text-gray-600">Total Products</div>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="text-2xl font-bold text-green-600">
+            {products.filter(p => (p.quantity || 0) > 0).length}
+          </div>
+          <div className="text-sm text-gray-600">In Stock</div>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="text-2xl font-bold text-blue-600">
+            {products.reduce((sum, p) => sum + (p.quantity || 0), 0)}
+          </div>
+          <div className="text-sm text-gray-600">Total Quantity</div>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="text-2xl font-bold text-teal-600">
+            {formatCurrency(products.reduce((sum, p) => sum + ((p.costPrice || 0) * (p.quantity || 0)), 0))}
+          </div>
+          <div className="text-sm text-gray-600">Total Value</div>
+        </div>
+      </div>
+
       {/* Products Table Header */}
       <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
         <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-600 uppercase tracking-wider">
@@ -43,9 +188,10 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
           <div className="col-span-2">PRODUCT</div>
           <div className="col-span-2">SKU</div>
           <div className="col-span-2">CATEGORY</div>
-          <div className="col-span-1">PRICE</div>
-          <div className="col-span-1">STOCK</div>
-          <div className="col-span-3">DESCRIPTION</div>
+          <div className="col-span-1">COST PRICE</div>
+          <div className="col-span-1">SELLING PRICE</div>
+          <div className="col-span-1">QUANTITY</div>
+          <div className="col-span-2">STATUS</div>
         </div>
       </div>
 
@@ -71,9 +217,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                     <div className="font-medium text-gray-900">
                       {product.name}
                     </div>
-                    <div className="text-xs text-gray-500">
-                      ID: {product.id}
-                    </div>
+                   
                   </div>
                 </div>
               </div>
@@ -81,58 +225,51 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
               {/* SKU */}
               <div className="col-span-2">
                 <span className="text-sm font-mono text-gray-900 bg-gray-100 px-2 py-1 rounded">
-                  {product.sku}
+                  {product.sku || 'N/A'}
                 </span>
               </div>
 
               {/* Category */}
               <div className="col-span-2">
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  {typeof product.category === "string"
-                    ? product.category || "Uncategorized"
-                    : "Uncategorized"}
+                  {product.category || 'Uncategorized'}
                 </span>
               </div>
 
-              {/* Price */}
+              {/* Cost Price */}
               <div className="col-span-1">
                 <span className="text-sm font-medium text-gray-900">
-                  {formatCurrency(product.price)}
+                  {formatCurrency(product.costPrice)}
                 </span>
               </div>
 
-              {/* Stock */}
+              {/* Selling Price */}
               <div className="col-span-1">
+                <span className="text-sm font-medium text-gray-900">
+                  {formatCurrency(product.sellingPrice)}
+                </span>
+              </div>
+
+              {/* Quantity */}
+              <div className="col-span-1">
+                <span className="text-sm font-medium text-gray-900">
+                  {product.quantity || 'N/A'}
+                </span>
+              </div>
+
+              {/* Status */}
+              <div className="col-span-2">
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    product.stock > 10
+                    product.status === 'active'
                       ? "bg-green-100 text-green-800"
-                      : product.stock > 0
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-red-100 text-red-800"
+                      : product.status === 'inactive'
+                      ? "bg-red-100 text-red-800"
+                      : "bg-gray-100 text-gray-800"
                   }`}
                 >
-                  <div
-                    className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                      product.stock > 10
-                        ? "bg-green-500"
-                        : product.stock > 0
-                          ? "bg-yellow-500"
-                          : "bg-red-500"
-                    }`}
-                  ></div>
-                  {product.stock}
+                  {product.status || 'Active'}
                 </span>
-              </div>
-
-              {/* Description */}
-              <div className="col-span-3">
-                <p
-                  className="text-sm text-gray-600 truncate"
-                  title={product.description}
-                >
-                  {product.description}
-                </p>
               </div>
             </div>
           </div>
@@ -148,7 +285,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
           <div className="text-right">
             <div className="text-lg font-semibold text-gray-900">
               {formatCurrency(
-                products.reduce((sum, p) => sum + p.price * p.stock, 0)
+                products.reduce((sum, p) => sum + ((p.costPrice || 0) * (p.quantity || 0)), 0)
               )}
             </div>
             <div className="text-sm text-gray-500">Total inventory value</div>

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { FaTh , FaClock, FaBars } from "react-icons/fa";
+import { FaTh , FaClock , FaHome } from "react-icons/fa";
 import { MdCampaign } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import { useAppSelector } from "../store/hooks";
 import { lastUpdatedManager } from "../utils/lastUpdatedUtils";
+import LogoutButton from "./LogoutButton";
 
 const Navbar: React.FC = () => {
   const [currentTime, setCurrentTime] = useState("");
@@ -64,7 +65,7 @@ const Navbar: React.FC = () => {
           onClick={() => navigate(`/store/${id}`)}
           style={{ cursor: "pointer" }}
         >
-          <FaTh className="text-[20px]" />
+          <FaHome className="text-[20px]" />
         </div>
         {/* Logo */}
         <div className="flex items-center px-4 h-full border-r border-[#127F92] space-x-2">
@@ -129,9 +130,9 @@ const Navbar: React.FC = () => {
           <FaClock className="text-base" />
           <span>Clock In/Out</span>
         </div>
-        {/* Menu Icon */}
-        <div className="flex items-center justify-center w-[56px] h-full">
-          <FaBars className="text-xl" />
+        {/* Logout Button */}
+        <div className="flex items-center justify-center px-4 h-full">
+          <LogoutButton />
         </div>
       </div>
       {/* Mobile View */}
@@ -159,7 +160,7 @@ const Navbar: React.FC = () => {
 
         {/* Right Icon */}
         <div className="flex items-center justify-center w-[56px]">
-          <FaBars className="text-[20px]" />
+          <LogoutButton />
         </div>
       </div>
     </div>

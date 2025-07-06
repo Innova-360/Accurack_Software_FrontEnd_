@@ -63,7 +63,7 @@ const ViewAssignedProductsModal: React.FC<ViewAssignedProductsModalProps> = ({
       
       if (response.data?.success && response.data?.data?.data && Array.isArray(response.data.data.data)) {
         // Handle the actual API response structure
-        assignedProducts = response.data.data.data.map(product => ({
+        assignedProducts = response.data.data.data.map((product: { id: any; name: any; pluUpc: any; sku: any; categoryId: any; msrpPrice: any; singleItemSellingPrice: any; itemQuantity: any; createdAt: any; updatedAt: any; }) => ({
           id: product.id,
           name: product.name,
           sku: product.pluUpc || product.sku,
@@ -76,7 +76,7 @@ const ViewAssignedProductsModal: React.FC<ViewAssignedProductsModalProps> = ({
         }));
       } else if (response.data?.data && Array.isArray(response.data.data)) {
         // Fallback for direct data array
-        assignedProducts = response.data.data.map(product => ({
+        assignedProducts = response.data.data.map((product: { id: any; name: any; pluUpc: any; sku: any; categoryId: any; msrpPrice: any; singleItemSellingPrice: any; itemQuantity: any; createdAt: any; updatedAt: any; }) => ({
           id: product.id,
           name: product.name,
           sku: product.pluUpc || product.sku,
@@ -105,7 +105,7 @@ const ViewAssignedProductsModal: React.FC<ViewAssignedProductsModalProps> = ({
       setProducts(assignedProducts);
       
       if (assignedProducts.length === 0) {
-        toast.info(`No products assigned to ${supplier.name}`);
+        toast.success(`No products assigned to ${supplier.name}`);
       } else {
         toast.success(`Found ${assignedProducts.length} assigned products`);
       }
@@ -114,9 +114,7 @@ const ViewAssignedProductsModal: React.FC<ViewAssignedProductsModalProps> = ({
       if (error.response?.status === 404) {
         setProducts([]);
         toast.error('No products found for this supplier');
-      } else {
-        toast.error('Failed to load assigned products');
-      }
+      } 
     } finally {
       setLoading(false);
     }
@@ -146,7 +144,7 @@ const ViewAssignedProductsModal: React.FC<ViewAssignedProductsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 backdrop-blur bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-[#043E49] to-[#0a5d5c] px-6 py-4">
@@ -229,8 +227,7 @@ const ViewAssignedProductsModal: React.FC<ViewAssignedProductsModalProps> = ({
                 <tbody>
                   {filteredProducts.map((product, index) => (
                     <tr
-                      key={product.id || index}
-                      className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                      
                     >
                       <td className="py-3 px-4">
                         <div className="font-medium text-gray-900">{product.name}</div>
