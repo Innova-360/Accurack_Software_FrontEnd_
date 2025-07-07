@@ -1,249 +1,506 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { FaPlus, FaBars, FaEye, FaEdit, FaTrash, FaBox, FaLink } from "react-icons/fa";
-import { SpecialButton, IconButton } from "../../components/buttons";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { fetchSuppliers } from "../../store/slices/supplierSlice";
-import type { Supplier } from "../../components/SupplierComponents/types";
-import Pagination from "../../components/SupplierComponents/Pagination";
-import Header from "../../components/Header";
+import { useNavigate } from "react-router-dom";
+import {  FaBars } from "react-icons/fa";
 import toast from "react-hot-toast";
-import useRequireStore from "../../hooks/useRequireStore";
-import type { SupplierTable } from "../../components/SupplierComponents";
+// import { SpecialButton } from "../../components/buttons";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import {
+  fetchSuppliers,
+  clearSuppliers,
+  setPage,
+} from "../../store/slices/supplierSlice";
+import {
+  AddSupplierModal,
+  EditSupplierModal,
+  DeleteSupplierModal,
+  ViewSupplierModal,
+  ProductsTable,
+  StatsGrid,
+  PaginationControls,
+} from "../../components/SupplierComponents";
+import SupplierTable from "../../components/SupplierComponents/updateSuppliertable";
 
-const UpdateSupplierPage: React.FC = () => {
+import type { Supplier } from "../../types/supplier";
+import Header from "../../components/Header";
+import useRequireStore from "../../hooks/useRequireStore";
+
+const SupplierPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const currentStore = useRequireStore();
-  const { suppliers, loading } = useAppSelector((state) => state.suppliers);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  const totalPages = Math.ceil(suppliers?.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentSuppliers = suppliers?.slice(startIndex, endIndex);
+  // Get suppliers from Redux store
+  const { suppliers, loading, error, pagination } = useAppSelector(
+    (state) => state.suppliers
+  );
 
-  // Fetch suppliers when component mounts
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
+    null
+  );
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [viewMode, setViewMode] = useState<"suppliers" | "products">(
+    "suppliers"
+  );
+
+  // Modal states
+  const [isAddSupplierModalOpen, setIsAddSupplierModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isViewProductsModalOpen, setIsViewProductsModalOpen] = useState(false);
+  const [isViewAssignedProductsModalOpen, setIsViewAssignedProductsModalOpen] = useState(false);
+  const [isAssignProductPromptOpen, setIsAssignProductPromptOpen] =
+    useState(false);
+  const [newlyCreatedSupplier, setNewlyCreatedSupplier] =
+    useState<Supplier | null>(null);  // Fetch suppliers when component mounts or store changes
   useEffect(() => {
-    if (currentStore?.id) {
-      dispatch(fetchSuppliers({ storeId: currentStore.id }));
-    }
+    const fetchData = async () => {
+      if (currentStore?.id) {
+        try {
+          console.log("Fetching suppliers for store:", currentStore.id);
+          // Using unwrap() for cleaner promise handling
+          await dispatch(fetchSuppliers({ storeId: currentStore.id })).unwrap();
+          console.log("Suppliers fetched successfully");
+        } catch (error) {
+          console.error("Failed to fetch suppliers:", error);
+        }
+      } else {
+        dispatch(clearSuppliers());
+      }
+    };
+
+    fetchData();
   }, [dispatch, currentStore?.id]);
 
-  // Handler functions
-  const handleViewSupplier = (supplier: Supplier) => {
-    toast(`Viewing supplier: ${supplier.name}`);
+  // Debug: Log suppliers whenever they change
+  useEffect(() => {
+    console.log("=== Supplier State Debug ===");
+    console.log("Current suppliers count:", suppliers.length);
+    console.log("Loading state:", loading);
+    console.log("Error state:", error);
+    console.log("Suppliers data:", suppliers);
+  }, [suppliers, loading, error]);
+  // Handle supplier selection from sidebar
+  const handleSupplierSelect = (supplier: Supplier) => {
+    setSelectedSupplier(supplier);
+    setViewMode("products");
+  };
+  // Handle back to suppliers view
+  const handleBackToSuppliers = () => {
+    setSelectedSupplier(null);
+    setViewMode("suppliers");
   };
 
+  // Edit supplier
   const handleEditSupplier = (supplier: Supplier) => {
-    toast(`Editing supplier: ${supplier.name}`);
+    setSelectedSupplier(supplier);
+    setIsEditModalOpen(true);
   };
 
+  // Delete supplier
   const handleDeleteSupplier = (supplier: Supplier) => {
-    toast(`Deleting supplier: ${supplier.name}`);
+    setSelectedSupplier(supplier);
+    setIsDeleteModalOpen(true);
   };
 
+  // Delete all suppliers - TODO: Implement API endpoint for bulk delete
+  const handleDeleteAll = () => {
+    setIsDeleteAllModalOpen(true);
+  };
+
+  // View supplier
+  const handleViewSupplier = (supplier: Supplier) => {
+    setSelectedSupplier(supplier);
+    setIsViewModalOpen(true);
+  };
+
+  // View products - Navigate to assign products page
   const handleViewProducts = (supplier: Supplier) => {
-    const supplierId = supplier.id || supplier.supplier_id;
-    navigate(`/store/${currentStore?.id}/supplier/${supplierId}/assign-products`, {
-      state: { supplier }
+    // Enhanced ID validation - check multiple possible ID fields
+    let supplierId = null;
+    
+    // Check if this is a temporary supplier (newly created)
+    if (supplier.isTemporary) {
+      console.log("Temporary supplier detected, finding real supplier from list");
+      // Find the real supplier from the suppliers list by name and email
+      const realSupplier = suppliers.find(s => 
+        s.name === supplier.name && s.email === supplier.email
+      );
+      
+      if (realSupplier) {
+        console.log("Found real supplier:", realSupplier);
+        supplier = realSupplier; // Use the real supplier
+      } else {
+        console.log("Real supplier not found, refreshing list...");
+        toast.success("Please wait, refreshing supplier data...");
+        handleRefreshSuppliers();
+        return;
+      }
+    }
+    
+    // Try different ID field variations
+    if (supplier.id && supplier.id.toString().trim()) {
+      supplierId = supplier.id.toString().trim();
+    } else if (supplier.supplier_id && supplier.supplier_id.toString().trim()) {
+      supplierId = supplier.supplier_id.toString().trim();
+    } else if (supplier._id && supplier._id.toString().trim()) {
+      supplierId = supplier._id.toString().trim();
+    }
+
+    console.log("handleViewProducts Debug:", {
+      supplier: supplier,
+      supplierId: supplierId,
+      supplier_id_field: supplier.id,
+      supplier_supplier_id_field: supplier.supplier_id,
+      supplier_underscore_id: supplier._id
     });
+
+    if (supplierId && supplierId !== 'undefined' && supplierId !== 'null' && !supplierId.startsWith('temp-')) {
+      const finalUrl = `/store/${currentStore?.id}/supplier/${supplierId}/assign-products`;
+
+      console.log("Navigating to:", finalUrl);
+      navigate(finalUrl, {
+        state: { supplier: supplier },
+      });
+    } else {
+      console.error("No valid supplier ID found:", supplier);
+      toast.error(
+        "Supplier ID not found. Please refresh the page and try again."
+      );
+    }
   };
 
+  // View assigned products - Open modal to show assigned products
   const handleViewAssignedProducts = (supplier: Supplier) => {
-    toast(`Viewing assigned products for: ${supplier.name}`);
+    setSelectedSupplier(supplier);
+    setIsViewAssignedProductsModalOpen(true);
   };
 
-  const handleAddSupplier = () => {
-    navigate(`/store/${currentStore?.id}/supplier/add`);
+  // Export functionality
+  const handleExport = () => {
+    try {
+      const dataToExport = suppliers.map((supplier) => ({
+        "Supplier ID": supplier.supplier_id,
+        Name: supplier.name,
+        Email: supplier.email,
+        Phone: supplier.phone,
+        Address: supplier.address,
+        "Store ID": supplier.storeId,
+        "Created At": supplier.createdAt
+          ? new Date(supplier.createdAt).toLocaleDateString()
+          : "",
+        "Updated At": supplier.updatedAt
+          ? new Date(supplier.updatedAt).toLocaleDateString()
+          : "",
+      }));
+
+      if (dataToExport.length === 0) {
+        toast.error("No suppliers to export");
+        return;
+      }
+
+      const csvContent = [
+        Object.keys(dataToExport[0]).join(","),
+        ...dataToExport.map((row) =>
+          Object.values(row)
+            .map((value) =>
+              typeof value === "string" && value.includes(",")
+                ? `"${value}"`
+                : value
+            )
+            .join(",")
+        ),
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `suppliers_${new Date().toISOString().split("T")[0]}.csv`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+      toast.success("Suppliers exported successfully!");
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast.error("Error exporting data. Please try again.");
+    }
   };
 
-  // Helper function to check if supplier can be edited/deleted
-  const isValidSupplier = (supplier: Supplier): boolean => {
-    // Simple check - any supplier with an ID can be edited/deleted
-    return !!(supplier.id || supplier.supplier_id);
-  };
-
+  // Pagination handler
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    if (currentStore?.id) {
+      dispatch(setPage(page));
+      dispatch(fetchSuppliers({ storeId: currentStore.id, page, limit: 10 }));
+    }
   };
 
-  if (suppliers?.length === 0) {
-    return (
-      <div className="text-center py-16 bg-white">
-        <div className="p-6 bg-teal-600 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
-          <FaBars className="text-white" size={28} />
-        </div>
-        <h3 className="text-2xl font-bold text-gray-800 mb-3">
-          No Suppliers Found
-        </h3>
-        <p className="text-gray-600 mb-8 max-w-md mx-auto">
-          You haven't added any suppliers yet. Start by adding your first
-          supplier to manage your supply chain effectively.
-        </p>
-        <SpecialButton
-          variant="expense-add"
-          onClick={handleAddSupplier}
-          className="mx-auto"
-        >
-          <FaPlus className="mr-2" /> Add Your First Supplier
-        </SpecialButton>
-      </div>
-    );
-  }
+  // Handle showing the popup after supplier creation (NO FUNCTIONALITY - Just styling demo)
+  const handleShowAssignProductPrompt = (supplier: Supplier) => {
+    setNewlyCreatedSupplier(supplier);
+    setIsAssignProductPromptOpen(true);
+  };
+
+  // Handle closing the popup
+  const handleCloseAssignProductPrompt = () => {
+    setIsAssignProductPromptOpen(false);
+    setNewlyCreatedSupplier(null);
+  };
+
+  // Force refresh suppliers list
+  const handleRefreshSuppliers = async () => {
+    if (currentStore?.id) {
+      try {
+        console.log("Force refreshing suppliers list");
+        await dispatch(fetchSuppliers({ storeId: currentStore.id })).unwrap();
+        console.log("Suppliers refreshed successfully");
+      } catch (error) {
+        console.error("Failed to refresh suppliers:", error);
+      }
+    }
+  };
+
+  // Handle delete modal close with refresh
+  const handleDeleteModalClose = () => {
+    setIsDeleteModalOpen(false);
+    setSelectedSupplier(null);
+    // Force refresh after modal close to ensure state is updated
+    handleRefreshSuppliers();
+  };
+
+  // Handle edit modal close with refresh
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setSelectedSupplier(null);
+    // Force refresh after modal close to ensure state is updated
+    handleRefreshSuppliers();
+  };
+
+  // Handle add modal close with refresh
+  const handleAddModalClose = () => {
+    setIsAddSupplierModalOpen(false);
+    // Force refresh after modal close to ensure state is updated
+    handleRefreshSuppliers();
+  };
+
+  // Handle delete all modal close with refresh
+  const handleDeleteAllModalClose = () => {
+    setIsDeleteAllModalOpen(false);
+    // Force refresh after modal close to ensure state is updated
+    handleRefreshSuppliers();
+  };
 
   return (
     <>
       <Header />
-      <br />
-      <br />
-      <br />
-      <div className="bg-white overflow-x-auto">
-        <div className="min-w-[1000px]">
-          {" "}
-          {/* Table Header */}
-          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-          <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-600 uppercase tracking-wider">
-            <div className="col-span-1">#</div>
-            <div className="col-span-2">SUPPLIER</div>
-            <div className="col-span-3">CONTACT</div>
-            <div className="col-span-3">ADDRESS</div>
-            {/* <div className="col-span-2">PRODUCTS</div> */}
-            <div className="col-span-2">ACTIONS</div>
+      <div className="min-h-screen bg-gray-100 flex">
+        {" "}
+        {/* Sidebar */}
+        {/* <SupplierSidebar
+          suppliers={suppliers}
+          selectedSupplier={selectedSupplier}
+          isSidebarOpen={isSidebarOpen}
+          viewMode={viewMode}
+          onSupplierSelect={handleSupplierSelect}
+          onBackToSuppliers={handleBackToSuppliers}
+          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          onAddSupplier={() => setIsAddSupplierModalOpen(true)}
+          onSetViewMode={setViewMode}
+        /> */}
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          {/* Top Navigation */}
+          <div className="bg-white  border-b border-gray-200 px-4 md:px-6 py-4 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="p-2 hover:bg-gray-100 rounded-md md:hidden"
+                >
+                  <FaBars className="text-gray-600" size={16} />
+                </button>
+
+                {/* <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
+                  <span className="text-gray-800 font-semibold text-lg">
+                    {viewMode === "products" && selectedSupplier
+                      ? selectedSupplier.name
+                      : "All Suppliers"}
+                  </span>
+                </div> */}
+                {/* {viewMode === "products" && selectedSupplier && (
+                  <button
+                    onClick={handleBackToSuppliers}
+                    className="text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full transition-colors duration-200 flex items-center gap-1"
+                  >
+                    ← Back to Suppliers
+                  </button>
+                )} */}
+              </div>{" "}
+              {/* <div className="flex items-center gap-2">
+                <SpecialButton variant="expense-export" onClick={handleExport}>
+                  <FaFileExport size={14} />
+                  <span className="sm:inline ml-2">Export</span>
+                </SpecialButton>
+                <SpecialButton
+                  variant="expense-delete"
+                  onClick={handleDeleteAll}
+                >
+                  <FaTrash size={14} />
+                  <span className="sm:inline ml-2">Delete All</span>
+                </SpecialButton>
+                <SpecialButton
+                  variant="expense-add"
+                  onClick={() => setIsAddSupplierModalOpen(true)}
+                >
+                  <FaPlus size={14} />
+                  <span className="sm:inline ml-2">Add New</span>
+                </SpecialButton>
+              </div> */}
+            </div>
           </div>
-        </div>
-        {/* Table Content */}
-        <div className="divide-y divide-gray-200">
-          {currentSuppliers?.map((supplier, index) => (
-            <div
-              key={supplier.supplier_id || supplier.id || index}
-              className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150 group"
-            >
-              <div className="grid grid-cols-12 gap-4 items-center">
-                <div className="col-span-1 text-sm font-medium text-gray-900">
-                  {startIndex + index + 1}
-                </div>{" "}
-                <div className="col-span-2">
-                  <div className="flex items-center gap-2">
-                    <div className="font-medium text-gray-900">
-                      {supplier.name}
-                    </div>
-                    {!isValidSupplier(supplier) && (
-                      <span className="px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-full">
-                        Sample Data
-                      </span>
-                    )}
-                  </div>
-                  {/* <div className="text-sm text-gray-500">ID: {supplier.supplier_id || supplier.id}</div> */}
+
+          {/* Content Area */}
+          <div className="flex-1 overflow-auto p-4 md:p-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              {/* Header */}
+              <div className="px-6 py-6 border-b border-gray-200">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  {viewMode === "products" && selectedSupplier
+                    ? `${selectedSupplier.name} - Products`
+                    : "Suppliers Management"}
+                </h2>
+                <p className="text-gray-600 text-sm mb-4">
+                  {viewMode === "products" && selectedSupplier
+                    ? `Manage products from ${selectedSupplier.name}`
+                    : "Manage your suppliers and their information"}
+                </p>{" "}
+                {/* Stats Grid */}
+                {/* <StatsGrid
+                  viewMode={viewMode}
+                  suppliers={suppliers}
+                  selectedSupplier={selectedSupplier}
+                  currentSupplierProducts={[]} // TODO: Integrate with products API when available
+                  totalSuppliers={pagination.total}
+                /> */}
+              </div>{" "}
+              {/* Loading and Error States */}
+              {loading && (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+                  <span className="ml-2 text-gray-600">
+                    Loading suppliers...
+                  </span>
                 </div>
-                <div className="col-span-3">
-                  <div className="text-sm text-gray-900">{supplier.email}</div>
-                  <div className="text-sm text-gray-500">{supplier.phone}</div>
+              )}
+              {error && (
+                <div className="mx-6 mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600">Error: {error}</p>
+                  <button
+                    onClick={() =>
+                      currentStore?.id &&
+                      dispatch(fetchSuppliers({ storeId: currentStore.id }))
+                    }
+                    className="mt-2 text-sm text-red-700 hover:text-red-900 underline"
+                  >
+                    Try Again
+                  </button>
                 </div>
-                <div className="col-span-3">
-                  <div className="text-sm text-gray-900">
-                    {supplier.address}
-                  </div>
-                  {supplier.createdAt && (
-                    <div className="text-sm text-gray-500">
-                      Created:{" "}
-                      {new Date(supplier.createdAt).toLocaleDateString()}
-                    </div>
+              )}{" "}
+              {/* Content based on view mode */}
+              {!loading && !error && (
+                <>
+                  {viewMode === "suppliers" ? (
+                    <>
+                      <SupplierTable
+                        suppliers={suppliers}
+                        onViewSupplier={handleViewSupplier}
+                        onEditSupplier={handleEditSupplier}
+                        onDeleteSupplier={handleDeleteSupplier}
+                        onViewProducts={handleViewProducts}
+                        onViewAssignedProducts={handleViewAssignedProducts}
+                        onAddSupplier={() => setIsAddSupplierModalOpen(true)}
+                      />
+                      {/* Pagination Controls */}
+                      <PaginationControls
+                        currentPage={pagination.page}
+                        totalPages={pagination.totalPages}
+                        total={pagination.total}
+                        limit={pagination.limit}
+                        onPageChange={handlePageChange}
+                        loading={loading}
+                      />
+                    </>
+                  ) : (
+                    selectedSupplier && (
+                      <ProductsTable
+                        supplier={selectedSupplier}
+                        onBackToSuppliers={handleBackToSuppliers}
+                      />
+                    )
                   )}
-                </div>
-                {/* <div className="col-span-2 text-sm font-medium text-gray-900">
-                  TODO: Show product count when products API is integrated
-                  <span className="text-gray-400">N/A</span>
-                </div>{" "} */}
-                <div className="col-span-3 flex items-center gap-1 lg:mr-9">
-                  <IconButton
-                    icon={<FaEye />}
-                    variant="info"
-                    onClick={() => handleViewSupplier(supplier)}
-                    title="View Details"
-                  />
-                  <IconButton
-                    icon={<FaEdit />}
-                    variant="primary"
-                    onClick={() =>
-                      isValidSupplier(supplier)
-                        ? handleEditSupplier(supplier)
-                        : null
-                    }
-                    title={
-                      isValidSupplier(supplier)
-                        ? "Edit Supplier"
-                        : "Cannot edit sample data"
-                    }
-                    disabled={!isValidSupplier(supplier)}
-                  />
-                  <IconButton
-                    icon={<FaTrash />}
-                    variant="danger"
-                    onClick={() =>
-                      isValidSupplier(supplier)
-                        ? handleDeleteSupplier(supplier)
-                        : null
-                    }
-                    title={
-                      isValidSupplier(supplier)
-                        ? "Delete Supplier"
-                        : "Cannot delete sample data"
-                    }
-                    disabled={!isValidSupplier(supplier)}
-                  />
-                  <IconButton
-                    icon={<FaLink />}
-                    variant="warning"
-                    onClick={() => handleViewProducts(supplier)}
-                    title="Assign Products"
-                    className=" ring-yellow-200 hover:ring-yellow-300"
-                  />
-                  <IconButton
-                    icon={<FaBox />}
-                    variant="secondary"
-                    onClick={() => handleViewAssignedProducts(supplier)}
-                    title="View Assigned Products"
-                    className="border-2 border-gray-400 hover:border-gray-500 bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-700"
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        {/* Footer Summary */}
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-          <div className="flex justify-between items-center">
-            <div className="text-sm text-gray-600">
-              Showing {currentSuppliers?.length} out of {suppliers?.length}{" "}
-              suppliers
-            </div>{" "}
-            <div className="text-right">
-              <div className="text-lg font-semibold text-gray-900">
-                {suppliers?.length} suppliers
-              </div>
-              <div className="text-sm text-gray-500">
-                Total suppliers in system
-              </div>
+                </>
+              )}
             </div>
           </div>
-        </div>
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="px-6 py-4 bg-white border-t border-gray-200">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              itemsPerPage={itemsPerPage}
-              totalItems={suppliers?.length}
-              onPageChange={handlePageChange}
-            />
-          </div>
-        )}
+        </div>{" "}
+        {/* Modals */}
+        {/* <AddSupplierModal
+          isOpen={isAddSupplierModalOpen}
+          onClose={handleAddModalClose}
+          onSupplierCreated={handleShowAssignProductPrompt}
+        /> */}
+        <EditSupplierModal
+          isOpen={isEditModalOpen}
+          onClose={handleEditModalClose}
+          supplier={selectedSupplier}
+        />
+        <DeleteSupplierModal
+          isOpen={isDeleteModalOpen}
+          onClose={handleDeleteModalClose}
+          supplier={selectedSupplier}
+        />
+        {/* <DeleteSupplierModal
+          isOpen={isDeleteAllModalOpen}
+          onClose={handleDeleteAllModalClose}
+          supplier={null}
+          isDeleteAll={true}
+          supplierCount={suppliers?.length}
+        /> */}
+        <ViewSupplierModal
+          isOpen={isViewModalOpen}
+          onClose={() => {
+            setIsViewModalOpen(false);
+            setSelectedSupplier(null);
+          }}
+          supplier={selectedSupplier}
+        />
+        {/* <ViewProductsModal
+          isOpen={isViewProductsModalOpen}
+          onClose={() => {
+            setIsViewProductsModalOpen(false);
+            setSelectedSupplier(null);
+          }}
+          supplier={selectedSupplier}
+          products={[]} // TODO: Integrate with products API when available
+        /> */}
+        {/* <ViewAssignedProductsModal
+          isOpen={isViewAssignedProductsModalOpen}
+          onClose={() => {
+            setIsViewAssignedProductsModalOpen(false);
+            setSelectedSupplier(null);
+          }}
+          supplier={selectedSupplier}
+        /> */}
+        {/* Assign Product Prompt Modal - Demo Only */}
+        {/* <AssignProductPromptModal
+          isOpen={isAssignProductPromptOpen}
+          onClose={handleCloseAssignProductPrompt}
+          supplier={newlyCreatedSupplier}
+          onViewProducts={handleViewProducts}
+        /> */}
       </div>
-    </div>
     </>
   );
 };
 
-export default UpdateSupplierPage;
+export default SupplierPage;
