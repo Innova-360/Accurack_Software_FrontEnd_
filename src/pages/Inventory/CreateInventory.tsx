@@ -75,82 +75,95 @@ const CreateInventory: React.FC = () => {
     const basePayload: any = {
       name: formData.productName,
       categoryId: formData.category, // Now using categoryId instead of category
-      ean: formData.ean,
-      pluUpc: formData.pluUpc,
+      ean: hasVariants ? "" : formData.ean, // Clear EAN for variants as each variant will have its own
+      pluUpc: hasVariants ? "" : formData.pluUpc, // Clear PLU for variants as each variant will have its own
       supplierId: (!hasVariants && formData.supplierId) || "",
-      sku: formData.customSku,
-      singleItemCostPrice: parseFloat(formData.itemCost) || 0,
-      itemQuantity: parseInt(formData.quantity) || 0,
-      msrpPrice: parseFloat(formData.msrpPrice) || 0,
-      singleItemSellingPrice: parseFloat(formData.itemSellingCost) || 0,
+      sku: hasVariants ? "" : formData.customSku, // Clear SKU for variants as each variant will have its own
+      singleItemCostPrice: hasVariants ? 0 : parseFloat(formData.itemCost) || 0, // Clear cost for variants
+      itemQuantity: hasVariants ? 0 : parseInt(formData.quantity) || 0, // Clear quantity for variants
+      msrpPrice: hasVariants ? 0 : parseFloat(formData.msrpPrice) || 0, // Clear MSRP for variants
+      singleItemSellingPrice: hasVariants
+        ? 0
+        : parseFloat(formData.itemSellingCost) || 0, // Clear selling price for variants
       clientId: clientId, // Use clientId from Redux store
       storeId: storeId,
       hasVariants: hasVariants,
-      packs: (formData.packDiscounts || []).map((pack: any) => {
-        const { discountAmount, percentAmount } = calculateDiscounts(
-          pack.discountType,
-          pack.discountValue,
-          formData.itemSellingCost
-        );
-        return {
-          minimumSellingQuantity: pack.quantity,
-          totalPacksQuantity: pack.totalPacksQuantity || 0,
-          orderedPacksPrice: pack.orderedPacksPrice || 0,
-          discountAmount,
-          percentDiscount:
-            pack.discountType === "percentage" ? pack.discountValue : 0,
-        };
-      }),
+      packs: hasVariants
+        ? []
+        : (formData.packDiscounts || []).map((pack: any) => {
+            const { discountAmount, percentAmount } = calculateDiscounts(
+              pack.discountType,
+              pack.discountValue,
+              formData.itemSellingCost
+            );
+            return {
+              minimumSellingQuantity: pack.quantity,
+              totalPacksQuantity: pack.totalPacksQuantity || 0,
+              orderedPacksPrice: pack.orderedPacksPrice || 0,
+              discountAmount,
+              percentDiscount:
+                pack.discountType === "percentage" ? pack.discountValue : 0,
+            };
+          }),
       // Add discountAmount and percentDiscount at root if needed (for non-variant products)
       discountAmount: (() => {
-        if (formData.orderValueDiscountType === "fixed") {
+        if (!hasVariants && formData.orderValueDiscountType === "fixed") {
           return parseFloat(formData.orderValueDiscountValue) || 0;
         }
         return 0;
       })(),
       percentDiscount: (() => {
-        if (formData.orderValueDiscountType === "percentage") {
+        if (!hasVariants && formData.orderValueDiscountType === "percentage") {
           return parseFloat(formData.orderValueDiscountValue) || 0;
         }
         return 0;
       })(),
       variants: [],
     };
-    if (hasVariants) {
-      basePayload.variants = (formData.variations || []).map(
+
+    if (hasVariants && formData.variations && formData.variations.length > 0) {
+      basePayload.variants = formData.variations.map(
         (variant: any, index: number) => {
           // Use the correct field names from the Variation interface
-          const price = variant.itemSellingCost || 0; // itemSellingCost is the selling price in Variation
-          const msrpPrice = variant.msrpPrice || 0;
+          const price = parseFloat(variant.itemSellingCost) || 0; // itemSellingCost is the selling price in Variation
+          const costPrice = parseFloat(variant.itemCost) || 0; // Cost price for the variant
+          const msrpPrice = parseFloat(variant.msrpPrice) || 0;
+          const quantity = parseInt(variant.quantity) || 0;
 
           // Handle variant-level discounts
-          const variantDiscountAmount = variant.discount || 0;
-          const variantPercentDiscount = variant.orderValueDiscount || 0;
+          const variantDiscountAmount = parseFloat(variant.discount) || 0;
+          const variantPercentDiscount =
+            parseFloat(variant.orderValueDiscount) || 0;
+
           const mappedVariant = {
-            name: variant.name || "",
+            name: variant.name || `Variant ${index + 1}`,
             price,
+            costPrice, // Include cost price for variants
             sku: variant.customSku || "",
-            pluUpc: variant.plu || "",
-            quantity: variant.quantity || 0,
+            ean: variant.ean || "", // Include EAN for variants
+            pluUpc: variant.plu || variant.pluUpc || "",
+            quantity,
             supplierId: variant.supplierId || "",
             msrpPrice,
             discountAmount: variantDiscountAmount,
             percentDiscount: variantPercentDiscount,
+            // Include variant attributes for identification
+            attributes: variant.attributes || {},
             packs: (variant.packDiscounts || []).map((pack: any) => {
-              const packPrice = pack.orderedPacksPrice || 0;
+              const packPrice = parseFloat(pack.orderedPacksPrice) || 0;
               const { discountAmount: packDiscountAmount } = calculateDiscounts(
                 pack.discountType,
                 pack.discountValue,
                 packPrice
               );
               return {
-                minimumSellingQuantity: pack.quantity || 0,
-                totalPacksQuantity: pack.totalPacksQuantity || 0,
+                minimumSellingQuantity: parseInt(pack.quantity) || 0,
+                totalPacksQuantity: parseInt(pack.totalPacksQuantity) || 0,
                 orderedPacksPrice: packPrice,
                 discountAmount: packDiscountAmount,
                 percentDiscount:
                   pack.discountType === "percentage"
-                    ? pack.discountValue || 0
+                    ? parseFloat(pack.discountValue) || 0
                     : 0,
               };
             }),
@@ -159,7 +172,15 @@ const CreateInventory: React.FC = () => {
           return mappedVariant;
         }
       );
+
+      // Log the payload for debugging when variants are enabled
+      console.log("Product with Variants Payload:", {
+        hasVariants: basePayload.hasVariants,
+        variantCount: basePayload.variants.length,
+        variants: basePayload.variants,
+      });
     }
+
     return basePayload;
   };
 
@@ -226,17 +247,6 @@ const CreateInventory: React.FC = () => {
         navigate(`/store/${storeId}/inventory`);
       }
     });
-    const inventoryData = {
-      ...formData,
-      price: parseFloat(formData.price) || 0,
-      quantity: parseInt(formData.quantity) || 0,
-      itemCost: parseFloat(formData.itemCost) || 0,
-      itemSellingCost: parseFloat(formData.itemSellingCost) || 0,
-      minSellingQuantity: parseInt(formData.minSellingQuantity) || 1,
-      minOrderValue: parseFloat(formData.minOrderValue) || 0,
-      orderValueDiscountValue:
-        parseFloat(formData.orderValueDiscountValue) || 0,
-    };
   };
 
   const handleNext = () => {
@@ -304,6 +314,16 @@ const CreateInventory: React.FC = () => {
       }
     });
   }, []);
+
+  // Handle barcode data from navigation state
+  useEffect(() => {
+    if (location.state?.scannedPLU) {
+      setFormData((prev) => ({
+        ...prev,
+        pluUpc: location.state.scannedPLU,
+      }));
+    }
+  }, [location.state]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">

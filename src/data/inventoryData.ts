@@ -32,7 +32,7 @@ export interface Product {
   ean?: string; // Add EAN field
   description: string;
   price: string;
-  category: string | { name: string; id?: string }; // Allow both string and object
+  category: string | { name: string; id?: string; code?: string }; // Allow both string and object with code
   itemsPerUnit: number;
   supplier:
     | string
@@ -41,9 +41,15 @@ export interface Product {
         name: string;
         email?: string;
         phone?: string;
+        address?: string; // Add address field
+        status?: string; // Add status field
       };
   supplierId?: string; // Add supplier ID field
+  clientId?: string; // Add client ID field
+  storeId?: string; // Add store ID field
+  categoryId?: string; // Add category ID field
   createdAt: string;
+  updatedAt?: string; // Add updated at field
   hasVariants?: boolean;
   variants?: Variant[];
   // Additional fields for detailed product view
@@ -65,16 +71,27 @@ export interface Product {
     quantity: number;
     total?: number;
     status: string;
+    createdAt?: string; // Add created at field
   }>;
   productSuppliers?: Array<{
-    id?: string;
-    costPrice?: number;
+    id: string;
+    productId: string;
+    supplierId: string;
+    costPrice: number;
+    categoryId: string;
     state: string;
-    supplier?: {
+    createdAt: string;
+    updatedAt: string;
+    supplier: {
       id: string;
       name: string;
-      email?: string;
-      phone?: string;
+      email: string;
+      phone: string;
+      address: string;
+      status: string;
+      storeId: string;
+      createdAt: string;
+      updatedAt: string;
     };
   }>;
   packs?: Array<{
@@ -88,6 +105,7 @@ export interface Product {
     createdAt?: string;
     updatedAt?: string;
   }>;
+  packIds?: string[]; // Add packIds field
 }
 
 export const products: Product[] = [

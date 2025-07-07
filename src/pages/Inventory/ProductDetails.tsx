@@ -59,7 +59,7 @@ const ProductDetails: React.FC = () => {
               <div class="product-info">SKU: ${product.sku}</div>
               <div class="product-info">PLU: ${product.pluUpc}</div>
               ${product.ean ? `<div class="product-info">EAN: ${product.ean}</div>` : ""}
-              <div class="barcode">${product.ean}</div>
+              <div class="barcode">${product.ean || product.pluUpc || product.sku}</div>
               <div class="product-info">Price: $${product.singleItemSellingPrice || "0.00"}</div>
             </body>
           </html>
@@ -119,6 +119,8 @@ const ProductDetails: React.FC = () => {
       </>
     );
   }
+
+  console.log("greate product", product)
 
   return (
     <>
@@ -183,7 +185,7 @@ const ProductDetails: React.FC = () => {
                         PLU / UPC
                       </label>
                       <div className="text-md text-gray-800 font-semibold">
-                        {product.pluUpc || product.plu || "Not specified"}
+                        {product.pluUpc || "Not specified"}
                       </div>
                     </div>
                   </div>
@@ -201,7 +203,7 @@ const ProductDetails: React.FC = () => {
                             const link = document.createElement("a");
                             link.href =
                               "data:text/plain;charset=utf-8,Barcode: " +
-                              (product.ean || product.pluUpc || product.plu);
+                              (product.ean || product.pluUpc || product.sku);
                             link.download = `barcode-${product.sku}.txt`;
                             link.click();
                           }}
@@ -252,14 +254,23 @@ const ProductDetails: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-md font-medium text-gray-500 mb-2">
-                        Subcategory
+                        Category Code
                       </label>
                       <div className="text-md text-gray-800 font-semibold">
                         {typeof product.category === "object" &&
-                        product.category !== null
-                          ? product.category.name || "Not specified"
+                        product.category?.code
+                          ? product.category.code
                           : "Not specified"}
                       </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Product Description
+                    </label>
+                    <div className="text-sm text-gray-800 bg-gray-50 p-3 rounded-lg">
+                      {product.description || "No description available"}
                     </div>
                   </div>
 
@@ -283,9 +294,80 @@ const ProductDetails: React.FC = () => {
                         ))
                       ) : (
                         <span className="text-sm text-gray-500">
-                          No variants available
+                          {product.hasVariants
+                            ? "No variants configured"
+                            : "Single product (no variants)"}
                         </span>
                       )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Product Packs
+                    </label>
+                    <div className="flex gap-2 flex-wrap">
+                      {product.packs && product.packs.length > 0 ? (
+                        product.packs.map((_, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-small bg-blue-100 text-blue-700"
+                          >
+                            Pack {index + 1}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-sm text-gray-500">
+                          No packs configured
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Product IDs & References
+                    </label>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-600">
+                          Product ID:
+                        </span>
+                        <br />
+                        <span className="text-gray-800 font-mono text-xs">
+                          {product.id}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">
+                          Client ID:
+                        </span>
+                        <br />
+                        <span className="text-gray-800 font-mono text-xs">
+                          {product.clientId || "N/A"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">
+                          Store ID:
+                        </span>
+                        <br />
+                        <span className="text-gray-800 font-mono text-xs">
+                          {product.storeId || product.store?.id || "N/A"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">
+                          Category ID:
+                        </span>
+                        <br />
+                        <span className="text-gray-800 font-mono text-xs">
+                          {product.categoryId ||
+                            (typeof product.category === "object"
+                              ? product.category?.id
+                              : "N/A")}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -359,6 +441,17 @@ const ProductDetails: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-md font-medium text-gray-500 mb-2">
+                        Profit Amount
+                      </label>
+                      <div className="text-md text-gray-800 font-semibold">
+                        ${product.profitAmount?.toFixed(2) || "0.00"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-md font-medium text-gray-500 mb-2">
                         {product.percentDiscount
                           ? `Discount (${product.percentDiscount}%)`
                           : "Discount"}
@@ -367,6 +460,14 @@ const ProductDetails: React.FC = () => {
                         {product.percentDiscount
                           ? `Yes - ${product.percentDiscount}% discount (Save $${product.discountAmount || 0})`
                           : "No active discounts"}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-md font-medium text-gray-500 mb-2">
+                        EAN/Barcode
+                      </label>
+                      <div className="text-md text-gray-800 font-semibold">
+                        {product.ean || "Not specified"}
                       </div>
                     </div>
                   </div>
@@ -386,40 +487,79 @@ const ProductDetails: React.FC = () => {
 
                 <div className="p-6">
                   {/* Table Header */}
-                  <div className="grid grid-cols-5 gap-4 pb-3 mb-4 text-sm font-medium text-gray-500 border-b border-gray-200">
+                  <div className="grid grid-cols-6 gap-4 pb-3 mb-4 text-sm font-medium text-gray-500 border-b border-gray-200">
                     <div>Supplier Name</div>
-                    <div>Contact</div>
-                    <div>Last Cost</div>
-                    <div>Last Purchase</div>
+                    <div>Contact Info</div>
+                    <div>Address</div>
+                    <div>Cost Price</div>
+                    <div>Status</div>
                     <div>Primary</div>
                   </div>
 
                   {/* Table Rows */}
                   <div className="space-y-4">
+                  
                     {product.productSuppliers &&
                     product.productSuppliers.length > 0 ? (
-                      product.productSuppliers.map((supplier, index) => (
+                      product.productSuppliers.map((productSupplier, index) => (
                         <div
-                          key={index}
-                          className="grid grid-cols-5 gap-4 items-center py-3"
+                          key={productSupplier.id || index}
+                          className="grid grid-cols-6 gap-4 items-center py-3 hover:bg-gray-50 rounded-lg px-2"
                         >
                           <div className="text-sm text-gray-900 font-medium">
-                            Supplier {index + 1}
+                            <div className="font-medium">
+                              {productSupplier.supplier?.name || "Unknown Supplier"}
+                            </div>
+                            <div className="font-mono text-xs text-gray-500 mt-1">
+                              ID: {productSupplier.supplier?.id?.substring(0, 8) || "N/A"}
+                            </div>
                           </div>
-                          <div className="text-sm text-blue-600 hover:text-blue-800 cursor-pointer">
-                            Contact Info
+                          <div className="text-sm">
+                            <div className="space-y-1">
+                              {productSupplier.supplier?.email && (
+                                <div className="text-blue-600 hover:text-blue-800 cursor-pointer">
+                                  {productSupplier.supplier.email}
+                                </div>
+                              )}
+                              {productSupplier.supplier?.phone && (
+                                <div className="text-gray-700">
+                                  {productSupplier.supplier.phone}
+                                </div>
+                              )}
+                              {!productSupplier.supplier?.email && !productSupplier.supplier?.phone && (
+                                <span className="text-gray-400">No contact info</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <div className="max-w-xs truncate" title={productSupplier.supplier?.address}>
+                              {productSupplier.supplier?.address || "No address"}
+                            </div>
                           </div>
                           <div className="text-sm text-gray-900 font-semibold">
-                            ${supplier.costPrice?.toFixed(2) || "0.00"}
-                          </div>
-                          <div className="text-sm text-gray-900">
-                            {new Date().toLocaleDateString()}
+                            ${productSupplier.costPrice?.toFixed(2) || "0.00"}
                           </div>
                           <div className="text-sm">
                             <span
-                              className={`text-lg ${supplier.state === "primary" ? "text-yellow-500" : "text-gray-300"}`}
+                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                productSupplier.supplier?.status === "active"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
                             >
-                              {supplier.state === "primary" ? "★" : "☆"}
+                              {productSupplier.supplier?.status || "Unknown"}
+                            </span>
+                          </div>
+                          <div className="text-sm">
+                            <span
+                              className={`text-lg ${productSupplier.state === "primary" ? "text-yellow-500" : "text-gray-300"}`}
+                              title={
+                                productSupplier.state === "primary"
+                                  ? "Primary Supplier"
+                                  : "Secondary Supplier"
+                              }
+                            >
+                              {productSupplier.state === "primary" ? "★" : "☆"}
                             </span>
                           </div>
                         </div>
@@ -458,23 +598,25 @@ const ProductDetails: React.FC = () => {
                         Minimum Stock
                       </label>
                       <div className="text-lg text-gray-900 font-semibold">
-                        20 units
+                        10 units
                       </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-500 mb-1">
-                        Last Restock
+                        Created Date
                       </label>
                       <div className="text-lg text-gray-900 font-semibold">
-                        Jun 15, 2023
+                        {new Date(product.createdAt).toLocaleDateString()}
                       </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-500 mb-1">
-                        Last Sold
+                        Updated Date
                       </label>
                       <div className="text-lg text-gray-900 font-semibold">
-                        Today, 10:23 AM
+                        {product.updatedAt
+                          ? new Date(product.updatedAt).toLocaleDateString()
+                          : new Date(product.createdAt).toLocaleDateString()}
                       </div>
                     </div>
                   </div>
@@ -506,16 +648,16 @@ const ProductDetails: React.FC = () => {
                         <div>
                           <span
                             className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              (product.itemQuantity || 0) > 20
+                              (product.itemQuantity || 0) > 50
                                 ? "bg-green-100 text-green-800"
-                                : (product.itemQuantity || 0) > 10
+                                : (product.itemQuantity || 0) > 20
                                   ? "bg-yellow-100 text-yellow-800"
                                   : "bg-red-100 text-red-800"
                             }`}
                           >
-                            {(product.itemQuantity || 0) > 20
+                            {(product.itemQuantity || 0) > 50
                               ? "Normal"
-                              : (product.itemQuantity || 0) > 10
+                              : (product.itemQuantity || 0) > 20
                                 ? "Low"
                                 : "Critical"}
                           </span>
@@ -643,23 +785,59 @@ const ProductDetails: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
+                      {/* Always show product creation entry */}
+                      <tr className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-3 px-4 text-sm text-gray-900">
+                          {new Date(product.createdAt).toLocaleDateString()}{" "}
+                          {new Date(product.createdAt).toLocaleTimeString()}
+                        </td>
+                        <td className="py-3 px-4 text-sm">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                            Product Created
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
+                          +{product.itemQuantity || 0}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
+                          $
+                          {(
+                            (product.singleItemCostPrice || 0) *
+                            (product.itemQuantity || 0)
+                          ).toFixed(2)}
+                        </td>
+                        <td className="py-3 px-4 text-sm">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Active
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-900 font-mono">
+                          PROD-{product.id?.substring(0, 8)}
+                        </td>
+                      </tr>
+
+                      {/* Purchase Orders */}
                       {product.purchaseOrders &&
                       product.purchaseOrders.length > 0 ? (
                         product.purchaseOrders.map((po, index) => (
                           <tr
-                            key={po.id}
+                            key={po.id || index}
                             className="border-b border-gray-100 hover:bg-gray-50"
                           >
                             <td className="py-3 px-4 text-sm text-gray-900">
-                              {new Date(product.createdAt).toLocaleDateString()}
+                              {po.createdAt
+                                ? new Date(po.createdAt).toLocaleDateString()
+                                : new Date(
+                                    product.createdAt
+                                  ).toLocaleDateString()}
                             </td>
                             <td className="py-3 px-4 text-sm">
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
                                 Purchase Order
                               </span>
                             </td>
                             <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
-                              +{po.quantity}
+                              +{po.quantity || 0}
                             </td>
                             <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
                               ${po.total?.toFixed(2) || "0.00"}
@@ -672,69 +850,39 @@ const ProductDetails: React.FC = () => {
                                     : "bg-gray-100 text-gray-800"
                                 }`}
                               >
-                                {po.status}
+                                {po.status || "Unknown"}
                               </span>
                             </td>
                             <td className="py-3 px-4 text-sm text-gray-900 font-mono">
-                              PO-{po.id.slice(-3)}
+                              PO-{po.id?.substring(0, 8) || `${index + 1}`}
                             </td>
                           </tr>
                         ))
                       ) : (
-                        <>
-                          <tr className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-3 px-4 text-sm text-gray-900">
-                              Today 10:21 AM
-                            </td>
-                            <td className="py-3 px-4 text-sm">
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                                Sale
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
-                              -1
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
-                              $25.99
-                            </td>
-                            <td className="py-3 px-4 text-sm">
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Completed
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900 font-mono">
-                              INV-001
-                            </td>
-                          </tr>
-                          <tr className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-3 px-4 text-sm text-gray-900">
-                              {new Date(product.createdAt).toLocaleDateString()}
-                            </td>
-                            <td className="py-3 px-4 text-sm">
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                                Product Created
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
-                              +{product.itemQuantity}
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
-                              $
-                              {(
-                                Number(product.singleItemCostPrice) *
-                                Number(product.itemQuantity)
-                              ).toFixed(2)}
-                            </td>
-                            <td className="py-3 px-4 text-sm">
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Active
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900 font-mono">
-                              PROD-{product.id?.substring(0, 5)}
-                            </td>
-                          </tr>
-                        </>
+                        <tr className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-4 text-sm text-gray-900">
+                            Today 10:21 AM
+                          </td>
+                          <td className="py-3 px-4 text-sm">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                              Sale (Sample)
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
+                            -1
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
+                            ${product.singleItemSellingPrice || "0.00"}
+                          </td>
+                          <td className="py-3 px-4 text-sm">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Completed
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-900 font-mono">
+                            SAMPLE-001
+                          </td>
+                        </tr>
                       )}
                     </tbody>
                   </table>
