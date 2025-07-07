@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { FaPlus, FaTrash, FaArrowLeft, FaSearch, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import toast from "react-hot-toast";
@@ -32,6 +32,7 @@ const AddNewSale: React.FC = () => {
   // Get current store and user data
   const currentStore = useRequireStore();
   const { user } = useSelector((state: RootState) => state.user);
+  const {id} = useParams(); // Get store ID from URL params
   
   // Redux state
   const {
@@ -330,10 +331,10 @@ const AddNewSale: React.FC = () => {
     setDiscount(0);
   };
 
-  const handleSaveDraft = () => {
-    // TODO: Implement save as draft functionality
-    console.log("Save as draft");
-  };
+  // const handleSaveDraft = () => {
+  //   // TODO: Implement save as draft functionality
+  //   console.log("Save as draft");
+  // };
 
   const handleCreateSale = async () => {
     // Validate form
@@ -552,7 +553,7 @@ const AddNewSale: React.FC = () => {
     
 
     // Navigate to invoice creation with data
-    navigate('/create-invoice', { state: { invoiceData } });
+    navigate(`/store/${id}/create-invoice`, { state: { invoiceData } });
   };
 
   const handleCancel = () => {
@@ -1275,13 +1276,13 @@ const AddNewSale: React.FC = () => {
                   Create Sale and make Invoice
                 </SpecialButton>
 
-                <SpecialButton
+                {/* <SpecialButton
                   variant="secondary"
                   onClick={handleSaveDraft}
                   className="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 py-3"
                 >
                   Save as Draft
-                </SpecialButton>
+                </SpecialButton> */}
 
                 <SpecialButton
                   variant="modal-cancel"
