@@ -218,6 +218,7 @@ export interface ProductSearchParams {
   page?: number;
   limit?: number;
   search?: string;
+  storeId?: string;
 }
 
 // API service
