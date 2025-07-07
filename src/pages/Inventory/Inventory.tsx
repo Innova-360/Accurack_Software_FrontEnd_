@@ -424,7 +424,7 @@ const Inventory: React.FC = () => {
     productData: EditProductFormData,
     productId: string
   ) => {
-    try {
+    try { 
       await productAPI.updateProduct(productId, productData);
       toast.success("Product updated successfully!");
       refetch(); // Refresh the product list

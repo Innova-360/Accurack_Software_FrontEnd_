@@ -12,6 +12,7 @@ import SalesPage from "../pages/salesPage/Sales";
 import CreateInventory from "../pages/Inventory/CreateInventory";
 import ProductDetails from "../pages/Inventory/ProductDetails";
 import UploadInventory from "../pages/Inventory/UploadInventory";
+import UpdateProduct from "../pages/Inventory/UpdateProduct";
 import AddNewSale from "../pages/salesPage/AddNewSale";
 import GoogleAuthCallback from "../components/GoogleAuthCallback";
 import Supplier from "../pages/Supplier/Supplier";
@@ -219,6 +220,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <UploadInventory />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/inventory/update"
+        element={
+          <ProtectedRoute>
+            <UpdateProduct />
           </ProtectedRoute>
         }
       />
