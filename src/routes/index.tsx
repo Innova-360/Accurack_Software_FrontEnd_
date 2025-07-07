@@ -47,6 +47,9 @@ import BusinessSettings from "../pages/BusinessSettings/BusinessSettings";
 import ChangePassword from "../pages/ChangePassword/ChangePassword";
 import NotFound from "../pages/NotFound/NotFound";
 
+
+// This file defines the application's routes using React Router.
+// It includes both public and protected routes, ensuring that certain pages
 const AppRoutes = () => {
   return (
     <Routes>
