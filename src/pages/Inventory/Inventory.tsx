@@ -18,7 +18,7 @@ import {
   EditProductModal,
   DeleteAllInventoryModal,
 } from "../../components/InventoryComponents";
-import { productAPI, type ApiProduct } from "../../services/productAPI";
+import { productAPI } from "../../services/productAPI";
 import type { Product } from "../../data/inventoryData";
 import type { EditProductFormData } from "../../components/InventoryComponents/EditProductModal";
 import {
@@ -359,7 +359,7 @@ const Inventory: React.FC = () => {
     if (checked) {
       // Use product IDs instead of array indices for server-side pagination
       const allIds = currentProducts.map(
-        (product: Product, index: number) => index
+        (_, index: number) => index
       );
       setSelectedItems(allIds);
     } else {
@@ -425,7 +425,7 @@ const Inventory: React.FC = () => {
     productId: string
   ) => {
     try { 
-      await productAPI.updateProduct(productId, productData);
+      await productAPI.updateProduct(productId, productData as any);
       toast.success("Product updated successfully!");
       refetch(); // Refresh the product list
       setIsEditProductModalOpen(false);
