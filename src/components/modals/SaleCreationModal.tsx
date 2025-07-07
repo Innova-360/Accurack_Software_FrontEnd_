@@ -158,7 +158,7 @@ const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
                 </div>
                 <div className="flex-1">
                   <h3 className="font-medium text-gray-900 mb-2">
-                    Create Manually
+                    Make sales Manually
                   </h3>
                   <p className="text-sm text-gray-600 mb-3">
                     Fill out the sale details manually using our form interface.
@@ -169,7 +169,7 @@ const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
                     className="w-full bg-[#03414C] hover:bg-[#025561] text-white py-2"
                     disabled={isUploading}
                   >
-                    Create Manually
+                    Make sales Manually
                   </SpecialButton>
                 </div>
               </div>

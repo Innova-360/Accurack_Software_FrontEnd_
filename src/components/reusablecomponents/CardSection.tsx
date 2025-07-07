@@ -27,9 +27,9 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
     if (card.iconComponent && (FeatherIcons as any)[card.iconComponent]) {
       const IconComponent = (FeatherIcons as any)[card.iconComponent];
       return (
-        <IconComponent 
-          size={24} 
-          className="text-[#03414C] group-hover:text-[#0f4d57] transition-colors duration-200" 
+        <IconComponent
+          size={24}
+          className="text-[#03414C] group-hover:text-[#0f4d57] transition-colors duration-200"
         />
       );
     }
@@ -62,8 +62,8 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
               } else if (card.title === "Update Inventory*") {
                 navigate(`/store/${activeStoreId}/inventory`);
               } else if (card.title === "Upload Inventory*") {
-                navigate(`/store/${activeStoreId}/inventory`);
-              } 
+                navigate(`/store/${activeStoreId}/inventory/upload`);
+              }
               // Supplier routes
               else if (card.title === "Add Supplier") {
                 navigate(`/store/${activeStoreId}/supplier/add`);
@@ -77,7 +77,7 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
                 navigate(`/store/${activeStoreId}/supplier`);
               } else if (card.title === "Customers") {
                 navigate(`/store/${activeStoreId}/customer`);
-              } 
+              }
               // Sales routes
               else if (card.title === "Upload Sales*") {
                 navigate(`/store/${activeStoreId}/sales`);
