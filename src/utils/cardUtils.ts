@@ -53,7 +53,7 @@ export const getAllCards = (): CardSection[] => {
         { title: "Inventory Dashboard", iconComponent: "FiBarChart3" },
       ],
     },
-     {
+    {
       sectionTitle: "Sales",
       cards: [
         { title: "Upload Sales*", iconComponent: "FiUpload" },
@@ -63,16 +63,16 @@ export const getAllCards = (): CardSection[] => {
         { title: "Sales Dashboard", iconComponent: "FiTrendingUp" },
       ],
     },
-     {
-      sectionTitle: "Invoice",
-      cards: [
-        { title: "Upload Invoice*", iconComponent: "FiUpload" },
-        { title: "Create Invoice*", iconComponent: "FiFileText" },
-        { title: "View Invoice*", iconComponent: "FiFile" },
-        { title: "Update Invoice*", iconComponent: "FiEdit3" },
-        { title: "Invoice Dashboard", iconComponent: "FiPieChart" },
-      ],
-    },
+    //  {
+    //   sectionTitle: "Invoice",
+    //   cards: [
+    //     { title: "Upload Invoice*", iconComponent: "FiUpload" },
+    //     { title: "Create Invoice*", iconComponent: "FiFileText" },
+    //     { title: "View Invoice*", iconComponent: "FiFile" },
+    //     { title: "Update Invoice*", iconComponent: "FiEdit3" },
+    //     { title: "Invoice Dashboard", iconComponent: "FiPieChart" },
+    //   ],
+    // },
     {
       sectionTitle: "Customers",
       cards: [
@@ -92,7 +92,7 @@ export const getAllCards = (): CardSection[] => {
         { title: "Supplier Dashboard", iconComponent: "FiBarChart3" },
       ],
     },
-     {
+    {
       sectionTitle: "Employee",
       cards: [
         { title: "Add Employee*", iconComponent: "FiUserPlus" },
@@ -119,7 +119,10 @@ export const getAllCards = (): CardSection[] => {
         { title: "View Orders", iconComponent: "FiEye" },
         { title: "Update Order", iconComponent: "FiEdit3" },
         { title: "Driver Management", iconComponent: "FiTruck" },
-        { title: "Order Tracking\nVerification", iconComponent: "FiCheckCircle" },
+        {
+          title: "Order Tracking\nVerification",
+          iconComponent: "FiCheckCircle",
+        },
       ],
     },
   ];
