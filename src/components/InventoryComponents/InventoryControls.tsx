@@ -7,6 +7,7 @@ interface InventoryControlsProps {
   onGroupByChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   rowsPerPage: number;
   onRowsPerPageChange: (newRowsPerPage: number) => void;
+  isSearching?: boolean; // Add prop to indicate search loading state
 }
 
 const InventoryControls: React.FC<InventoryControlsProps> = ({
@@ -16,6 +17,7 @@ const InventoryControls: React.FC<InventoryControlsProps> = ({
   onGroupByChange,
   rowsPerPage,
   onRowsPerPageChange,
+  isSearching = false,
 }) => {
   return (
     <div className="border border-gray-300 px-4 sm:px-6 lg:px-10 py-4 sm:py-5 rounded-lg rounded-b-none border-b-0">
@@ -23,13 +25,20 @@ const InventoryControls: React.FC<InventoryControlsProps> = ({
         Inventory Items
       </h2>
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
-        <input
-          type="text"
-          placeholder="Search inventory..."
-          className="border border-gray-300 rounded px-4 py-2 w-full lg:w-80"
-          value={searchTerm}
-          onChange={onSearchChange}
-        />
+        <div className="relative w-full lg:w-80">
+          <input
+            type="text"
+            placeholder="Search inventory..."
+            className="border border-gray-300 rounded px-4 py-2 w-full pr-10"
+            value={searchTerm}
+            onChange={onSearchChange}
+          />
+          {isSearching && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="inline-block rounded-full h-4 w-4 border-b-2 border-[#0f4d57] animate-spin"></div>
+            </div>
+          )}
+        </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 lg:space-x-6 w-full lg:w-auto">
           <div className="flex items-center space-x-2">
             <span className="text-sm sm:text-base whitespace-nowrap">

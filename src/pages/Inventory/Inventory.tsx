@@ -181,15 +181,15 @@ const Inventory: React.FC = () => {
     fetchWithParams,
   ]);
 
-  // Show loading state
-  if (loading) {
+  // Show loading state only for initial load (when we have no products and no search term)
+  if (loading && products.length === 0 && !searchTerm && !debouncedSearchTerm) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="px-4 py-8 mx-auto max-w-7xl">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0f4d57] mx-auto mb-4"></div>
+              <div className="rounded-full h-12 w-12 border-b-2 border-[#0f4d57] mx-auto mb-4"></div>
               <p className="text-gray-600">Loading products...</p>
             </div>
           </div>
@@ -225,7 +225,7 @@ const Inventory: React.FC = () => {
               </p>
               <button
                 onClick={refetch}
-                className="bg-[#0f4d57] hover:bg-[#083540] text-white px-4 py-2 rounded-lg transition-colors"
+                className="bg-[#0f4d57] hover:bg-[#083540] text-white px-4 py-2 rounded-lg"
               >
                 Retry
               </button>
@@ -358,9 +358,7 @@ const Inventory: React.FC = () => {
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       // Use product IDs instead of array indices for server-side pagination
-      const allIds = currentProducts.map(
-        (_, index: number) => index
-      );
+      const allIds = currentProducts.map((_, index: number) => index);
       setSelectedItems(allIds);
     } else {
       setSelectedItems([]);
@@ -424,7 +422,7 @@ const Inventory: React.FC = () => {
     productData: EditProductFormData,
     productId: string
   ) => {
-    try { 
+    try {
       await productAPI.updateProduct(productId, productData as any);
       toast.success("Product updated successfully!");
       refetch(); // Refresh the product list
@@ -503,23 +501,23 @@ const Inventory: React.FC = () => {
   return (
     <>
       <Header />
-      <div className="p-4 sm:p-6 bg-white min-h-screen animate-fadeIn">
+      <div className="p-4 sm:p-6 bg-white min-h-screen">
         {/* Header Section */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 lg:mb-6 space-y-4 lg:space-y-0 animate-slideDown">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 lg:mb-6 space-y-4 lg:space-y-0">
           <h1 className="text-xl sm:text-2xl font-bold text-[#0f4d57]">
             Inventory Management
           </h1>{" "}
           <div className="flex flex-wrap gap-2 sm:gap-4">
             <button
               onClick={handleAddInventoryClick}
-              className="bg-[#0f4d57] text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base hover:bg-[#0d3f47] transition-all duration-300 hover:scale-105 hover:shadow-lg transform"
+              className="bg-[#0f4d57] text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base hover:bg-[#0d3f47]"
             >
               + Add Inventory
             </button>
             <button
               onClick={handleDeleteAllInventory}
               disabled={isDeletingAllProducts || products.length === 0}
-              className={`px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base transition-all duration-300 hover:scale-105 hover:shadow-lg transform ${
+              className={`px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base ${
                 isDeletingAllProducts || products.length === 0
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-red-700 hover:bg-red-800 text-white"
@@ -527,7 +525,7 @@ const Inventory: React.FC = () => {
             >
               {isDeletingAllProducts ? (
                 <>
-                  <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  <div className="inline-block rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Deleting...
                 </>
               ) : (
@@ -537,9 +535,8 @@ const Inventory: React.FC = () => {
           </div>
         </div>
         {/* Horizontal line */}
-        <hr className="border-gray-300 mb-6 animate-slideIn" />{" "}
-        {/* Stats Cards Section */}
-        <div className="animate-slideUp">
+        <hr className="border-gray-300 mb-6" /> {/* Stats Cards Section */}
+        <div>
           <InventoryStats
             totalProducts={inventoryStats.totalProducts}
             totalItems={inventoryStats.totalItems}
@@ -547,7 +544,7 @@ const Inventory: React.FC = () => {
           />
         </div>
         {/* Inventory Controls */}
-        <div className="animate-slideUp" style={{ animationDelay: "200ms" }}>
+        <div>
           <InventoryControls
             searchTerm={searchTerm}
             onSearchChange={handleSearchChange}
@@ -555,98 +552,128 @@ const Inventory: React.FC = () => {
             onGroupByChange={handleGroupByChange}
             rowsPerPage={rowsPerPage}
             onRowsPerPageChange={handleRowsPerPageChange}
+            isSearching={
+              loading &&
+              (searchTerm !== debouncedSearchTerm ||
+                Boolean(debouncedSearchTerm))
+            }
           />
         </div>
         {/* Inventory Table/View Container */}
         <div
-          className={`border border-gray-300 px-4 sm:px-6 lg:px-10 py-4 sm:py-5 rounded-lg rounded-t-none transition-all duration-300 animate-slideUp ${isPageChanging ? "opacity-75" : "opacity-100"}`}
-          style={{ animationDelay: "300ms" }}
+          className={`border border-gray-300 px-4 sm:px-6 lg:px-10 py-4 sm:py-5 rounded-lg rounded-t-none ${isPageChanging ? "opacity-75" : "opacity-100"}`}
         >
-          {/* Mobile View */}
-          <div className="block md:hidden">
-            {/* Mobile View Toggle */}
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-medium text-gray-700">View Mode:</h3>
-              <div className="flex bg-gray-100 rounded-lg p-1">
-                <button
-                  onClick={() => setMobileViewType("cards")}
-                  className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                    mobileViewType === "cards"
-                      ? "bg-white text-[#0f4d57] shadow-sm"
-                      : "text-gray-600"
-                  }`}
-                >
-                  Cards
-                </button>
-                <button
-                  onClick={() => setMobileViewType("table")}
-                  className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                    mobileViewType === "table"
-                      ? "bg-white text-[#0f4d57] shadow-sm"
-                      : "text-gray-600"
-                  }`}
-                >
-                  Table
-                </button>
+          {/* Loading indicator for search and table updates */}
+          {loading &&
+            (products.length > 0 || searchTerm || debouncedSearchTerm) && (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-center">
+                  <div className="inline-block rounded-full h-8 w-8 border-b-2 border-[#0f4d57] animate-spin mb-2"></div>
+                  <p className="text-gray-600 text-sm">
+                    {searchTerm || debouncedSearchTerm
+                      ? "Searching products..."
+                      : "Loading..."}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
-            {mobileViewType === "cards" ? (
-              <InventoryMobileView
-                products={currentProducts}
-                groupedProducts={groupedProducts}
-                groupBy={groupBy}
-                expandedCategories={expandedCategories}
-                onToggleCategory={toggleCategory}
-                onProductViewed={handleViewProduct}
-              />
-            ) : (
-              <div className="overflow-x-auto">
-                {groupBy === "category" && groupedProducts ? (
-                  <GroupedTableView
-                    groupedProducts={groupedProducts}
-                    expandedCategories={expandedCategories}
-                    onToggleCategory={toggleCategory}
-                  />
-                ) : (
-                  <InventoryTable
-                    products={currentProducts}
-                    selectedItems={selectedItems}
-                    startIndex={startIndex}
-                    onProductDeleted={refetch}
-                    sortConfig={sortConfig}
-                    onSelectAll={handleSelectAll}
-                    onSelectItem={handleSelectItem}
-                    onSort={handleSort}
-                    onProductEdited={handleEditProduct}
-                    onProductViewed={handleViewProduct}
-                  />
-                )}
+          {/* Content - Show even when loading for search to prevent flicker */}
+          <div
+            className={
+              loading && (searchTerm || debouncedSearchTerm)
+                ? "opacity-50"
+                : "opacity-100"
+            }
+          >
+            {/* Mobile View */}
+            <div className="block md:hidden">
+              {/* Mobile View Toggle */}
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-sm font-medium text-gray-700">
+                  View Mode:
+                </h3>
+                <div className="flex bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setMobileViewType("cards")}
+                    className={`px-3 py-1 text-xs rounded-md ${
+                      mobileViewType === "cards"
+                        ? "bg-white text-[#0f4d57] shadow-sm"
+                        : "text-gray-600"
+                    }`}
+                  >
+                    Cards
+                  </button>
+                  <button
+                    onClick={() => setMobileViewType("table")}
+                    className={`px-3 py-1 text-xs rounded-md ${
+                      mobileViewType === "table"
+                        ? "bg-white text-[#0f4d57] shadow-sm"
+                        : "text-gray-600"
+                    }`}
+                  >
+                    Table
+                  </button>
+                </div>
               </div>
-            )}
-          </div>{" "}
-          {/* Desktop View */}
-          <div className="hidden md:block overflow-x-auto">
-            {groupBy === "category" && groupedProducts ? (
-              <GroupedTableView
-                groupedProducts={groupedProducts}
-                expandedCategories={expandedCategories}
-                onToggleCategory={toggleCategory}
-              />
-            ) : (
-              <InventoryTable
-                products={currentProducts}
-                selectedItems={selectedItems}
-                onProductDeleted={refetch}
-                startIndex={startIndex}
-                sortConfig={sortConfig}
-                onSelectAll={handleSelectAll}
-                onSelectItem={handleSelectItem}
-                onSort={handleSort}
-                onProductEdited={handleEditProduct}
-                onProductViewed={handleViewProduct}
-              />
-            )}
+
+              {mobileViewType === "cards" ? (
+                <InventoryMobileView
+                  products={currentProducts}
+                  groupedProducts={groupedProducts}
+                  groupBy={groupBy}
+                  expandedCategories={expandedCategories}
+                  onToggleCategory={toggleCategory}
+                  onProductViewed={handleViewProduct}
+                />
+              ) : (
+                <div className="overflow-x-auto">
+                  {groupBy === "category" && groupedProducts ? (
+                    <GroupedTableView
+                      groupedProducts={groupedProducts}
+                      expandedCategories={expandedCategories}
+                      onToggleCategory={toggleCategory}
+                    />
+                  ) : (
+                    <InventoryTable
+                      products={currentProducts}
+                      selectedItems={selectedItems}
+                      startIndex={startIndex}
+                      onProductDeleted={refetch}
+                      sortConfig={sortConfig}
+                      onSelectAll={handleSelectAll}
+                      onSelectItem={handleSelectItem}
+                      onSort={handleSort}
+                      onProductEdited={handleEditProduct}
+                      onProductViewed={handleViewProduct}
+                    />
+                  )}
+                </div>
+              )}
+            </div>{" "}
+            {/* Desktop View */}
+            <div className="hidden md:block overflow-x-auto">
+              {groupBy === "category" && groupedProducts ? (
+                <GroupedTableView
+                  groupedProducts={groupedProducts}
+                  expandedCategories={expandedCategories}
+                  onToggleCategory={toggleCategory}
+                />
+              ) : (
+                <InventoryTable
+                  products={currentProducts}
+                  selectedItems={selectedItems}
+                  onProductDeleted={refetch}
+                  startIndex={startIndex}
+                  sortConfig={sortConfig}
+                  onSelectAll={handleSelectAll}
+                  onSelectItem={handleSelectItem}
+                  onSort={handleSort}
+                  onProductEdited={handleEditProduct}
+                  onProductViewed={handleViewProduct}
+                />
+              )}
+            </div>
           </div>
           {/* Pagination - Only show when not grouped by category */}
           {groupBy !== "category" && (

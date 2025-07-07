@@ -155,8 +155,8 @@ const UpdateProduct: React.FC = () => {
     fetchWithParams,
   ]);
 
-  // Show loading state
-  if (loading) {
+  // Show loading state only for initial load (when we have no products and no search term)
+  if (loading && products.length === 0 && !searchTerm && !debouncedSearchTerm) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -325,6 +325,11 @@ const UpdateProduct: React.FC = () => {
           <UpdateProductControls
             searchTerm={searchTerm}
             onSearchChange={handleSearchChange}
+            isSearching={
+              loading &&
+              (searchTerm !== debouncedSearchTerm ||
+                Boolean(debouncedSearchTerm))
+            }
           />
         </div>
 
@@ -333,64 +338,90 @@ const UpdateProduct: React.FC = () => {
           className={`border border-gray-300 px-4 sm:px-6 lg:px-10 py-4 sm:py-5 rounded-lg rounded-t-none transition-all duration-300 animate-slideUp ${isPageChanging ? "opacity-75" : "opacity-100"}`}
           style={{ animationDelay: "300ms" }}
         >
-          {/* Mobile View */}
-          <div className="block md:hidden">
-            {/* Mobile View Toggle */}
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-medium text-gray-700">View Mode:</h3>
-              <div className="flex bg-gray-100 rounded-lg p-1">
-                <button
-                  onClick={() => setMobileViewType("cards")}
-                  className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                    mobileViewType === "cards"
-                      ? "bg-white text-[#0f4d57] shadow-sm"
-                      : "text-gray-600"
-                  }`}
-                >
-                  Cards
-                </button>
-                <button
-                  onClick={() => setMobileViewType("table")}
-                  className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                    mobileViewType === "table"
-                      ? "bg-white text-[#0f4d57] shadow-sm"
-                      : "text-gray-600"
-                  }`}
-                >
-                  Table
-                </button>
-              </div>
-            </div>
-
-            {mobileViewType === "cards" ? (
-              <InventoryMobileView
-                products={currentProducts}
-                groupedProducts={null}
-                groupBy=""
-                expandedCategories={[]}
-                onToggleCategory={() => {}}
-                onProductViewed={handleProductClicked}
-              />
-            ) : (
-              <div className="overflow-x-auto">
-                <UpdateProductTable
-                  products={currentProducts}
-                  sortConfig={sortConfig}
-                  onSort={handleSort}
-                  onProductClicked={handleProductClicked}
-                />
+          {/* Loading indicator for search and table updates */}
+          {loading &&
+            (products.length > 0 || searchTerm || debouncedSearchTerm) && (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-center">
+                  <div className="inline-block rounded-full h-8 w-8 border-b-2 border-[#0f4d57] animate-spin mb-2"></div>
+                  <p className="text-gray-600 text-sm">
+                    {searchTerm || debouncedSearchTerm
+                      ? "Searching products..."
+                      : "Loading..."}
+                  </p>
+                </div>
               </div>
             )}
-          </div>
 
-          {/* Desktop View */}
-          <div className="hidden md:block overflow-x-auto">
-            <UpdateProductTable
-              products={currentProducts}
-              sortConfig={sortConfig}
-              onSort={handleSort}
-              onProductClicked={handleProductClicked}
-            />
+          {/* Content - Show even when loading for search to prevent flicker */}
+          <div
+            className={
+              loading && (searchTerm || debouncedSearchTerm)
+                ? "opacity-50"
+                : "opacity-100"
+            }
+          >
+            {/* Mobile View */}
+            <div className="block md:hidden">
+              {/* Mobile View Toggle */}
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-sm font-medium text-gray-700">
+                  View Mode:
+                </h3>
+                <div className="flex bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setMobileViewType("cards")}
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                      mobileViewType === "cards"
+                        ? "bg-white text-[#0f4d57] shadow-sm"
+                        : "text-gray-600"
+                    }`}
+                  >
+                    Cards
+                  </button>
+                  <button
+                    onClick={() => setMobileViewType("table")}
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                      mobileViewType === "table"
+                        ? "bg-white text-[#0f4d57] shadow-sm"
+                        : "text-gray-600"
+                    }`}
+                  >
+                    Table
+                  </button>
+                </div>
+              </div>
+
+              {mobileViewType === "cards" ? (
+                <InventoryMobileView
+                  products={currentProducts}
+                  groupedProducts={null}
+                  groupBy=""
+                  expandedCategories={[]}
+                  onToggleCategory={() => {}}
+                  onProductViewed={handleProductClicked}
+                />
+              ) : (
+                <div className="overflow-x-auto">
+                  <UpdateProductTable
+                    products={currentProducts}
+                    sortConfig={sortConfig}
+                    onSort={handleSort}
+                    onProductClicked={handleProductClicked}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Desktop View */}
+            <div className="hidden md:block overflow-x-auto">
+              <UpdateProductTable
+                products={currentProducts}
+                sortConfig={sortConfig}
+                onSort={handleSort}
+                onProductClicked={handleProductClicked}
+              />
+            </div>
           </div>
 
           {/* Pagination */}
