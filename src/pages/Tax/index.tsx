@@ -24,6 +24,34 @@ interface TaxItem {
     time: string;
     region?: string;
     taxCode?: string;
+    assignments?: number;
+}
+
+// Define a type for the taxRate object from API
+interface TaxRateApi {
+    id: string;
+    taxType?: {
+        name?: string;
+        description?: string;
+    };
+    rate: number;
+    rateType: 'PERCENTAGE' | 'FIXED';
+    createdAt: string;
+    region?: {
+        name?: string;
+    };
+    taxCode?: {
+        code?: string;
+    };
+    assignments?: Assignment[]; // Assuming assignments is an array of Assignment objects
+}
+
+ interface Assignment {
+  id: string;                 
+  entityId: string;           
+  entityType: 'STORE' | 'PRODUCT' | 'USER';     
+  assignedAt: string;         
+  entity: string | null;         
 }
 
 const Tax = () => {
@@ -32,27 +60,6 @@ const Tax = () => {
     const [typeFilter, setTypeFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
 
-
-    // Define a type for the taxRate object from API
-    interface TaxRateApi {
-        id: string;
-        taxType?: {
-            name?: string;
-            description?: string;
-        };
-        rate: number;
-        rateType: 'PERCENTAGE' | 'FIXED';
-        createdAt: string;
-        region?: {
-            name?: string;
-        };
-        taxCode?: {
-            code?: string;
-        };
-    }
-
-    console.log('taxratesdata', taxRatesData);
-    
 
     // Transform API data to match component structure, memoized
     const allTaxes = useMemo<TaxItem[]>(() => {
@@ -76,10 +83,13 @@ const Tax = () => {
                     hour12: true
                 }),
                 region: taxRate.region?.name,
-                taxCode: taxRate.taxCode?.code
+                taxCode: taxRate.taxCode?.code,
+                assignments: taxRate.assignments ? taxRate.assignments.length : 0
             })) || []
         );
     }, [taxRatesData]);
+
+
     // Filter and search logic
     const taxes = useMemo(() => {
         return allTaxes.filter(tax => {
@@ -223,7 +233,7 @@ const Tax = () => {
                                                 {tax.status}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 whitespace-pre-line"><span className="bg-[#E5E7EB] rounded-2xl py-1 px-2 text-xs">{tax.assigned}</span></td>
+                                        <td className="px-4 py-3 whitespace-pre-line"><span className="bg-[#E5E7EB] rounded-2xl py-1 px-2 text-xs">Assigned to {tax.assignments}</span></td>
                                         <td className="px-4 py-3">
                                             <div>{tax.date}</div>
                                             <div className="text-xs text-gray-400">{tax.time}</div>

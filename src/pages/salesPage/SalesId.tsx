@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
     Building2,
@@ -23,6 +23,7 @@ const SalesDetails: React.FC = () => {
     const { saleid } = useParams<{ saleid: string }>();
     const dispatch = useDispatch<AppDispatch>();
     const { currentSale, loading, error } = useSelector((state: RootState) => state.sales);
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (saleid) {
@@ -104,8 +105,10 @@ const SalesDetails: React.FC = () => {
         });
     };
 
+    
+
     return (
-        <>
+        <div className="printable-receipt">
             <Header />
             <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
                 <div className="max-w-7xl mx-auto">
@@ -120,7 +123,25 @@ const SalesDetails: React.FC = () => {
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                                    <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                                        <button
+                                            onClick={() => (navigate(-1))}
+                                            className=" text-gray-600 hover:text-[#0f4d57] "
+                                        >
+                                            <svg
+                                                className="w-5 h-5 sm:w-6 sm:h-6 transform "
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M15 19l-7-7 7-7"
+                                                />
+                                            </svg>
+                                        </button>
                                         Order Details
                                     </h1>
                                     <p className="text-gray-600 text-lg">Order #{currentSale.id.slice(-8).toUpperCase()}</p>
@@ -307,11 +328,10 @@ const SalesDetails: React.FC = () => {
                                 </div>
                                 <div className="flex justify-between items-center py-3 border-b border-gray-100">
                                     <span className="text-gray-600">Generate Invoice</span>
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                        currentSale.generateInvoice 
-                                            ? 'bg-green-100 text-green-800' 
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${currentSale.generateInvoice
+                                            ? 'bg-green-100 text-green-800'
                                             : 'bg-gray-100 text-gray-800'
-                                    }`}>
+                                        }`}>
                                         {currentSale.generateInvoice ? 'Yes' : 'No'}
                                     </span>
                                 </div>
@@ -400,7 +420,7 @@ const SalesDetails: React.FC = () => {
 
 
             </div>
-        </>
+        </div>
     );
 };
 

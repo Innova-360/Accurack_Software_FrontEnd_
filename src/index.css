@@ -346,3 +346,29 @@
 .animate-form-slide-in {
   animation: formSlideIn 0.5s ease-out;
 }
+
+
+@media print {
+  
+  body * {
+    visibility: hidden !important;
+  }
+
+  .printable-receipt, .printable-receipt * {
+    visibility: visible !important;
+  }
+
+  .printable-receipt {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Optional: Hide URL at bottom */
+  @page {
+    margin: 0;
+  }
+}
