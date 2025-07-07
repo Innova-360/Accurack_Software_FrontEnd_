@@ -8,6 +8,7 @@ interface CardSection {
   cards: CardItem[];
 }
 
+
 export const filterCardsBySearch = (
   cardSections: CardSection[],
   searchTerm: string
