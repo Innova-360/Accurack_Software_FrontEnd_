@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Header from "../../components/Header";
 import SalesHeader from "../../components/SalesComponents/SalesHeader";
 import StatsGrid from "../../components/SalesComponents/StatsGrid";
+import StatusTabs from "../../components/SalesComponents/StatusTabs";
 import FilterBar from "../../components/SalesComponents/FilterBar";
 import TransactionTable from "../../components/SalesComponents/TransactionTable";
 import Pagination from "../../components/SalesComponents/Pagination";
@@ -12,7 +13,7 @@ import EditTransactionModal from "../../components/SalesComponents/EditTransacti
 import ViewTransactionModal from "../../components/SalesComponents/ViewTransactionModal";
 import DeleteConfirmModal from "../../components/SalesComponents/DeleteConfirmModal";
 import SaleCreationModal from "../../components/modals/SaleCreationModal";
-import { fetchSales } from "../../store/slices/salesSlice";
+import { fetchSales, updateSale } from "../../store/slices/salesSlice";
 import type { RootState, AppDispatch } from "../../store";
 import useRequireStore from "../../hooks/useRequireStore";
 
@@ -104,6 +105,7 @@ const SalesPage: React.FC = () => {
 
   // Local state for UI
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeStatusTab, setActiveStatusTab] = useState("All"); // New state for status tabs
   const [statusFilter, setStatusFilter] = useState("All");
   const [paymentFilter, setPaymentFilter] = useState("All");
   const [cashierFilter, setCashierFilter] = useState("All");
@@ -122,9 +124,10 @@ const SalesPage: React.FC = () => {
       };
       console.log("type of page:", typeof params.page);
       console.log("type of limit:", typeof params.limit);
-      // Add filters if they're not "All"
-      if (statusFilter !== "All") {
-        params.status = statusFilter;
+      
+      // Use activeStatusTab for filtering instead of statusFilter
+      if (activeStatusTab !== "All") {
+        params.status = activeStatusTab;
       }
       if (paymentFilter !== "All") {
         params.paymentMethod = paymentFilter;
@@ -143,7 +146,7 @@ const SalesPage: React.FC = () => {
     currentStore?.id,
     currentPage,
     rowsPerPage,
-    statusFilter,
+    activeStatusTab, // Updated dependency
     paymentFilter,
     dateFilter,
     dispatch,
@@ -179,14 +182,30 @@ const SalesPage: React.FC = () => {
         transaction.transactionId
           .toLowerCase()
           .includes(searchTerm.toLowerCase());
-      const matchesStatus =
-        statusFilter === "All" || transaction.status === statusFilter;
       const matchesPayment =
         paymentFilter === "All" || transaction.payment === paymentFilter;
 
-      return matchesSearch && matchesStatus && matchesPayment;
+      return matchesSearch && matchesPayment;
     });
   };
+
+  // Calculate sales counts for status tabs
+  const getSalesCounts = () => {
+    // We need to fetch all sales to get accurate counts
+    // For now, we'll calculate from current filtered data
+    const allSales = transactions; // This should ideally be all sales, not filtered
+    
+    return {
+      all: allSales.length,
+      pending: allSales.filter((s: any) => s.status?.toLowerCase() === 'pending').length,
+      confirmed: allSales.filter((s: any) => s.status?.toLowerCase() === 'confirmed').length,
+      cancelled: allSales.filter((s: any) => s.status?.toLowerCase() === 'cancelled').length,
+      shipped: allSales.filter((s: any) => s.status?.toLowerCase() === 'shipped').length,
+      completed: allSales.filter((s: any) => s.status?.toLowerCase() === 'completed').length,
+    };
+  };
+
+  const salesCounts = getSalesCounts();
 
   const displayTransactions = getDisplayTransactions();
   const paginatedTransactions = displayTransactions;
@@ -214,6 +233,7 @@ const SalesPage: React.FC = () => {
   // Clear filters handler
   const handleClearFilters = () => {
     setSearchTerm("");
+    setActiveStatusTab("All"); // Reset status tab
     setStatusFilter("All");
     setPaymentFilter("All");
     setCashierFilter("All");
@@ -221,14 +241,29 @@ const SalesPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const handleView = (transaction: any) => {
-    setSelectedTransaction(transaction);
-    setIsViewModalOpen(true);
+  // Handle status tab change
+  const handleStatusTabChange = (status: string) => {
+    setActiveStatusTab(status);
+    setStatusFilter(status); // Keep them in sync
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  // Handle status filter change (from dropdown)
+  const handleStatusFilterChange = (status: string) => {
+    setStatusFilter(status);
+    setActiveStatusTab(status); // Keep tabs in sync
+    setCurrentPage(1); // Reset to first page when filtering
   };
 
   const handleNavigateToSale = (transaction: any) => {
     if (storeId && transaction.id) {
       navigate(`/store/${storeId}/sales/${transaction.id}`);
+    }
+  };
+
+  const handleNavigateToEdit = (transaction: any) => {
+    if (storeId && transaction.id) {
+      navigate(`/store/${storeId}/sales/${transaction.id}/edit`);
     }
   };
 
@@ -320,6 +355,42 @@ const SalesPage: React.FC = () => {
     setIsSaleCreationModalOpen(false);
   };
 
+  const handleStatusChange = async (transactionId: string, newStatus: string) => {
+    try {
+      // Find the transaction to get its current data
+      const transaction = transactions.find((t: any) => t.id === transactionId);
+      if (!transaction) {
+        toast.error("Transaction not found");
+        return;
+      }
+
+      // Create update data with existing values
+      const updateData = {
+        paymentMethod: transaction.payment || "CASH",
+        status: newStatus,
+        totalAmount: transaction.total || 0,
+        tax: transaction.tax || 0,
+        cashierName: transaction.cashier || "Unknown",
+      };
+
+      console.log("Updating transaction status:", {
+        transactionId,
+        updateData,
+      });
+
+      // Dispatch the update action
+      await dispatch(updateSale({
+        saleId: transactionId,
+        updateData,
+      })).unwrap();
+
+      toast.success("Transaction status updated successfully");
+    } catch (error) {
+      console.error("Failed to update transaction status:", error);
+      toast.error("Failed to update transaction status");
+    }
+  };
+
   return (
     <>
       <Header />
@@ -340,6 +411,14 @@ const SalesPage: React.FC = () => {
           />
           {/* Stats Grid */}
           <StatsGrid stats={stats} loading={loading} />
+          
+          {/* Status Tabs */}
+          <StatusTabs
+            activeTab={activeStatusTab}
+            onTabChange={handleStatusTabChange}
+            salesCounts={salesCounts}
+          />
+          
           {/* Filters Section */}
           <div className="bg-white rounded-lg p-6 mb-6">
             <FilterBar
@@ -349,7 +428,7 @@ const SalesPage: React.FC = () => {
               cashierFilter={cashierFilter}
               dateFilter={dateFilter}
               onSearchChange={setSearchTerm}
-              onStatusChange={setStatusFilter}
+              onStatusChange={handleStatusFilterChange}
               onPaymentChange={setPaymentFilter}
               onCashierChange={setCashierFilter}
               onDateChange={setDateFilter}
@@ -390,6 +469,9 @@ const SalesPage: React.FC = () => {
                 onEdit={handleEdit}
                 onPrint={handlePrint}
                 onDelete={handleDelete}
+                onStatusChange={handleStatusChange}
+                onEditNavigation={handleNavigateToEdit}
+                isUpdating={loading}
               />
             )}
 
