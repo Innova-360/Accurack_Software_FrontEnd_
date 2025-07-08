@@ -12,11 +12,19 @@ interface ReturnedProduct {
   quantity: number;
   returnDate: string;
   reason: string;
-  status: "scrap" | "restock";
+  status: "saleable" | "no_saleable" | "scrap";
   customerInfo?: {
     name: string;
     phone: string;
   };
+}
+
+interface GroupedReturn {
+  saleId: string;
+  returnDate: string;
+  customerName: string;
+  products: ReturnedProduct[];
+  totalAmountReturned: number;
 }
 
 // Mock product data for selection
@@ -77,7 +85,7 @@ const AddReturnModal: React.FC<AddReturnModalProps> = ({
     quantity: 1,
     returnDate: new Date().toISOString().split("T")[0],
     reason: "",
-    status: "restock" as "scrap" | "restock",
+    status: "saleable" as "saleable" | "no_saleable" | "scrap",
     customerName: "",
     customerPhone: "",
   });
@@ -164,7 +172,7 @@ const AddReturnModal: React.FC<AddReturnModalProps> = ({
       quantity: 1,
       returnDate: new Date().toISOString().split("T")[0],
       reason: "",
-      status: "restock",
+      status: "saleable",
       customerName: "",
       customerPhone: "",
     });
@@ -296,7 +304,8 @@ const AddReturnModal: React.FC<AddReturnModalProps> = ({
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57]"
               >
-                <option value="restock">Restock</option>
+                <option value="saleable">Saleable</option>
+                <option value="no_saleable">No Saleable</option>
                 <option value="scrap">Scrap</option>
               </select>
             </div>
@@ -376,16 +385,246 @@ const AddReturnModal: React.FC<AddReturnModalProps> = ({
   );
 };
 
+interface SaleDetailModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  saleId: string;
+  products: ReturnedProduct[];
+}
+
+const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
+  isOpen,
+  onClose,
+  saleId,
+  products,
+}) => {
+  if (!isOpen) return null;
+
+  const totalAmount = products.reduce(
+    (sum, product) => sum + product.sellingPrice * product.quantity,
+    0
+  );
+  const customerName = products[0]?.customerInfo?.name || "N/A";
+  const customerPhone = products[0]?.customerInfo?.phone || "N/A";
+  const returnDate = products[0]?.returnDate || "";
+
+  return (
+    <div className="fixed inset-0 z-50 bg-gray-50 overflow-y-auto">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <svg
+                className="w-6 h-6 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+              </svg>
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-[#0f4d57]">
+                Sale Details: {saleId}
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                View all returned products for this sale
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-[#0f4d57] text-white rounded-lg hover:bg-[#0d3f47] transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="px-6 py-8">
+        {/* Sale Summary */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Sale Summary</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Customer Name</p>
+              <p className="text-lg font-semibold text-gray-900 mt-1">{customerName}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Customer Phone</p>
+              <p className="text-lg font-semibold text-gray-900 mt-1">{customerPhone}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Return Date</p>
+              <p className="text-lg font-semibold text-gray-900 mt-1">
+                {new Date(returnDate).toLocaleDateString()}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Amount Returned</p>
+              <p className="text-lg font-semibold text-gray-900 mt-1">
+                ${totalAmount.toFixed(2)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Products Table */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Returned Products ({products.length})
+            </h3>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Product Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    PLU/UPC
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Quantity
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Selling Price
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Vendor Price
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Amount
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Reason
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {products.map((product) => (
+                  <tr key={product.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">
+                        {product.productName}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-blue-600 font-mono">
+                        {product.pluUpc}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 font-semibold">
+                        {product.quantity}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 font-semibold">
+                        ${product.sellingPrice.toFixed(2)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-600">
+                        ${product.vendorPrice.toFixed(2)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 font-semibold">
+                        ${(product.sellingPrice * product.quantity).toFixed(2)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          product.status === "saleable"
+                            ? "bg-green-100 text-green-800"
+                            : product.status === "no_saleable"
+                            ? "bg-orange-100 text-orange-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {product.status === "saleable"
+                          ? "Saleable"
+                          : product.status === "no_saleable"
+                          ? "No Saleable"
+                          : "Scrap"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 max-w-xs">
+                        {product.reason}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Summary Footer */}
+        <div className="mt-8 bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-600">
+              Total Products: {products.length} | Total Quantity: {products.reduce((sum, p) => sum + p.quantity, 0)}
+            </div>
+            <div className="text-lg font-semibold text-gray-900">
+              Total Amount: ${totalAmount.toFixed(2)}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Return: React.FC = () => {
   const [returnedProducts, setReturnedProducts] =
     useState<ReturnedProduct[]>(returnedProductsData);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "scrap" | "restock">(
+  const [statusFilter, setStatusFilter] = useState<"all" | "saleable" | "no_saleable" | "scrap">(
     "all"
   );
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  // Group products by sale ID
+  const groupedReturns = returnedProducts.reduce((acc, product) => {
+    if (!acc[product.saleId]) {
+      acc[product.saleId] = {
+        saleId: product.saleId,
+        returnDate: product.returnDate,
+        customerName: product.customerInfo?.name || "N/A",
+        products: [],
+        totalAmountReturned: 0,
+      };
+    }
+    acc[product.saleId].products.push(product);
+    acc[product.saleId].totalAmountReturned += product.sellingPrice * product.quantity;
+    return acc;
+  }, {} as Record<string, GroupedReturn>);
+
+  const groupedReturnsArray = Object.values(groupedReturns);
 
   // Calculate stats
   const totalReturnedItems = returnedProducts.reduce(
@@ -402,24 +641,28 @@ const Return: React.FC = () => {
     0
   );
 
-  // Filter products
-  const filteredProducts = returnedProducts.filter((product) => {
-    const matchesSearch =
+  // Filter grouped returns
+  const filteredGroupedReturns = groupedReturnsArray.filter((groupedReturn) => {
+    // Filter by search term
+    const matchesSearch = groupedReturn.products.some(product =>
       product.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.saleId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.pluUpc.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "all" || product.status === statusFilter;
-
+      product.pluUpc.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      groupedReturn.customerName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    // Filter by status
+    const matchesStatus = statusFilter === "all" || 
+      groupedReturn.products.some(product => product.status === statusFilter);
+    
     return matchesSearch && matchesStatus;
   });
 
   // Pagination
-  const totalPages = Math.ceil(filteredProducts.length / rowsPerPage);
+  const totalPages = Math.ceil(filteredGroupedReturns.length / rowsPerPage);
   const startIndex = (currentPage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
-  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+  const currentGroupedReturns = filteredGroupedReturns.slice(startIndex, endIndex);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -619,22 +862,41 @@ const Return: React.FC = () => {
               </span>
             </button>
             <button
-              onClick={() => setStatusFilter("restock")}
+              onClick={() => setStatusFilter("saleable")}
               className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                statusFilter === "restock"
+                statusFilter === "saleable"
                   ? "bg-[#0f4d57] text-white"
                   : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
               }`}
             >
-              Restock
+              Saleable
               <span
                 className={`ml-2 py-0.5 px-2.5 rounded-full text-xs font-medium ${
-                  statusFilter === "restock"
+                  statusFilter === "saleable"
                     ? "bg-white/20 text-white"
                     : "bg-green-100 text-green-800"
                 }`}
               >
-                {returnedProducts.filter((p) => p.status === "restock").length}
+                {returnedProducts.filter((p) => p.status === "saleable").length}
+              </span>
+            </button>
+            <button
+              onClick={() => setStatusFilter("no_saleable")}
+              className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === "no_saleable"
+                  ? "bg-[#0f4d57] text-white"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+              }`}
+            >
+              No Saleable
+              <span
+                className={`ml-2 py-0.5 px-2.5 rounded-full text-xs font-medium ${
+                  statusFilter === "no_saleable"
+                    ? "bg-white/20 text-white"
+                    : "bg-orange-100 text-orange-800"
+                }`}
+              >
+                {returnedProducts.filter((p) => p.status === "no_saleable").length}
               </span>
             </button>
             <button
@@ -714,80 +976,70 @@ const Return: React.FC = () => {
                     Sale ID
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Product Name
+                    Customer Name
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    PLU/UPC
+                    Products Count
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Selling Price
+                    Total Selling Price
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Vendor Price
+                    Amount Returned
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Quantity
+                    Refund Type
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Return Date
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Reason
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {currentProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">
-                      {product.saleId}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {product.productName}
-                      </div>
-                      {product.customerInfo && (
-                        <div className="text-xs text-gray-500">
-                          Customer: {product.customerInfo.name}
+                {currentGroupedReturns.map((groupedReturn) => {
+                  return (
+                    <tr 
+                      key={groupedReturn.saleId} 
+                      className="hover:bg-gray-50 cursor-pointer transition-colors"
+                      onClick={() => {
+                        setSelectedSaleId(groupedReturn.saleId);
+                        setIsDetailModalOpen(true);
+                      }}
+                    >
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">
+                        {groupedReturn.saleId}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                        {groupedReturn.customerName}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div className="flex items-center">
+                          <span className="font-medium">{groupedReturn.products.length} products</span>
+                          <svg className="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
                         </div>
-                      )}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600 font-mono">
-                      {product.pluUpc}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
-                      ${product.sellingPrice.toFixed(2)}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
-                      ${product.vendorPrice.toFixed(2)}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
-                      {product.quantity}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {new Date(product.returnDate).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {product.reason}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          product.status === "restock"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {product.status === "restock" ? "Restock" : "Scrap"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                        <div className="text-xs text-gray-500 mt-1">
+                          Click to view details
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
+                        ${groupedReturn.products.reduce((sum, product) => sum + product.sellingPrice, 0).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
+                        ${groupedReturn.totalAmountReturned.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          Cash Refund
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {new Date(groupedReturn.returnDate).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -799,8 +1051,8 @@ const Return: React.FC = () => {
                 <div className="flex items-center">
                   <p className="text-sm text-gray-700">
                     Showing {startIndex + 1} to{" "}
-                    {Math.min(endIndex, filteredProducts.length)} of{" "}
-                    {filteredProducts.length} results
+                    {Math.min(endIndex, filteredGroupedReturns.length)} of{" "}
+                    {filteredGroupedReturns.length} results
                   </p>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -842,7 +1094,7 @@ const Return: React.FC = () => {
         </div>
 
         {/* Empty State */}
-        {filteredProducts.length === 0 && (
+        {filteredGroupedReturns.length === 0 && (
           <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
             <svg
               className="mx-auto h-12 w-12 text-gray-400"
@@ -876,6 +1128,19 @@ const Return: React.FC = () => {
           onClose={() => setIsAddModalOpen(false)}
           onSave={handleAddReturn}
           availableProducts={availableProducts}
+        />
+      )}
+
+      {/* Sale Detail Modal */}
+      {isDetailModalOpen && selectedSaleId && (
+        <SaleDetailModal
+          isOpen={isDetailModalOpen}
+          onClose={() => {
+            setIsDetailModalOpen(false);
+            setSelectedSaleId(null);
+          }}
+          saleId={selectedSaleId}
+          products={groupedReturns[selectedSaleId]?.products || []}
         />
       )}
     </div>

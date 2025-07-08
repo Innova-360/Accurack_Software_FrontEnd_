@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { FaPlus, FaBars, FaEye, FaEdit, FaTrash, FaBox, FaLink } from "react-icons/fa";
+import {
+  FaPlus,
+  FaBars,
+  FaEye,
+  FaEdit,
+  FaTrash,
+  FaBox,
+  FaLink,
+} from "react-icons/fa";
 import { SpecialButton, IconButton } from "../buttons";
 import type { Supplier } from "./types";
 import Pagination from "./Pagination";
@@ -162,8 +170,7 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
                   <IconButton
                     icon={<FaLink />}
                     variant="warning"
-                                      onClick={() => onViewProducts(supplier)}
-
+                    onClick={() => onViewProducts(supplier)}
                     title="Assign Products"
                     className=" ring-yellow-200 hover:ring-yellow-300"
                   />
@@ -172,8 +179,8 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
                     variant="secondary"
                     onClick={() => onViewAssignedProducts(supplier)}
                     title="View Assigned Products"
-                    className="border border-gray-400 hover:border-gray-500 bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-700"
-                  />
+                    className=" bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-700"
+                  /> */}
                 </div>
               </div>
             </div>
