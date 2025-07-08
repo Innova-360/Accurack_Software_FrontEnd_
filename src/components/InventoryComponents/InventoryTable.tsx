@@ -159,6 +159,17 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                   {getSortIcon("price")}
                 </div>
               </th>
+
+              <th
+                className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100 min-w-[80px]"
+                onClick={() => onSort("supplier")}
+              >
+                <div className="flex items-center justify-between">
+                  Supplier
+                  {getSortIcon("supplier")}
+                </div>
+              </th>
+
               <th
                 className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100 min-w-[100px]"
                 onClick={() => onSort("category")}
@@ -310,6 +321,19 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                               ? `$${(product.price as number).toFixed(2)}`
                               : "$0.00")}
                       </td>
+
+                      
+                      <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
+                        <div className="truncate">
+                          {typeof product.supplier === "string"
+                            ? product.supplier
+                            : (product.supplier as any)?.name ||
+                              "Uncategorized"}
+                        </div>
+                      </td>
+
+
+
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <div className="truncate">
                           {typeof product.category === "string"
@@ -467,6 +491,17 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                             <span>${variant.price.toFixed(2)}</span>
                           </td>
+
+                          <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
+                            <div className="truncate">
+                              {typeof product.supplier === "string"
+                                ? product.supplier
+                                : (product.supplier as any)?.name ||
+                                  "Uncategorized"}
+                            </div>
+                          </td>
+
+                          
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                             <div className="truncate">
                               {typeof product.category === "string"
