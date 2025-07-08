@@ -120,7 +120,7 @@ const ProductDetails: React.FC = () => {
     );
   }
 
-  console.log("greate product", product)
+  console.log("greate product", product);
 
   return (
     <>
@@ -185,7 +185,7 @@ const ProductDetails: React.FC = () => {
                         PLU / UPC
                       </label>
                       <div className="text-md text-gray-800 font-semibold">
-                        {product.pluUpc || "Not specified"}
+                        {product.plu || "Not specified"}
                       </div>
                     </div>
                   </div>
@@ -473,105 +473,6 @@ const ProductDetails: React.FC = () => {
                   </div>
                 </div>
               </div>
-
-              {/* Suppliers */}
-              <div className="bg-white rounded-lg">
-                <div className="flex justify-between items-center border-b border-gray-200 pb-5 p-5">
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    Suppliers
-                  </h2>
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                    + Add Supplier
-                  </button>
-                </div>
-
-                <div className="p-6">
-                  {/* Table Header */}
-                  <div className="grid grid-cols-6 gap-4 pb-3 mb-4 text-sm font-medium text-gray-500 border-b border-gray-200">
-                    <div>Supplier Name</div>
-                    <div>Contact Info</div>
-                    <div>Address</div>
-                    <div>Cost Price</div>
-                    <div>Status</div>
-                    <div>Primary</div>
-                  </div>
-
-                  {/* Table Rows */}
-                  <div className="space-y-4">
-                  
-                    {product.productSuppliers &&
-                    product.productSuppliers.length > 0 ? (
-                      product.productSuppliers.map((productSupplier, index) => (
-                        <div
-                          key={productSupplier.id || index}
-                          className="grid grid-cols-6 gap-4 items-center py-3 hover:bg-gray-50 rounded-lg px-2"
-                        >
-                          <div className="text-sm text-gray-900 font-medium">
-                            <div className="font-medium">
-                              {productSupplier.supplier?.name || "Unknown Supplier"}
-                            </div>
-                            <div className="font-mono text-xs text-gray-500 mt-1">
-                              ID: {productSupplier.supplier?.id?.substring(0, 8) || "N/A"}
-                            </div>
-                          </div>
-                          <div className="text-sm">
-                            <div className="space-y-1">
-                              {productSupplier.supplier?.email && (
-                                <div className="text-blue-600 hover:text-blue-800 cursor-pointer">
-                                  {productSupplier.supplier.email}
-                                </div>
-                              )}
-                              {productSupplier.supplier?.phone && (
-                                <div className="text-gray-700">
-                                  {productSupplier.supplier.phone}
-                                </div>
-                              )}
-                              {!productSupplier.supplier?.email && !productSupplier.supplier?.phone && (
-                                <span className="text-gray-400">No contact info</span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            <div className="max-w-xs truncate" title={productSupplier.supplier?.address}>
-                              {productSupplier.supplier?.address || "No address"}
-                            </div>
-                          </div>
-                          <div className="text-sm text-gray-900 font-semibold">
-                            ${productSupplier.costPrice?.toFixed(2) || "0.00"}
-                          </div>
-                          <div className="text-sm">
-                            <span
-                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                productSupplier.supplier?.status === "active"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {productSupplier.supplier?.status || "Unknown"}
-                            </span>
-                          </div>
-                          <div className="text-sm">
-                            <span
-                              className={`text-lg ${productSupplier.state === "primary" ? "text-yellow-500" : "text-gray-300"}`}
-                              title={
-                                productSupplier.state === "primary"
-                                  ? "Primary Supplier"
-                                  : "Secondary Supplier"
-                              }
-                            >
-                              {productSupplier.state === "primary" ? "★" : "☆"}
-                            </span>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-6 text-gray-500">
-                        No suppliers found
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Right Column - 60% width (3/5) */}
@@ -660,70 +561,6 @@ const ProductDetails: React.FC = () => {
                               : (product.itemQuantity || 0) > 20
                                 ? "Low"
                                 : "Critical"}
-                          </span>
-                        </div>
-                        <div>
-                          <button className="text-gray-400 hover:text-gray-600">
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                      {/* Warehouse Row */}
-                      <div className="grid grid-cols-5 gap-4 py-3 items-center">
-                        <div className="text-sm text-gray-900 font-medium">
-                          Warehouse
-                        </div>
-                        <div className="text-sm text-gray-900 font-semibold">
-                          15 units
-                        </div>
-                        <div className="text-sm text-gray-900">20 units</div>
-                        <div>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            Low
-                          </span>
-                        </div>
-                        <div>
-                          <button className="text-gray-400 hover:text-gray-600">
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                      {/* Online Store Row */}
-                      <div className="grid grid-cols-5 gap-4 py-3 items-center">
-                        <div className="text-sm text-gray-900 font-medium">
-                          Online Store
-                        </div>
-                        <div className="text-sm text-gray-900 font-semibold">
-                          2 units
-                        </div>
-                        <div className="text-sm text-gray-900">5 units</div>
-                        <div>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                            Critical
                           </span>
                         </div>
                         <div>
@@ -888,6 +725,116 @@ const ProductDetails: React.FC = () => {
                   </table>
                 </div>
               </div>
+
+              {/* Suppliers */}
+              <div className="bg-white rounded-lg">
+                <div className="flex justify-between items-center border-b border-gray-200 pb-5 p-5">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Suppliers
+                  </h2>
+                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    + Add Supplier
+                  </button>
+                </div>
+
+                <div className="p-6">
+                  {/* Table Header */}
+                  <div className="grid grid-cols-6 gap-4 pb-3 mb-4 text-sm font-medium text-gray-500 border-b border-gray-200">
+                    <div>Supplier Name</div>
+                    <div>Contact Info</div>
+                    <div>Address</div>
+                    <div>Cost Price</div>
+                    <div>Status</div>
+                    <div>Primary</div>
+                  </div>
+
+                  {/* Table Rows */}
+                  <div className="space-y-4">
+                    {product.productSuppliers &&
+                    product.productSuppliers.length > 0 ? (
+                      product.productSuppliers.map((productSupplier, index) => (
+                        <div
+                          key={productSupplier.id || index}
+                          className="grid grid-cols-6 gap-4 items-center py-3 hover:bg-gray-50 rounded-lg px-2"
+                        >
+                          <div className="text-sm text-gray-900 font-medium">
+                            <div className="font-medium">
+                              {productSupplier.supplier?.name ||
+                                "Unknown Supplier"}
+                            </div>
+                            <div className="font-mono text-xs text-gray-500 mt-1">
+                              ID:{" "}
+                              {productSupplier.supplier?.id?.substring(0, 8) ||
+                                "N/A"}
+                            </div>
+                          </div>
+                          <div className="text-sm">
+                            <div className="space-y-1">
+                              {productSupplier.supplier?.email && (
+                                <div className="text-blue-600 hover:text-blue-800 cursor-pointer">
+                                  {productSupplier.supplier.email}
+                                </div>
+                              )}
+                              {productSupplier.supplier?.phone && (
+                                <div className="text-gray-700">
+                                  {productSupplier.supplier.phone}
+                                </div>
+                              )}
+                              {!productSupplier.supplier?.email &&
+                                !productSupplier.supplier?.phone && (
+                                  <span className="text-gray-400">
+                                    No contact info
+                                  </span>
+                                )}
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <div
+                              className="max-w-xs truncate"
+                              title={productSupplier.supplier?.address}
+                            >
+                              {productSupplier.supplier?.address ||
+                                "No address"}
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-900 font-semibold">
+                            ${productSupplier.costPrice?.toFixed(2) || "0.00"}
+                          </div>
+                          <div className="text-sm">
+                            <span
+                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                productSupplier.supplier?.status === "active"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {productSupplier.supplier?.status || "Unknown"}
+                            </span>
+                          </div>
+                          <div className="text-sm">
+                            <span
+                              className={`text-lg ${productSupplier.state === "primary" ? "text-yellow-500" : "text-gray-300"}`}
+                              title={
+                                productSupplier.state === "primary"
+                                  ? "Primary Supplier"
+                                  : "Secondary Supplier"
+                              }
+                            >
+                              {productSupplier.state === "primary" ? "★" : "☆"}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-6 text-gray-500">
+                        No suppliers found
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              
             </div>
           </div>
         </div>
