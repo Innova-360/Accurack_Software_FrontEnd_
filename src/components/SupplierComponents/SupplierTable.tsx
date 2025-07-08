@@ -173,7 +173,6 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
                     onClick={() => onViewAssignedProducts(supplier)}
                     title="View Assigned Products"
                     className=" bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-700"
-                  /> */}
                 </div>
               </div>
             </div>

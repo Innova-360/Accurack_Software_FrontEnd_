@@ -1,12 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react";
-import {
-  FaPlus,
-  FaBars,
-  FaEye,
-  FaEdit,
-  FaTrash,
-  FaSearch,
-} from "react-icons/fa";
+
+import React, { useState } from "react";
+import { FaPlus, FaBars, FaEye, FaEdit, FaTrash, FaBox, FaLink } from "react-icons/fa";
 import { SpecialButton, IconButton } from "../buttons";
 import type { Supplier } from "./types";
 import Pagination from "./Pagination";
