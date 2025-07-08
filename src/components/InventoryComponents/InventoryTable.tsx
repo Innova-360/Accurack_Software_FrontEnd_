@@ -94,6 +94,8 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
       </span>
     </div>
   );
+
+  console.log("Greate product", products);
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       <div className="overflow-x-auto">
@@ -159,6 +161,17 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                   {getSortIcon("price")}
                 </div>
               </th>
+
+              <th
+                className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100 min-w-[80px]"
+                onClick={() => onSort("supplier")}
+              >
+                <div className="flex items-center justify-between">
+                  Supplier
+                  {getSortIcon("supplier")}
+                </div>
+              </th>
+
               <th
                 className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100 min-w-[100px]"
                 onClick={() => onSort("category")}
@@ -242,7 +255,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                               </div>
                             )}
                           </div>
-                          {product.quantity < 10 && (
+                          {!hasVariantsToShow && product.quantity < 10 && (
                             <svg
                               className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 flex-shrink-0"
                               fill="currentColor"
@@ -258,29 +271,35 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                         </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                        <span
-                          className={
-                            product.quantity < 10
-                              ? "text-red-600 font-bold"
-                              : ""
-                          }
-                        >
-                          {product.quantity}
-                        </span>
+                        {!hasVariantsToShow && (
+                          <span
+                            className={
+                              product.quantity < 10
+                                ? "text-red-600 font-bold"
+                                : ""
+                            }
+                          >
+                            {product.quantity}
+                          </span>
+                        )}
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-blue-600 border-b border-gray-300">
-                        <div className="truncate">
-                          {typeof product.plu === "string"
-                            ? product.plu.split("/")[0]
-                            : String(product.plu || "N/A")}
-                        </div>
+                        {!hasVariantsToShow && (
+                          <div className="truncate">
+                            {typeof product.plu === "string"
+                              ? product.plu.split("/")[0]
+                              : String(product.plu || "N/A")}
+                          </div>
+                        )}
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-blue-600 border-b border-gray-300">
-                        <div className="truncate">
-                          {typeof product.sku === "string"
-                            ? product.sku
-                            : String(product.sku || "N/A")}
-                        </div>
+                        {!hasVariantsToShow && (
+                          <div className="truncate">
+                            {typeof product.sku === "string"
+                              ? product.sku
+                              : String(product.sku || "N/A")}
+                          </div>
+                        )}
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <div
@@ -297,12 +316,27 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                         </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                        {typeof product.price === "string"
-                          ? product.price
-                          : typeof product.price === "number"
-                            ? `$${(product.price as number).toFixed(2)}`
-                            : "$0.00"}
+                        {!hasVariantsToShow &&
+                          (typeof product.price === "string"
+                            ? product.price
+                            : typeof product.price === "number"
+                              ? `$${(product.price as number).toFixed(2)}`
+                              : "$0.00")}
                       </td>
+
+                      <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
+                        <div className="truncate">
+                          {typeof product.supplier === "string"
+                            ? product.supplier
+                            : (product.supplier as any)?.name ||
+                              (product.productSuppliers &&
+                                product.productSuppliers.length > 0 &&
+                                product.productSuppliers[0].supplier &&
+                                product.productSuppliers[0].supplier.name) ||
+                              "supplier not found"}
+                        </div>
+                      </td>
+
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <div className="truncate">
                           {typeof product.category === "string"
@@ -312,9 +346,10 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                         </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                        {typeof product.itemsPerUnit === "number"
-                          ? product.itemsPerUnit
-                          : String(product.itemsPerUnit || "1")}
+                        {!hasVariantsToShow &&
+                          (typeof product.itemsPerUnit === "number"
+                            ? product.itemsPerUnit
+                            : String(product.itemsPerUnit || "1"))}
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <div className="flex items-center gap-2">
@@ -454,30 +489,33 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                               {typeof product.name === "string"
                                 ? product.name
                                 : String(product.name || "Product")}
-                              {variant.discountAmount &&
-                                variant.discountAmount > 0 && (
-                                  <div className="text-xs text-green-600">
-                                    ${variant.discountAmount} discount
-                                  </div>
-                                )}
-                              {variant.percentDiscount &&
-                                variant.percentDiscount > 0 && (
-                                  <div className="text-xs text-green-600">
-                                    {variant.percentDiscount}% off
-                                  </div>
-                                )}
                             </div>
                           </td>
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                            <div className="flex flex-col">
-                              <span>${variant.price.toFixed(2)}</span>
-                              {variant.msrpPrice && variant.msrpPrice > 0 && (
-                                <span className="text-xs text-gray-500 line-through">
-                                  MSRP: ${variant.msrpPrice.toFixed(2)}
-                                </span>
-                              )}
+                            <span>${variant.price.toFixed(2)}</span>
+                          </td>
+
+                          <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
+                            {/* <div className="truncate">
+                              {typeof product.supplier === "string"
+                                ? product.supplier
+                                : (product.supplier as any)?.name ||
+                                  "No supplier"}
+                            </div> */}
+
+                            <div className="truncate">
+                              {typeof product.supplier === "string"
+                                ? product.supplier
+                                : (product.supplier as any)?.name ||
+                                  (product.productSuppliers &&
+                                    product.productSuppliers.length > 0 &&
+                                    product.productSuppliers[0].supplier &&
+                                    product.productSuppliers[0].supplier
+                                      .name) ||
+                                  "supplier not found"}
                             </div>
                           </td>
+
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                             <div className="truncate">
                               {typeof product.category === "string"
@@ -487,19 +525,11 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                             </div>
                           </td>
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                            <div className="flex flex-col text-xs">
-                              <span>
-                                {typeof product.itemsPerUnit === "number"
-                                  ? product.itemsPerUnit
-                                  : String(product.itemsPerUnit || "1")}
-                              </span>
-                              {variant.packIds &&
-                                variant.packIds.length > 0 && (
-                                  <span className="text-blue-600">
-                                    {variant.packIds.length} pack(s)
-                                  </span>
-                                )}
-                            </div>
+                            <span>
+                              {typeof product.itemsPerUnit === "number"
+                                ? product.itemsPerUnit
+                                : String(product.itemsPerUnit || "1")}
+                            </span>
                           </td>
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                             {/* Empty actions cell for variants */}

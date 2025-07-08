@@ -18,7 +18,7 @@ import {
   EditProductModal,
   DeleteAllInventoryModal,
 } from "../../components/InventoryComponents";
-import { productAPI, type ApiProduct } from "../../services/productAPI";
+import { productAPI } from "../../services/productAPI";
 import type { Product } from "../../data/inventoryData";
 import type { EditProductFormData } from "../../components/InventoryComponents/EditProductModal";
 import {
@@ -111,6 +111,11 @@ const Inventory: React.FC = () => {
     direction: "asc" | "desc";
   } | null>(null);
 
+  // --- Custom search state ---
+  const [searchResults, setSearchResults] = useState<Product[] | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
   // Fetch products from API with pagination and filters
   const { products, loading, error, pagination, fetchWithParams, refetch } =
     useProducts({
@@ -161,6 +166,28 @@ const Inventory: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  // --- Search API integration ---
+  useEffect(() => {
+    if (!debouncedSearchTerm) {
+      setSearchResults(null);
+      setSearchLoading(false);
+      setSearchError(null);
+      return;
+    }
+    setSearchLoading(true);
+    setSearchError(null);
+    productAPI
+      .searchProducts(debouncedSearchTerm)
+      .then((results) => {
+        setSearchResults(results);
+        setSearchLoading(false);
+      })
+      .catch((err) => {
+        setSearchError(extractErrorMessage(err));
+        setSearchLoading(false);
+      });
+  }, [debouncedSearchTerm]);
+
   // Fetch data when search term changes
   useEffect(() => {
     if (debouncedSearchTerm !== searchTerm) return;
@@ -181,67 +208,31 @@ const Inventory: React.FC = () => {
     fetchWithParams,
   ]);
 
-  // Show loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="px-4 py-8 mx-auto max-w-7xl">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0f4d57] mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading products...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Show loading state only for initial load (when we have no products and no search term)
+  const isInitialLoading =
+    (loading && products.length === 0 && !searchTerm && !debouncedSearchTerm) ||
+    (searchLoading && debouncedSearchTerm && !searchResults);
 
-  // Show error state
-  if (error) {
-    const errorMessage = extractErrorMessage(error);
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="px-4 py-8 mx-auto max-w-7xl">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="text-red-500 mb-4">
-                <svg
-                  className="w-12 h-12 mx-auto"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <p className="text-gray-600 mb-4">
-                Error loading products: {errorMessage}
-              </p>
-              <button
-                onClick={refetch}
-                className="bg-[#0f4d57] hover:bg-[#083540] text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Retry
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Show error state only for initial load
+  const isInitialError = (error && !searchTerm) || searchError;
 
-  // Server-side pagination - use pagination data from API
-  const totalItems = pagination.total;
-  const totalPages = pagination.totalPages;
-  const startIndex = (pagination.page - 1) * pagination.limit;
-  const endIndex = Math.min(startIndex + pagination.limit, totalItems);
-  const currentProducts = products; // All products returned from API for current page
+  // Use search results if present, else fallback to paginated products
+  const isSearching = searchResults !== null;
+  const allProducts = isSearching ? searchResults : products;
+
+  // Pagination logic for both normal and search results
+  const paginatedProducts = isSearching
+    ? allProducts.slice(
+        (currentPage - 1) * rowsPerPage,
+        currentPage * rowsPerPage
+      )
+    : allProducts;
+
+  const totalItems = allProducts.length || pagination.total;
+  const totalPages =
+    Math.ceil(totalItems / rowsPerPage) || pagination.totalPages;
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = Math.min(startIndex + rowsPerPage, totalItems);
 
   // Calculate pagination for low stock products (client-side for now)
   const totalLowStockItems = lowStockProducts.length;
@@ -358,9 +349,7 @@ const Inventory: React.FC = () => {
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       // Use product IDs instead of array indices for server-side pagination
-      const allIds = currentProducts.map(
-        (product: Product, index: number) => index
-      );
+      const allIds = paginatedProducts.map((_, index: number) => index);
       setSelectedItems(allIds);
     } else {
       setSelectedItems([]);
@@ -425,7 +414,7 @@ const Inventory: React.FC = () => {
     productId: string
   ) => {
     try {
-      await productAPI.updateProduct(productId, productData);
+      await productAPI.updateProduct(productId, productData as any);
       toast.success("Product updated successfully!");
       refetch(); // Refresh the product list
       setIsEditProductModalOpen(false);
@@ -503,23 +492,23 @@ const Inventory: React.FC = () => {
   return (
     <>
       <Header />
-      <div className="p-4 sm:p-6 bg-white min-h-screen animate-fadeIn">
+      <div className="p-4 sm:p-6 bg-white min-h-screen">
         {/* Header Section */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 lg:mb-6 space-y-4 lg:space-y-0 animate-slideDown">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 lg:mb-6 space-y-4 lg:space-y-0">
           <h1 className="text-xl sm:text-2xl font-bold text-[#0f4d57]">
             Inventory Management
           </h1>{" "}
           <div className="flex flex-wrap gap-2 sm:gap-4">
             <button
               onClick={handleAddInventoryClick}
-              className="bg-[#0f4d57] text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base hover:bg-[#0d3f47] transition-all duration-300 hover:scale-105 hover:shadow-lg transform"
+              className="bg-[#0f4d57] text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base hover:bg-[#0d3f47]"
             >
               + Add Inventory
             </button>
             <button
               onClick={handleDeleteAllInventory}
               disabled={isDeletingAllProducts || products.length === 0}
-              className={`px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base transition-all duration-300 hover:scale-105 hover:shadow-lg transform ${
+              className={`px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base ${
                 isDeletingAllProducts || products.length === 0
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-red-700 hover:bg-red-800 text-white"
@@ -527,7 +516,7 @@ const Inventory: React.FC = () => {
             >
               {isDeletingAllProducts ? (
                 <>
-                  <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  <div className="inline-block rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Deleting...
                 </>
               ) : (
@@ -537,9 +526,8 @@ const Inventory: React.FC = () => {
           </div>
         </div>
         {/* Horizontal line */}
-        <hr className="border-gray-300 mb-6 animate-slideIn" />{" "}
-        {/* Stats Cards Section */}
-        <div className="animate-slideUp">
+        <hr className="border-gray-300 mb-6" /> {/* Stats Cards Section */}
+        <div>
           <InventoryStats
             totalProducts={inventoryStats.totalProducts}
             totalItems={inventoryStats.totalItems}
@@ -547,7 +535,7 @@ const Inventory: React.FC = () => {
           />
         </div>
         {/* Inventory Controls */}
-        <div className="animate-slideUp" style={{ animationDelay: "200ms" }}>
+        <div>
           <InventoryControls
             searchTerm={searchTerm}
             onSearchChange={handleSearchChange}
@@ -555,53 +543,132 @@ const Inventory: React.FC = () => {
             onGroupByChange={handleGroupByChange}
             rowsPerPage={rowsPerPage}
             onRowsPerPageChange={handleRowsPerPageChange}
+            isSearching={
+              loading &&
+              (searchTerm !== debouncedSearchTerm ||
+                Boolean(debouncedSearchTerm))
+            }
           />
         </div>
         {/* Inventory Table/View Container */}
         <div
-          className={`border border-gray-300 px-4 sm:px-6 lg:px-10 py-4 sm:py-5 rounded-lg rounded-t-none transition-all duration-300 animate-slideUp ${isPageChanging ? "opacity-75" : "opacity-100"}`}
-          style={{ animationDelay: "300ms" }}
+          className={`border border-gray-300 px-4 sm:px-6 lg:px-10 py-4 sm:py-5 rounded-lg rounded-t-none ${isPageChanging ? "opacity-75" : "opacity-100"}`}
         >
-          {/* Mobile View */}
-          <div className="block md:hidden">
-            {/* Mobile View Toggle */}
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-medium text-gray-700">View Mode:</h3>
-              <div className="flex bg-gray-100 rounded-lg p-1">
+          {/* Loading/Error indicator for search and table updates */}
+          {isInitialLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <div className="inline-block rounded-full h-8 w-8 border-b-2 border-[#0f4d57] animate-spin mb-2"></div>
+                <p className="text-gray-600 text-sm">
+                  {searchTerm || debouncedSearchTerm
+                    ? "Searching products..."
+                    : "Loading..."}
+                </p>
+              </div>
+            </div>
+          ) : isInitialError ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <div className="text-red-500 mb-4">
+                  <svg
+                    className="w-12 h-12 mx-auto"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <p className="text-gray-600 mb-4">
+                  Error loading products:{" "}
+                  {searchError || extractErrorMessage(error)}
+                </p>
                 <button
-                  onClick={() => setMobileViewType("cards")}
-                  className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                    mobileViewType === "cards"
-                      ? "bg-white text-[#0f4d57] shadow-sm"
-                      : "text-gray-600"
-                  }`}
+                  onClick={refetch}
+                  className="bg-[#0f4d57] hover:bg-[#083540] text-white px-4 py-2 rounded-lg"
                 >
-                  Cards
-                </button>
-                <button
-                  onClick={() => setMobileViewType("table")}
-                  className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                    mobileViewType === "table"
-                      ? "bg-white text-[#0f4d57] shadow-sm"
-                      : "text-gray-600"
-                  }`}
-                >
-                  Table
+                  Retry
                 </button>
               </div>
             </div>
+          ) : (
+            <div
+              className={
+                loading && (searchTerm || debouncedSearchTerm)
+                  ? "opacity-50"
+                  : "opacity-100"
+              }
+            >
+              {/* Mobile View */}
+              <div className="block md:hidden">
+                {/* Mobile View Toggle */}
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-medium text-gray-700">
+                    View Mode:
+                  </h3>
+                  <div className="flex bg-gray-100 rounded-lg p-1">
+                    <button
+                      onClick={() => setMobileViewType("cards")}
+                      className={`px-3 py-1 text-xs rounded-md ${
+                        mobileViewType === "cards"
+                          ? "bg-white text-[#0f4d57] shadow-sm"
+                          : "text-gray-600"
+                      }`}
+                    >
+                      Cards
+                    </button>
+                    <button
+                      onClick={() => setMobileViewType("table")}
+                      className={`px-3 py-1 text-xs rounded-md ${
+                        mobileViewType === "table"
+                          ? "bg-white text-[#0f4d57] shadow-sm"
+                          : "text-gray-600"
+                      }`}
+                    >
+                      Table
+                    </button>
+                  </div>
+                </div>
 
-            {mobileViewType === "cards" ? (
-              <InventoryMobileView
-                products={currentProducts}
-                groupedProducts={groupedProducts}
-                groupBy={groupBy}
-                expandedCategories={expandedCategories}
-                onToggleCategory={toggleCategory}
-                onProductViewed={handleViewProduct}
-              />
-            ) : (
-              <div className="overflow-x-auto">
+                {mobileViewType === "cards" ? (
+                  <InventoryMobileView
+                    products={paginatedProducts}
+                    groupedProducts={groupedProducts}
+                    groupBy={groupBy}
+                    expandedCategories={expandedCategories}
+                    onToggleCategory={toggleCategory}
+                    onProductViewed={handleViewProduct}
+                  />
+                ) : (
+                  <div className="overflow-x-auto">
+                    {groupBy === "category" && groupedProducts ? (
+                      <GroupedTableView
+                        groupedProducts={groupedProducts}
+                        expandedCategories={expandedCategories}
+                        onToggleCategory={toggleCategory}
+                      />
+                    ) : (
+                      <InventoryTable
+                        products={paginatedProducts}
+                        selectedItems={selectedItems}
+                        startIndex={startIndex}
+                        onProductDeleted={refetch}
+                        sortConfig={sortConfig}
+                        onSelectAll={handleSelectAll}
+                        onSelectItem={handleSelectItem}
+                        onSort={handleSort}
+                        onProductEdited={handleEditProduct}
+                        onProductViewed={handleViewProduct}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>{" "}
+              {/* Desktop View */}
+              <div className="hidden md:block overflow-x-auto">
                 {groupBy === "category" && groupedProducts ? (
                   <GroupedTableView
                     groupedProducts={groupedProducts}
@@ -610,10 +677,10 @@ const Inventory: React.FC = () => {
                   />
                 ) : (
                   <InventoryTable
-                    products={currentProducts}
+                    products={paginatedProducts}
                     selectedItems={selectedItems}
-                    startIndex={startIndex}
                     onProductDeleted={refetch}
+                    startIndex={startIndex}
                     sortConfig={sortConfig}
                     onSelectAll={handleSelectAll}
                     onSelectItem={handleSelectItem}
@@ -623,41 +690,7 @@ const Inventory: React.FC = () => {
                   />
                 )}
               </div>
-            )}
-          </div>{" "}
-          {/* Desktop View */}
-          <div className="hidden md:block overflow-x-auto">
-            {groupBy === "category" && groupedProducts ? (
-              <GroupedTableView
-                groupedProducts={groupedProducts}
-                expandedCategories={expandedCategories}
-                onToggleCategory={toggleCategory}
-              />
-            ) : (
-              <InventoryTable
-                products={currentProducts}
-                selectedItems={selectedItems}
-                onProductDeleted={refetch}
-                startIndex={startIndex}
-                sortConfig={sortConfig}
-                onSelectAll={handleSelectAll}
-                onSelectItem={handleSelectItem}
-                onSort={handleSort}
-                onProductEdited={handleEditProduct}
-                onProductViewed={handleViewProduct}
-              />
-            )}
-          </div>
-          {/* Pagination - Only show when not grouped by category */}
-          {groupBy !== "category" && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              startIndex={startIndex}
-              endIndex={endIndex}
-              onPageChange={handlePageChange}
-            />
+            </div>
           )}
         </div>{" "}
         {/* Low Stock Products Section */}
