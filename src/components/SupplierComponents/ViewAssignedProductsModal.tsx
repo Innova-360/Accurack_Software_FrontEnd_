@@ -63,7 +63,30 @@ const ViewAssignedProductsModal: React.FC<ViewAssignedProductsModalProps> = ({
       
       if (response.data?.success && response.data?.data?.data && Array.isArray(response.data.data.data)) {
         // Handle the actual API response structure
-        assignedProducts = response.data.data.data.map((product: { id: any; name: any; pluUpc: any; sku: any; categoryId: any; msrpPrice: any; singleItemSellingPrice: any; itemQuantity: any; createdAt: any; updatedAt: any; }) => ({
+         assignedProducts = response.data.data.data.map((assignment: any) => {
+          const product = assignment.product || {};
+          return {
+            id: product.id || assignment.productId || assignment.id,
+            name: product.name || 'N/A',
+            sku: product.pluUpc || product.sku || 'N/A',
+            categoryId: product.categoryId,
+            category: product.category?.name || 'Uncategorized',
+            costPrice: assignment.costPrice ?? product.msrpPrice ?? 0,
+            sellingPrice: product.singleItemSellingPrice ?? 0,
+            quantity: product.itemQuantity ?? 0,
+            status: 'active',
+            supplierType: assignment.state || 'primary',
+            assignedAt: assignment.createdAt || assignment.updatedAt || new Date().toISOString(),
+            ean: product.ean,
+            pluUpc: product.pluUpc,
+            itemQuantity: product.itemQuantity,
+            msrpPrice: product.msrpPrice,
+            singleItemSellingPrice: product.singleItemSellingPrice
+          };
+        });
+      } else if (response.data?.success && response.data?.data && Array.isArray(response.data.data)) {
+        // Handle the case where data is directly in response.data.data
+        assignedProducts = response.data.data.map((product: { id: any; name: any; pluUpc: any; sku: any; categoryId: any; msrpPrice: any; singleItemSellingPrice: any; itemQuantity: any; createdAt: any; updatedAt: any; }) => ({
           id: product.id,
           name: product.name,
           sku: product.pluUpc || product.sku,
@@ -71,7 +94,7 @@ const ViewAssignedProductsModal: React.FC<ViewAssignedProductsModalProps> = ({
           costPrice: product.msrpPrice || product.singleItemSellingPrice,
           sellingPrice: product.singleItemSellingPrice,
           quantity: product.itemQuantity,
-          status: 'active', // Default status
+          status: 'active',
           assignedAt: product.createdAt || product.updatedAt || new Date().toISOString()
         }));
       } else if (response.data?.data && Array.isArray(response.data.data)) {
