@@ -94,6 +94,8 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
       </span>
     </div>
   );
+
+  console.log("Greate product", products);
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       <div className="overflow-x-auto">
@@ -322,17 +324,18 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                               : "$0.00")}
                       </td>
 
-                      
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <div className="truncate">
                           {typeof product.supplier === "string"
                             ? product.supplier
                             : (product.supplier as any)?.name ||
-                              "Uncategorized"}
+                              (product.productSuppliers &&
+                                product.productSuppliers.length > 0 &&
+                                product.productSuppliers[0].supplier &&
+                                product.productSuppliers[0].supplier.name) ||
+                              "supplier not found"}
                         </div>
                       </td>
-
-
 
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <div className="truncate">
@@ -493,15 +496,26 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                           </td>
 
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
+                            {/* <div className="truncate">
+                              {typeof product.supplier === "string"
+                                ? product.supplier
+                                : (product.supplier as any)?.name ||
+                                  "No supplier"}
+                            </div> */}
+
                             <div className="truncate">
                               {typeof product.supplier === "string"
                                 ? product.supplier
                                 : (product.supplier as any)?.name ||
-                                  "Uncategorized"}
+                                  (product.productSuppliers &&
+                                    product.productSuppliers.length > 0 &&
+                                    product.productSuppliers[0].supplier &&
+                                    product.productSuppliers[0].supplier
+                                      .name) ||
+                                  "supplier not found"}
                             </div>
                           </td>
 
-                          
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                             <div className="truncate">
                               {typeof product.category === "string"

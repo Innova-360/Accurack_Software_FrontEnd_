@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import type { Product } from "../../data/inventoryData";
 import { productAPI } from "../../services/productAPI";
+import Barcode from "react-barcode";
 
 const ProductDetails: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -60,7 +61,7 @@ const ProductDetails: React.FC = () => {
               <div class="product-info">PLU: ${product.pluUpc}</div>
               ${product.ean ? `<div class="product-info">EAN: ${product.ean}</div>` : ""}
               <div class="barcode">${product.ean || product.pluUpc || product.sku}</div>
-              <div class="product-info">Price: $${product.singleItemSellingPrice || "0.00"}</div>
+              <div class="product-info">Price: $${product.price || "0.00"}</div>
             </body>
           </html>
         `);
@@ -195,7 +196,22 @@ const ProductDetails: React.FC = () => {
                       Barcode
                     </label>
                     <div className="relative bg-[#f9fafb] flex flex-row items-center justify-between p-4 rounded-lg">
-                      <img src="/img.png" alt="img" />
+                      <span>
+                        {/* Render barcode visually using react-barcode */}
+                        {product.plu ? (
+                          <Barcode
+                            value={product.plu}
+                            height={40}
+                            width={1.5}
+                            fontSize={14}
+                            displayValue={true}
+                          />
+                        ) : (
+                          <span className="text-gray-400">
+                            No PLU available
+                          </span>
+                        )}
+                      </span>
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => {
@@ -250,17 +266,6 @@ const ProductDetails: React.FC = () => {
                         {typeof product.category === "string"
                           ? product.category
                           : product.category?.name || "Not specified"}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-md font-medium text-gray-500 mb-2">
-                        Category Code
-                      </label>
-                      <div className="text-md text-gray-800 font-semibold">
-                        {typeof product.category === "object" &&
-                        product.category?.code
-                          ? product.category.code
-                          : "Not specified"}
                       </div>
                     </div>
                   </div>
@@ -326,53 +331,6 @@ const ProductDetails: React.FC = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Product IDs & References
-                    </label>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium text-gray-600">
-                          Product ID:
-                        </span>
-                        <br />
-                        <span className="text-gray-800 font-mono text-xs">
-                          {product.id}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600">
-                          Client ID:
-                        </span>
-                        <br />
-                        <span className="text-gray-800 font-mono text-xs">
-                          {product.clientId || "N/A"}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600">
-                          Store ID:
-                        </span>
-                        <br />
-                        <span className="text-gray-800 font-mono text-xs">
-                          {product.storeId || product.store?.id || "N/A"}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600">
-                          Category ID:
-                        </span>
-                        <br />
-                        <span className="text-gray-800 font-mono text-xs">
-                          {product.categoryId ||
-                            (typeof product.category === "object"
-                              ? product.category?.id
-                              : "N/A")}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
                       Product Status
                     </label>
                     <div className="inline-flex items-center px-3 py-2 rounded-full text-sm font-medium bg-green-50 text-green-700">
@@ -396,7 +354,7 @@ const ProductDetails: React.FC = () => {
                         Cost Price
                       </label>
                       <div className="text-md text-gray-800 font-semibold">
-                        ${product.singleItemCostPrice?.toFixed(2) || "0.00"}
+                        ${product.costPrice?.toFixed(2) || "0.00"}
                       </div>
                     </div>
                     <div>
@@ -404,7 +362,7 @@ const ProductDetails: React.FC = () => {
                         Selling Price
                       </label>
                       <div className="text-md text-gray-800 font-semibold">
-                        ${product.singleItemSellingPrice || "0.00"}
+                        {product.price || "0.00"}
                       </div>
                     </div>
                   </div>
@@ -491,7 +449,7 @@ const ProductDetails: React.FC = () => {
                         Current Stock
                       </label>
                       <div className="text-lg text-gray-900 font-semibold">
-                        {product.itemQuantity || 0} units
+                        {product.quantity || 0} units
                       </div>
                     </div>
                     <div>
@@ -543,7 +501,7 @@ const ProductDetails: React.FC = () => {
                           {product.store?.name || "Main Store"}
                         </div>
                         <div className="text-sm text-gray-900 font-semibold">
-                          {product.itemQuantity || 0} units
+                          {product.quantity || 0} units
                         </div>
                         <div className="text-sm text-gray-900">10 units</div>
                         <div>
@@ -732,20 +690,16 @@ const ProductDetails: React.FC = () => {
                   <h2 className="text-xl font-semibold text-gray-900">
                     Suppliers
                   </h2>
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                    + Add Supplier
-                  </button>
                 </div>
 
                 <div className="p-6">
                   {/* Table Header */}
-                  <div className="grid grid-cols-6 gap-4 pb-3 mb-4 text-sm font-medium text-gray-500 border-b border-gray-200">
+                  <div className="grid grid-cols-5 gap-4 pb-3 mb-4 text-sm font-medium text-gray-500 border-b border-gray-200">
                     <div>Supplier Name</div>
                     <div>Contact Info</div>
                     <div>Address</div>
                     <div>Cost Price</div>
                     <div>Status</div>
-                    <div>Primary</div>
                   </div>
 
                   {/* Table Rows */}
@@ -755,18 +709,18 @@ const ProductDetails: React.FC = () => {
                       product.productSuppliers.map((productSupplier, index) => (
                         <div
                           key={productSupplier.id || index}
-                          className="grid grid-cols-6 gap-4 items-center py-3 hover:bg-gray-50 rounded-lg px-2"
+                          className="grid grid-cols-5 gap-4 items-center py-3 hover:bg-gray-50 rounded-lg px-2"
                         >
                           <div className="text-sm text-gray-900 font-medium">
                             <div className="font-medium">
                               {productSupplier.supplier?.name ||
                                 "Unknown Supplier"}
                             </div>
-                            <div className="font-mono text-xs text-gray-500 mt-1">
+                            {/* <div className="font-mono text-xs text-gray-500 mt-1">
                               ID:{" "}
                               {productSupplier.supplier?.id?.substring(0, 8) ||
                                 "N/A"}
-                            </div>
+                            </div> */}
                           </div>
                           <div className="text-sm">
                             <div className="space-y-1">
@@ -800,27 +754,19 @@ const ProductDetails: React.FC = () => {
                           <div className="text-sm text-gray-900 font-semibold">
                             ${productSupplier.costPrice?.toFixed(2) || "0.00"}
                           </div>
+
                           <div className="text-sm">
                             <span
-                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                productSupplier.supplier?.status === "active"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {productSupplier.supplier?.status || "Unknown"}
-                            </span>
-                          </div>
-                          <div className="text-sm">
-                            <span
-                              className={`text-lg ${productSupplier.state === "primary" ? "text-yellow-500" : "text-gray-300"}`}
+                              className={`text-md ${productSupplier.state === "primary" ? "text-black-900 font-bold" : "text-black-700"}`}
                               title={
                                 productSupplier.state === "primary"
                                   ? "Primary Supplier"
                                   : "Secondary Supplier"
                               }
                             >
-                              {productSupplier.state === "primary" ? "★" : "☆"}
+                              {productSupplier.state === "primary"
+                                ? "Primary"
+                                : "Secondary"}
                             </span>
                           </div>
                         </div>
@@ -833,8 +779,6 @@ const ProductDetails: React.FC = () => {
                   </div>
                 </div>
               </div>
-
-              
             </div>
           </div>
         </div>
@@ -917,7 +861,7 @@ const ProductDetails: React.FC = () => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2v-4a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 012 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2v-4a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                   />
                 </svg>
                 View Sales Report

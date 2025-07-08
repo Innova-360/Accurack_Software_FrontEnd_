@@ -9,6 +9,7 @@ export interface Variant {
   discountAmount?: number;
   percentDiscount?: number;
   supplierId?: string;
+  supplierName?: string; // add suplier name
   packIds?: string[];
   color?: string;
   origin?: string;

@@ -111,6 +111,11 @@ const Inventory: React.FC = () => {
     direction: "asc" | "desc";
   } | null>(null);
 
+  // --- Custom search state ---
+  const [searchResults, setSearchResults] = useState<Product[] | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
   // Fetch products from API with pagination and filters
   const { products, loading, error, pagination, fetchWithParams, refetch } =
     useProducts({
@@ -161,6 +166,28 @@ const Inventory: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  // --- Search API integration ---
+  useEffect(() => {
+    if (!debouncedSearchTerm) {
+      setSearchResults(null);
+      setSearchLoading(false);
+      setSearchError(null);
+      return;
+    }
+    setSearchLoading(true);
+    setSearchError(null);
+    productAPI
+      .searchProducts(debouncedSearchTerm)
+      .then((results) => {
+        setSearchResults(results);
+        setSearchLoading(false);
+      })
+      .catch((err) => {
+        setSearchError(extractErrorMessage(err));
+        setSearchLoading(false);
+      });
+  }, [debouncedSearchTerm]);
+
   // Fetch data when search term changes
   useEffect(() => {
     if (debouncedSearchTerm !== searchTerm) return;
@@ -182,66 +209,30 @@ const Inventory: React.FC = () => {
   ]);
 
   // Show loading state only for initial load (when we have no products and no search term)
-  if (loading && products.length === 0 && !searchTerm && !debouncedSearchTerm) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="px-4 py-8 mx-auto max-w-7xl">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="rounded-full h-12 w-12 border-b-2 border-[#0f4d57] mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading products...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const isInitialLoading =
+    (loading && products.length === 0 && !searchTerm && !debouncedSearchTerm) ||
+    (searchLoading && debouncedSearchTerm && !searchResults);
 
-  // Show error state
-  if (error) {
-    const errorMessage = extractErrorMessage(error);
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="px-4 py-8 mx-auto max-w-7xl">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="text-red-500 mb-4">
-                <svg
-                  className="w-12 h-12 mx-auto"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <p className="text-gray-600 mb-4">
-                Error loading products: {errorMessage}
-              </p>
-              <button
-                onClick={refetch}
-                className="bg-[#0f4d57] hover:bg-[#083540] text-white px-4 py-2 rounded-lg"
-              >
-                Retry
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Show error state only for initial load
+  const isInitialError = (error && !searchTerm) || searchError;
 
-  // Server-side pagination - use pagination data from API
-  const totalItems = pagination.total;
-  const totalPages = pagination.totalPages;
-  const startIndex = (pagination.page - 1) * pagination.limit;
-  const endIndex = Math.min(startIndex + pagination.limit, totalItems);
-  const currentProducts = products; // All products returned from API for current page
+  // Use search results if present, else fallback to paginated products
+  const isSearching = searchResults !== null;
+  const allProducts = isSearching ? searchResults : products;
+
+  // Pagination logic for both normal and search results
+  const paginatedProducts = isSearching
+    ? allProducts.slice(
+        (currentPage - 1) * rowsPerPage,
+        currentPage * rowsPerPage
+      )
+    : allProducts;
+
+  const totalItems = allProducts.length || pagination.total;
+  const totalPages =
+    Math.ceil(totalItems / rowsPerPage) || pagination.totalPages;
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = Math.min(startIndex + rowsPerPage, totalItems);
 
   // Calculate pagination for low stock products (client-side for now)
   const totalLowStockItems = lowStockProducts.length;
@@ -358,7 +349,7 @@ const Inventory: React.FC = () => {
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       // Use product IDs instead of array indices for server-side pagination
-      const allIds = currentProducts.map((_, index: number) => index);
+      const allIds = paginatedProducts.map((_, index: number) => index);
       setSelectedItems(allIds);
     } else {
       setSelectedItems([]);
@@ -563,128 +554,143 @@ const Inventory: React.FC = () => {
         <div
           className={`border border-gray-300 px-4 sm:px-6 lg:px-10 py-4 sm:py-5 rounded-lg rounded-t-none ${isPageChanging ? "opacity-75" : "opacity-100"}`}
         >
-          {/* Loading indicator for search and table updates */}
-          {loading &&
-            (products.length > 0 || searchTerm || debouncedSearchTerm) && (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-center">
-                  <div className="inline-block rounded-full h-8 w-8 border-b-2 border-[#0f4d57] animate-spin mb-2"></div>
-                  <p className="text-gray-600 text-sm">
-                    {searchTerm || debouncedSearchTerm
-                      ? "Searching products..."
-                      : "Loading..."}
-                  </p>
-                </div>
+          {/* Loading/Error indicator for search and table updates */}
+          {isInitialLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <div className="inline-block rounded-full h-8 w-8 border-b-2 border-[#0f4d57] animate-spin mb-2"></div>
+                <p className="text-gray-600 text-sm">
+                  {searchTerm || debouncedSearchTerm
+                    ? "Searching products..."
+                    : "Loading..."}
+                </p>
               </div>
-            )}
-
-          {/* Content - Show even when loading for search to prevent flicker */}
-          <div
-            className={
-              loading && (searchTerm || debouncedSearchTerm)
-                ? "opacity-50"
-                : "opacity-100"
-            }
-          >
-            {/* Mobile View */}
-            <div className="block md:hidden">
-              {/* Mobile View Toggle */}
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-sm font-medium text-gray-700">
-                  View Mode:
-                </h3>
-                <div className="flex bg-gray-100 rounded-lg p-1">
-                  <button
-                    onClick={() => setMobileViewType("cards")}
-                    className={`px-3 py-1 text-xs rounded-md ${
-                      mobileViewType === "cards"
-                        ? "bg-white text-[#0f4d57] shadow-sm"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    Cards
-                  </button>
-                  <button
-                    onClick={() => setMobileViewType("table")}
-                    className={`px-3 py-1 text-xs rounded-md ${
-                      mobileViewType === "table"
-                        ? "bg-white text-[#0f4d57] shadow-sm"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    Table
-                  </button>
-                </div>
-              </div>
-
-              {mobileViewType === "cards" ? (
-                <InventoryMobileView
-                  products={currentProducts}
-                  groupedProducts={groupedProducts}
-                  groupBy={groupBy}
-                  expandedCategories={expandedCategories}
-                  onToggleCategory={toggleCategory}
-                  onProductViewed={handleViewProduct}
-                />
-              ) : (
-                <div className="overflow-x-auto">
-                  {groupBy === "category" && groupedProducts ? (
-                    <GroupedTableView
-                      groupedProducts={groupedProducts}
-                      expandedCategories={expandedCategories}
-                      onToggleCategory={toggleCategory}
-                    />
-                  ) : (
-                    <InventoryTable
-                      products={currentProducts}
-                      selectedItems={selectedItems}
-                      startIndex={startIndex}
-                      onProductDeleted={refetch}
-                      sortConfig={sortConfig}
-                      onSelectAll={handleSelectAll}
-                      onSelectItem={handleSelectItem}
-                      onSort={handleSort}
-                      onProductEdited={handleEditProduct}
-                      onProductViewed={handleViewProduct}
-                    />
-                  )}
-                </div>
-              )}
-            </div>{" "}
-            {/* Desktop View */}
-            <div className="hidden md:block overflow-x-auto">
-              {groupBy === "category" && groupedProducts ? (
-                <GroupedTableView
-                  groupedProducts={groupedProducts}
-                  expandedCategories={expandedCategories}
-                  onToggleCategory={toggleCategory}
-                />
-              ) : (
-                <InventoryTable
-                  products={currentProducts}
-                  selectedItems={selectedItems}
-                  onProductDeleted={refetch}
-                  startIndex={startIndex}
-                  sortConfig={sortConfig}
-                  onSelectAll={handleSelectAll}
-                  onSelectItem={handleSelectItem}
-                  onSort={handleSort}
-                  onProductEdited={handleEditProduct}
-                  onProductViewed={handleViewProduct}
-                />
-              )}
             </div>
-          </div>
-          {/* Pagination - Only show when not grouped by category */}
-          {groupBy !== "category" && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              startIndex={startIndex}
-              endIndex={endIndex}
-              onPageChange={handlePageChange}
-            />
+          ) : isInitialError ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <div className="text-red-500 mb-4">
+                  <svg
+                    className="w-12 h-12 mx-auto"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <p className="text-gray-600 mb-4">
+                  Error loading products:{" "}
+                  {searchError || extractErrorMessage(error)}
+                </p>
+                <button
+                  onClick={refetch}
+                  className="bg-[#0f4d57] hover:bg-[#083540] text-white px-4 py-2 rounded-lg"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div
+              className={
+                loading && (searchTerm || debouncedSearchTerm)
+                  ? "opacity-50"
+                  : "opacity-100"
+              }
+            >
+              {/* Mobile View */}
+              <div className="block md:hidden">
+                {/* Mobile View Toggle */}
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-medium text-gray-700">
+                    View Mode:
+                  </h3>
+                  <div className="flex bg-gray-100 rounded-lg p-1">
+                    <button
+                      onClick={() => setMobileViewType("cards")}
+                      className={`px-3 py-1 text-xs rounded-md ${
+                        mobileViewType === "cards"
+                          ? "bg-white text-[#0f4d57] shadow-sm"
+                          : "text-gray-600"
+                      }`}
+                    >
+                      Cards
+                    </button>
+                    <button
+                      onClick={() => setMobileViewType("table")}
+                      className={`px-3 py-1 text-xs rounded-md ${
+                        mobileViewType === "table"
+                          ? "bg-white text-[#0f4d57] shadow-sm"
+                          : "text-gray-600"
+                      }`}
+                    >
+                      Table
+                    </button>
+                  </div>
+                </div>
+
+                {mobileViewType === "cards" ? (
+                  <InventoryMobileView
+                    products={paginatedProducts}
+                    groupedProducts={groupedProducts}
+                    groupBy={groupBy}
+                    expandedCategories={expandedCategories}
+                    onToggleCategory={toggleCategory}
+                    onProductViewed={handleViewProduct}
+                  />
+                ) : (
+                  <div className="overflow-x-auto">
+                    {groupBy === "category" && groupedProducts ? (
+                      <GroupedTableView
+                        groupedProducts={groupedProducts}
+                        expandedCategories={expandedCategories}
+                        onToggleCategory={toggleCategory}
+                      />
+                    ) : (
+                      <InventoryTable
+                        products={paginatedProducts}
+                        selectedItems={selectedItems}
+                        startIndex={startIndex}
+                        onProductDeleted={refetch}
+                        sortConfig={sortConfig}
+                        onSelectAll={handleSelectAll}
+                        onSelectItem={handleSelectItem}
+                        onSort={handleSort}
+                        onProductEdited={handleEditProduct}
+                        onProductViewed={handleViewProduct}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>{" "}
+              {/* Desktop View */}
+              <div className="hidden md:block overflow-x-auto">
+                {groupBy === "category" && groupedProducts ? (
+                  <GroupedTableView
+                    groupedProducts={groupedProducts}
+                    expandedCategories={expandedCategories}
+                    onToggleCategory={toggleCategory}
+                  />
+                ) : (
+                  <InventoryTable
+                    products={paginatedProducts}
+                    selectedItems={selectedItems}
+                    onProductDeleted={refetch}
+                    startIndex={startIndex}
+                    sortConfig={sortConfig}
+                    onSelectAll={handleSelectAll}
+                    onSelectItem={handleSelectItem}
+                    onSort={handleSort}
+                    onProductEdited={handleEditProduct}
+                    onProductViewed={handleViewProduct}
+                  />
+                )}
+              </div>
+            </div>
           )}
         </div>{" "}
         {/* Low Stock Products Section */}

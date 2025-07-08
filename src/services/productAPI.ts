@@ -209,8 +209,12 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
       (ps) => ps.state === "primary"
     );
 
+    // Fix: Only assign a supplier object or string, not an array
     const supplier =
-      primarySupplierEntry?.supplier || apiProduct.supplier || "N/A";
+      primarySupplierEntry?.supplier ||
+      apiProduct.productSuppliers?.[0]?.supplier ||
+      apiProduct.supplier ||
+      "N/A";
 
     return {
       id: apiProduct.id || "",
@@ -600,6 +604,28 @@ export const productAPI = {
       return response.data;
     } catch (error) {
       console.error("Error updating product:", error);
+      throw error;
+    }
+  },
+
+  // Search products by query string
+  async searchProducts(query: string): Promise<Product[]> {
+    try {
+      const response = await apiClient.get(
+        `/product/search?q=${encodeURIComponent(query)}`
+      );
+      // Assume response.data is an array of products or has a .data property
+      let apiProducts: ApiProduct[] = [];
+      if (Array.isArray(response.data)) {
+        apiProducts = response.data;
+      } else if (Array.isArray(response.data?.data)) {
+        apiProducts = response.data.data;
+      } else if (response.data?.products && Array.isArray(response.data.products)) {
+        apiProducts = response.data.products;
+      }
+      return apiProducts.map(transformApiProduct);
+    } catch (error) {
+      console.error("Error searching products:", error);
       throw error;
     }
   },
