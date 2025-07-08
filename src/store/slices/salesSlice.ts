@@ -167,6 +167,34 @@ export const fetchSaleById = createAsyncThunk<
   }
 });
 
+// Async thunk for updating a sale
+export const updateSale = createAsyncThunk<
+  SaleResponseData,
+  {
+    saleId: string;
+    updateData: {
+      paymentMethod: string;
+      status: string;
+      totalAmount: number;
+      tax: number;
+      cashierName: string;
+    };
+  },
+  { rejectValue: string }
+>("sales/updateSale", async ({ saleId, updateData }, { rejectWithValue }) => {
+  try {
+    console.log("🚀 Updating sale:", saleId, "with data:", updateData);
+    const response = await apiClient.put(`/sales/${saleId}`, updateData);
+    console.log("✅ Sale update response:", response.data);
+    return response.data.data || response.data;
+  } catch (error: any) {
+    console.error("❌ Sale update error:", error);
+    return rejectWithValue(
+      error.response?.data?.message || "Failed to update sale"
+    );
+  }
+});
+
 const salesSlice = createSlice({
   name: "sales",
   initialState,
@@ -228,6 +256,28 @@ const salesSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchSaleById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Update sale
+      .addCase(updateSale.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateSale.fulfilled, (state, action) => {
+        state.loading = false;
+        // Update the sale in the sales array
+        const index = state.sales.findIndex(sale => sale.id === action.payload.id);
+        if (index !== -1) {
+          state.sales[index] = action.payload;
+        }
+        // Update current sale if it's the same
+        if (state.currentSale?.id === action.payload.id) {
+          state.currentSale = action.payload;
+        }
+        state.error = null;
+      })
+      .addCase(updateSale.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

@@ -17,12 +17,10 @@ interface FilterBarProps {
 
 const FilterBar: React.FC<FilterBarProps> = ({
   searchTerm,
-  statusFilter,
   paymentFilter,
   cashierFilter = "All",
   dateFilter = "Today",
   onSearchChange,
-  onStatusChange,
   onPaymentChange,
   onCashierChange,
   onDateChange,
@@ -49,21 +47,6 @@ const FilterBar: React.FC<FilterBarProps> = ({
 
       {/* Filter Dropdowns */}
       <div className="flex flex-wrap items-center gap-6">
-        {/* Status Filter */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600 font-medium">Status:</span>
-          <select
-            value={statusFilter}
-            onChange={(e) => onStatusChange(e.target.value)}
-            className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-          >
-            <option>All</option>
-            <option>Paid</option>
-            <option>Pending</option>
-            <option>Partially Paid</option>
-            <option>Refunded</option>
-          </select>
-        </div>
 
         {/* Payment Filter */}
         <div className="flex items-center gap-2">

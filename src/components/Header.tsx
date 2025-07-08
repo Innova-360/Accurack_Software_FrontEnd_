@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaTh, FaClock, FaHome, FaStore } from "react-icons/fa";
+import { FaClock, FaHome, FaStore } from "react-icons/fa";
 import { MdCampaign } from "react-icons/md";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useParams } from "react-router-dom";
@@ -7,7 +7,11 @@ import { useAppSelector } from "../store/hooks";
 import { lastUpdatedManager } from "../utils/lastUpdatedUtils";
 import LogoutButton from "./LogoutButton";
 
-const Navbar: React.FC = () => {
+interface HeaderProps {
+    className?: string;
+}
+
+const Navbar:  React.FC<HeaderProps> = ({ className }) => {
   const [currentTime, setCurrentTime] = useState("");
   const [lastUpdatedDisplay, setLastUpdatedDisplay] = useState("");
   const navigate = useNavigate();
@@ -75,7 +79,7 @@ const Navbar: React.FC = () => {
     };
   }, []);
   return (
-    <div className="w-full bg-[#03414CF0] text-white text-sm font-medium px-0 py-0">
+    <div className={`${className} w-full bg-[#03414CF0] text-white text-sm font-medium px-0 py-0`}>
       <div className="hidden lg:flex items-center h-14">
         {/* Grid Icon */}
         <div
