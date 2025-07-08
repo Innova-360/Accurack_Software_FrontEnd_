@@ -135,6 +135,9 @@ const AssignProductsPage: React.FC = () => {
     Record<string, "primary" | "secondary">
   >({});
   const [assigning, setAssigning] = useState(false);
+  
+  // Track products that already have primary suppliers
+  const [productsWithPrimarySupplier, setProductsWithPrimarySupplier] = useState<Set<string>>(new Set());
 
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -147,6 +150,58 @@ const AssignProductsPage: React.FC = () => {
   const [rowsPerPage] = useState(50);
   const [isPageChanging, setIsPageChanging] = useState(false);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
+
+  // Fetch all product assignments to check which products have primary suppliers
+  const fetchProductAssignments = async () => {
+    try {
+      const finalStoreId = currentStore?.id || storeId;
+      
+      // Get all suppliers for this store
+      const suppliersResponse = await apiClient.get("/supplier/list", {
+        params: { storeId: finalStoreId },
+      });
+      
+      const suppliers = suppliersResponse.data?.data?.suppliers || suppliersResponse.data?.data || [];
+      const primaryProductIds = new Set<string>();
+      const currentSupplierId = currentSupplier?.id || currentSupplier?.supplier_id || supplierId;
+      
+      console.log("Current supplier ID:", currentSupplierId);
+      console.log("All suppliers:", suppliers.map((s: any) => ({ id: s.id, supplier_id: s.supplier_id, name: s.name })));
+      
+      // For each supplier, get their assigned products
+      for (const supplier of suppliers) {
+        try {
+          const supplierIdToCheck = supplier.id || supplier.supplier_id;
+          
+          const supplierProductsResponse = await apiClient.get(`/supplier/${supplierIdToCheck}/products`);
+          
+          if (supplierProductsResponse.data?.success && supplierProductsResponse.data?.data?.data) {
+            const assignments = supplierProductsResponse.data.data.data;
+            
+            console.log(`Supplier ${supplier.name} (${supplierIdToCheck}) assignments:`, assignments);
+            
+            // Check for primary assignments
+            assignments.forEach((assignment: any) => {
+              if (assignment.state === "primary" && assignment.productId) {
+                // If this is NOT the current supplier, mark the product as having a primary
+                if (supplierIdToCheck !== currentSupplierId) {
+                  primaryProductIds.add(assignment.productId);
+                  console.log(`Product ${assignment.productId} has primary from supplier ${supplier.name}`);
+                }
+              }
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching products for supplier ${supplier.id}:`, error);
+        }
+      }
+      
+      setProductsWithPrimarySupplier(primaryProductIds);
+      console.log("Products with primary suppliers from OTHER suppliers:", Array.from(primaryProductIds));
+    } catch (error) {
+      console.error("Error fetching product assignments:", error);
+    }
+  };
 
   // Fetch products from inventory
   const fetchProducts = async () => {
@@ -186,6 +241,9 @@ const AssignProductsPage: React.FC = () => {
         const maxPrice = Math.max(...prices);
         setPriceRange({ min: Math.floor(minPrice), max: Math.ceil(maxPrice) });
       }
+      
+      // Fetch product assignments to check which products have primary suppliers
+      await fetchProductAssignments();
     } catch (error) {
       console.error("Error fetching products:", error);
       toast.error("Failed to load products");
@@ -280,7 +338,17 @@ const AssignProductsPage: React.FC = () => {
       setCategories(newCategories);
     } else {
       newSelected.add(productId);
-      setCategories((prev) => ({ ...prev, [productId]: "secondary" })); // Default to secondary
+      // If product already has a primary supplier, this supplier can only be secondary
+      const hasPrimary = productsWithPrimarySupplier.has(productId);
+      const defaultCategory = hasPrimary ? "secondary" : "primary";
+      
+      console.log(`Product ${productId}:`, {
+        hasPrimaryFromOtherSupplier: hasPrimary,
+        defaultCategory: defaultCategory,
+        productsWithPrimary: Array.from(productsWithPrimarySupplier)
+      });
+      
+      setCategories((prev) => ({ ...prev, [productId]: defaultCategory }));
     }
     setSelectedProducts(newSelected);
   };
@@ -801,7 +869,12 @@ const AssignProductsPage: React.FC = () => {
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                             >
                               <option value="secondary">Secondary</option>
-                              <option value="primary">Primary</option>
+                              <option 
+                                value="primary" 
+                                disabled={productsWithPrimarySupplier.has(product.id)}
+                              >
+                                Primary {productsWithPrimarySupplier.has(product.id) ? "(Already Assigned)" : ""}
+                              </option>
                             </select>
                           </div>
                         </div>
@@ -930,7 +1003,12 @@ const AssignProductsPage: React.FC = () => {
                               className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                             >
                               <option value="secondary">Secondary</option>
-                              <option value="primary">Primary</option>
+                              <option 
+                                value="primary" 
+                                disabled={productsWithPrimarySupplier.has(product.id)}
+                              >
+                                Primary {productsWithPrimarySupplier.has(product.id) ? "(Already Assigned)" : ""}
+                              </option>
                             </select>
                           ) : (
                             <span className="text-gray-400 text-sm font-medium">
