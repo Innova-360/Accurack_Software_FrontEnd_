@@ -120,11 +120,11 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
         });
       }
       setProducts(assignedProducts);
-      if (assignedProducts.length === 0) {
-        toast.success(`No products assigned to ${supplier.name}`);
-      } else {
-        toast.success(`Found ${assignedProducts.length} assigned products`);
-      }
+      // if (assignedProducts.length === 0) {
+      //   toast.success(`No products assigned to ${supplier.name}`);
+      // } else {
+      //   toast.success(`Found ${assignedProducts.length} assigned products`);
+      // }
     } catch (error: any) {
       console.error("Error fetching assigned products:", error);
       if (error.response?.status === 404) {

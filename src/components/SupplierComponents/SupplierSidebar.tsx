@@ -81,7 +81,8 @@ const SupplierSidebar: React.FC<SupplierSidebarProps> = ({
             {/* All Suppliers List */}
           <div className="space-y-1">
             {suppliers.map((supplier) => (
-              <div key={supplier.supplier_id} className="group">                <SidebarButton
+              <div key={supplier.supplier_id} className="group">              
+                <SidebarButton
                   onClick={() => onSupplierSelect(supplier)}
                   active={selectedSupplier?.supplier_id === supplier.supplier_id}
                   icon={selectedSupplier?.supplier_id === supplier.supplier_id ? <FaChevronDown size={12} /> : <FaChevronRight size={12} />}

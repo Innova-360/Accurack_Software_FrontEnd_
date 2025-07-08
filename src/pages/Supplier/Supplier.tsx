@@ -51,11 +51,12 @@ const SupplierPage: React.FC = () => {
   const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isViewProductsModalOpen, setIsViewProductsModalOpen] = useState(false);
-  const [isViewAssignedProductsModalOpen, setIsViewAssignedProductsModalOpen] = useState(false);
+  const [isViewAssignedProductsModalOpen, setIsViewAssignedProductsModalOpen] =
+    useState(false);
   const [isAssignProductPromptOpen, setIsAssignProductPromptOpen] =
     useState(false);
   const [newlyCreatedSupplier, setNewlyCreatedSupplier] =
-    useState<Supplier | null>(null);  // Fetch suppliers when component mounts or store changes
+    useState<Supplier | null>(null); // Fetch suppliers when component mounts or store changes
   useEffect(() => {
     const fetchData = async () => {
       if (currentStore?.id) {
@@ -121,15 +122,17 @@ const SupplierPage: React.FC = () => {
   const handleViewProducts = (supplier: Supplier) => {
     // Enhanced ID validation - check multiple possible ID fields
     let supplierId = null;
-    
+
     // Check if this is a temporary supplier (newly created)
     if (supplier.isTemporary) {
-      console.log("Temporary supplier detected, finding real supplier from list");
-      // Find the real supplier from the suppliers list by name and email
-      const realSupplier = suppliers.find(s => 
-        s.name === supplier.name && s.email === supplier.email
+      console.log(
+        "Temporary supplier detected, finding real supplier from list"
       );
-      
+      // Find the real supplier from the suppliers list by name and email
+      const realSupplier = suppliers.find(
+        (s) => s.name === supplier.name && s.email === supplier.email
+      );
+
       if (realSupplier) {
         console.log("Found real supplier:", realSupplier);
         supplier = realSupplier; // Use the real supplier
@@ -140,7 +143,7 @@ const SupplierPage: React.FC = () => {
         return;
       }
     }
-    
+
     // Try different ID field variations
     if (supplier.id && supplier.id.toString().trim()) {
       supplierId = supplier.id.toString().trim();
@@ -155,10 +158,15 @@ const SupplierPage: React.FC = () => {
       supplierId: supplierId,
       supplier_id_field: supplier.id,
       supplier_supplier_id_field: supplier.supplier_id,
-      supplier_underscore_id: supplier._id
+      supplier_underscore_id: supplier._id,
     });
 
-    if (supplierId && supplierId !== 'undefined' && supplierId !== 'null' && !supplierId.startsWith('temp-')) {
+    if (
+      supplierId &&
+      supplierId !== "undefined" &&
+      supplierId !== "null" &&
+      !supplierId.startsWith("temp-")
+    ) {
       const finalUrl = `/store/${currentStore?.id}/supplier/${supplierId}/assign-products`;
 
       console.log("Navigating to:", finalUrl);
@@ -333,7 +341,7 @@ const SupplierPage: React.FC = () => {
                 </div>
                 {viewMode === "products" && selectedSupplier && (
                   <button
-                    onClick={handleBackToSuppliers}
+                    onClick={() => handleBackToSuppliers()}
                     className="text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full transition-colors duration-200 flex items-center gap-1"
                   >
                     ← Back to Suppliers

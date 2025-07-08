@@ -80,7 +80,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
               </label>
               <input
                 type="text"
-                value={formData.customer}
+                value={typeof formData.customer === "string" ? formData.customer : formData.customer?.customerName || ""}
                 onChange={(e) =>
                   setFormData({ ...formData, customer: e.target.value })
                 }

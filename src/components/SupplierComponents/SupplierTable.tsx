@@ -167,13 +167,12 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
                     title="Assign Products"
                     className=" ring-yellow-200 hover:ring-yellow-300"
                   />
-                  <IconButton
+                  {/* <IconButton
                     icon={<FaBox />}
                     variant="secondary"
                     onClick={() => onViewAssignedProducts(supplier)}
                     title="View Assigned Products"
-                    className="border border-gray-400 hover:border-gray-500 bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-700"
-                  />
+                    className=" bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-700"
                 </div>
               </div>
             </div>
