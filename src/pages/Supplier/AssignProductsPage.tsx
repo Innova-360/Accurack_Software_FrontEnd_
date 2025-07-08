@@ -512,15 +512,15 @@ const AssignProductsPage: React.FC = () => {
               : "Loading products..."}
           </p>
           <div className="mt-4 flex justify-center gap-1">
-            <div className="w-2 h-2 bg-[#03414C] rounded-full animate-bounce"></div>
+            {/* <div className="w-2 h-2 bg-[#03414C] rounded-full animate-bounce"></div>
             <div
               className="w-2 h-2 bg-[#03414C] rounded-full animate-bounce"
               style={{ animationDelay: "0.1s" }}
-            ></div>
-            <div
+            ></div> */}
+            {/* <div
               className="w-2 h-2 bg-[#03414C] rounded-full animate-bounce"
               style={{ animationDelay: "0.2s" }}
-            ></div>
+            ></div> */}
           </div>
         </div>
       </div>
