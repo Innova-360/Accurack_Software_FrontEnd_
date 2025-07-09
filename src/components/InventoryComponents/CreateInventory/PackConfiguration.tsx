@@ -65,11 +65,9 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
           </div>
           <div>
             <h3 className="text-xl font-bold text-gray-900">
-              Pack Of Configuration
+              Box Sale Settings
             </h3>
-            <p className="text-gray-600 text-sm">
-              Set up bulk purchase discounts
-            </p>
+            <p className="text-gray-600 text-sm">Set up bulk purchases</p>
           </div>
         </div>
         <label className="relative inline-flex items-center cursor-pointer">
@@ -100,7 +98,7 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
                   d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
                 />
               </svg>
-              Pack Discounts
+              Boxes
             </h4>
             <button
               type="button"
@@ -120,7 +118,7 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
                   d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                 />
               </svg>
-              <span>Add Discount</span>
+              <span>Add Box</span>
             </button>
           </div>{" "}
           {packDiscounts.map((discount) => (
@@ -130,7 +128,7 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
             >
               <div className="space-y-1 w-full md:w-1/6">
                 <label className="block text-xs font-medium text-gray-700">
-                  Pack Of Quantity
+                  Items in Box
                 </label>
                 <input
                   type="number"
@@ -190,11 +188,11 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
               </div>
               <div className="space-y-1 w-full md:w-1/4">
                 <label className="block text-xs font-medium text-gray-700">
-                  Total Packs Quantity
+                  Total Box Quantity
                 </label>
                 <input
                   type="number"
-                  placeholder="Total packs"
+                  placeholder="Total Boxes"
                   value={discount.totalPacksQuantity || ""}
                   onChange={(e) =>
                     updatePackDiscount(
@@ -208,7 +206,7 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
               </div>{" "}
               <div className="space-y-1 w-full md:w-1/6">
                 <label className="block text-xs font-medium text-gray-700">
-                  Ordered Packs Price
+                  Ordered Box Price
                 </label>
                 <input
                   type="number"

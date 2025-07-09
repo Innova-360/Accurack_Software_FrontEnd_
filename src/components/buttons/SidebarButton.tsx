@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import type { BaseButtonProps } from "./types";
 
 interface SidebarButtonProps extends BaseButtonProps {
@@ -12,10 +12,23 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
   disabled = false,
   type = "button",
   className = "",
-  active = false,
+  active,
   icon,
   ...props
 }) => {
+  const [internalActive, setInternalActive] = useState(false);
+
+  // Determine if this is controlled (active prop provided) or uncontrolled
+  const isControlled = active !== undefined;
+  const isActive = isControlled ? active : internalActive;
+
+  // Update internal state when active prop changes (for controlled mode)
+  useEffect(() => {
+    if (isControlled) {
+      setInternalActive(active);
+    }
+  }, [active, isControlled]);
+
   const baseClasses = [
     "flex",
     "items-center",
@@ -29,14 +42,11 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
     "transition-colors",
     "duration-200",
     "focus:outline-none",
-    "focus:ring-2",
-    "focus:ring-offset-2",
-    "focus:ring-[#03414C]",
   ];
 
-  const stateClasses = active
+  const stateClasses = isActive
     ? ["bg-[#03414C]", "text-white"]
-    : ["text-gray-700", "hover:bg-gray-50", ];
+    : ["bg-white", "text-black"];
 
   if (disabled) {
     baseClasses.push("opacity-50", "cursor-not-allowed");
@@ -48,6 +58,10 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
 
   const handleClick = () => {
     if (!disabled && onClick) {
+      // Only toggle internal state if this is uncontrolled
+      if (!isControlled) {
+        setInternalActive(!internalActive);
+      }
       onClick();
     }
   };
@@ -61,8 +75,11 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
       {...props}
     >
       <div className="flex items-center">
-        <div className="w-2 h-2 bg-current rounded-full mr-2 opacity-60"></div>
-        <span className={active ? "text-sm font-medium" : "text-sm"}>
+        <span
+          className={
+            isActive ? "text-sm font-medium text-white" : "text-sm text-black"
+          }
+        >
           {children}
         </span>
       </div>

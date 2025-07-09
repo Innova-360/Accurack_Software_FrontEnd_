@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { FaSpinner } from 'react-icons/fa';
-import apiClient from '../../services/api';
-import toast from 'react-hot-toast';
+import { FaSpinner } from "react-icons/fa";
+import apiClient from "../../services/api";
+import toast from "react-hot-toast";
 import type { Supplier } from "./types";
 
 interface AssignedProduct {
@@ -20,11 +20,11 @@ interface AssignedProduct {
   itemQuantity?: number;
   msrpPrice?: number;
   singleItemSellingPrice?: number;
-  supplierType?: 'primary' | 'secondary';
+  supplierType?: "primary" | "secondary";
 }
 
 const formatCurrency = (amount: number | undefined) => {
-  if (!amount) return 'N/A';
+  if (!amount) return "N/A";
   return `$${amount.toFixed(2)}`;
 };
 
@@ -39,14 +39,14 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
 }) => {
   const [products, setProducts] = useState<AssignedProduct[]>([]);
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState<{[key: string]: string}>({});
+  const [categories, setCategories] = useState<{ [key: string]: string }>({});
 
   // Fetch categories for mapping categoryId to category name
   const fetchCategories = async () => {
     try {
-      const response = await apiClient.get('/categories');
-      const categoriesMap: {[key: string]: string} = {};
-      
+      const response = await apiClient.get("/categories");
+      const categoriesMap: { [key: string]: string } = {};
+
       // Handle different possible response structures
       let categoriesData = [];
       if (response.data?.data?.data) {
@@ -56,19 +56,19 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
       } else if (Array.isArray(response.data)) {
         categoriesData = response.data;
       }
-      
+
       categoriesData.forEach((category: any) => {
-        categoriesMap[category.id] = category.name || category.categoryName || 'Uncategorized';
+        categoriesMap[category.id] =
+          category.name || category.categoryName || "Uncategorized";
       });
-      
+
       setCategories(categoriesMap);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error("Error fetching categories:", error);
       // If categories fetch fails, we'll show categoryId as fallback
     }
   };
 
-  // Fetch assigned products when component mounts
   useEffect(() => {
     if (supplier) {
       fetchCategories(); // Fetch categories first
@@ -82,98 +82,56 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
     try {
       setLoading(true);
       const supplierId = supplier.id || supplier.supplier_id;
-      
-      console.log('Fetching assigned products for supplier:', supplierId);
-      
-      // Using the exact API endpoint you specified
-      const response = await apiClient.get(`/supplier/${supplierId}/products`);
-      
-      console.log('Assigned products response:', response.data);
-      
-      // Handle the API response structure based on your actual response format
-      let assignedProducts = [];
-      
-      if (response.data?.success && response.data?.data?.data && Array.isArray(response.data.data.data)) {
-        // Handle the actual API response structure
-        assignedProducts = response.data.data.data.map((product: any) => ({
-          id: product.id,
-          name: product.name,
-          sku: product.pluUpc || product.sku || 'N/A',
-          categoryId: product.categoryId,
-          category: categories[product.categoryId] || product.categoryId || 'Uncategorized',
-          costPrice: product.msrpPrice || 0, // Cost price from supplier
-          sellingPrice: product.singleItemSellingPrice || 0, // Selling price in store
-          quantity: product.itemQuantity || 0,
-          status: 'active', // Default status
-          supplierType: 'primary', // You can determine this based on your business logic
-          assignedAt: product.createdAt || product.updatedAt || new Date().toISOString(),
-          ean: product.ean,
-          pluUpc: product.pluUpc,
-          itemQuantity: product.itemQuantity,
-          msrpPrice: product.msrpPrice,
-          singleItemSellingPrice: product.singleItemSellingPrice
-        }));
-      } else if (response.data?.data?.data && Array.isArray(response.data.data.data)) {
-        // Handle nested data structure
-        assignedProducts = response.data.data.data.map((product: any) => ({
-          id: product.id,
-          name: product.name,
-          sku: product.pluUpc || product.sku || 'N/A',
-          categoryId: product.categoryId,
-          category: categories[product.categoryId] || product.categoryId || 'Uncategorized',
-          costPrice: product.msrpPrice || 0,
-          sellingPrice: product.singleItemSellingPrice || 0,
-          quantity: product.itemQuantity || 0,
-          status: 'active',
-          supplierType: 'primary',
-          assignedAt: product.createdAt || product.updatedAt || new Date().toISOString()
-        }));
-      } else if (response.data?.data && Array.isArray(response.data.data)) {
-        // Fallback for direct data array
-        assignedProducts = response.data.data.map((product: any) => ({
-          id: product.id,
-          name: product.name,
-          sku: product.pluUpc || product.sku || 'N/A',
-          categoryId: product.categoryId,
-          category: categories[product.categoryId] || product.categoryId || 'Uncategorized',
-          costPrice: product.msrpPrice || 0,
-          sellingPrice: product.singleItemSellingPrice || 0,
-          quantity: product.itemQuantity || 0,
-          status: 'active',
-          supplierType: 'primary',
-          assignedAt: product.createdAt || product.updatedAt || new Date().toISOString()
-        }));
-      } else if (Array.isArray(response.data)) {
-        // Fallback for direct array response
-        assignedProducts = response.data.map((product: any) => ({
-          id: product.id,
-          name: product.name,
-          sku: product.pluUpc || product.sku || 'N/A',
-          categoryId: product.categoryId,
-          category: categories[product.categoryId] || product.categoryId || 'Uncategorized',
-          costPrice: product.msrpPrice || 0,
-          sellingPrice: product.singleItemSellingPrice || 0,
-          quantity: product.itemQuantity || 0,
-          status: 'active',
-          supplierType: 'primary',
-          assignedAt: product.createdAt || product.updatedAt || new Date().toISOString()
-        }));
-      }
 
-      setProducts(assignedProducts);
-      
-      if (assignedProducts.length === 0) {
-        toast.success(`No products assigned to ${supplier.name}`);
-      } else {
-        toast.success(`Found ${assignedProducts.length} assigned products`);
+      console.log("Fetching assigned products for supplier:", supplierId);
+
+      // New API response structure
+      const response = await apiClient.get(`/supplier/${supplierId}/products`);
+      console.log("Assigned products response:", response.data);
+      let assignedProducts = [];
+      if (
+        response.data?.success &&
+        response.data?.data?.data &&
+        Array.isArray(response.data.data.data)
+      ) {
+        assignedProducts = response.data.data.data.map((assignment: any) => {
+          const product = assignment.product || {};
+          return {
+            id: product.id || assignment.productId || assignment.id,
+            name: product.name || "N/A",
+            sku: product.pluUpc || product.sku || "N/A",
+            categoryId: product.categoryId,
+            category: product.category?.name || "Uncategorized",
+            costPrice: assignment.costPrice ?? product.msrpPrice ?? 0,
+            sellingPrice: product.singleItemSellingPrice ?? 0,
+            quantity: product.itemQuantity ?? 0,
+            status: "active",
+            supplierType: assignment.state || "primary",
+            assignedAt:
+              assignment.createdAt ||
+              assignment.updatedAt ||
+              new Date().toISOString(),
+            ean: product.ean,
+            pluUpc: product.pluUpc,
+            itemQuantity: product.itemQuantity,
+            msrpPrice: product.msrpPrice,
+            singleItemSellingPrice: product.singleItemSellingPrice,
+          };
+        });
       }
+      setProducts(assignedProducts);
+      // if (assignedProducts.length === 0) {
+      //   toast.success(`No products assigned to ${supplier.name}`);
+      // } else {
+      //   toast.success(`Found ${assignedProducts.length} assigned products`);
+      // }
     } catch (error: any) {
-      console.error('Error fetching assigned products:', error);
+      console.error("Error fetching assigned products:", error);
       if (error.response?.status === 404) {
         setProducts([]);
-        toast.error('No products found for this supplier');
+        toast.error("No products found for this supplier");
       } else {
-        toast.error('Failed to load assigned products');
+        toast.error("Failed to load assigned products");
       }
     } finally {
       setLoading(false);
@@ -214,12 +172,14 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-gray-50 border-b border-gray-200">
         <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-          <div className="text-2xl font-bold text-gray-900">{products.length}</div>
+          <div className="text-2xl font-bold text-gray-900">
+            {products.length}
+          </div>
           <div className="text-sm text-gray-600">Total Products</div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
           <div className="text-2xl font-bold text-green-600">
-            {products.filter(p => (p.quantity || 0) > 0).length}
+            {products.filter((p) => (p.quantity || 0) > 0).length}
           </div>
           <div className="text-sm text-gray-600">In Stock</div>
         </div>
@@ -231,7 +191,12 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
           <div className="text-2xl font-bold text-teal-600">
-            {formatCurrency(products.reduce((sum, p) => sum + ((p.costPrice || 0) * (p.quantity || 0)), 0))}
+            {formatCurrency(
+              products.reduce(
+                (sum, p) => sum + (p.costPrice || 0) * (p.quantity || 0),
+                0
+              )
+            )}
           </div>
           <div className="text-sm text-gray-600">Total Value</div>
         </div>
@@ -256,7 +221,6 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
         {products.map((product, index) => (
           <div
             key={product.id}
-
             className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150"
           >
             <div className="grid grid-cols-12 gap-4 items-center">
@@ -274,7 +238,6 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                     <div className="font-medium text-gray-900">
                       {product.name}
                     </div>
-                   
                   </div>
                 </div>
               </div>
@@ -282,14 +245,14 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
               {/* SKU */}
               <div className="col-span-2">
                 <span className="text-sm font-mono text-gray-900 bg-gray-100 px-2 py-1 rounded">
-                  {product.sku || 'N/A'}
+                  {product.sku || "N/A"}
                 </span>
               </div>
 
               {/* Category */}
               <div className="col-span-2">
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  {product.category || 'Uncategorized'}
+                  {product.category || "Uncategorized"}
                 </span>
               </div>
 
@@ -310,7 +273,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
               {/* Quantity */}
               <div className="col-span-1">
                 <span className="text-sm font-medium text-gray-900">
-                  {product.quantity || 'N/A'}
+                  {product.quantity || "N/A"}
                 </span>
               </div>
 
@@ -318,14 +281,14 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
               <div className="col-span-2">
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    product.supplierType === 'primary'
+                    product.supplierType === "primary"
                       ? "bg-blue-100 text-blue-800"
-                      : product.supplierType === 'secondary'
-                      ? "bg-green-100 text-green-800"
-                      : "bg-gray-100 text-gray-800"
+                      : product.supplierType === "secondary"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-100 text-gray-800"
                   }`}
                 >
-                  {product.supplierType === 'primary' ? 'Primary' : 'Secondary'}
+                  {product.supplierType === "primary" ? "Primary" : "Secondary"}
                 </span>
               </div>
             </div>
@@ -342,7 +305,10 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
           <div className="text-right">
             <div className="text-lg font-semibold text-gray-900">
               {formatCurrency(
-                products.reduce((sum, p) => sum + ((p.costPrice || 0) * (p.quantity || 0)), 0)
+                products.reduce(
+                  (sum, p) => sum + (p.costPrice || 0) * (p.quantity || 0),
+                  0
+                )
               )}
             </div>
             <div className="text-sm text-gray-500">Total inventory value</div>

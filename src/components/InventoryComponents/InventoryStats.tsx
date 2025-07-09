@@ -15,7 +15,7 @@ const InventoryStats: React.FC<InventoryStatsProps> = ({
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       {" "}
       {/* Total Products Card */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-lg transition-all duration-300 transform hover:scale-105 animate-slideUp">
+      <div className="bg-white border border-gray-300 px-4 sm:px-6 lg:px-10 py-4 sm:py-5 rounded-lg">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-600">Total Products</p>{" "}
@@ -24,9 +24,9 @@ const InventoryStats: React.FC<InventoryStatsProps> = ({
             </p>
             <p className="text-sm text-gray-500 mt-1">Unique product types</p>
           </div>
-          <div className="p-3 bg-blue-100 rounded-full hover:bg-blue-200 transition-colors duration-300">
+          <div className="p-3 bg-blue-100 rounded-full">
             <svg
-              className="w-6 h-6 text-blue-600 "
+              className="w-6 h-6 text-blue-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -42,10 +42,7 @@ const InventoryStats: React.FC<InventoryStatsProps> = ({
         </div>
       </div>
       {/* Total Items Card */}
-      <div
-        className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-lg transition-all duration-300 transform hover:scale-105 animate-slideUp"
-        style={{ animationDelay: "100ms" }}
-      >
+      <div className="bg-white border border-gray-300 px-4 sm:px-6 lg:px-10 py-4 sm:py-5 rounded-lg">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-600">Total Items</p>{" "}
@@ -54,13 +51,12 @@ const InventoryStats: React.FC<InventoryStatsProps> = ({
             </p>
             <p className="text-sm text-gray-500 mt-1">Items in stock</p>
           </div>
-          <div className="p-3 bg-green-100 rounded-full hover:bg-green-200 transition-colors duration-300">
+          <div className="p-3 bg-green-100 rounded-full">
             <svg
-              className="w-6 h-6 text-green-600 "
+              className="w-6 h-6 text-green-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              style={{ animationDelay: "200ms" }}
             >
               <path
                 strokeLinecap="round"
@@ -73,10 +69,7 @@ const InventoryStats: React.FC<InventoryStatsProps> = ({
         </div>
       </div>
       {/* Total Value Card */}
-      <div
-        className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-lg transition-all duration-300 transform hover:scale-105 animate-slideUp"
-        style={{ animationDelay: "200ms" }}
-      >
+      <div className="bg-white border border-gray-300 px-4 sm:px-6 lg:px-10 py-4 sm:py-5 rounded-lg">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-600">Total Value</p>{" "}
@@ -85,13 +78,12 @@ const InventoryStats: React.FC<InventoryStatsProps> = ({
             </p>
             <p className="text-sm text-gray-500 mt-1">Total stock value</p>
           </div>
-          <div className="p-3 bg-purple-100 rounded-full hover:bg-purple-200 transition-colors duration-300">
+          <div className="p-3 bg-purple-100 rounded-full">
             <svg
-              className="w-6 h-6 text-purple-600 "
+              className="w-6 h-6 text-purple-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              style={{ animationDelay: "400ms" }}
             >
               <path
                 strokeLinecap="round"

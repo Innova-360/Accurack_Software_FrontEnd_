@@ -789,7 +789,7 @@ const AddNewSale: React.FC = () => {
                 )}
               </div>
 
-              {/* Pagination Controls - Top */}
+              {/* Pagination Controls - Top 
               {totalPages > 1 && (
                 <div className="mb-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                   <div className="text-sm text-gray-600">
@@ -816,6 +816,7 @@ const AddNewSale: React.FC = () => {
                   </div>
                 </div>
               )}
+                */}
 
               {/* Products loading/error state */}
               {productsLoading && (

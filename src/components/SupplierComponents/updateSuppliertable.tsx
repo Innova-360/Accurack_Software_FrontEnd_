@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaPlus, FaBars, FaEye, FaEdit, FaTrash, FaBox } from "react-icons/fa";
+import { FaPlus, FaBars, FaEye, FaEdit, FaTrash, FaLink } from "react-icons/fa";
 import { SpecialButton, IconButton } from "../buttons";
 import type { Supplier } from "./types";
 import Pagination from "./Pagination";
@@ -10,6 +10,7 @@ interface SupplierTableProps {
   onEditSupplier: (supplier: Supplier) => void;
   onDeleteSupplier: (supplier: Supplier) => void;
   onViewProducts: (supplier: Supplier) => void;
+  onViewAssignedProducts: (supplier: Supplier) => void;
   onAddSupplier: () => void;
 }
 
@@ -19,6 +20,7 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
   onEditSupplier,
   onDeleteSupplier,
   onViewProducts,
+  onViewAssignedProducts,
   onAddSupplier,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -70,10 +72,10 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
           <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-600 uppercase tracking-wider">
             <div className="col-span-1">#</div>
-            <div className="col-span-3">SUPPLIER</div>
-            <div className="col-span-2">CONTACT</div>
-            <div className="col-span-2">ADDRESS</div>
-            <div className="col-span-2">PRODUCTS</div>
+            <div className="col-span-2">SUPPLIER</div>
+            <div className="col-span-3">CONTACT</div>
+            <div className="col-span-3">ADDRESS</div>
+            {/* <div className="col-span-2">PRODUCTS</div> */}
             <div className="col-span-2">ACTIONS</div>
           </div>
         </div>
@@ -81,14 +83,14 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
         <div className="divide-y divide-gray-200">
           {currentSuppliers?.map((supplier, index) => (
             <div
-              // key={supplier.supplier_id}
+              key={supplier.supplier_id || supplier.id || index}
               className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150 group"
             >
               <div className="grid grid-cols-12 gap-4 items-center">
                 <div className="col-span-1 text-sm font-medium text-gray-900">
                   {startIndex + index + 1}
                 </div>{" "}
-                <div className="col-span-3">
+                <div className="col-span-2">
                   <div className="flex items-center gap-2">
                     <div className="font-medium text-gray-900">
                       {supplier.name}
@@ -99,13 +101,13 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
                       </span>
                     )}
                   </div>
-                  <div className="text-sm text-gray-500">ID: {supplier.id}</div>
+                  {/* <div className="text-sm text-gray-500">ID: {supplier.supplier_id || supplier.id}</div> */}
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-3">
                   <div className="text-sm text-gray-900">{supplier.email}</div>
                   <div className="text-sm text-gray-500">{supplier.phone}</div>
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-3">
                   <div className="text-sm text-gray-900">
                     {supplier.address}
                   </div>
@@ -116,11 +118,11 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
                     </div>
                   )}
                 </div>
-                <div className="col-span-2 text-sm font-medium text-gray-900">
-                  {/* TODO: Show product count when products API is integrated */}
+                {/* <div className="col-span-2 text-sm font-medium text-gray-900">
+                  TODO: Show product count when products API is integrated
                   <span className="text-gray-400">N/A</span>
-                </div>{" "}
-                <div className="col-span-2 flex items-center gap-1 lg:mr-9">
+                </div>{" "} */}
+                <div className="col-span-3 flex items-center gap-1 lg:mr-9">
                   <IconButton
                     icon={<FaEye />}
                     variant="info"
@@ -157,12 +159,21 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
                     }
                     disabled={!isValidSupplier(supplier)}
                   />
+                  {/* <IconButton
+                    icon={<FaLink />}
+                    variant="warning"
+                                      onClick={() => onViewProducts(supplier)}
+
+                    title="Assign Products"
+                    className=" ring-yellow-200 hover:ring-yellow-300"
+                  />
                   <IconButton
                     icon={<FaBox />}
-                    variant="success"
-                    onClick={() => onViewProducts(supplier)}
-                    title="View Products"
-                  />
+                    variant="secondary"
+                    onClick={() => onViewAssignedProducts(supplier)}
+                    title="View Assigned Products"
+                    className="border border-gray-400 hover:border-gray-500 bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-700"
+                  /> */}
                 </div>
               </div>
             </div>

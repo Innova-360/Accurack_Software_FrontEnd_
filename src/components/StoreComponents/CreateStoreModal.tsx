@@ -28,6 +28,15 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({
     logoUrl: "",
   });
 
+  // Separate address fields
+  const [addressFields, setAddressFields] = useState({
+    street: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "",
+  });
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string>("");
@@ -48,6 +57,21 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const handleAddressChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setAddressFields((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Clear address error when user starts typing
+    if (errors.address) {
+      setErrors((prev) => ({ ...prev, address: "" }));
     }
   };
 
@@ -78,8 +102,24 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({
     }
   };
 
+  const combineAddress = (): string => {
+    const { street, city, state, zipCode, country } = addressFields;
+    if (!street && !city && !state && !zipCode && !country) return "";
+    
+    let address = street.trim();
+    if (city.trim() || state.trim() || zipCode.trim() || country.trim()) {
+      address += address ? "\n" : "";
+      const cityStateZipCountry = [city.trim(), state.trim(), zipCode.trim(), country.trim()]
+        .filter(Boolean)
+        .join(" ");
+      address += cityStateZipCountry;
+    }
+    return address;
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
+    const combinedAddress = combineAddress();
 
     if (!formData.name.trim()) {
       newErrors.name = "Store name is required";
@@ -89,9 +129,26 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "Please enter a valid email address";
     }
-    if (!formData.address.trim()) {
-      newErrors.address = "Address is required";
+    
+    // Validate address fields
+    if (!addressFields.street.trim()) {
+      newErrors.street = "Street address is required";
     }
+    if (!addressFields.city.trim()) {
+      newErrors.city = "City is required";
+    }
+    if (!addressFields.state.trim()) {
+      newErrors.state = "State is required";
+    }
+    if (!addressFields.zipCode.trim()) {
+      newErrors.zipCode = "ZIP code is required";
+    } else if (!/^\d{5}(-\d{4})?$/.test(addressFields.zipCode.trim())) {
+      newErrors.zipCode = "Please enter a valid ZIP code (12345 or 12345-6789)";
+    }
+    if (!addressFields.country.trim()) {
+      newErrors.country = "Country is required";
+    }
+    
     if (!formData.phone.trim()) {
       newErrors.phone = "Phone number is required";
     }
@@ -103,7 +160,11 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      onSave(formData);
+      const combinedAddress = combineAddress();
+      onSave({
+        ...formData,
+        address: combinedAddress,
+      });
     }
   };
 
@@ -117,6 +178,13 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({
         currency: "USD",
         timezone: "America/New_York",
         logoUrl: "",
+      });
+      setAddressFields({
+        street: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "",
       });
       setErrors({});
       setLogoPreview("");
@@ -305,25 +373,115 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({
             </div>
           </div>
 
-          {/* Address */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Address *
-            </label>
-            <textarea
-              name="address"
-              value={formData.address}
-              onChange={handleInputChange}
-              rows={3}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] ${
-                errors.address ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder="123 Main St, City, State 12345"
-              disabled={loading}
-            />
-            {errors.address && (
-              <p className="text-red-500 text-sm mt-1">{errors.address}</p>
-            )}
+          {/* Address Fields */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-gray-700">Address *</h3>
+            {/* Street Address */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Street Address *
+              </label>
+              <input
+                type="text"
+                name="street"
+                value={addressFields.street}
+                onChange={handleAddressChange}
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] ${
+                  errors.street ? "border-red-500" : "border-gray-300"
+                }`}
+                placeholder="123 Main Street"
+                disabled={loading}
+              />
+              {errors.street && (
+                <p className="text-red-500 text-sm mt-1">{errors.street}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* City */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  City *
+                </label>
+                <input
+                  type="text"
+                  name="city"
+                  value={addressFields.city}
+                  onChange={handleAddressChange}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] ${
+                    errors.city ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="New York"
+                  disabled={loading}
+                />
+                {errors.city && (
+                  <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+                )}
+              </div>
+
+              {/* State (text input, not select) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  State *
+                </label>
+                <input
+                  type="text"
+                  name="state"
+                  value={addressFields.state}
+                  onChange={handleAddressChange}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] ${
+                    errors.state ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="California"
+                  disabled={loading}
+                />
+                {errors.state && (
+                  <p className="text-red-500 text-sm mt-1">{errors.state}</p>
+                )}
+              </div>
+
+              {/* ZIP Code */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  ZIP Code *
+                </label>
+                <input
+                  type="text"
+                  name="zipCode"
+                  value={addressFields.zipCode}
+                  onChange={handleAddressChange}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] ${
+                    errors.zipCode ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="12345"
+                  disabled={loading}
+                />
+                {errors.zipCode && (
+                  <p className="text-red-500 text-sm mt-1">{errors.zipCode}</p>
+                )}
+              </div>
+
+              {/* Country */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Country *
+                </label>
+                <input
+                  type="text"
+                  name="country"
+                  value={addressFields.country || ""}
+                  onChange={handleAddressChange}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] ${
+                    errors.country ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="United States"
+                  disabled={loading}
+                />
+                {errors.country && (
+                  <p className="text-red-500 text-sm mt-1">{errors.country}</p>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Form Actions */}

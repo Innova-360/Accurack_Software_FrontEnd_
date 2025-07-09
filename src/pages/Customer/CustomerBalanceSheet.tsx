@@ -52,14 +52,14 @@ const CustomerBalanceSheet: React.FC = () => {
     navigate(`/store/${storeId}/customer`);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toUpperCase()) {
-      case 'PAID': return 'bg-green-100 text-green-800';
-      case 'UNPAID': return 'bg-red-100 text-red-800';
-      case 'PARTIALLY_PAID': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  // const getStatusColor = (status: string) => {
+  //   switch (status.toUpperCase()) {
+  //     case 'PAID': return 'bg-green-100 text-green-800';
+  //     case 'UNPAID': return 'bg-red-100 text-red-800';
+  //     case 'PARTIALLY_PAID': return 'bg-yellow-100 text-yellow-800';
+  //     default: return 'bg-gray-100 text-gray-800';
+  //   }
+  // };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -229,15 +229,14 @@ const CustomerBalanceSheet: React.FC = () => {
 
 
 
-        {/* Payment History */}
+        {/* Customer Balance Sheet */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <h3 className="text-lg font-semibold text-gray-900">Payment History</h3>
-              {/* <SpecialButton variant="primary" className="flex items-center gap-2">
-                <FaFileInvoiceDollar size={14} />
-                Add Payment
-              </SpecialButton> */}
+              <h3 className="text-lg font-semibold text-gray-900">Customer Balance Sheet</h3>
+              <div className="text-sm text-gray-600">
+                As of {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
+              </div>
             </div>
           </div>
 
@@ -277,72 +276,104 @@ const CustomerBalanceSheet: React.FC = () => {
             </div>
           </div>
 
-          {/* Payment Table */}
+          {/* Balance Sheet Table */}
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Transaction ID
+            <table className="min-w-full">
+              <thead>
+                <tr className="border-b-2 border-gray-900">
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider border-r border-gray-300">
+                    Payment ID
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date & Time
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider border-r border-gray-300">
+                    Sales ID
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Description
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider border-r border-gray-300">
+                    Created at
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount Paid
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider border-r border-gray-300">
+                    Amount paid
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Remaining Amount
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider border-r border-gray-300">
+                    Remaining Amount 
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider border-r border-gray-300">
+                    Source
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider border-r border-gray-300">
                     Status
                   </th>
-                  {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Action
-                  </th>*/}
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                    Reason
+                  </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredPayments.map((payment) => (
-                  <tr key={payment.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {payment.saleId || payment.id}
+              <tbody className="divide-y divide-gray-200">
+                {filteredPayments.filter(payment => payment.description !== "Initial balance sheet created").map((payment, index) => (
+                  <tr key={payment.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                    <td className="px-1 py-3 whitespace-nowrap text-sm font-medium text-gray-900 border-r border-gray-200">
+                      {payment.id.slice(-8)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(payment.createdAt)}
+                    <td className="px-1 py-3 whitespace-nowrap text-sm text-gray-500 border-r border-gray-200">
+                      {payment.saleId?.slice(-8) || payment.id.slice(-8)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                    <td className="px-1 py-3 text-sm text-gray-900 border-r border-gray-200">
                       <div className="max-w-xs truncate" title={payment.description}>
-                        {payment.description}
+                        {formatDate(payment.createdAt)}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <span className="text-green-600">
-                        {formatCurrency(payment.amountPaid)}
+                    <td className="px-1 py-3 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
+                      <span className=" font-mono font-semibold">
+                        ${payment.amountPaid.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      <span className="text-red-600">
-                        {formatCurrency(payment.remainingAmount)}
+                    <td className="px-1 py-3 whitespace-nowrap text-sm font-medium text-gray-900 border-r border-gray-200">
+                      <span className=" font-mono font-semibold">
+                        ${payment.remainingAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-1 py-3 whitespace-nowrap text-sm font-medium text-gray-900 border-r border-gray-200">
+                      <span className="">
+                        {payment?.sale?.source || 'Manual'}
+                      </span>
+                    </td>
+                    <td className="px-1 py-3 whitespace-nowrap border-r border-gray-200">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(payment.paymentStatus)}`}
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full`}
                       >
                         {payment.paymentStatus}
                       </span>
                     </td>
-                    {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <SpecialButton variant="action-view" className="text-blue-600 hover:text-blue-800">
-                        View
-                      </SpecialButton>
-                    </td> */}
+                    <td className="px-1 py-3 whitespace-nowrap">
+                        {payment.description.includes('Sale') ? (
+                          <span className="text-black font-medium">Normal sale</span>
+                        ) : (
+                          <span className="text-gray-600">{payment.description}</span>
+                        )}
+                    </td>
                   </tr>
                 ))}
+                
+                {/* Total Row */}
+                <tr className="border-t-2 border-gray-900 bg-gray-100">
+                  <td className="px-6 py-4 text-sm font-bold text-gray-900 border-r border-gray-300" colSpan={3}>
+                    Total
+                  </td>
+                  <td className="px-6 py-4 text-left text-sm font-bold border-r border-gray-300">
+                    <span className="font-mono ">
+                      ${balanceData.totalPaid.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-left text-sm font-bold border-r border-gray-300">
+                    <span className="font-mono ">
+                      ${balanceData.currentBalance.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-left text-sm font-bold" colSpan={3}>
+                    <span className="font-mono ">
+                      Total Balance: ${(balanceData.currentBalance + balanceData.totalPaid).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </span>
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
