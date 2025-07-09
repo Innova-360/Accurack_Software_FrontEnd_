@@ -202,6 +202,14 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
                     : "/order-tracking-verification"
                 );
               }
+              // Return & Refund routes
+              else if (card.title === "View Returns") {
+                navigate(`/store/${activeStoreId}/return`);
+              } else if (card.title === "Create Return") {
+                navigate(`/store/${activeStoreId}/return/create`);
+              } else if (card.title === "Return Dashboard") {
+                navigate(`/store/${activeStoreId}/return`);
+              }
             }}
             className="group bg-white rounded-xl shadow-lg border-2 border-[#f5f4f4] shadow-[#D1D1D1] hover:shadow-xl hover:border-[#03414C]/20 transition-all duration-300 cursor-pointer
                        flex flex-row lg:flex-col items-center lg:items-center
