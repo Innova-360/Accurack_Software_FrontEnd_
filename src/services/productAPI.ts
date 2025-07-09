@@ -331,6 +331,7 @@ interface PaginationParams {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   category?: string;
+  storeId?: string;
 }
 
 // Pagination and search parameters interface
@@ -355,6 +356,9 @@ export const productAPI = {
       const searchParams = new URLSearchParams();
       searchParams.append("page", page.toString());
       searchParams.append("limit", limit.toString());
+      if (params.storeId !== undefined) {
+        searchParams.append("storeId", params.storeId.toString());
+      }
 
       // Add search parameter if provided
       if (params.search && params.search.trim()) {

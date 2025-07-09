@@ -91,3 +91,22 @@ export interface FetchOrdersParams {
   paymentType?: PaymentType;
   search?: string;
 }
+
+
+export interface Order {
+  id: string;
+  customerId: string;
+  customerName: string;
+  storeId: string;
+  paymentAmount: number;
+  paymentType: string;
+  status: string;
+  isValidated: boolean;
+  driverName: string;
+  driverId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+
+

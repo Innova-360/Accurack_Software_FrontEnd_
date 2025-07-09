@@ -37,9 +37,11 @@ const ViewOrdersPage: React.FC = () => {
   }, []);
 
   // Redux state
-  const { orders, loading, error } = useSelector(
+  const { orders, loading, error, pagination } = useSelector(
     (state: RootState) => state.orders
   );
+
+  // console.log(orders, pagination);
 
   // Get customers for the dropdown
   const { customers, loading: customersLoading } = useCustomers(currentStore?.id, {
@@ -79,7 +81,7 @@ const ViewOrdersPage: React.FC = () => {
         params.search = searchTerm.trim();
       }
 
-      console.log("Fetching orders with params:", params);
+      // console.log("Fetching orders with params:", params);
       dispatch(fetchOrders(params));
     }
   }, [
@@ -331,8 +333,8 @@ const ViewOrdersPage: React.FC = () => {
             {/* Pagination */}
             {displayOrders.length > 0 && (
               <OrderPagination
-                currentPage={currentPage}
-                totalPages={totalPages}
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
                 startIndex={startIndex}
                 endIndex={endIndex}
                 totalItems={displayOrders.length}

@@ -55,9 +55,9 @@ export interface CreateProductPayload {
 // Async thunk for fetching products
 export const fetchProducts = createAsyncThunk(
   "products/fetchProducts",
-  async (_, { rejectWithValue }) => {
+  async (params: ProductSearchParams, { rejectWithValue }) => {
     try {
-      const products = await productAPI.getProducts();
+      const products = await productAPI.getProducts(params);
       return products;
     } catch (error: any) {
       console.error("Error fetching products:", error);
@@ -146,7 +146,7 @@ const productsSlice = createSlice({
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.products = action.payload;
+        state.products = action.payload.products;
         state.error = null;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
