@@ -14,7 +14,7 @@ import LowStockSection from "../../components/InventoryComponents/LowStockSectio
 import {
   AddInventoryOptionsModal,
   UploadInventoryModal,
-  BarcodeScanModal,
+  BarcodeScanModal, 
   EditProductModal,
   DeleteAllInventoryModal,
 } from "../../components/InventoryComponents";
@@ -111,6 +111,9 @@ const Inventory: React.FC = () => {
     direction: "asc" | "desc";
   } | null>(null);
 
+
+  console.log("storeid",storeId)
+
   // Fetch products from API with pagination and filters
   const { products, loading, error, pagination, fetchWithParams, refetch } =
     useProducts({
@@ -119,6 +122,7 @@ const Inventory: React.FC = () => {
       search: searchTerm,
       sortBy: sortConfig?.key,
       sortOrder: sortConfig?.direction,
+      storeId: storeId
     });
   const [groupBy, setGroupBy] = useState("");
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
@@ -425,7 +429,15 @@ const Inventory: React.FC = () => {
     productId: string
   ) => {
     try {
-      await productAPI.updateProduct(productId, productData);
+      // Ensure each variant has purchaseOrders property to match ApiProduct type
+      const fixedProductData: Partial<ApiProduct> = {
+        ...productData,
+        variants: productData.variants?.map((variant: any) => ({
+          ...variant,
+          purchaseOrders: variant.purchaseOrders ?? [],
+        })),
+      };
+      await productAPI.updateProduct(productId, fixedProductData);
       toast.success("Product updated successfully!");
       refetch(); // Refresh the product list
       setIsEditProductModalOpen(false);

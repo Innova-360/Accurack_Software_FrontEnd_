@@ -12,6 +12,7 @@ interface PaginationParams {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   category?: string;
+  storeId?: string;
 }
 
 interface UseProductsResult {
@@ -31,6 +32,7 @@ interface UseProductsResult {
 export const useProducts = (
   initialParams: PaginationParams = {}
 ): UseProductsResult => {
+      console.log("parms",initialParams)
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<any>(null);
@@ -50,7 +52,7 @@ export const useProducts = (
 
     try {
       const response: PaginatedProductsResponse =
-        await productAPI.getProducts(params);
+        await productAPI.getProducts(initialParams);
       setProducts(response.products);
       setPagination(response.pagination);
     } catch (err) {

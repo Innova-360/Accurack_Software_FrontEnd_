@@ -74,6 +74,7 @@ const AddNewSale: React.FC = () => {
       page: currentPageLocal,
       limit: productsPerPage,
       search: debouncedSearchTerm || undefined,
+      storeId: currentStore?.id
     }));
   }, [dispatch, currentPageLocal, debouncedSearchTerm]);
 
@@ -459,7 +460,7 @@ const AddNewSale: React.FC = () => {
       
       // Navigate back to sales page
       navigate(-1);
-    } catch (error: axios.AxiosError) {
+    } catch (error) {
       console.error("Error creating sale:", error);
       toast.error(`Failed to create sale: ${error}`);
     }

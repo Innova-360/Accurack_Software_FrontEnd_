@@ -20,71 +20,71 @@ const initialState: OrderTrackingState = {
   },
 };
 
-// Dummy data for tracking orders
-const dummyTrackingOrders: OrderTrackingItem[] = [
-  {
-    id: 'tracking-001',
-    customerId: 'customer-001',
-    customerName: 'John Smith',
-    status: 'pending_verification',
-    paymentAmount: 250.00,
-    originalPaymentAmount: 250.00,
-    paymentType: 'CASH',
-    driverName: 'Mike Johnson',
-    isVerified: false,
-    validatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    storeId: 'store-001',
-  },
-  {
-    id: 'tracking-002',
-    customerId: 'customer-002',
-    customerName: 'Sarah Wilson',
-    status: 'verified',
-    paymentAmount: 180.00,
-    originalPaymentAmount: 200.00,
-    paymentType: 'CARD',
-    driverName: 'David Brown',
-    isVerified: true,
-    verifiedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    verifiedBy: 'Admin User',
-    validatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    storeId: 'store-001',
-  },
-  {
-    id: 'tracking-003',
-    customerId: 'customer-003',
-    customerName: 'Robert Davis',
-    status: 'under_review',
-    paymentAmount: 450.00,
-    originalPaymentAmount: 450.00,
-    paymentType: 'BANK_TRANSFER',
-    driverName: 'Chris Wilson',
-    isVerified: false,
-    validatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    storeId: 'store-001',
-  },
-  {
-    id: 'tracking-004',
-    customerId: 'customer-004',
-    customerName: 'Emily Taylor',
-    status: 'rejected',
-    paymentAmount: 120.00,
-    originalPaymentAmount: 120.00,
-    paymentType: 'DIGITAL_WALLET',
-    driverName: 'Alex Martinez',
-    isVerified: false,
-    validatedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-    storeId: 'store-001',
-  },
-];
+// // Dummy data for tracking orders
+// const dummyTrackingOrders: OrderTrackingItem[] = [
+//   {
+//     id: 'tracking-001',
+//     customerId: 'customer-001',
+//     customerName: 'John Smith',
+//     status: 'pending_verification',
+//     paymentAmount: 250.00,
+//     originalPaymentAmount: 250.00,
+//     paymentType: 'CASH',
+//     driverName: 'Mike Johnson',
+//     isVerified: false,
+//     validatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+//     createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+//     updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+//     storeId: 'store-001',
+//   },
+//   {
+//     id: 'tracking-002',
+//     customerId: 'customer-002',
+//     customerName: 'Sarah Wilson',
+//     status: 'verified',
+//     paymentAmount: 180.00,
+//     originalPaymentAmount: 200.00,
+//     paymentType: 'CARD',
+//     driverName: 'David Brown',
+//     isVerified: true,
+//     verifiedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+//     verifiedBy: 'Admin User',
+//     validatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+//     createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+//     updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+//     storeId: 'store-001',
+//   },
+//   {
+//     id: 'tracking-003',
+//     customerId: 'customer-003',
+//     customerName: 'Robert Davis',
+//     status: 'under_review',
+//     paymentAmount: 450.00,
+//     originalPaymentAmount: 450.00,
+//     paymentType: 'BANK_TRANSFER',
+//     driverName: 'Chris Wilson',
+//     isVerified: false,
+//     validatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+//     createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+//     updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+//     storeId: 'store-001',
+//   },
+//   {
+//     id: 'tracking-004',
+//     customerId: 'customer-004',
+//     customerName: 'Emily Taylor',
+//     status: 'rejected',
+//     paymentAmount: 120.00,
+//     originalPaymentAmount: 120.00,
+//     paymentType: 'DIGITAL_WALLET',
+//     driverName: 'Alex Martinez',
+//     isVerified: false,
+//     validatedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+//     createdAt: new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString(),
+//     updatedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+//     storeId: 'store-001',
+//   },
+// ];
 
 // Async thunks with dummy data
 export const fetchTrackingOrders = createAsyncThunk(
@@ -94,7 +94,7 @@ export const fetchTrackingOrders = createAsyncThunk(
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      let filteredOrders = [...dummyTrackingOrders];
+      let filteredOrders = [];
       
       // Apply filters
       if (params.status) {
