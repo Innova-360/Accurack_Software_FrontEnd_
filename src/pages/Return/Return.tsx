@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import Header from "../../components/Header";
 import { returnedProductsData } from "../../data/returnData";
 
@@ -596,6 +597,9 @@ const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
 };
 
 const Return: React.FC = () => {
+  const navigate = useNavigate();
+  const { id: storeId } = useParams<{ id: string }>();
+  
   const [returnedProducts, setReturnedProducts] =
     useState<ReturnedProduct[]>(returnedProductsData);
   const [currentPage, setCurrentPage] = useState(1);
@@ -691,25 +695,46 @@ const Return: React.FC = () => {
               Manage returned products and process refunds
             </p>
           </div>
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="bg-[#0f4d57] hover:bg-[#0d3f47] text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="flex gap-3">
+            <button
+              onClick={() => navigate(`/store/${storeId}/return/create`)}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
-            Add Returned Product
-          </button>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+              Create Return
+            </button>
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="bg-[#0f4d57] hover:bg-[#0d3f47] text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+              Add Return (Modal)
+            </button>
+          </div>
         </div>
 
         {/* Stats Cards */}

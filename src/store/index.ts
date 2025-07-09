@@ -17,6 +17,7 @@ import { taxApi } from "./slices/taxSlice";
 import { categoryApi } from "./slices/categorySlice";
 import { taxReducer } from "./slices/taxSlice";
 import customerReducer from "./slices/customerSlice";
+import returnReducer from "./slices/returnSlice";
 import productCategoriesReducer from "./slices/productCategoriesSlice";
 import orderProcessingReducer from "./slices/orderProcessingSlice";
 import orderTrackingReducer from "./slices/orderTrackingSlice";
@@ -38,6 +39,7 @@ export const store = configureStore({
     tax: taxReducer,
     sales: salesReducer,
     customers: customerReducer,
+    returns: returnReducer,
     productCategories: productCategoriesReducer,
     orders: orderProcessingReducer,
     orderTracking: orderTrackingReducer,
