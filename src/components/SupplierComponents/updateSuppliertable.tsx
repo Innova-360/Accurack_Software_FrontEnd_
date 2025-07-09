@@ -160,7 +160,7 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
             <div className="col-span-1">#</div>
             <div className="col-span-2">SUPPLIER</div>
             <div className="col-span-3">CONTACT</div>
-            <div className="col-span-3">ADDRESS</div>
+            <div className="col-span-4">ADDRESS</div>
             {/* <div className="col-span-2">PRODUCTS</div> */}
             <div className="col-span-2">ACTIONS</div>
           </div>
@@ -193,7 +193,7 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
                   <div className="text-sm text-gray-900">{supplier.email}</div>
                   <div className="text-sm text-gray-500">{supplier.phone}</div>
                 </div>
-                <div className="col-span-3">
+                <div className="col-span-4">
                   <div className="text-sm text-gray-900">
                     {supplier.address}
                   </div>
@@ -208,7 +208,7 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
                   TODO: Show product count when products API is integrated
                   <span className="text-gray-400">N/A</span>
                 </div>{" "} */}
-                <div className="col-span-3 flex items-center gap-1 lg:mr-9">
+                <div className=" flex items-center gap-1 ">
                   <IconButton
                     icon={<FaEye />}
                     variant="info"

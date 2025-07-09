@@ -150,7 +150,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
           onClick={onBackToSuppliers}
           className="bg-[#03414C] text-white font-medium px-6 py-3 rounded-lg transition-colors duration-200 hover:bg-[#032e37]"
         >
-          Assign Products to Supplier
+          Back to Supplier
         </button>
       </div>
     );
