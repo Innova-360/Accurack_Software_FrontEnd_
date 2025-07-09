@@ -6,6 +6,121 @@ export interface ReturnItem {
   id: string;
   saleId: string;
   productId: string;
+  pluUpc: string;
+  quantity: number;
+  returnCategory: "SALEABLE" | "NON_SALEABLE" | "SCRAP";
+  reason: string;
+  processedBy: string;
+  createdAt: string;
+  updatedAt: string;
+  sale?: {
+    id: string;
+    customerId?: string;
+    userId?: string;
+    storeId: string;
+    clientId: string;
+    paymentMethod: string;
+    totalAmount: number;
+    confirmation: string;
+    quantitySend: number;
+    allowance: number;
+    source: string;
+    tax: number;
+    status: string;
+    generateInvoice: boolean;
+    isProductReturned?: boolean;
+    cashierName?: string;
+    createdAt: string;
+    updatedAt: string;
+    fileUploadSalesId?: string | null;
+    validatorId?: string | null;
+    customer?: {
+      id: string;
+      customerName: string;
+      customerAddress?: string | null;
+      phoneNumber?: string;
+      telephoneNumber?: string | null;
+      customerMail?: string | null;
+      website?: string | null;
+      threshold: number;
+      storeId: string;
+      clientId: string;
+      createdAt: string;
+      updatedAt: string;
+    };
+    saleItems?: Array<{
+      id: string;
+      saleId: string;
+      productId: string;
+      pluUpc: string;
+      productName: string;
+      quantity: number;
+      sellingPrice: number;
+      totalPrice: number;
+      createdAt: string;
+      updatedAt: string;
+      product?: {
+        id: string;
+        name: string;
+        categoryId: string;
+        ean?: string | null;
+        pluUpc: string;
+        sku?: string | null;
+        itemQuantity: number;
+        msrpPrice: number;
+        singleItemSellingPrice: number;
+        clientId: string;
+        storeId: string;
+        discountAmount: number;
+        percentDiscount: number;
+        hasVariants: boolean;
+        packIds: any[];
+        variants: any[];
+        createdAt: string;
+        updatedAt: string;
+      };
+    }>;
+    client?: {
+      id: string;
+      name: string;
+    };
+    store?: {
+      id: string;
+      name: string;
+    };
+    user?: {
+      id: string;
+      firstName?: string;
+      name?: string;
+    };
+  };
+  product?: {
+    id: string;
+    name: string;
+    categoryId: string;
+    ean?: string | null;
+    pluUpc: string;
+    sku?: string | null;
+    itemQuantity: number;
+    msrpPrice: number;
+    singleItemSellingPrice: number;
+    clientId: string;
+    storeId: string;
+    discountAmount: number;
+    percentDiscount: number;
+    hasVariants: boolean;
+    packIds: any[];
+    variants: any[];
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
+// Helper interfaces for UI display
+export interface DisplayReturnItem {
+  id: string;
+  saleId: string;
+  productId: string;
   productName: string;
   pluUpc: string;
   sellingPrice: number;
@@ -35,6 +150,7 @@ export interface CreateReturnRequest {
 
 interface ReturnState {
   returns: ReturnItem[];
+  displayReturns: DisplayReturnItem[];
   loading: boolean;
   error: string | null;
   currentReturn: ReturnItem | null;
@@ -42,9 +158,38 @@ interface ReturnState {
 
 const initialState: ReturnState = {
   returns: [],
+  displayReturns: [],
   loading: false,
   error: null,
   currentReturn: null,
+};
+
+// Helper function to transform API response to display format
+const transformReturnForDisplay = (returnItem: ReturnItem): DisplayReturnItem => {
+  // Map returnCategory to status
+  const statusMap: Record<string, "saleable" | "no_saleable" | "scrap"> = {
+    "SALEABLE": "saleable",
+    "NON_SALEABLE": "no_saleable",
+    "SCRAP": "scrap"
+  };
+
+  return {
+    id: returnItem.id,
+    saleId: returnItem.saleId,
+    productId: returnItem.productId,
+    productName: returnItem.product?.name || "Unknown Product",
+    pluUpc: returnItem.pluUpc || "",
+    sellingPrice: returnItem.product?.singleItemSellingPrice || 0,
+    vendorPrice: returnItem.product?.msrpPrice || 0, // Using msrpPrice as vendor price
+    quantity: returnItem.quantity || 0,
+    returnDate: returnItem.createdAt || "",
+    reason: returnItem.reason || "",
+    status: statusMap[returnItem.returnCategory] || "no_saleable",
+    customerInfo: returnItem.sale?.customer ? {
+      name: returnItem.sale.customer.customerName || "Unknown Customer",
+      phone: returnItem.sale.customer.phoneNumber || returnItem.sale.customer.telephoneNumber || "",
+    } : undefined,
+  };
 };
 
 // Async thunk for creating a return
@@ -70,34 +215,31 @@ export const createReturn = createAsyncThunk<
 export const fetchReturns = createAsyncThunk<
   ReturnItem[],
   { 
-    storeId: string; 
-    page?: number; 
-    limit?: number;
+    storeId: string;
   },
   { rejectValue: string }
 >("returns/fetchReturns", async ({ 
   storeId, 
-  page = 1, 
-  limit = 20
 }, { rejectWithValue }) => {
   try {
     const params = new URLSearchParams({
       storeId,
-      page: page.toString(),
-      limit: limit.toString(),
     });
 
     console.log("Fetching returns with params:", params.toString());
     
-    const response = await apiClient.get(`/returns/list?${params.toString()}`);
+    const response = await apiClient.get(`/sales/returns?${params.toString()}`);
     console.log("📊 Returns API response:", JSON.stringify(response.data, null, 2));
     
-    const returnsData = response.data?.data?.returns || response.data?.returns || response.data?.data || response.data;
+    // Extract the data array from the response wrapper
+    const returnsData = response.data?.data || response.data;
     
     if (!Array.isArray(returnsData)) {
-      throw new Error("Invalid returns data format");
+      console.error("❌ Invalid returns data format. Expected array, got:", typeof returnsData);
+      throw new Error("Invalid returns data format - expected array");
     }
     
+    console.log("✅ Successfully parsed returns data:", returnsData.length, "items");
     return returnsData;
   } catch (error: any) {
     console.error("❌ Error fetching returns:", error);
@@ -164,6 +306,7 @@ const returnSlice = createSlice({
   reducers: {
     clearReturns: (state) => {
       state.returns = [];
+      state.displayReturns = [];
       state.currentReturn = null;
     },
     clearCurrentReturn: (state) => {
@@ -183,6 +326,7 @@ const returnSlice = createSlice({
       .addCase(createReturn.fulfilled, (state, action) => {
         state.loading = false;
         state.returns.push(action.payload);
+        state.displayReturns.push(transformReturnForDisplay(action.payload));
         state.currentReturn = action.payload;
       })
       .addCase(createReturn.rejected, (state, action) => {
@@ -197,6 +341,7 @@ const returnSlice = createSlice({
       .addCase(fetchReturns.fulfilled, (state, action) => {
         state.loading = false;
         state.returns = action.payload;
+        state.displayReturns = action.payload.map(transformReturnForDisplay);
       })
       .addCase(fetchReturns.rejected, (state, action) => {
         state.loading = false;
@@ -225,6 +370,7 @@ const returnSlice = createSlice({
         const index = state.returns.findIndex(r => r.id === action.payload.id);
         if (index !== -1) {
           state.returns[index] = action.payload;
+          state.displayReturns[index] = transformReturnForDisplay(action.payload);
         }
         state.currentReturn = action.payload;
       })
@@ -240,6 +386,7 @@ const returnSlice = createSlice({
       .addCase(deleteReturn.fulfilled, (state, action) => {
         state.loading = false;
         state.returns = state.returns.filter(r => r.id !== action.payload);
+        state.displayReturns = state.displayReturns.filter(r => r.id !== action.payload);
         if (state.currentReturn?.id === action.payload) {
           state.currentReturn = null;
         }

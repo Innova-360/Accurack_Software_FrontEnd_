@@ -172,6 +172,36 @@ const CreateReturn: React.FC = () => {
         i === index ? { ...item, [field]: value } : item
       ),
     }));
+
+    // Immediate validation for quantity field
+    if (field === "quantity") {
+      const currentItem = formData.returnItems[index];
+      if (currentItem && currentItem.productId) {
+        const selectedProduct = saleProducts.find(p => p.productId === currentItem.productId);
+        if (selectedProduct && value > selectedProduct.quantity) {
+          setErrors((prev) => ({
+            ...prev,
+            [`returnItems[${index}].quantity`]: `Quantity cannot exceed ${selectedProduct.quantity}`
+          }));
+        } else {
+          // Clear the error if quantity is valid
+          setErrors((prev) => {
+            const newErrors = { ...prev };
+            delete newErrors[`returnItems[${index}].quantity`];
+            return newErrors;
+          });
+        }
+      }
+    }
+
+    // Clear other field errors when user starts typing
+    if (errors[`returnItems[${index}].${field}`]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[`returnItems[${index}].${field}`];
+        return newErrors;
+      });
+    }
   };
 
   const getAvailableProducts = (excludeIndex?: number) => {
@@ -204,9 +234,6 @@ const CreateReturn: React.FC = () => {
         }
         if (item.quantity < 1) {
           newErrors[`returnItems[${index}].quantity`] = "Quantity must be at least 1";
-        }
-        if (!item.reason.trim()) {
-          newErrors[`returnItems[${index}].reason`] = "Reason is required";
         }
         if (item.reason.length > 100) {
           newErrors[`returnItems[${index}].reason`] = "Reason must be 100 characters or less";
@@ -325,8 +352,8 @@ const CreateReturn: React.FC = () => {
               <FaArrowLeft className="text-gray-600" size={20} />
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Create Return</h1>
-              <p className="text-gray-600">Process a product return</p>
+              <h1 className="text-3xl font-bold text-gray-900">Create Return & Refund</h1>
+              <p className="text-gray-600">Process a product return & refund</p>
             </div>
           </div>
         </div>
@@ -341,7 +368,7 @@ const CreateReturn: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Customer *
+                    Select Customer <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="selectedCustomerId"
@@ -402,7 +429,7 @@ const CreateReturn: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Sale *
+                    Select Sale <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="selectedSaleId"
@@ -470,11 +497,11 @@ const CreateReturn: React.FC = () => {
             {/* Return Type */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Return Type
+                Refund Options
               </h2>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Return Type *
+                  Refund Options <span className="text-red-500">*</span>
                 </label>
                 <select
                   name="returnType"
@@ -501,7 +528,7 @@ const CreateReturn: React.FC = () => {
               </h2>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Return Status *
+                  Return Status <span className="text-red-500">*</span>
                 </label>
                 <select
                   name="status"
@@ -575,7 +602,7 @@ const CreateReturn: React.FC = () => {
                           {/* Product Selection */}
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Select Product *
+                              Select Product <span className="text-red-500">*</span>
                             </label>
                             <select
                               value={item.productId}
@@ -599,7 +626,7 @@ const CreateReturn: React.FC = () => {
                           {/* Quantity */}
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Quantity *
+                              Quantity <span className="text-red-500">*</span>
                             </label>
                             <input
                               type="number"
@@ -619,7 +646,7 @@ const CreateReturn: React.FC = () => {
                           {/* Return Amount Type */}
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Return Amount Type *
+                              Return Amount Type <span className="text-red-500">*</span>
                             </label>
                             <select
                               value={item.returnAmountType}
@@ -634,7 +661,7 @@ const CreateReturn: React.FC = () => {
                           {/* Return Value */}
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Return {item.returnAmountType === "percentage" ? "Percentage" : "Amount"} *
+                              Return {item.returnAmountType === "percentage" ? "Percentage" : "Amount"} <span className="text-red-500">*</span>
                             </label>
                             <input
                               type="number"
@@ -656,7 +683,7 @@ const CreateReturn: React.FC = () => {
                           {/* Reason */}
                           <div className="md:col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Return Reason * (max 100 characters)
+                              Return Reason (max 100 characters)
                             </label>
                             <textarea
                               value={item.reason}
@@ -666,7 +693,7 @@ const CreateReturn: React.FC = () => {
                               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] ${
                                 errors[`returnItems[${index}].reason`] ? "border-red-500" : "border-gray-300"
                               }`}
-                              placeholder="Enter reason for return"
+                              placeholder="Enter reason for return (optional)"
                             />
                             <div className="flex justify-between items-center mt-1">
                               {errors[`returnItems[${index}].reason`] && (
