@@ -17,7 +17,6 @@ import {
   clearError,
   validateOrder 
 } from "../../store/slices/orderProcessingSlice";
-import { addOrderToTracking } from "../../store/slices/orderTrackingSlice";
 import type { AppDispatch, RootState } from "../../store";
 import type { OrderItem, UpdateOrderRequest } from "../../types/orderProcessing";
 
@@ -40,8 +39,6 @@ const ViewOrdersPage: React.FC = () => {
   const { orders, loading, error, pagination } = useSelector(
     (state: RootState) => state.orders
   );
-
-  // console.log(orders, pagination);
 
   // Get customers for the dropdown
   const { customers, loading: customersLoading } = useCustomers(currentStore?.id, {
@@ -68,6 +65,7 @@ const ViewOrdersPage: React.FC = () => {
         storeId: currentStore.id,
         page: currentPage,
         limit: rowsPerPage,
+        search: searchTerm.trim() || undefined, // Send undefined if search is empty
       };
 
       // Add filters if they're not "All"
@@ -77,11 +75,7 @@ const ViewOrdersPage: React.FC = () => {
       if (paymentFilter !== "All") {
         params.paymentType = paymentFilter;
       }
-      if (searchTerm.trim()) {
-        params.search = searchTerm.trim();
-      }
 
-      // console.log("Fetching orders with params:", params);
       dispatch(fetchOrders(params));
     }
   }, [
@@ -114,16 +108,14 @@ const ViewOrdersPage: React.FC = () => {
     }
 
     return orders.filter((order: OrderItem) =>
-      order.driverName.toLowerCase().includes(driverFilter.toLowerCase())
+      order.driverName?.toLowerCase().includes(driverFilter.toLowerCase())
     );
   };
 
   const displayOrders = getDisplayOrders();
   
   // For pagination display
-  const totalPages = Math.ceil(displayOrders.length / rowsPerPage);
-  const startIndex = (currentPage - 1) * rowsPerPage + 1;
-  const endIndex = Math.min(currentPage * rowsPerPage, displayOrders.length);
+  const totalPages = Math.ceil(pagination.total / rowsPerPage);
 
   // Action handlers
   const handleCreateOrder = () => {
@@ -143,22 +135,8 @@ const ViewOrdersPage: React.FC = () => {
   const handleValidateOrder = async (order: OrderItem) => {
     if (currentStore?.id) {
       try {
-        // First validate the order in the order processing system
         await dispatch(validateOrder({ id: order.id, storeId: currentStore.id })).unwrap();
-        
-        // Then move the order to tracking verification
-        await dispatch(addOrderToTracking({
-          id: order.id,
-          customerId: order.customerId,
-          customerName: order.customerName,
-          paymentAmount: order.paymentAmount,
-          paymentType: order.paymentType,
-          driverName: order.driverName,
-          createdAt: order.createdAt,
-          storeId: currentStore.id,
-        })).unwrap();
-        
-        toast.success("Order validated and moved to tracking verification");
+        toast.success("Order validated successfully");
       } catch (error: any) {
         toast.error(error || "Failed to validate order");
       }
@@ -335,9 +313,9 @@ const ViewOrdersPage: React.FC = () => {
               <OrderPagination
                 currentPage={pagination.page}
                 totalPages={pagination.totalPages}
-                startIndex={startIndex}
-                endIndex={endIndex}
-                totalItems={displayOrders.length}
+                startIndex={(pagination.page - 1) * rowsPerPage + 1}
+                endIndex={Math.min(pagination.page * rowsPerPage, pagination.total)}
+                totalItems={pagination.total}
                 rowsPerPage={rowsPerPage}
                 onPageChange={setCurrentPage}
                 onRowsPerPageChange={setRowsPerPage}

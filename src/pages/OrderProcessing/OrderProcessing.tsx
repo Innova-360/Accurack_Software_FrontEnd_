@@ -19,7 +19,7 @@ import {
   validateOrder,
   clearError,
 } from "../../store/slices/orderProcessingSlice";
-import { addOrderToTracking } from "../../store/slices/orderTrackingSlice";
+// import { addOrderToTracking } from "../../store/slices/orderTrackingSlice";
 import type { AppDispatch, RootState } from "../../store";
 import type { OrderItem, OrderStats, UpdateOrderRequest, CreateOrderRequest } from "../../types/orderProcessing";
 
@@ -145,17 +145,17 @@ const OrderProcessingPage: React.FC = () => {
         // First validate the order in the order processing system
         await dispatch(validateOrder({ id: order.id, storeId: currentStore.id })).unwrap();
         
-        // Then move the order to tracking verification
-        await dispatch(addOrderToTracking({
-          id: order.id,
-          customerId: order.customerId,
-          customerName: order.customerName,
-          paymentAmount: order.paymentAmount,
-          paymentType: order.paymentType,
-          driverName: order.driverName,
-          createdAt: order.createdAt,
-          storeId: currentStore.id,
-        })).unwrap();
+        // // Then move the order to tracking verification
+        // await dispatch(addOrderToTracking({
+        //   id: order.id,
+        //   customerId: order.customerId,
+        //   customerName: order.customerName,
+        //   paymentAmount: order.paymentAmount,
+        //   paymentType: order.paymentType,
+        //   driverName: order.driverName,
+        //   createdAt: order.createdAt,
+        //   storeId: currentStore.id,
+        // })).unwrap();
         
         toast.success("Order validated and moved to tracking verification");
       } catch (error: any) {

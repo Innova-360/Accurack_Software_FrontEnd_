@@ -105,7 +105,7 @@ const CreateOrderPage: React.FC = () => {
     
     if (!validateForm()) return;
     if (!currentStore?.id) return;
-
+    
     setIsSubmitting(true);
     try {
       const createData = {
@@ -117,9 +117,8 @@ const CreateOrderPage: React.FC = () => {
       console.log(createData);
       await dispatch(createOrder(createData)).unwrap();
       toast.success("Order created successfully");
-      
       // Navigate back to order processing page
-      // navigate(storeId ? `/store/${storeId}/order-processing` : "/order-processing");
+      navigate(storeId ? `/store/${storeId}/order-processing/view-orders` : "/order-processing");
     } catch (error: any) {
       toast.error(error || "Failed to create order");
     } finally {

@@ -57,14 +57,14 @@ export interface OrderTrackingStats {
 
 export interface VerifyOrderRequest {
   id: string;
-  paymentAmount: number;
+  paymentAmount?: number;
   verificationNotes?: string;
   storeId: string;
 }
 
 export interface RejectOrderRequest {
   id: string;
-  rejectionReason: string;
+  rejectionReason?: string;
   storeId: string;
 }
 

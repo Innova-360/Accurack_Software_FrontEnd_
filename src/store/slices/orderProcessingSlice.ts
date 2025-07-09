@@ -22,15 +22,15 @@ const initialState: OrderState = {
 
 export const fetchOrders = createAsyncThunk(
   "orders/fetchOrders",
-  async ({ storeId, page, limit }: FetchOrdersParams, { rejectWithValue }) => {
+  async ({ storeId, page, limit, search = '' }: FetchOrdersParams, { rejectWithValue }) => {
     try {
-      const response = await apiClient.get(`/driver/orders?storeId=${storeId}&page=${page}&limit=${limit}`);
+      const response = await apiClient.get(`/driver/orders?storeId=${storeId}&page=${page}&limit=${limit}&search=${search}`);
 
       if (!response.data?.data) {
         throw new Error("Failed to fetch orders");
       }
 
-      console.log(response.data)
+      console.log(response.data);
 
       return {
         orders: response.data.data.orders,

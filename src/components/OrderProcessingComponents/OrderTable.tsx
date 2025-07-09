@@ -134,7 +134,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                  {order.status.toLowerCase() === 'validated' ? "VERIFIED" : order.status}
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -172,14 +172,14 @@ const OrderTable: React.FC<OrderTableProps> = ({
                     variant={order.isValidated ? "secondary" : "success"}
                     size="sm"
                     icon={<FaCheckCircle />}
-                    disabled={order.isValidated}
+                    disabled={order.isValidated || order.status.toLowerCase() === 'pending_validation'}
                     className={
                       order.isValidated 
                         ? "bg-gray-400 text-gray-700 px-3 py-1 text-xs cursor-not-allowed opacity-60"
                         : "bg-green-600 hover:bg-green-700 text-white px-3 py-1 text-xs"
                     }
                   >
-                    {order.isValidated ? "Validated" : "Validate"}
+                    {order.status.toLowerCase() === 'pending_validation' ? "pending" : order.isValidated ? "Validated" : "Validate"}
                   </Button>
                 </div>
               </td>
