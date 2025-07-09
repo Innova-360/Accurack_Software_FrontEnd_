@@ -12,6 +12,7 @@ import SalesPage from "../pages/salesPage/Sales";
 import CreateInventory from "../pages/Inventory/CreateInventory";
 import ProductDetails from "../pages/Inventory/ProductDetails";
 import UploadInventory from "../pages/Inventory/UploadInventory";
+import UpdateProduct from "../pages/Inventory/UpdateProduct";
 import AddNewSale from "../pages/salesPage/AddNewSale";
 import EditSalePage from "../pages/salesPage/EditSale";
 import GoogleAuthCallback from "../components/GoogleAuthCallback";
@@ -20,7 +21,7 @@ import AddSupplierPage from "../pages/Supplier/AddSupplierPage";
 import UpdateSupplierPage from "../pages/Supplier/UpdateSupplier";
 import StoresPage from "../pages/Stores/Stores";
 import EmployeePage from "../pages/Employee/EmployeeManagementPage";
-import CreateInvoice from "../pages/salesPage/CreateInvoice";
+import CreateInvoice from "../pages/Invoice/CreateInvoice";
 import SalesId from "../pages/salesPage/SalesId";
 import Employee from "../pages/Employee/EmployeePage";
 import OrderProcessingPage from "../pages/OrderProcessing/OrderProcessing";
@@ -47,6 +48,9 @@ import ProfileSettings from "../pages/ProfileSettings/ProfileSettings";
 import BusinessSettings from "../pages/BusinessSettings/BusinessSettings";
 import ChangePassword from "../pages/ChangePassword/ChangePassword";
 import NotFound from "../pages/NotFound/NotFound";
+import Invoice from "../pages/Invoice/Invoice";
+import InvoicePreview from "../pages/Invoice/invoicePreview";
+
 
 const AppRoutes = () => {
   return (
@@ -58,6 +62,7 @@ const AppRoutes = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
       <Route path="/term" element={<Terms />} />
+      <Route path="/invoice" element={<InvoicePreview />} />
 
       {/* Protected Routes - Authentication required */}
       <Route
@@ -224,6 +229,14 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/store/:id/inventory/update"
+        element={
+          <ProtectedRoute>
+            <UpdateProduct />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/store/:id/sales"
         element={
           <ProtectedRoute>
@@ -260,6 +273,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <CreateInvoice />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/invoices"
+        element={
+          <ProtectedRoute>
+            <Invoice />
           </ProtectedRoute>
         }
       />
@@ -404,14 +425,6 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <BusinessForm />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/store/:id/invoice"
-        element={
-          <ProtectedRoute>
-            <CreateInvoice />
           </ProtectedRoute>
         }
       />

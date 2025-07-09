@@ -1,18 +1,12 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { PayloadAction } from '@reduxjs/toolkit';
-import type { 
-  OrderState, 
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import type { PayloadAction } from "@reduxjs/toolkit";
+import type {
+  OrderState,
   CreateOrderRequest,
   UpdateOrderRequest,
-  FetchOrdersParams
-} from '../../types/orderProcessing';
-import { 
-  mockOrderData, 
-  getFilteredOrders, 
-  addMockOrder, 
-  updateMockOrder, 
-  deleteMockOrder 
-} from '../../data/mockOrderData';
+  FetchOrdersParams,
+} from "../../types/orderProcessing";
+import apiClient from "../../services";
 
 const initialState: OrderState = {
   orders: [],
@@ -26,156 +20,144 @@ const initialState: OrderState = {
   },
 };
 
-// Async thunks
 export const fetchOrders = createAsyncThunk(
-  'orders/fetchOrders',
-  async (params: FetchOrdersParams, { rejectWithValue }) => {
+  "orders/fetchOrders",
+  async ({ storeId, page, limit, search = '' }: FetchOrdersParams, { rejectWithValue }) => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Use dummy data with filtering
-      const filteredOrders = getFilteredOrders(
-        params.search,
-        params.status,
-        params.paymentType,
-        undefined // driver filter handled client-side
-      );
-      
-      // Simulate pagination
-      const page = params.page || 1;
-      const limit = params.limit || 10;
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
-      
-      const pagination = {
-        page,
-        limit,
-        total: filteredOrders.length,
-        totalPages: Math.ceil(filteredOrders.length / limit),
-      };
+      const response = await apiClient.get(`/driver/orders?storeId=${storeId}&page=${page}&limit=${limit}&search=${search}`);
 
-      return { orders: paginatedOrders, pagination };
+      if (!response.data?.data) {
+        throw new Error("Failed to fetch orders");
+      }
+
+      console.log(response.data);
+
+      return {
+        orders: response.data.data.orders,
+        pagination: {
+          page: response.data.data.page,
+          limit: response.data.data.limit,
+          total: response.data.data.total,
+          totalPages: response.data.data.totalPages,
+        },
+      };
     } catch (error: any) {
-      return rejectWithValue('Failed to fetch orders');
+      return rejectWithValue(error.message || "Failed to fetch orders");
     }
   }
 );
 
 export const createOrder = createAsyncThunk(
-  'orders/createOrder',
+  "orders/createOrder",
   async (orderData: CreateOrderRequest, { rejectWithValue, dispatch }) => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Add order to mock data
-      const newOrder = addMockOrder(orderData);
-      
+      const response = await apiClient.post('/driver/order', orderData);
+
+      if (!response.data?.data) {
+        throw new Error("Failed to create order");
+      }
+
       // Refresh orders list after creation
-      await dispatch(fetchOrders({ storeId: orderData.storeId }));
-      
+      await dispatch(fetchOrders({ storeId: orderData.storeId, page: 1, limit: 10 }));
+
       return {
         success: true,
-        message: 'Order created successfully',
-        data: newOrder
+        message: "Order created successfully",
+        data: response.data.data,
       };
     } catch (error: any) {
-      return rejectWithValue('Failed to create order');
+      return rejectWithValue(error.message || "Failed to create order");
     }
   }
 );
 
 export const updateOrder = createAsyncThunk(
-  'orders/updateOrder',
-  async ({ id, orderData, storeId }: { id: string; orderData: UpdateOrderRequest; storeId: string }, { rejectWithValue, dispatch }) => {
+  "orders/updateOrder",
+  async (
+    {
+      id,
+      orderData,
+      storeId,
+    }: { id: string; orderData: UpdateOrderRequest; storeId: string },
+    { rejectWithValue, dispatch }
+  ) => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Update order in mock data
-      const updatedOrder = updateMockOrder(id, orderData);
-      
-      if (!updatedOrder) {
-        throw new Error('Order not found');
+      const response = await apiClient.patch(`/driver/order/${id}`, orderData);
+
+      if (!response.data?.data) {
+        throw new Error("Failed to update order");
       }
-      
+
       // Refresh orders list after update
-      await dispatch(fetchOrders({ storeId }));
-      
+      await dispatch(fetchOrders({ storeId, page: 1, limit: 10 }));
+
       return {
         success: true,
-        message: 'Order updated successfully',
-        data: updatedOrder
+        message: "Order updated successfully",
+        data: response.data.data,
       };
     } catch (error: any) {
-      return rejectWithValue('Failed to update order');
+      return rejectWithValue(error.message || "Failed to update order");
     }
   }
 );
 
 export const deleteOrder = createAsyncThunk(
-  'orders/deleteOrder',
-  async ({ id, storeId }: { id: string; storeId: string }, { rejectWithValue, dispatch }) => {
+  "orders/deleteOrder",
+  async (
+    { id, storeId }: { id: string; storeId: string },
+    { rejectWithValue, dispatch }
+  ) => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Delete order from mock data
-      const success = deleteMockOrder(id);
-      
-      if (!success) {
-        throw new Error('Order not found');
+      const response = await apiClient.delete(`/driver/order/${id}`);
+
+      if (!response.data?.success) {
+        throw new Error("Failed to delete order");
       }
-      
+
       // Refresh orders list after deletion
-      await dispatch(fetchOrders({ storeId }));
-      
+      await dispatch(fetchOrders({ storeId, page: 1, limit: 10 }));
+
       return {
         success: true,
-        message: 'Order deleted successfully'
+        message: "Order deleted successfully",
       };
     } catch (error: any) {
-      return rejectWithValue('Failed to delete order');
+      return rejectWithValue(error.message || "Failed to delete order");
     }
   }
 );
 
 export const validateOrder = createAsyncThunk(
-  'orders/validateOrder',
-  async ({ id, storeId }: { id: string; storeId: string }, { rejectWithValue, dispatch }) => {
+  "orders/validateOrder",
+  async (
+    { id, storeId }: { id: string; storeId: string },
+    { rejectWithValue, dispatch }
+  ) => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Find and validate the order
-      const validatedOrder = updateMockOrder(id, { 
-        isValidated: true,
-        validatedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
-      
-      if (!validatedOrder) {
-        throw new Error('Order not found');
+      console.log(id)
+      const response = await apiClient.post(`/driver/order/validate/${id}`, {});
+
+      if (!response.data?.data) {
+        throw new Error("Failed to validate order");
       }
-      
+
       // Refresh orders list after validation
-      await dispatch(fetchOrders({ storeId }));
-      
+      await dispatch(fetchOrders({ storeId, page: 1, limit: 10 }));
+
       return {
         success: true,
-        message: 'Order validated successfully',
-        data: validatedOrder
+        message: "Order validated successfully",
+        data: response.data.data,
       };
     } catch (error: any) {
-      return rejectWithValue('Failed to validate order');
+      return rejectWithValue(error.message || "Failed to validate order");
     }
   }
 );
 
 const orderSlice = createSlice({
-  name: 'orders',
+  name: "orders",
   initialState,
   reducers: {
     clearError: (state) => {

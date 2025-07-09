@@ -74,6 +74,7 @@ const AddNewSale: React.FC = () => {
       page: currentPageLocal,
       limit: productsPerPage,
       search: debouncedSearchTerm || undefined,
+      storeId: currentStore?.id
     }));
   }, [dispatch, currentPageLocal, debouncedSearchTerm]);
 
@@ -459,7 +460,7 @@ const AddNewSale: React.FC = () => {
       
       // Navigate back to sales page
       navigate(-1);
-    } catch (error: axios.AxiosError) {
+    } catch (error) {
       console.error("Error creating sale:", error);
       toast.error(`Failed to create sale: ${error}`);
     }
@@ -788,7 +789,7 @@ const AddNewSale: React.FC = () => {
                 )}
               </div>
 
-              {/* Pagination Controls - Top */}
+              {/* Pagination Controls - Top 
               {totalPages > 1 && (
                 <div className="mb-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                   <div className="text-sm text-gray-600">
@@ -815,6 +816,7 @@ const AddNewSale: React.FC = () => {
                   </div>
                 </div>
               )}
+                */}
 
               {/* Products loading/error state */}
               {productsLoading && (

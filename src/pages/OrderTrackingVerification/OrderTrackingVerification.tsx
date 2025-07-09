@@ -7,9 +7,11 @@ import OrderTrackingFilterBar from "../../components/OrderTrackingComponents/Ord
 import OrderTrackingTable from "../../components/OrderTrackingComponents/OrderTrackingTable";
 import Loading from "../../components/Loading";
 import type { OrderTrackingItem, OrderTrackingStats } from "../../types/orderTracking";
+import { useParams } from "react-router-dom";
 
 const OrderTrackingVerification: React.FC = () => {
   const dispatch = useAppDispatch();
+  const { id: storeId } = useParams<{ id: string }>();
   const { trackingOrders, loading, error } = useAppSelector((state) => state.orderTracking);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,22 +21,23 @@ const OrderTrackingVerification: React.FC = () => {
 
   // Mock stats for now
   const mockStats: OrderTrackingStats = {
-    totalTrackingOrders: trackingOrders.length,
-    pendingVerification: trackingOrders.filter(o => !o.isVerified && o.status !== 'rejected').length,
-    verifiedOrders: trackingOrders.filter(o => o.isVerified).length,
-    rejectedOrders: trackingOrders.filter(o => o.status === 'rejected').length,
-    totalVerifiedAmount: trackingOrders.filter(o => o.isVerified).reduce((sum, o) => sum + o.paymentAmount, 0),
+    totalTrackingOrders: trackingOrders?.length,
+    pendingVerification: trackingOrders?.filter(o => !o.isVerified && o.status !== 'rejected').length,
+    verifiedOrders: trackingOrders?.filter(o => o.isVerified).length,
+    rejectedOrders: trackingOrders?.filter(o => o.status === 'rejected').length,
+    totalVerifiedAmount: trackingOrders?.filter(o => o.isVerified).reduce((sum, o) => sum + o.paymentAmount, 0),
     averageVerificationTime: 2.5,
   };
 
   useEffect(() => {
-    dispatch(fetchTrackingOrders({ storeId: 'store-001' }));
-  }, [dispatch]);
+    if (storeId) {
+      dispatch(fetchTrackingOrders({ storeId }));
+    }
+  }, [dispatch, storeId]);
 
-  const handleVerify = (order: OrderTrackingItem, paymentAmount: number) => {
+  const handleVerify = (order: OrderTrackingItem) => {
     dispatch(verifyOrder({
       id: order.id,
-      paymentAmount,
       storeId: order.storeId,
     }));
   };
@@ -55,7 +58,7 @@ const OrderTrackingVerification: React.FC = () => {
   };
 
   // Filter orders based on current filters
-  const filteredOrders = trackingOrders.filter(order => {
+  const filteredOrders = trackingOrders?.filter(order => {
     const matchesSearch = searchTerm === "" || 
       order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.driverName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -109,9 +112,9 @@ const OrderTrackingVerification: React.FC = () => {
           <div className="px-6 pb-6">
             <OrderTrackingTable
               orders={filteredOrders}
-              onVerify={handleVerify}
-              onReject={handleReject}
-              loading={loading}
+              // onVerify={handleVerify}
+              // onReject={handleReject}
+              // loading={loading}
             />
           </div>
         </div>

@@ -10,6 +10,8 @@ import useRequireStore from "../../hooks/useRequireStore";
 import { createOrder } from "../../store/slices/orderProcessingSlice";
 import type { AppDispatch } from "../../store";
 import type { OrderStatus, PaymentType } from "../../types/orderProcessing";
+import { useGetDrivers } from "../../hooks/useGetDrivers";
+
 
 const CreateOrderPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -22,6 +24,10 @@ const CreateOrderPage: React.FC = () => {
     limit: 1000, // Get all customers for dropdown
   });
 
+
+  const { drivers, loading: driverLoading, error: driverError, refetch } = useGetDrivers(storeId, true);
+  console.log(drivers)
+
   const [formData, setFormData] = useState({
     customerId: '',
     customerName: '',
@@ -29,6 +35,7 @@ const CreateOrderPage: React.FC = () => {
     paymentAmount: 0,
     paymentType: 'CASH' as PaymentType,
     driverName: '',
+    driverId: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -46,7 +53,20 @@ const CreateOrderPage: React.FC = () => {
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
+
+    const handleDriverChange = (driverId: string) => {
+    const selectedDriver = drivers.find(d => d.id === driverId);
+    setFormData(prev => ({
+      ...prev,
+      driverId,
+      driverName: selectedDriver ? (selectedDriver.firstName).concat(" ").concat(selectedDriver.lastName) : '',
+    }));
+    if (errors.driverId) {
+      setErrors(prev => ({ ...prev, driverId: '' }));
+    }
+  };
+
+  const handleInputChange = (field: string, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
@@ -85,7 +105,7 @@ const CreateOrderPage: React.FC = () => {
     
     if (!validateForm()) return;
     if (!currentStore?.id) return;
-
+    
     setIsSubmitting(true);
     try {
       const createData = {
@@ -93,11 +113,12 @@ const CreateOrderPage: React.FC = () => {
         storeId: currentStore.id,
         isValidated: false, // New orders start as not validated
       };
+
+      console.log(createData);
       await dispatch(createOrder(createData)).unwrap();
       toast.success("Order created successfully");
-      
       // Navigate back to order processing page
-      navigate(storeId ? `/store/${storeId}/order-processing` : "/order-processing");
+      navigate(storeId ? `/store/${storeId}/order-processing/view-orders` : "/order-processing");
     } catch (error: any) {
       toast.error(error || "Failed to create order");
     } finally {
@@ -109,6 +130,7 @@ const CreateOrderPage: React.FC = () => {
     // Navigate back to order processing page
     navigate(storeId ? `/store/${storeId}/order-processing` : "/order-processing");
   };
+
 
   useEffect(() => {
     // If the store is not available, redirect to stores page
@@ -267,17 +289,25 @@ const CreateOrderPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Driver Name *
                 </label>
-                <input
-                  type="text"
-                  value={formData.driverName}
-                  onChange={(e) => handleInputChange('driverName', e.target.value)}
+                <select
+                  value={formData.driverId}
+                  onChange={(e) => handleDriverChange(e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
-                    errors.driverName ? 'border-red-500' : 'border-gray-300'
+                    errors.customerId ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholder="Enter driver name"
-                />
-                {errors.driverName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.driverName}</p>
+                  disabled={driverLoading}
+                >
+                  <option value="">
+                    {driverLoading ? 'Loading drivers...' : 'Select a driver'}
+                  </option>
+                  {drivers && drivers.map((driver) => (
+                    <option key={driver.id} value={driver.id}>
+                      {driver.firstName} - {driver.lastName}
+                    </option>
+                  ))}
+                </select>
+                {errors.driverId && (
+                  <p className="mt-1 text-sm text-red-600">{errors.driverId}</p>
                 )}
               </div>
 

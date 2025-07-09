@@ -96,12 +96,7 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
           return;
         }
 
-        console.log(
-          "Deleting supplier with valid ID:",
-          validId,
-          "for store:",
-          currentStore.id
-        );
+       
 
         // Check if this is sample data
         const isSample = isSampleData(supplier);
@@ -117,13 +112,12 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
             })
           ).unwrap();
 
-          console.log("Supplier deleted successfully:", result);
           
           // Show appropriate success message
           if (isSample) {
-            toast.success("Sample supplier removed from view!");
+            toast.success("Sample vendor removed from view!");
           } else {
-            toast.success("Supplier deleted successfully!");
+            toast.success("Vendor deleted successfully!");
           }
           
           onClose();
@@ -135,7 +129,7 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
             const errorMessage = deleteError.message as string;
             if (errorMessage.includes('not found') || errorMessage.includes('404')) {
               console.log("Sample data delete completed (404 expected)");
-              toast.success("Sample supplier removed from view!");
+              toast.success("Sample vendor removed from view!");
               onClose();
               return;
             }
@@ -201,16 +195,16 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
                 <p className="text-gray-700 mb-4">
                   Are you sure you want to delete all{" "}
                   <span className="font-semibold">{supplierCount}</span>{" "}
-                  suppliers? This will permanently remove all supplier data
+                  suppliers? This will permanently remove all vendor data
                   including their contact information, business details, and
                   product relationships.
                 </p>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <p className="text-red-800 text-sm font-medium">
-                    ⚠️ Warning: This action is irreversible
+                  <p className="text-red-600 text-sm font-medium">
+                     Warning: This action is irreversible
                   </p>
-                  <p className="text-red-700 text-sm mt-1">
-                    All supplier data will be permanently deleted and cannot be
+                  <p className="text-red-500 text-sm mt-1">
+                    All vendor data will be permanently deleted and cannot be
                     recovered.
                   </p>
                 </div>
@@ -227,7 +221,7 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
                 {supplier && (
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
                     <h4 className="font-medium text-gray-900 mb-2">
-                      Supplier Details:
+                      Vendor Details:
                     </h4>
                     <div className="text-sm text-gray-600 space-y-1">
                       <p>
@@ -260,11 +254,11 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
                   </div>
                 )}
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <p className="text-red-800 text-sm font-medium">
-                    ⚠️ Warning: This action is irreversible
+                  <p className="text-red-600 text-sm font-medium">
+                     Warning: This action is irreversible
                   </p>
-                  <p className="text-red-700 text-sm mt-1">
-                    The supplier data will be permanently deleted and cannot be
+                  <p className="text-red-500 text-sm mt-1">
+                    The vendor data will be permanently deleted and cannot be
                     recovered.
                   </p>
                 </div>

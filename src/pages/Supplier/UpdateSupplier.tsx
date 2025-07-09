@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {  FaBars } from "react-icons/fa";
+import { FaBars } from "react-icons/fa";
 import toast from "react-hot-toast";
 // import { SpecialButton } from "../../components/buttons";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
@@ -10,12 +10,9 @@ import {
   setPage,
 } from "../../store/slices/supplierSlice";
 import {
-  AddSupplierModal,
   EditSupplierModal,
   DeleteSupplierModal,
   ViewSupplierModal,
-  ProductsTable,
-  StatsGrid,
   PaginationControls,
 } from "../../components/SupplierComponents";
 import SupplierTable from "../../components/SupplierComponents/updateSuppliertable";
@@ -23,6 +20,7 @@ import SupplierTable from "../../components/SupplierComponents/updateSuppliertab
 import type { Supplier } from "../../types/supplier";
 import Header from "../../components/Header";
 import useRequireStore from "../../hooks/useRequireStore";
+import { useResponsiveSidebar } from "../../hooks/useResponsiveSidebar";
 
 const SupplierPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -36,23 +34,15 @@ const SupplierPage: React.FC = () => {
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
     null
   );
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [viewMode, setViewMode] = useState<"suppliers" | "products">(
-    "suppliers"
-  );
+  // Use responsive sidebar hook
+  const { isSidebarOpen, toggleSidebar } = useResponsiveSidebar();
 
   // Modal states
-  const [isAddSupplierModalOpen, setIsAddSupplierModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [isViewProductsModalOpen, setIsViewProductsModalOpen] = useState(false);
-  const [isViewAssignedProductsModalOpen, setIsViewAssignedProductsModalOpen] = useState(false);
-  const [isAssignProductPromptOpen, setIsAssignProductPromptOpen] =
-    useState(false);
-  const [newlyCreatedSupplier, setNewlyCreatedSupplier] =
-    useState<Supplier | null>(null);  // Fetch suppliers when component mounts or store changes
+
+  // Fetch suppliers when component mounts or store changes
   useEffect(() => {
     const fetchData = async () => {
       if (currentStore?.id) {
@@ -72,6 +62,24 @@ const SupplierPage: React.FC = () => {
     fetchData();
   }, [dispatch, currentStore?.id]);
 
+  // Handle responsive sidebar behavior
+  useEffect(() => {
+    const handleResize = () => {
+      // Auto-close sidebar on mobile, auto-open on desktop
+      if (window.innerWidth < 1024) {
+        toggleSidebar();
+      } else {
+        toggleSidebar();
+      }
+    };
+
+    // Add event listener
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // Debug: Log suppliers whenever they change
   useEffect(() => {
     console.log("=== Supplier State Debug ===");
@@ -80,15 +88,17 @@ const SupplierPage: React.FC = () => {
     console.log("Error state:", error);
     console.log("Suppliers data:", suppliers);
   }, [suppliers, loading, error]);
-  // Handle supplier selection from sidebar
-  const handleSupplierSelect = (supplier: Supplier) => {
+
+  // View assigned products - Open modal to show assigned products
+  const handleViewAssignedProducts = (supplier: Supplier) => {
     setSelectedSupplier(supplier);
-    setViewMode("products");
+    // In a real app, this would open a modal to show assigned products
+    console.log("View assigned products for:", supplier.name);
   };
-  // Handle back to suppliers view
-  const handleBackToSuppliers = () => {
-    setSelectedSupplier(null);
-    setViewMode("suppliers");
+
+  // Add supplier - placeholder function since modal is not implemented
+  const handleAddSupplier = () => {
+    console.log("Add supplier functionality not implemented in this view");
   };
 
   // Edit supplier
@@ -103,11 +113,6 @@ const SupplierPage: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
-  // Delete all suppliers - TODO: Implement API endpoint for bulk delete
-  const handleDeleteAll = () => {
-    setIsDeleteAllModalOpen(true);
-  };
-
   // View supplier
   const handleViewSupplier = (supplier: Supplier) => {
     setSelectedSupplier(supplier);
@@ -118,15 +123,17 @@ const SupplierPage: React.FC = () => {
   const handleViewProducts = (supplier: Supplier) => {
     // Enhanced ID validation - check multiple possible ID fields
     let supplierId = null;
-    
+
     // Check if this is a temporary supplier (newly created)
     if (supplier.isTemporary) {
-      console.log("Temporary supplier detected, finding real supplier from list");
-      // Find the real supplier from the suppliers list by name and email
-      const realSupplier = suppliers.find(s => 
-        s.name === supplier.name && s.email === supplier.email
+      console.log(
+        "Temporary supplier detected, finding real supplier from list"
       );
-      
+      // Find the real supplier from the suppliers list by name and email
+      const realSupplier = suppliers.find(
+        (s) => s.name === supplier.name && s.email === supplier.email
+      );
+
       if (realSupplier) {
         console.log("Found real supplier:", realSupplier);
         supplier = realSupplier; // Use the real supplier
@@ -137,7 +144,7 @@ const SupplierPage: React.FC = () => {
         return;
       }
     }
-    
+
     // Try different ID field variations
     if (supplier.id && supplier.id.toString().trim()) {
       supplierId = supplier.id.toString().trim();
@@ -152,10 +159,15 @@ const SupplierPage: React.FC = () => {
       supplierId: supplierId,
       supplier_id_field: supplier.id,
       supplier_supplier_id_field: supplier.supplier_id,
-      supplier_underscore_id: supplier._id
+      supplier_underscore_id: supplier._id,
     });
 
-    if (supplierId && supplierId !== 'undefined' && supplierId !== 'null' && !supplierId.startsWith('temp-')) {
+    if (
+      supplierId &&
+      supplierId !== "undefined" &&
+      supplierId !== "null" &&
+      !supplierId.startsWith("temp-")
+    ) {
       const finalUrl = `/store/${currentStore?.id}/supplier/${supplierId}/assign-products`;
 
       console.log("Navigating to:", finalUrl);
@@ -170,62 +182,6 @@ const SupplierPage: React.FC = () => {
     }
   };
 
-  // View assigned products - Open modal to show assigned products
-  const handleViewAssignedProducts = (supplier: Supplier) => {
-    setSelectedSupplier(supplier);
-    setIsViewAssignedProductsModalOpen(true);
-  };
-
-  // Export functionality
-  const handleExport = () => {
-    try {
-      const dataToExport = suppliers.map((supplier) => ({
-        "Supplier ID": supplier.supplier_id,
-        Name: supplier.name,
-        Email: supplier.email,
-        Phone: supplier.phone,
-        Address: supplier.address,
-        "Store ID": supplier.storeId,
-        "Created At": supplier.createdAt
-          ? new Date(supplier.createdAt).toLocaleDateString()
-          : "",
-        "Updated At": supplier.updatedAt
-          ? new Date(supplier.updatedAt).toLocaleDateString()
-          : "",
-      }));
-
-      if (dataToExport.length === 0) {
-        toast.error("No suppliers to export");
-        return;
-      }
-
-      const csvContent = [
-        Object.keys(dataToExport[0]).join(","),
-        ...dataToExport.map((row) =>
-          Object.values(row)
-            .map((value) =>
-              typeof value === "string" && value.includes(",")
-                ? `"${value}"`
-                : value
-            )
-            .join(",")
-        ),
-      ].join("\n");
-
-      const blob = new Blob([csvContent], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `suppliers_${new Date().toISOString().split("T")[0]}.csv`;
-      link.click();
-      window.URL.revokeObjectURL(url);
-      toast.success("Suppliers exported successfully!");
-    } catch (error) {
-      console.error("Error exporting data:", error);
-      toast.error("Error exporting data. Please try again.");
-    }
-  };
-
   // Pagination handler
   const handlePageChange = (page: number) => {
     if (currentStore?.id) {
@@ -234,16 +190,20 @@ const SupplierPage: React.FC = () => {
     }
   };
 
-  // Handle showing the popup after supplier creation (NO FUNCTIONALITY - Just styling demo)
-  const handleShowAssignProductPrompt = (supplier: Supplier) => {
-    setNewlyCreatedSupplier(supplier);
-    setIsAssignProductPromptOpen(true);
+  // Handle edit modal close with refresh
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setSelectedSupplier(null);
+    // Force refresh after modal close to ensure state is updated
+    handleRefreshSuppliers();
   };
 
-  // Handle closing the popup
-  const handleCloseAssignProductPrompt = () => {
-    setIsAssignProductPromptOpen(false);
-    setNewlyCreatedSupplier(null);
+  // Handle delete modal close with refresh
+  const handleDeleteModalClose = () => {
+    setIsDeleteModalOpen(false);
+    setSelectedSupplier(null);
+    // Force refresh after modal close to ensure state is updated
+    handleRefreshSuppliers();
   };
 
   // Force refresh suppliers list
@@ -257,36 +217,6 @@ const SupplierPage: React.FC = () => {
         console.error("Failed to refresh suppliers:", error);
       }
     }
-  };
-
-  // Handle delete modal close with refresh
-  const handleDeleteModalClose = () => {
-    setIsDeleteModalOpen(false);
-    setSelectedSupplier(null);
-    // Force refresh after modal close to ensure state is updated
-    handleRefreshSuppliers();
-  };
-
-  // Handle edit modal close with refresh
-  const handleEditModalClose = () => {
-    setIsEditModalOpen(false);
-    setSelectedSupplier(null);
-    // Force refresh after modal close to ensure state is updated
-    handleRefreshSuppliers();
-  };
-
-  // Handle add modal close with refresh
-  const handleAddModalClose = () => {
-    setIsAddSupplierModalOpen(false);
-    // Force refresh after modal close to ensure state is updated
-    handleRefreshSuppliers();
-  };
-
-  // Handle delete all modal close with refresh
-  const handleDeleteAllModalClose = () => {
-    setIsDeleteAllModalOpen(false);
-    // Force refresh after modal close to ensure state is updated
-    handleRefreshSuppliers();
   };
 
   return (
@@ -313,7 +243,7 @@ const SupplierPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  onClick={toggleSidebar}
                   className="p-2 hover:bg-gray-100 rounded-md md:hidden"
                 >
                   <FaBars className="text-gray-600" size={16} />
@@ -350,7 +280,7 @@ const SupplierPage: React.FC = () => {
                 </SpecialButton>
                 <SpecialButton
                   variant="expense-add"
-                  onClick={() => setIsAddSupplierModalOpen(true)}
+                  onClick={handleAddSupplier}
                 >
                   <FaPlus size={14} />
                   <span className="sm:inline ml-2">Add New</span>
@@ -365,14 +295,10 @@ const SupplierPage: React.FC = () => {
               {/* Header */}
               <div className="px-6 py-6 border-b border-gray-200">
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  {viewMode === "products" && selectedSupplier
-                    ? `${selectedSupplier.name} - Products`
-                    : "Suppliers Management"}
+                  Vendors Management
                 </h2>
                 <p className="text-gray-600 text-sm mb-4">
-                  {viewMode === "products" && selectedSupplier
-                    ? `Manage products from ${selectedSupplier.name}`
-                    : "Manage your suppliers and their information"}
+                  Manage your vendors and their information
                 </p>{" "}
                 {/* Stats Grid */}
                 {/* <StatsGrid
@@ -409,35 +335,25 @@ const SupplierPage: React.FC = () => {
               {/* Content based on view mode */}
               {!loading && !error && (
                 <>
-                  {viewMode === "suppliers" ? (
-                    <>
-                      <SupplierTable
-                        suppliers={suppliers}
-                        onViewSupplier={handleViewSupplier}
-                        onEditSupplier={handleEditSupplier}
-                        onDeleteSupplier={handleDeleteSupplier}
-                        onViewProducts={handleViewProducts}
-                        onViewAssignedProducts={handleViewAssignedProducts}
-                        onAddSupplier={() => setIsAddSupplierModalOpen(true)}
-                      />
-                      {/* Pagination Controls */}
-                      <PaginationControls
-                        currentPage={pagination.page}
-                        totalPages={pagination.totalPages}
-                        total={pagination.total}
-                        limit={pagination.limit}
-                        onPageChange={handlePageChange}
-                        loading={loading}
-                      />
-                    </>
-                  ) : (
-                    selectedSupplier && (
-                      <ProductsTable
-                        supplier={selectedSupplier}
-                        onBackToSuppliers={handleBackToSuppliers}
-                      />
-                    )
-                  )}
+                  {/* Always show suppliers table in this view */}
+                  <SupplierTable
+                    suppliers={suppliers}
+                    onViewSupplier={handleViewSupplier}
+                    onEditSupplier={handleEditSupplier}
+                    onDeleteSupplier={handleDeleteSupplier}
+                    onViewProducts={handleViewProducts}
+                    onViewAssignedProducts={handleViewAssignedProducts}
+                    onAddSupplier={handleAddSupplier}
+                  />
+                  {/* Pagination Controls */}
+                  <PaginationControls
+                    currentPage={pagination.page}
+                    totalPages={pagination.totalPages}
+                    total={pagination.total}
+                    limit={pagination.limit}
+                    onPageChange={handlePageChange}
+                    loading={loading}
+                  />
                 </>
               )}
             </div>

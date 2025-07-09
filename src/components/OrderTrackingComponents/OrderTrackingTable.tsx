@@ -1,22 +1,20 @@
 import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { FaEdit, FaCheckCircle, FaTimes, FaClock } from "react-icons/fa";
 import { IconButton, Button } from "../buttons";
 import type { OrderTrackingItem } from "../../types/orderTracking";
+import { verifyOrder, rejectOrder, updatePayment, fetchTrackingOrders } from "../../store/slices/orderTrackingSlice";
+import type { RootState } from "../../store";
+import type { AppDispatch } from "../../store";
 
 interface OrderTrackingTableProps {
   orders: OrderTrackingItem[];
-  onVerify: (order: OrderTrackingItem, paymentAmount: number) => void;
-  onReject: (order: OrderTrackingItem) => void;
-  loading?: boolean;
 }
-
-const OrderTrackingTable: React.FC<OrderTrackingTableProps> = ({
-  orders,
-  onVerify,
-  onReject,
-  loading = false,
-}) => {
+const OrderTrackingTable: React.FC<OrderTrackingTableProps> = ({ orders }) => {
+  const dispatch: AppDispatch = useDispatch();
+  const { loading, error } = useSelector((state: RootState) => state.orderTracking);
   const [editingPayment, setEditingPayment] = useState<string | null>(null);
+  // const [tempPaymentAmounts, setTempPaymentAmounts] = useState<Record<string, number>>({});
   const [tempPaymentAmounts, setTempPaymentAmounts] = useState<Record<string, number>>({});
 
   const getStatusColor = (status: string, isVerified: boolean) => {
@@ -25,11 +23,11 @@ const OrderTrackingTable: React.FC<OrderTrackingTableProps> = ({
     }
     
     switch (status.toLowerCase()) {
-      case 'pending_verification':
+      case 'pending_validation':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'under_review':
         return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'verified':
+      case 'validated':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'rejected':
         return 'bg-red-100 text-red-800 border-red-200';
@@ -44,11 +42,11 @@ const OrderTrackingTable: React.FC<OrderTrackingTableProps> = ({
     }
     
     switch (status.toLowerCase()) {
-      case 'pending_verification':
+      case 'pending_validation':
         return <FaClock className="w-3 h-3 mr-1" />;
       case 'under_review':
         return <FaEdit className="w-3 h-3 mr-1" />;
-      case 'verified':
+      case 'validated':
         return <FaCheckCircle className="w-3 h-3 mr-1" />;
       case 'rejected':
         return <FaTimes className="w-3 h-3 mr-1" />;
@@ -92,11 +90,19 @@ const OrderTrackingTable: React.FC<OrderTrackingTableProps> = ({
     }));
   };
 
-  const handlePaymentSave = (order: OrderTrackingItem) => {
+  const handlePaymentSave = async (order: OrderTrackingItem) => {
     const newAmount = tempPaymentAmounts[order.id] || order.paymentAmount;
-    setEditingPayment(null);
-    // Update the order with new amount (this would trigger a state update)
-    order.paymentAmount = newAmount;
+    try {
+      await dispatch(updatePayment({
+        orderId: order.id,
+        paymentAmount: newAmount,
+        paymentType: order.paymentType,
+        // storeId: order.storeId,
+      })).unwrap();
+      setEditingPayment(null);
+    } catch (error) {
+      console.error('Failed to update payment:', error);
+    }
   };
 
   const handlePaymentCancel = () => {
@@ -104,14 +110,45 @@ const OrderTrackingTable: React.FC<OrderTrackingTableProps> = ({
     setTempPaymentAmounts({});
   };
 
-  const handleVerify = (order: OrderTrackingItem) => {
-    const finalAmount = tempPaymentAmounts[order.id] || order.paymentAmount;
-    onVerify(order, finalAmount);
-    setEditingPayment(null);
-    setTempPaymentAmounts({});
+  const handleVerify = async (order: OrderTrackingItem) => {
+    try {
+      // If payment amount was edited, update it first
+      if (tempPaymentAmounts[order.id] && tempPaymentAmounts[order.id] !== order.paymentAmount) {
+        await dispatch(updatePayment({
+          orderId: order.id,
+          paymentAmount: tempPaymentAmounts[order.id],
+          paymentType: order.paymentType,
+          // storeId: order.storeId,
+        })).unwrap();
+      }
+      
+      // Then verify the order
+      await dispatch(verifyOrder({
+        id: order.id,
+        storeId: order.storeId,
+        // paymentAmount: tempPaymentAmounts[order.id] || order.paymentAmount,
+      })).unwrap();
+      
+      setEditingPayment(null);
+      setTempPaymentAmounts({});
+    } catch (error) {
+      console.error('Failed to verify order:', error);
+    }
   };
 
-  if (orders.length === 0) {
+  const handleReject = async (order: OrderTrackingItem) => {
+    try {
+      await dispatch(rejectOrder({
+        id: order.id,
+        // rejectionReason: 'Rejected by user', // You can customize or prompt for this reason
+        storeId: order.storeId,
+      })).unwrap();
+    } catch (error) {
+      console.error('Failed to reject order:', error);
+    }
+  };
+
+  if (orders?.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="text-gray-500">
@@ -141,6 +178,11 @@ const OrderTrackingTable: React.FC<OrderTrackingTableProps> = ({
 
   return (
     <div className="overflow-x-auto">
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
+          {error}
+        </div>
+      )}
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
@@ -174,7 +216,7 @@ const OrderTrackingTable: React.FC<OrderTrackingTableProps> = ({
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {orders.map((order) => (
+          {orders && orders.map((order) => (
             <tr key={order.id} className={`hover:bg-gray-50 ${order.isVerified ? 'bg-green-50' : ''}`}>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                 #{order.id.slice(-8).toUpperCase()}
@@ -187,7 +229,7 @@ const OrderTrackingTable: React.FC<OrderTrackingTableProps> = ({
               <td className="px-6 py-4 whitespace-nowrap">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(order.status, order.isVerified)}`}>
                   {getStatusIcon(order.status, order.isVerified)}
-                  {order.isVerified ? 'Verified' : order.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  {order.isVerified ? 'Validated' : order.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -207,12 +249,14 @@ const OrderTrackingTable: React.FC<OrderTrackingTableProps> = ({
                     <button
                       onClick={() => handlePaymentSave(order)}
                       className="text-green-600 hover:text-green-800 text-xs"
+                      disabled={loading}
                     >
                       ✓
                     </button>
                     <button
                       onClick={handlePaymentCancel}
                       className="text-red-600 hover:text-red-800 text-xs"
+                      disabled={loading}
                     >
                       ✕
                     </button>
@@ -228,13 +272,14 @@ const OrderTrackingTable: React.FC<OrderTrackingTableProps> = ({
                         size="sm"
                         className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1"
                         title="Edit Payment Amount"
+                        disabled={loading}
                       />
                     )}
                   </div>
                 )}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                ${order.originalPaymentAmount.toFixed(2)}
+                ${order.originalPaymentAmount?.toFixed(2)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {getPaymentTypeDisplay(order.paymentType)}
@@ -243,7 +288,7 @@ const OrderTrackingTable: React.FC<OrderTrackingTableProps> = ({
                 {order.driverName || 'Not Assigned'}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatDate(order.validatedAt)}
+                {formatDate(order.validatedAt || order.updatedAt)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <div className="flex items-center gap-2">
@@ -260,7 +305,7 @@ const OrderTrackingTable: React.FC<OrderTrackingTableProps> = ({
                         Verify
                       </Button>
                       <Button
-                        onClick={() => onReject(order)}
+                        onClick={() => handleReject(order)}
                         variant="danger"
                         size="sm"
                         icon={<FaTimes />}
@@ -273,7 +318,7 @@ const OrderTrackingTable: React.FC<OrderTrackingTableProps> = ({
                   )}
                   {order.isVerified && (
                     <span className="text-green-600 text-sm font-medium">
-                      ✓ Verified
+                      ✓ Validated
                       {order.verifiedBy && (
                         <div className="text-xs text-gray-500">
                           by {order.verifiedBy}
