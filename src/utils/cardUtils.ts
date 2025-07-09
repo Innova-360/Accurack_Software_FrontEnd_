@@ -126,5 +126,13 @@ export const getAllCards = (): CardSection[] => {
         },
       ],
     },
+    {
+      sectionTitle: "Return & Refund",
+      cards: [
+        { title: "View Returns", iconComponent: "FiEye" },
+        { title: "Create Return", iconComponent: "FiPlus" },
+        { title: "Return Dashboard", iconComponent: "FiBarChart3" },
+      ],
+    },
   ];
 };
