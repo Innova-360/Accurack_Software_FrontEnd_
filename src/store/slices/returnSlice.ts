@@ -22,11 +22,15 @@ export interface ReturnItem {
 
 export interface CreateReturnRequest {
   saleId: string;
-  productId: string;
-  quantity: number;
-  returnDate: string;
-  reason: string;
-  status: "saleable" | "no_saleable" | "scrap";
+  returnItems: {
+    productId: string;
+    pluUpc: string;
+    isProductReturned: boolean;
+    quantity: number;
+    refundAmount: number;
+    returnCategory: "SALEABLE" | "NON_SALEABLE" | "SCRAP";
+    reason: string;
+  }[];
 }
 
 interface ReturnState {
@@ -51,7 +55,7 @@ export const createReturn = createAsyncThunk<
 >("returns/createReturn", async (returnData, { rejectWithValue }) => {
   try {
     console.log("🚀 Sending return data to backend:", JSON.stringify(returnData, null, 2));
-    const response = await apiClient.post("/returns/create", returnData);
+    const response = await apiClient.post("/sales/returns", returnData);
     console.log("✅ Return creation response:", JSON.stringify(response.data, null, 2));
     return response.data.data || response.data;
   } catch (error: any) {
