@@ -34,13 +34,13 @@ const AssignProductPromptModal: React.FC<AssignProductPromptModalProps> = ({
               <FaCheckCircle className="text-green-600" size={24} />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">
-              Supplier Created Successfully!
+              Vendor Created Successfully!
             </h3>
             <p className="text-gray-600 text-sm">
               <span className="font-medium text-[#03414C]">
                 {supplier.name}
               </span>{" "}
-              has been added to your suppliers list.
+              has been added to your vendors list.
             </p>
           </div>
         </div>
@@ -61,7 +61,7 @@ const AssignProductPromptModal: React.FC<AssignProductPromptModalProps> = ({
                 <p className="text-sm text-gray-600 leading-relaxed">
                   You can now assign products to{" "}
                   <span className="font-medium">{supplier.name}</span> to start
-                  managing your inventory and supplier relationships.
+                  managing your inventory and vendor relationships.
                 </p>
               </div>
             </div>

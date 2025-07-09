@@ -57,7 +57,7 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     if (!formData.name.trim()) {
-      newErrors.name = "Supplier name is required";
+      newErrors.name = "Vendor name is required";
     }
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
@@ -197,10 +197,10 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
             </div>
             <div>
               <h2 className="text-xl font-semibold text-gray-900">
-                Add New Supplier
+                Add New Vendor
               </h2>
               <p className="text-sm text-gray-600">
-                Create a new supplier profile
+                Create a new vendor profile
               </p>
             </div>
           </div>
@@ -213,10 +213,10 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
         </div>{" "}
         {/* Form */}
         <form onSubmit={(e) => handleSubmit(e)} className="p-6 space-y-4">
-          {/* Supplier Name */}
+          {/* Vendor Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Supplier Name *
+              Vendor Name *
             </label>
             <input
               type="text"

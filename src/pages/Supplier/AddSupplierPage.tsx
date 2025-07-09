@@ -53,7 +53,7 @@ const AddSupplierPage: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     if (!formData.name.trim()) {
-      newErrors.name = "Supplier name is required";
+      newErrors.name = "Vendor name is required";
     }
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
@@ -146,10 +146,10 @@ const AddSupplierPage: React.FC = () => {
                   </div>
                   <div>
                     <h1 className="text-2xl lg:text-2xl font-bold text-gray-900 mb-1">
-                      Add New Supplier
+                      Add New Vendor
                     </h1>
                     <p className="text-sm lg:text-base text-gray-600 font-medium">
-                      Create a new supplier profile for your store
+                      Create a new vendor profile for your store
                     </p>
                   </div>
                 </div>
@@ -164,20 +164,20 @@ const AddSupplierPage: React.FC = () => {
             {/* Form Header */}
             <div className="bg-gradient-to-r from-[#03414C] to-[#025a6b] p-6 lg:p-5">
               <h2 className="text-xl lg:text-2xl font-bold text-white">
-                Supplier Information
+                Vendor Information
               </h2>
               <p className="text-blue-100 mt-1">
-                Please fill in all the required information to create a new supplier
+                Please fill in all the required information to create a new vendor
               </p>
             </div>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="p-6 lg:p-8 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Supplier Name */}
+                {/* Vendor Name */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Supplier Name *
+                    Vendor Name *
                   </label>
                   <input
                     type="text"

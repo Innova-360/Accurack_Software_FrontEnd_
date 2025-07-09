@@ -26,6 +26,7 @@ import {
 import type { Supplier } from "../../types/supplier";
 import Header from "../../components/Header";
 import useRequireStore from "../../hooks/useRequireStore";
+import { useResponsiveSidebar } from "../../hooks/useResponsiveSidebar";
 
 const SupplierPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -39,7 +40,8 @@ const SupplierPage: React.FC = () => {
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
     null
   );
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Use responsive sidebar hook
+  const { isSidebarOpen, toggleSidebar } = useResponsiveSidebar();
   const [viewMode, setViewMode] = useState<"suppliers" | "products">(
     "suppliers"
   );
@@ -84,6 +86,7 @@ const SupplierPage: React.FC = () => {
     console.log("Error state:", error);
     console.log("Suppliers data:", suppliers);
   }, [suppliers, loading, error]);
+
   // Handle supplier selection from sidebar
   const handleSupplierSelect = (supplier: Supplier) => {
     setSelectedSupplier(supplier);
@@ -179,12 +182,6 @@ const SupplierPage: React.FC = () => {
         "Supplier ID not found. Please refresh the page and try again."
       );
     }
-  };
-
-  // View assigned products - Open modal to show assigned products
-  const handleViewAssignedProducts = (supplier: Supplier) => {
-    setSelectedSupplier(supplier);
-    setIsViewAssignedProductsModalOpen(true);
   };
 
   // Export functionality
@@ -307,13 +304,23 @@ const SupplierPage: React.FC = () => {
         {" "}
         {/* Sidebar */}
         <SupplierSidebar
-          suppliers={suppliers}
-          selectedSupplier={selectedSupplier}
+          suppliers={suppliers.map((supplier) => ({
+            ...supplier,
+            streetAddress: supplier.streetAddress || "",
+          }))}
+          selectedSupplier={
+            selectedSupplier
+              ? {
+                  ...selectedSupplier,
+                  streetAddress: selectedSupplier.streetAddress || "",
+                }
+              : null
+          }
           isSidebarOpen={isSidebarOpen}
           viewMode={viewMode}
           onSupplierSelect={handleSupplierSelect}
           onBackToSuppliers={handleBackToSuppliers}
-          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          onToggleSidebar={toggleSidebar}
           onAddSupplier={() => setIsAddSupplierModalOpen(true)}
           onSetViewMode={setViewMode}
         />
@@ -325,7 +332,7 @@ const SupplierPage: React.FC = () => {
               <div className="flex items-center gap-3">
                 {/* Mobile menu button */}
                 <button
-                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  onClick={toggleSidebar}
                   className="p-2 hover:bg-gray-100 rounded-md md:hidden"
                 >
                   <FaBars className="text-gray-600" size={16} />
@@ -336,7 +343,7 @@ const SupplierPage: React.FC = () => {
                   <span className="text-gray-800 font-semibold text-lg">
                     {viewMode === "products" && selectedSupplier
                       ? selectedSupplier.name
-                      : "All Suppliers"}
+                      : "All Vendors"}
                   </span>
                 </div>
                 {viewMode === "products" && selectedSupplier && (
@@ -379,18 +386,28 @@ const SupplierPage: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">
                   {viewMode === "products" && selectedSupplier
                     ? `${selectedSupplier.name} - Products`
-                    : "Suppliers Management"}
+                    : "Vendors Management"}
                 </h2>
                 <p className="text-gray-600 text-sm mb-4">
                   {viewMode === "products" && selectedSupplier
                     ? `Manage products from ${selectedSupplier.name}`
-                    : "Manage your suppliers and their information"}
+                    : "Manage your vendor and their information"}
                 </p>{" "}
                 {/* Stats Grid */}
                 <StatsGrid
                   viewMode={viewMode}
-                  suppliers={suppliers}
-                  selectedSupplier={selectedSupplier}
+                  suppliers={suppliers.map((supplier) => ({
+                    ...supplier,
+                    streetAddress: supplier.streetAddress || "",
+                  }))}
+                  selectedSupplier={
+                    selectedSupplier
+                      ? {
+                          ...selectedSupplier,
+                          streetAddress: selectedSupplier.streetAddress || "",
+                        }
+                      : null
+                  }
                   currentSupplierProducts={[]} // TODO: Integrate with products API when available
                   totalSuppliers={pagination.total}
                 />
@@ -424,12 +441,14 @@ const SupplierPage: React.FC = () => {
                   {viewMode === "suppliers" ? (
                     <>
                       <SupplierTable
-                        suppliers={suppliers}
+                        suppliers={suppliers.map((supplier) => ({
+                          ...supplier,
+                          streetAddress: supplier.streetAddress || "",
+                        }))}
                         onViewSupplier={handleViewSupplier}
                         onEditSupplier={handleEditSupplier}
                         onDeleteSupplier={handleDeleteSupplier}
                         onViewProducts={handleViewProducts}
-                        onViewAssignedProducts={handleViewAssignedProducts}
                         onAddSupplier={() => setIsAddSupplierModalOpen(true)}
                       />
                       {/* Pagination Controls */}
@@ -445,7 +464,10 @@ const SupplierPage: React.FC = () => {
                   ) : (
                     selectedSupplier && (
                       <ProductsTable
-                        supplier={selectedSupplier}
+                        supplier={{
+                          ...selectedSupplier,
+                          streetAddress: selectedSupplier.streetAddress || "",
+                        }}
                         onBackToSuppliers={handleBackToSuppliers}
                       />
                     )
@@ -484,7 +506,14 @@ const SupplierPage: React.FC = () => {
             setIsViewModalOpen(false);
             setSelectedSupplier(null);
           }}
-          supplier={selectedSupplier}
+          supplier={
+            selectedSupplier
+              ? {
+                  ...selectedSupplier,
+                  streetAddress: selectedSupplier.streetAddress || "",
+                }
+              : null
+          }
         />
         <ViewProductsModal
           isOpen={isViewProductsModalOpen}
