@@ -39,33 +39,15 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
 }) => {
   const [products, setProducts] = useState<AssignedProduct[]>([]);
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState<{ [key: string]: string }>({});
 
   // Fetch categories for mapping categoryId to category name
   const fetchCategories = async () => {
     try {
-      const response = await apiClient.get("/categories");
-      const categoriesMap: { [key: string]: string } = {};
-
-      // Handle different possible response structures
-      let categoriesData = [];
-      if (response.data?.data?.data) {
-        categoriesData = response.data.data.data;
-      } else if (response.data?.data) {
-        categoriesData = response.data.data;
-      } else if (Array.isArray(response.data)) {
-        categoriesData = response.data;
-      }
-
-      categoriesData.forEach((category: any) => {
-        categoriesMap[category.id] =
-          category.name || category.categoryName || "Uncategorized";
-      });
-
-      setCategories(categoriesMap);
+      await apiClient.get("/categories");
+      // Categories are now mapped directly in the product data
+      // This function kept for potential future use
     } catch (error) {
       console.error("Error fetching categories:", error);
-      // If categories fetch fails, we'll show categoryId as fallback
     }
   };
 
@@ -94,30 +76,36 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
         response.data?.data?.data &&
         Array.isArray(response.data.data.data)
       ) {
-        assignedProducts = response.data.data.data.map((assignment: any) => {
-          const product = assignment.product || {};
-          return {
-            id: product.id || assignment.productId || assignment.id,
-            name: product.name || "N/A",
-            sku: product.pluUpc || product.sku || "N/A",
-            categoryId: product.categoryId,
-            category: product.category?.name || "Uncategorized",
-            costPrice: assignment.costPrice ?? product.msrpPrice ?? 0,
-            sellingPrice: product.singleItemSellingPrice ?? 0,
-            quantity: product.itemQuantity ?? 0,
-            status: "active",
-            supplierType: assignment.state || "primary",
-            assignedAt:
-              assignment.createdAt ||
-              assignment.updatedAt ||
-              new Date().toISOString(),
-            ean: product.ean,
-            pluUpc: product.pluUpc,
-            itemQuantity: product.itemQuantity,
-            msrpPrice: product.msrpPrice,
-            singleItemSellingPrice: product.singleItemSellingPrice,
-          };
-        });
+        assignedProducts = response.data.data.data
+          .filter((assignment: any) => {
+            // Only include products that have valid data
+            const product = assignment.product || {};
+            return product.id && product.name && product.name !== "N/A";
+          })
+          .map((assignment: any) => {
+            const product = assignment.product || {};
+            return {
+              id: product.id || assignment.productId || assignment.id,
+              name: product.name,
+              sku: product.pluUpc || product.sku || "-",
+              categoryId: product.categoryId,
+              category: product.category?.name || "Uncategorized",
+              costPrice: assignment.costPrice ?? product.msrpPrice ?? 0,
+              sellingPrice: product.singleItemSellingPrice ?? 0,
+              quantity: product.itemQuantity ?? 0,
+              status: "active",
+              supplierType: assignment.state || "primary",
+              assignedAt:
+                assignment.createdAt ||
+                assignment.updatedAt ||
+                new Date().toISOString(),
+              ean: product.ean,
+              pluUpc: product.pluUpc,
+              itemQuantity: product.itemQuantity,
+              msrpPrice: product.msrpPrice,
+              singleItemSellingPrice: product.singleItemSellingPrice,
+            };
+          });
       }
       setProducts(assignedProducts);
       // if (assignedProducts.length === 0) {
@@ -129,7 +117,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
       console.error("Error fetching assigned products:", error);
       if (error.response?.status === 404) {
         setProducts([]);
-        toast.error("No products found for this supplier");
+        toast.error("No products assigned for this supplier");
       } else {
         toast.error("Failed to load assigned products");
       }
@@ -155,14 +143,14 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
           No Products Found
         </h3>
         <p className="text-gray-600 mb-8 max-w-md mx-auto">
-          {supplier.name} doesn't have any products in the system yet. Products
-          will appear here once they're added.
+          {supplier.name} doesn't have any products assigned yet. Click below to
+          assign products to this supplier.
         </p>
         <button
           onClick={onBackToSuppliers}
-          className="bg-black hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg transition-colors duration-200"
+          className="bg-[#03414C] text-white font-medium px-6 py-3 rounded-lg transition-colors duration-200 hover:bg-[#032e37]"
         >
-          ← Back to Suppliers
+          Back to Supplier
         </button>
       </div>
     );
@@ -170,27 +158,27 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
   return (
     <div className="bg-white">
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-gray-50 border-b border-gray-200">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 lg:p-6 bg-gray-50 border-b border-gray-200">
         <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-          <div className="text-2xl font-bold text-gray-900">
+          <div className="text-xl lg:text-2xl font-bold text-gray-900">
             {products.length}
           </div>
-          <div className="text-sm text-gray-600">Total Products</div>
+          <div className="text-xs lg:text-sm text-gray-600">Total Products</div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-          <div className="text-2xl font-bold text-green-600">
+          <div className="text-xl lg:text-2xl font-bold text-green-600">
             {products.filter((p) => (p.quantity || 0) > 0).length}
           </div>
-          <div className="text-sm text-gray-600">In Stock</div>
+          <div className="text-xs lg:text-sm text-gray-600">In Stock</div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-          <div className="text-2xl font-bold text-blue-600">
+          <div className="text-xl lg:text-2xl font-bold text-blue-600">
             {products.reduce((sum, p) => sum + (p.quantity || 0), 0)}
           </div>
-          <div className="text-sm text-gray-600">Total Quantity</div>
+          <div className="text-xs lg:text-sm text-gray-600">Total Quantity</div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-          <div className="text-2xl font-bold text-teal-600">
+          <div className="text-xl lg:text-2xl font-bold text-teal-600">
             {formatCurrency(
               products.reduce(
                 (sum, p) => sum + (p.costPrice || 0) * (p.quantity || 0),
@@ -198,120 +186,126 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
               )
             )}
           </div>
-          <div className="text-sm text-gray-600">Total Value</div>
+          <div className="text-xs lg:text-sm text-gray-600">Total Value</div>
         </div>
       </div>
 
-      {/* Products Table Header */}
-      <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-        <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-600 uppercase tracking-wider">
-          <div className="col-span-1">#</div>
-          <div className="col-span-2">PRODUCT</div>
-          <div className="col-span-2">SKU</div>
-          <div className="col-span-2">CATEGORY</div>
-          <div className="col-span-1">COST PRICE</div>
-          <div className="col-span-1">SELLING PRICE</div>
-          <div className="col-span-1">QUANTITY</div>
-          <div className="col-span-2">SUPPLIER TYPE</div>
-        </div>
-      </div>
+      <div className="overflow-x-auto">
+        <div className="min-w-[1000px]">
+          {/* Products Table Header */}
+          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-600 uppercase tracking-wider">
+              <div className="col-span-1">#</div>
+              <div className="col-span-2">PRODUCT</div>
+              <div className="col-span-2">SKU</div>
+              <div className="col-span-2">CATEGORY</div>
+              <div className="col-span-1">COST PRICE</div>
+              <div className="col-span-1">SELLING PRICE</div>
+              <div className="col-span-1">QUANTITY</div>
+              <div className="col-span-2">VENDOR TYPE</div>
+            </div>
+          </div>
 
-      {/* Products Table Content */}
-      <div className="divide-y divide-gray-200">
-        {products.map((product, index) => (
-          <div
-            key={product.id}
-            className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150"
-          >
-            <div className="grid grid-cols-12 gap-4 items-center">
-              {/* Index */}
-              <div className="col-span-1">
-                <span className="text-sm font-medium text-gray-900">
-                  {index + 1}
-                </span>
-              </div>
+          {/* Products Table Content */}
+          <div className="divide-y divide-gray-200">
+            {products.map((product, index) => (
+              <div
+                key={product.id}
+                className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150"
+              >
+                <div className="grid grid-cols-12 gap-4 items-center">
+                  {/* Index */}
+                  <div className="col-span-1">
+                    <span className="text-sm font-medium text-gray-900">
+                      {index + 1}
+                    </span>
+                  </div>
 
-              {/* Product Name */}
-              <div className="col-span-2">
-                <div className="flex items-center gap-3">
-                  <div>
-                    <div className="font-medium text-gray-900">
-                      {product.name}
+                  {/* Product Name */}
+                  <div className="col-span-2">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {product.name}
+                        </div>
+                      </div>
                     </div>
+                  </div>
+
+                  {/* SKU */}
+                  <div className="col-span-2">
+                    <span className="text-sm font-mono text-gray-900 bg-gray-100 px-2 py-1 rounded">
+                      {product.sku || "N/A"}
+                    </span>
+                  </div>
+
+                  {/* Category */}
+                  <div className="col-span-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {product.category || "Uncategorized"}
+                    </span>
+                  </div>
+
+                  {/* Cost Price */}
+                  <div className="col-span-1">
+                    <span className="text-sm font-medium text-gray-900">
+                      {formatCurrency(product.costPrice)}
+                    </span>
+                  </div>
+
+                  {/* Selling Price */}
+                  <div className="col-span-1">
+                    <span className="text-sm font-medium text-gray-900">
+                      {formatCurrency(product.sellingPrice)}
+                    </span>
+                  </div>
+
+                  {/* Quantity */}
+                  <div className="col-span-1">
+                    <span className="text-sm font-medium text-gray-900">
+                      {product.quantity || "N/A"}
+                    </span>
+                  </div>
+
+                  {/* Supplier Type */}
+                  <div className="col-span-2">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        product.supplierType === "primary"
+                          ? "bg-blue-100 text-blue-800"
+                          : product.supplierType === "secondary"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {product.supplierType === "primary"
+                        ? "Primary"
+                        : "Secondary"}
+                    </span>
                   </div>
                 </div>
               </div>
-
-              {/* SKU */}
-              <div className="col-span-2">
-                <span className="text-sm font-mono text-gray-900 bg-gray-100 px-2 py-1 rounded">
-                  {product.sku || "N/A"}
-                </span>
-              </div>
-
-              {/* Category */}
-              <div className="col-span-2">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  {product.category || "Uncategorized"}
-                </span>
-              </div>
-
-              {/* Cost Price */}
-              <div className="col-span-1">
-                <span className="text-sm font-medium text-gray-900">
-                  {formatCurrency(product.costPrice)}
-                </span>
-              </div>
-
-              {/* Selling Price */}
-              <div className="col-span-1">
-                <span className="text-sm font-medium text-gray-900">
-                  {formatCurrency(product.sellingPrice)}
-                </span>
-              </div>
-
-              {/* Quantity */}
-              <div className="col-span-1">
-                <span className="text-sm font-medium text-gray-900">
-                  {product.quantity || "N/A"}
-                </span>
-              </div>
-
-              {/* Supplier Type */}
-              <div className="col-span-2">
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    product.supplierType === "primary"
-                      ? "bg-blue-100 text-blue-800"
-                      : product.supplierType === "secondary"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
-                  }`}
-                >
-                  {product.supplierType === "primary" ? "Primary" : "Secondary"}
-                </span>
-              </div>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Products Summary */}
-      <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-600">
-            Showing {products.length} products from {supplier.name}
-          </div>
-          <div className="text-right">
-            <div className="text-lg font-semibold text-gray-900">
-              {formatCurrency(
-                products.reduce(
-                  (sum, p) => sum + (p.costPrice || 0) * (p.quantity || 0),
-                  0
-                )
-              )}
+        {/* Products Summary */}
+        <div className="px-4 lg:px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div className="text-sm text-gray-600">
+              Showing {products.length} products from {supplier.name}
             </div>
-            <div className="text-sm text-gray-500">Total inventory value</div>
+            <div className="text-left sm:text-right">
+              <div className="text-lg font-semibold text-gray-900">
+                {formatCurrency(
+                  products.reduce(
+                    (sum, p) => sum + (p.costPrice || 0) * (p.quantity || 0),
+                    0
+                  )
+                )}
+              </div>
+              <div className="text-sm text-gray-500">Total inventory value</div>
+            </div>
           </div>
         </div>
       </div>

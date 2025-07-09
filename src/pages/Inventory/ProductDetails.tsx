@@ -773,7 +773,7 @@ const ProductDetails: React.FC = () => {
                       ))
                     ) : (
                       <div className="text-center py-6 text-gray-500">
-                        No suppliers found
+                        No vendors found
                       </div>
                     )}
                   </div>

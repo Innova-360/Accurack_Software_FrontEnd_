@@ -1,4 +1,8 @@
 export interface Supplier {
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
   id?: string; // Optional numeric/UUID ID from backend
   supplier_id: string;
   name: string;
@@ -6,8 +10,11 @@ export interface Supplier {
   phone: string;
   address: string;
   storeId: string;
+  status?: "active" | "inactive";
   createdAt?: Date;
   updatedAt?: Date;
+  isTemporary?: boolean;
+  _id?: string;
   productSuppliers?: ProductSupplier[];
 }
 
