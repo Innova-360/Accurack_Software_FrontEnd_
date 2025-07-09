@@ -117,7 +117,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
       console.error("Error fetching assigned products:", error);
       if (error.response?.status === 404) {
         setProducts([]);
-        toast.error("No products found for this supplier");
+        toast.error("No products assigned for this supplier");
       } else {
         toast.error("Failed to load assigned products");
       }

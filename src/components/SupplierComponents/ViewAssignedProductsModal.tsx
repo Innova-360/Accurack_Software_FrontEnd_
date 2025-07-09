@@ -136,7 +136,7 @@ const ViewAssignedProductsModal: React.FC<ViewAssignedProductsModalProps> = ({
       console.error('Error fetching assigned products:', error);
       if (error.response?.status === 404) {
         setProducts([]);
-        toast.error('No products found for this supplier');
+        toast('No products assigned for this supplier');
       } 
     } finally {
       setLoading(false);
