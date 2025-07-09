@@ -21,6 +21,7 @@
     "dayjs": "^1.11.13",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.525.0",
+    "puppeteer-core": "^24.12.1",
     "quagga": "^0.12.1",
     "react": "^19.1.0",
     "react-barcode": "^1.6.1",

@@ -48,6 +48,7 @@ import ProfileSettings from "../pages/ProfileSettings/ProfileSettings";
 import BusinessSettings from "../pages/BusinessSettings/BusinessSettings";
 import ChangePassword from "../pages/ChangePassword/ChangePassword";
 import NotFound from "../pages/NotFound/NotFound";
+import Invoices from "../pages/Invoice/invoices";
 
 const AppRoutes = () => {
   return (
@@ -269,6 +270,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <CreateInvoice />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/invoices"
+        element={
+          <ProtectedRoute>
+            <Invoices />
           </ProtectedRoute>
         }
       />

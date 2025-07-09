@@ -27,6 +27,7 @@ export interface SaleRequestData {
   paymentMethod: "CASH" | "CARD" | "BANK_TRANSFER" | "CHECK" | "DIGITAL_WALLET";
   totalAmount: number;
   tax: number;
+  allowance: number;
   cashierName: string;
   generateInvoice: boolean;
   source: string;
@@ -61,6 +62,7 @@ interface SalesState {
   error: string | null;
   lastCreatedSale: SaleResponseData | null;
 }
+
 
 const initialState: SalesState = {
   sales: [],

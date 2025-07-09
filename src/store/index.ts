@@ -21,6 +21,7 @@ import productCategoriesReducer from "./slices/productCategoriesSlice";
 import orderProcessingReducer from "./slices/orderProcessingSlice";
 import orderTrackingReducer from "./slices/orderTrackingSlice";
 import businessReducer from "./slices/businessSlice";
+import invoiceReducer from "./slices/invoiceSlice";
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +29,7 @@ export const store = configureStore({
     auth: authReducer,
     ui: uiReducer,
     search: searchReducer,
+    invoices: invoiceReducer,
     stores: storeReducer,
     suppliers: supplierReducer,
     employees: employeeReducer,
