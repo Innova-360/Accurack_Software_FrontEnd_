@@ -41,6 +41,7 @@ import CreateCustomer from "../pages/Customer/CreateCustomer";
 import CustomerBalanceSheet from "../pages/Customer/CustomerBalanceSheet";
 import ProtectedRoute from "../components/ProtectedRoute";
 import ReturnPage from "../pages/Return/Return";
+import CreateReturn from "../pages/Return/CreateReturn";
 import Tax from "../pages/Tax/index";
 import AddTax from "../pages/Tax/AddTax";
 import StoreDetails from "../pages/Stores/StoreDetails";
@@ -417,6 +418,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <ReturnPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/return/create"
+        element={
+          <ProtectedRoute>
+            <CreateReturn />
           </ProtectedRoute>
         }
       />
