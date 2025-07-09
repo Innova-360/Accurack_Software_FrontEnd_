@@ -95,7 +95,7 @@ const AssignProductsPage: React.FC = () => {
           setFetchedSupplier(response.data?.data);
         } catch (error) {
           console.error("Error fetching supplier:", error);
-          toast.error("Failed to load supplier information");
+          toast.error("Failed to load vendor information");
         } finally {
           setFetchingSupplier(false);
         }
@@ -420,9 +420,7 @@ const AssignProductsPage: React.FC = () => {
   useEffect(() => {
     const checkAndRedirectIfNeeded = async () => {
       if (supplierId && !isValidUUID(supplierId) && !supplierInfo) {
-        console.log(
-          "URL has supplier name instead of UUID, trying to find correct ID..."
-        );
+        
 
         try {
           // Fetch all suppliers to find the one with matching name
@@ -481,10 +479,10 @@ const AssignProductsPage: React.FC = () => {
             <span className="text-red-600 text-4xl">⚠</span>
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-4">
-            Supplier Not Found
+            Vendor Not Found
           </h3>
           <p className="text-gray-600 mb-8 leading-relaxed">
-            The supplier information could not be loaded. Please try again or
+            The vendor information could not be loaded. Please try again or
             contact support if the issue persists.
           </p>
           <button
@@ -508,7 +506,7 @@ const AssignProductsPage: React.FC = () => {
           </div>
           <p className="mt-6 text-gray-600 text-lg font-medium">
             {fetchingSupplier
-              ? "Loading supplier information..."
+              ? "Loading vendor information..."
               : "Loading products..."}
           </p>
           <div className="mt-4 flex justify-center gap-1">
@@ -543,7 +541,7 @@ const AssignProductsPage: React.FC = () => {
                 </button>
                 <div>
                   <h1 className="text-2xl lg:text-2xl font-bold text-gray-900 mb-1">
-                    Assign Products to Supplier
+                    Assign Products to Vendor
                   </h1>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>

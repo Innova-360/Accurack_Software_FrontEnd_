@@ -25,8 +25,8 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
               <FaEye className="text-white" size={18} />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-[#03414C]">Supplier Details</h2>
-              <p className="text-sm text-gray-600">View supplier information</p>
+              <h2 className="text-xl font-semibold text-[#03414C]">Vendor Details</h2>
+              <p className="text-sm text-gray-600">View vendor information</p>
             </div>
           </div>
           <button
