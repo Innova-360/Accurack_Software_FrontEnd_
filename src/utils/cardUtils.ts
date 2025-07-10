@@ -134,5 +134,12 @@ export const getAllCards = (): CardSection[] => {
         { title: "Return Dashboard", iconComponent: "FiBarChart3" },
       ],
     },
+    {
+      sectionTitle: "MSA",
+      cards: [
+        { title: "MSA Inventory Report", iconComponent: "FiFileText" },
+        { title: "MSA Sales Report", iconComponent: "FiDollarSign" },
+      ],
+    },
   ];
 };
