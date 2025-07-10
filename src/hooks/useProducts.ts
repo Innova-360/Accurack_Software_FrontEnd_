@@ -52,7 +52,7 @@ export const useProducts = (
 
     try {
       const response: PaginatedProductsResponse =
-        await productAPI.getProducts(initialParams);
+        await productAPI.getProducts(params);
       setProducts(response.products);
       setPagination(response.pagination);
     } catch (err) {
@@ -74,10 +74,19 @@ export const useProducts = (
     await fetchWithParams(currentParams);
   }, [fetchWithParams, currentParams]);
 
-  // Initial fetch
+  // Initial fetch and refetch when parameters change
   useEffect(() => {
     fetchWithParams(initialParams);
-  }, []); // Remove initialParams from dependency to prevent infinite re-renders
+  }, [
+    initialParams.page,
+    initialParams.limit,
+    initialParams.search,
+    initialParams.sortBy,
+    initialParams.sortOrder,
+    initialParams.category,
+    initialParams.storeId,
+    fetchWithParams
+  ]);
 
   return {
     products,
