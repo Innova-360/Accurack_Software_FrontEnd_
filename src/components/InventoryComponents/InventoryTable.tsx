@@ -33,6 +33,14 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
   const [deletingProductId, setDeletingProductId] = useState<string | null>(
     null
   );
+  const [editingQuantity, setEditingQuantity] = useState<{
+    productId: string;
+    variantIndex?: number;
+    value: string;
+  } | null>(null);
+  const [updatingQuantity, setUpdatingQuantity] = useState<Set<string>>(
+    new Set()
+  );
   const handleDeleteProduct = async (
     productId: string,
     productName: string
@@ -94,6 +102,79 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
       </span>
     </div>
   );
+
+  const handleEditQuantity = (
+    productId: string,
+    currentQuantity: number,
+    variantIndex?: number
+  ) => {
+    setEditingQuantity({
+      productId,
+      variantIndex,
+      value: currentQuantity.toString(),
+    });
+  };
+
+  const handleQuantityChange = (value: string) => {
+    if (editingQuantity) {
+      setEditingQuantity({
+        ...editingQuantity,
+        value: value,
+      });
+    }
+  };
+
+  const handleQuantitySave = async () => {
+    if (!editingQuantity) return;
+
+    const newQuantity = parseInt(editingQuantity.value, 10);
+    if (isNaN(newQuantity) || newQuantity < 0) {
+      alert("Please enter a valid quantity (0 or greater)");
+      return;
+    }
+
+    const updateKey =
+      editingQuantity.variantIndex !== undefined
+        ? `${editingQuantity.productId}-variant-${editingQuantity.variantIndex}`
+        : editingQuantity.productId;
+
+    try {
+      setUpdatingQuantity((prev) => new Set(prev).add(updateKey));
+
+      // For now, we'll use the main product ID for API call
+      // In a real scenario, you might need variant-specific endpoints
+      await productAPI.updateProductQuantity(
+        editingQuantity.productId,
+        newQuantity
+      );
+
+      // Refresh the product list to get updated data
+      onProductDeleted?.(); // Reusing this callback to refresh the data
+
+      setEditingQuantity(null);
+    } catch (error) {
+      console.error("Failed to update quantity:", error);
+      alert("Failed to update quantity. Please try again.");
+    } finally {
+      setUpdatingQuantity((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(updateKey);
+        return newSet;
+      });
+    }
+  };
+
+  const handleQuantityCancel = () => {
+    setEditingQuantity(null);
+  };
+
+  const handleQuantityKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleQuantitySave();
+    } else if (e.key === "Escape") {
+      handleQuantityCancel();
+    }
+  };
 
   console.log("Greate product", products);
   return (
@@ -210,7 +291,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                 return (
                   <React.Fragment key={productKey}>
                     {/* Main product row */}
-                    <tr className="hover:bg-gray-50">
+                    <tr className="hover:bg-gray-50 group">
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <input
                           type="checkbox"
@@ -272,15 +353,108 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         {!hasVariantsToShow && (
-                          <span
-                            className={
-                              product.quantity < 10
-                                ? "text-red-600 font-bold"
-                                : ""
-                            }
-                          >
-                            {product.quantity}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            {editingQuantity?.productId === productKey &&
+                            editingQuantity.variantIndex === undefined ? (
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={editingQuantity.value}
+                                  onChange={(e) =>
+                                    handleQuantityChange(e.target.value)
+                                  }
+                                  onKeyDown={handleQuantityKeyPress}
+                                  onBlur={handleQuantitySave}
+                                  className="w-16 px-1 py-1 text-xs border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={handleQuantitySave}
+                                  className="text-green-600 hover:text-green-800 p-1"
+                                  title="Save quantity"
+                                >
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M5 13l4 4L19 7"
+                                    />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={handleQuantityCancel}
+                                  className="text-red-600 hover:text-red-800 p-1"
+                                  title="Cancel editing"
+                                >
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M6 18L18 6M6 6l12 12"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={
+                                    product.quantity < 10
+                                      ? "text-red-600 font-bold"
+                                      : ""
+                                  }
+                                >
+                                  {updatingQuantity.has(productKey) ? (
+                                    <div className="flex items-center gap-1">
+                                      <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                      <span>{product.quantity}</span>
+                                    </div>
+                                  ) : (
+                                    product.quantity
+                                  )}
+                                </span>
+                                {!updatingQuantity.has(productKey) && (
+                                  <button
+                                    onClick={() =>
+                                      handleEditQuantity(
+                                        productKey,
+                                        product.quantity
+                                      )
+                                    }
+                                    className="text-gray-400 hover:text-blue-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    title="Edit quantity"
+                                  >
+                                    <svg
+                                      className="w-3 h-3"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                      />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         )}
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-blue-600 border-b border-gray-300">
@@ -444,7 +618,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                       product.variants?.map((variant, variantIndex) => (
                         <tr
                           key={`${productKey}-variant-${variantIndex}`}
-                          className="bg-gray-50 hover:bg-gray-100"
+                          className="bg-gray-50 hover:bg-gray-100 group"
                         >
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                             {/* Empty checkbox column for variants */}
@@ -460,15 +634,113 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                             </div>
                           </td>
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300 text-gray-600">
-                            <span
-                              className={
-                                (variant.quantity || 0) < 10
-                                  ? "text-red-600 font-bold"
-                                  : ""
-                              }
-                            >
-                              {variant.quantity || 0}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              {editingQuantity?.productId === productKey &&
+                              editingQuantity.variantIndex === variantIndex ? (
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={editingQuantity.value}
+                                    onChange={(e) =>
+                                      handleQuantityChange(e.target.value)
+                                    }
+                                    onKeyDown={handleQuantityKeyPress}
+                                    onBlur={handleQuantitySave}
+                                    className="w-16 px-1 py-1 text-xs border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    autoFocus
+                                  />
+                                  <button
+                                    onClick={handleQuantitySave}
+                                    className="text-green-600 hover:text-green-800 p-1"
+                                    title="Save quantity"
+                                  >
+                                    <svg
+                                      className="w-3 h-3"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={handleQuantityCancel}
+                                    className="text-red-600 hover:text-red-800 p-1"
+                                    title="Cancel editing"
+                                  >
+                                    <svg
+                                      className="w-3 h-3"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M6 18L18 6M6 6l12 12"
+                                      />
+                                    </svg>
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className={
+                                      (variant.quantity || 0) < 10
+                                        ? "text-red-600 font-bold"
+                                        : ""
+                                    }
+                                  >
+                                    {updatingQuantity.has(
+                                      `${productKey}-variant-${variantIndex}`
+                                    ) ? (
+                                      <div className="flex items-center gap-1">
+                                        <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                        <span>{variant.quantity || 0}</span>
+                                      </div>
+                                    ) : (
+                                      variant.quantity || 0
+                                    )}
+                                  </span>
+                                  {!updatingQuantity.has(
+                                    `${productKey}-variant-${variantIndex}`
+                                  ) && (
+                                    <button
+                                      onClick={() =>
+                                        handleEditQuantity(
+                                          productKey,
+                                          variant.quantity || 0,
+                                          variantIndex
+                                        )
+                                      }
+                                      className="text-gray-400 hover:text-blue-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      title="Edit quantity"
+                                    >
+                                      <svg
+                                        className="w-3 h-3"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                        />
+                                      </svg>
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </td>
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-blue-600 border-b border-gray-300">
                             <div className="truncate">
