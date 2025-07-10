@@ -74,8 +74,10 @@ const AddNewSale: React.FC = () => {
     dispatch(fetchProductsPaginated({
       page: currentPageLocal,
       limit: productsPerPage,
+      storeId: id,
       search: debouncedSearchTerm || undefined,
     }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, currentPageLocal, debouncedSearchTerm]);
 
   // Fetch products, user, and customers on component mount
@@ -251,6 +253,8 @@ const AddNewSale: React.FC = () => {
     value: string | number
   ) => {
     const updatedProducts = [...products];
+    console.log("Index",index, "Field", field, "Value", value);
+    
 
     // Handle product selection
     if (field === "name") {
@@ -792,7 +796,7 @@ const AddNewSale: React.FC = () => {
                 )}
               </div>
 
-              {/* Pagination Controls - Top */}
+              {/* Pagination Controls - Top 
               {totalPages > 1 && (
                 <div className="mb-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                   <div className="text-sm text-gray-600">
@@ -819,6 +823,7 @@ const AddNewSale: React.FC = () => {
                   </div>
                 </div>
               )}
+                */}
 
               {/* Products loading/error state */}
               {productsLoading && (
@@ -866,10 +871,12 @@ const AddNewSale: React.FC = () => {
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                           disabled={productsLoading}
                         >
+                          
+
                           <option value="">
                             {productsLoading
                               ? (debouncedSearchTerm ? `Searching "${debouncedSearchTerm}"...` : "Loading products...")
-                              : `Select from ${totalProducts} products${debouncedSearchTerm ? ` (filtered)` : ''}...`}
+                              : `Select from ${flattenedProducts.length} products${debouncedSearchTerm ? ` (filtered)` : ''}...`}
                           </option>
                           {flattenedProducts.map((flatProduct) => (
                             <option
