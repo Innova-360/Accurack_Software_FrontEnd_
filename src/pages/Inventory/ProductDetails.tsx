@@ -4,6 +4,7 @@ import Header from "../../components/Header";
 import type { Product } from "../../data/inventoryData";
 import { productAPI } from "../../services/productAPI";
 import Barcode from "react-barcode";
+import { useStoreFromUrl } from "../../hooks/useStoreFromUrl";
 
 const ProductDetails: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -12,6 +13,7 @@ const ProductDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const { storeId } = useStoreFromUrl();
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -38,7 +40,7 @@ const ProductDetails: React.FC = () => {
   };
 
   const handleEdit = () => {
-    navigate(`/inventory/product/${productId}/update`);
+    navigate(`/store/${storeId}/inventory/product/${productId}/update`);
   };
 
   const handlePrintBarcode = () => {

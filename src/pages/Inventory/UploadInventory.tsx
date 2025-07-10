@@ -178,7 +178,7 @@ const UploadInventory: React.FC = () => {
         {/* Header Section */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 lg:mb-6 space-y-4 lg:space-y-0 animate-slideDown">
           <h1 className="text-xl sm:text-2xl font-bold text-[#0f4d57]">
-            Upload Inventory
+            Upload Inventory Files
           </h1>
           <div className="flex flex-wrap gap-2 sm:gap-4">
             <button
@@ -316,7 +316,7 @@ const UploadInventory: React.FC = () => {
                 disabled={!selectedFile}
                 className="px-8 py-3 bg-[#0f4d57] text-white rounded-lg hover:bg-[#0d3f47] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium"
               >
-                Upload Inventory
+                Upload Inventory File
               </button>
             </div>
 

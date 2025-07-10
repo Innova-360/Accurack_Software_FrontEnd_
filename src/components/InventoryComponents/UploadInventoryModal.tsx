@@ -196,7 +196,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
       <div className="relative bg-white rounded-xl shadow-2xl p-6 m-4 w-full max-w-lg animate-modal-enter">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-[#0f4d57]">Upload Inventory</h2>
+          <h2 className="text-xl font-bold text-[#0f4d57]">Upload Inventory File</h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors p-1"
