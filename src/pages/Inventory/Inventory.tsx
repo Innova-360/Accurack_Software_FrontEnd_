@@ -414,7 +414,7 @@ const Inventory: React.FC = () => {
       await productAPI.updateProduct(productId, fixedProductData as any);
 
       toast.success("Product updated successfully!");
-      refetch(); // Refresh the product list
+      refetch(); // Refresh the product lis
       setIsEditProductModalOpen(false);
       setSelectedProductToEdit(null);
     } catch (error) {
