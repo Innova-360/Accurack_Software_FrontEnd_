@@ -80,7 +80,8 @@ const ProductDetails: React.FC = () => {
                 format: "CODE128",
                 width: 2,
                 height: 100,
-                displayValue: false
+                displayValue: true,
+                fontSize: 14
               });
               window.onload = function() {
                 window.print();
