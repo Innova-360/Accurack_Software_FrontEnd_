@@ -10,6 +10,7 @@ import StoreForm from "../components/StoreForm";
 import ExpensePage from "../pages/expensePage/Expense";
 import SalesPage from "../pages/salesPage/Sales";
 import CreateInventory from "../pages/Inventory/CreateInventory";
+import UpdateInventory from "../pages/Inventory/UpdateInventory";
 import ProductDetails from "../pages/Inventory/ProductDetails";
 import UploadInventory from "../pages/Inventory/UploadInventory";
 import UpdateProduct from "../pages/Inventory/UpdateProduct";
@@ -212,6 +213,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <ProductDetails />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/inventory/product/:productId/update"
+        element={
+          <ProtectedRoute>
+            <UpdateInventory />
           </ProtectedRoute>
         }
       />
