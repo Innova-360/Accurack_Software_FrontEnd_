@@ -49,7 +49,7 @@ const AddInventoryOptionsModal: React.FC<AddInventoryOptionsModalProps> = ({
               </div>
               <div className="flex-1 text-left">
                 <h3 className="font-semibold text-gray-900 group-hover:text-[#0f4d57]">
-                  Upload Inventory
+                  Upload Inventory File
                 </h3>
                 <p className="text-sm text-gray-500 group-hover:text-gray-600">
                   Bulk upload products from Excel file

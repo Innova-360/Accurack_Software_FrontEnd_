@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import type { Variation, Attribute, PackDiscount, DiscountTier } from "./types";
 import { generateId } from "./utils";
 import { useSelector, useDispatch } from "react-redux";
@@ -123,6 +123,8 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
       discount: 0,
       customSku: "",
       supplierId: "",
+      imageFile: null, // Added to match the interface
+      imagePreview: "", // Added to match the interface
       hasPackSettings: false,
       packDiscounts: [],
       hasDiscountTiers: false,
@@ -215,7 +217,7 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
         orderedPacksPrice: 0,
       };
       updateVariation(variationId, "packDiscounts", [
-        ...variation.packDiscounts,
+        ...(variation.packDiscounts || []),
         newDiscount,
       ]);
     }
@@ -229,7 +231,7 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
   ) => {
     const variation = variations.find((v) => v.id === variationId);
     if (variation) {
-      const updatedDiscounts = variation.packDiscounts.map((d) =>
+      const updatedDiscounts = (variation.packDiscounts || []).map((d) =>
         d.id === discountId ? { ...d, [field]: value } : d
       );
       updateVariation(variationId, "packDiscounts", updatedDiscounts);
@@ -242,7 +244,7 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
   ) => {
     const variation = variations.find((v) => v.id === variationId);
     if (variation) {
-      const updatedDiscounts = variation.packDiscounts.filter(
+      const updatedDiscounts = (variation.packDiscounts || []).filter(
         (d) => d.id !== discountId
       );
       updateVariation(variationId, "packDiscounts", updatedDiscounts);
@@ -322,7 +324,6 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
             onUpdate={updateVariation}
             onUpdateAttribute={updateVariationAttribute}
             onRemove={removeVariation}
-            onImageUpload={() => {}} // placeholder
             onAddPackDiscount={addVariationPackDiscount}
             onUpdatePackDiscount={updateVariationPackDiscount}
             onRemovePackDiscount={removeVariationPackDiscount}
@@ -354,10 +355,6 @@ interface VariationCardProps {
     value: string
   ) => void;
   onRemove: (id: string) => void;
-  onImageUpload: (
-    variationId: string,
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => void;
   onAddPackDiscount: (variationId: string) => void;
   onUpdatePackDiscount: (
     variationId: string,
@@ -385,21 +382,15 @@ const VariationCard: React.FC<VariationCardProps> = ({
   suppliersError,
   categories,
   categoriesLoading,
-  categoriesError,
   creatingCategory,
   onUpdate,
   onUpdateAttribute,
   onRemove,
-  onImageUpload,
   onAddPackDiscount,
   onUpdatePackDiscount,
   onRemovePackDiscount,
-  onAddDiscountTier,
-  onUpdateDiscountTier,
-  onRemoveDiscountTier,
 }) => {
   const dispatch = useDispatch();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // State for managing category creation for this variation
   const [isCreatingCategory, setIsCreatingCategory] = React.useState(false);
@@ -565,7 +556,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
                     >
                       <path
                         fillRule="evenodd"
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-4 4a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
                         clipRule="evenodd"
                       />
                     </svg>
@@ -779,7 +770,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
         <div>
           {" "}
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Vendor
+            Vendor *
           </label>
           <select
             value={variation.supplierId}
@@ -794,7 +785,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
                 ? "bg-gray-100 cursor-not-allowed text-gray-500"
                 : ""
             }`}
-            
+         
             disabled={
               !suppliersLoading &&
               !suppliersError &&
@@ -931,14 +922,14 @@ const VariationCard: React.FC<VariationCardProps> = ({
                 </span>
               </span>
             </div>
-            {variation.packDiscounts.length === 0 && (
+            {/* {variation.packDiscounts.length === 0 && (
               <div className="text-xs text-gray-500 mb-2">
                 No pack discounts added yet.
               </div>
-            )}
+            )} */}
             <div className="space-y-2">
               {" "}
-              {variation.packDiscounts.map((discount) => (
+              {(variation.packDiscounts || []).map((discount) => (
                 <div
                   key={discount.id}
                   className="grid grid-cols-12 gap-2 p-2 bg-gray-50 rounded items-center border border-gray-200 relative group"

@@ -28,12 +28,12 @@ interface ProductItem {
 const AddNewSale: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  
+
   // Get current store and user data
   const currentStore = useRequireStore();
   const { user } = useSelector((state: RootState) => state.user);
-  const {id} = useParams(); // Get store ID from URL params
-  
+  const { id } = useParams(); // Get store ID from URL params
+
   // Redux state
   const {
     products: availableProducts,
@@ -45,7 +45,7 @@ const AddNewSale: React.FC = () => {
     hasNextPage,
     hasPreviousPage,
   } = useSelector((state: RootState) => state.products);
-  
+
   // Sales state
   const { loading: salesLoading } = useSelector((state: RootState) => state.sales);
 
@@ -57,6 +57,7 @@ const AddNewSale: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const productsPerPage = 50;
+  const [allowance, setAllowance] = useState(0);
 
   // Debounce search term
   useEffect(() => {
@@ -73,9 +74,10 @@ const AddNewSale: React.FC = () => {
     dispatch(fetchProductsPaginated({
       page: currentPageLocal,
       limit: productsPerPage,
+      storeId: id,
       search: debouncedSearchTerm || undefined,
-      storeId: currentStore?.id
     }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, currentPageLocal, debouncedSearchTerm]);
 
   // Fetch products, user, and customers on component mount
@@ -119,8 +121,8 @@ const AddNewSale: React.FC = () => {
   const subtotal = products.reduce((sum, product) => sum + product.total, 0);
   const discountAmount =
     discountType === "percentage" ? (subtotal * discount) / 100 : discount;
-  const taxAmount = ((subtotal - discountAmount) * taxRate) / 100;
-  const finalTotal = subtotal - discountAmount + taxAmount;
+  const taxAmount = ((subtotal - discountAmount ) * taxRate) / 100;
+  const finalTotal = subtotal - discountAmount  + taxAmount;
 
   // Combine address fields into a single address string
   const getFullAddress = () => {
@@ -133,7 +135,7 @@ const AddNewSale: React.FC = () => {
   // Handle customer selection from dropdown
   const handleCustomerSelect = (customerId: string) => {
     setSelectedCustomerId(customerId);
-    
+
     if (customerId === "new") {
       // Clear all fields for a new customer
       setCustomerName("");
@@ -166,12 +168,12 @@ const AddNewSale: React.FC = () => {
     const selectedCustomer = customers.find(customer => customer.id === customerId);
     if (selectedCustomer) {
       setCustomerName(selectedCustomer.customerName || "");
-      
+
       // Extract country code from phone number or set default
       const phoneStr = selectedCustomer.phoneNumber || "";
       const phoneRegex = /^(\+\d+)(.*)$/;
       const match = phoneStr.match(phoneRegex);
-      
+
       if (match) {
         setCountryCode(match[1]);
         setPhoneNumber(match[2]);
@@ -179,9 +181,9 @@ const AddNewSale: React.FC = () => {
         setCountryCode("+1");
         setPhoneNumber(phoneStr);
       }
-      
+
       setEmail(selectedCustomer.customerMail || "");
-      
+
       if (selectedCustomer.customerAddress) {
         // Split address into components if available
         const addressParts = selectedCustomer.customerAddress.split(', ');
@@ -251,6 +253,8 @@ const AddNewSale: React.FC = () => {
     value: string | number
   ) => {
     const updatedProducts = [...products];
+    console.log("Index",index, "Field", field, "Value", value);
+    
 
     // Handle product selection
     if (field === "name") {
@@ -353,7 +357,7 @@ const AddNewSale: React.FC = () => {
       toast.error("Phone number is required");
       return;
     }
-    
+
     // Make sure country code is in proper format
     if (!countryCode.startsWith('+')) {
       toast.error("Country code must start with '+' (e.g., +1)");
@@ -442,8 +446,9 @@ const AddNewSale: React.FC = () => {
         paymentMethod: paymentMethod as "CASH" | "CARD" | "BANK_TRANSFER" | "CHECK" | "DIGITAL_WALLET",
         totalAmount: Math.round(finalTotal * 100) / 100, // Ensure proper number format
         tax: Math.round(taxAmount * 100) / 100, // Ensure proper number format
-        cashierName: user.firstName && user.lastName 
-          ? `${user.firstName} ${user.lastName}` 
+         allowance: Math.round(allowance * 100) / 100, // Add this line
+        cashierName: user.firstName && user.lastName
+          ? `${user.firstName} ${user.lastName}`
           : user.email || "Current User",
         generateInvoice: false, // Default to false as specified
         source: "manual", // Default source as manual
@@ -455,18 +460,19 @@ const AddNewSale: React.FC = () => {
 
       // Dispatch create sale action
       await dispatch(createSale(saleData)).unwrap();
-      
+
       toast.success("Sale created successfully!");
-      
+
       // Navigate back to sales page
       navigate(-1);
-    } catch (error) {
+    } 
+    catch (error: axios.AxiosError) {
       console.error("Error creating sale:", error);
       toast.error(`Failed to create sale: ${error}`);
     }
   };
 
-   const handleCreateInvoice = () => {
+  const handleCreateInvoice = () => {
     // Validate form before proceeding to invoice creation
     if (!customerName.trim()) {
       alert('Customer name is required');
@@ -504,7 +510,7 @@ const AddNewSale: React.FC = () => {
       return;
     }
 
-    
+
 
     // Prepare invoice data
     const invoiceData = {
@@ -544,6 +550,7 @@ const AddNewSale: React.FC = () => {
       discountType,
       discountAmount,
       taxRate,
+      allowance,
       taxAmount,
       finalTotal,
       paymentMethod,
@@ -551,7 +558,7 @@ const AddNewSale: React.FC = () => {
     };
 
     console.log("Products for invoice:", products);
-    
+
 
     // Navigate to invoice creation with data
     navigate(`/store/${id}/create-invoice`, { state: { invoiceData } });
@@ -591,7 +598,7 @@ const AddNewSale: React.FC = () => {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Customer Information
               </h2>
-              
+
               {/* Customer Selection Dropdown */}
               <div className="mb-6 py-4 rounded-lg">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -604,9 +611,9 @@ const AddNewSale: React.FC = () => {
                   disabled={customersLoading}
                 >
                   <option value="" className="text-gray-500">
-                    {customersLoading 
-                      ? "Loading customers..." 
-                      : customers.length > 0 
+                    {customersLoading
+                      ? "Loading customers..."
+                      : customers.length > 0
                         ? `Select from ${customers.length} existing customers or enter new details below`
                         : "No existing customers found - enter new details below"
                     }
@@ -616,7 +623,7 @@ const AddNewSale: React.FC = () => {
                       {customer.customerName} - {customer.phoneNumber}
                     </option>
                   ))}
-                {customers.length > 0 && <option className="text-gray-700 py-1.5" value="new">Add New Customer</option>}
+                  {customers.length > 0 && <option className="text-gray-700 py-1.5" value="new">Add New Customer</option>}
                 </select>
                 {selectedCustomerId === "new" && (
                   <p className="mt-2 text-sm text-green-700">
@@ -822,8 +829,8 @@ const AddNewSale: React.FC = () => {
               {productsLoading && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                   <p className="text-blue-700 text-sm">
-                    {debouncedSearchTerm 
-                      ? `Searching for "${debouncedSearchTerm}"...` 
+                    {debouncedSearchTerm
+                      ? `Searching for "${debouncedSearchTerm}"...`
                       : "Loading products..."}
                   </p>
                 </div>
@@ -864,10 +871,12 @@ const AddNewSale: React.FC = () => {
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                           disabled={productsLoading}
                         >
+                          
+
                           <option value="">
                             {productsLoading
                               ? (debouncedSearchTerm ? `Searching "${debouncedSearchTerm}"...` : "Loading products...")
-                              : `Select from ${totalProducts} products${debouncedSearchTerm ? ` (filtered)` : ''}...`}
+                              : `Select from ${flattenedProducts.length} products${debouncedSearchTerm ? ` (filtered)` : ''}...`}
                           </option>
                           {flattenedProducts.map((flatProduct) => (
                             <option
@@ -1000,10 +1009,10 @@ const AddNewSale: React.FC = () => {
                             </span>
                             <div className="text-gray-900">
                               {typeof product.selectedProduct.category ===
-                              "string"
+                                "string"
                                 ? product.selectedProduct.category
                                 : (product.selectedProduct.category as any)?.name ||
-                                  "Uncategorized"}
+                                "Uncategorized"}
                             </div>
                           </div>
                           <div>
@@ -1012,10 +1021,10 @@ const AddNewSale: React.FC = () => {
                             </span>
                             <div className="text-gray-900">
                               {typeof product.selectedProduct.supplier ===
-                              "string"
+                                "string"
                                 ? product.selectedProduct.supplier
                                 : (product.selectedProduct.supplier as any)?.name ||
-                                  "N/A"}
+                                "N/A"}
                             </div>
                           </div>
                           <div>
@@ -1048,30 +1057,30 @@ const AddNewSale: React.FC = () => {
                             {flattenedProducts.find(
                               (fp) => fp.displayName === product.name
                             )?.variantData && (
-                              <div className="text-xs text-gray-600 mt-1">
-                                <span className="font-medium">
-                                  Variant SKU:
-                                </span>{" "}
-                                {flattenedProducts.find(
-                                  (fp) => fp.displayName === product.name
-                                )?.variantData?.sku || "N/A"}
-                                {flattenedProducts.find(
-                                  (fp) => fp.displayName === product.name
-                                )?.variantData?.pluUpc && (
-                                  <>
-                                    {" | "}
-                                    <span className="font-medium">
-                                      Variant PLU:
-                                    </span>{" "}
-                                    {
-                                      flattenedProducts.find(
-                                        (fp) => fp.displayName === product.name
-                                      )?.variantData?.pluUpc
-                                    }
-                                  </>
-                                )}
-                              </div>
-                            )}
+                                <div className="text-xs text-gray-600 mt-1">
+                                  <span className="font-medium">
+                                    Variant SKU:
+                                  </span>{" "}
+                                  {flattenedProducts.find(
+                                    (fp) => fp.displayName === product.name
+                                  )?.variantData?.sku || "N/A"}
+                                  {flattenedProducts.find(
+                                    (fp) => fp.displayName === product.name
+                                  )?.variantData?.pluUpc && (
+                                      <>
+                                        {" | "}
+                                        <span className="font-medium">
+                                          Variant PLU:
+                                        </span>{" "}
+                                        {
+                                          flattenedProducts.find(
+                                            (fp) => fp.displayName === product.name
+                                          )?.variantData?.pluUpc
+                                        }
+                                      </>
+                                    )}
+                                </div>
+                              )}
                           </div>
                         )}
                       </div>
@@ -1226,6 +1235,28 @@ const AddNewSale: React.FC = () => {
                       -${discountAmount.toFixed(2)}
                     </span>
                   </div>
+                </div>
+                {/* Allowance field */}
+                <div className="flex justify-between items-start text-gray-600 mt-2">
+                  <span className="font-medium">Allowance</span>
+                  <div className="flex flex-col items-end space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={allowance}
+                        onChange={(e) => setAllowance(parseFloat(e.target.value) || 0)}
+                        className="w-[100%] px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                        placeholder="0"
+                      />
+                      <span className="text-sm">$</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span></span>
+                  <span className="text-green-600">-${allowance.toFixed(2)}</span>
                 </div>
 
                 <div className="flex justify-between items-start text-gray-600">

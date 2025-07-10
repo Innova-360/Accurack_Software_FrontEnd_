@@ -613,6 +613,22 @@ export const productAPI = {
     }
   },
 
+  // Update product quantity
+  async updateProductQuantity(
+    id: string,
+    quantity: number
+  ): Promise<{ success: boolean; message: string; data?: ApiProduct }> {
+    try {
+      const response = await apiClient.patch(`/product/${id}/quantity`, {
+        quantity: quantity,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error updating product quantity:", error);
+      throw error;
+    }
+  },
+
   // Search products by query string
   async searchProducts(query: string): Promise<Product[]> {
     try {
@@ -625,7 +641,10 @@ export const productAPI = {
         apiProducts = response.data;
       } else if (Array.isArray(response.data?.data)) {
         apiProducts = response.data.data;
-      } else if (response.data?.products && Array.isArray(response.data.products)) {
+      } else if (
+        response.data?.products &&
+        Array.isArray(response.data.products)
+      ) {
         apiProducts = response.data.products;
       }
       return apiProducts.map(transformApiProduct);

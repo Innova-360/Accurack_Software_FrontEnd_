@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import Header from "../../components/Header";
 import { BASE_URL } from "../../services/api";
+import { extractErrorMessage } from "../../utils/lastUpdatedUtils";
 
 const UploadInventory: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ const UploadInventory: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false); // <-- add uploading state
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -62,7 +64,7 @@ const UploadInventory: React.FC = () => {
 
   const handleUpload = async () => {
     if (!selectedFile) return;
-
+    setUploading(true); // <-- set uploading true
     // Show processing toast
     const processingToast = toast.loading(
       `Processing ${selectedFile.name}...`,
@@ -96,11 +98,12 @@ const UploadInventory: React.FC = () => {
 
       // Navigate back to inventory page
       navigate(`/store/${id}/inventory`);
-    } catch (error) {
+    } catch (error: any) {
       // Dismiss processing toast and show error
       toast.dismiss(processingToast);
-      toast.error("Upload failed. Please try again.");
+      toast.error(extractErrorMessage(error));
       console.error("Upload error:", error);
+      setUploading(false); // <-- set uploading false on error
     }
   };
 
@@ -177,7 +180,7 @@ const UploadInventory: React.FC = () => {
         {/* Header Section */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 lg:mb-6 space-y-4 lg:space-y-0 animate-slideDown">
           <h1 className="text-xl sm:text-2xl font-bold text-[#0f4d57]">
-            Upload Inventory
+            Upload Inventory Files
           </h1>
           <div className="flex flex-wrap gap-2 sm:gap-4">
             <button
@@ -312,10 +315,20 @@ const UploadInventory: React.FC = () => {
             <div className="flex justify-center mt-8">
               <button
                 onClick={handleUpload}
-                disabled={!selectedFile}
-                className="px-8 py-3 bg-[#0f4d57] text-white rounded-lg hover:bg-[#0d3f47] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium"
+                disabled={!selectedFile || uploading}
+                className="px-8 py-3 bg-[#0f4d57] text-white rounded-lg hover:bg-[#0d3f47] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium flex items-center justify-center"
               >
-                Upload Inventory
+                {uploading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    Uploading...
+                  </>
+                ) : (
+                  "Upload Inventory File"
+                )}
               </button>
             </div>
 

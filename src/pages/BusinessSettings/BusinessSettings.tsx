@@ -112,53 +112,83 @@ const BusinessSettings: React.FC = () => {
     try {
       setSaving(true);
 
-      // Use update API if profile exists, create API if new
-      const apiEndpoint = profile
-        ? "/invoice/update-business/details"
-        : "/invoice/set-business/details";
-
-      const response = await apiClient.put(apiEndpoint, formData);
-
-      console.log("Save response:", response.data);
-
-      if (response.data.success) {
-        // Update profile with the saved data
-        const updatedProfile = response.data.data || formData;
-        console.log("Updated profile:", updatedProfile);
-
-        setProfile(updatedProfile);
-
-        // Also update formData to ensure consistency
-        setFormData({
-          businessName: updatedProfile.businessName || formData.businessName,
-          contactNo: updatedProfile.contactNo || formData.contactNo,
-          website: updatedProfile.website || formData.website,
-          address: updatedProfile.address || formData.address,
-          logoUrl: updatedProfile.logoUrl || formData.logoUrl,
-        });
-
-        setIsEditing(false);
-        toast.success(
-          profile
-            ? "Business profile updated successfully"
-            : "Business profile created successfully"
-        );
-
-        // Force re-fetch to ensure sync
-        await fetchBusinessProfile();
+      if (profile) {
+        // Update existing profile
+        await handleUpdateProfile();
       } else {
-        toast.error(
-          "Failed to save: " + (response.data.message || "Unknown error")
-        );
+        // Create new profile
+        await handleCreateProfile();
       }
     } catch (error: any) {
       console.error("Save error:", error);
       toast.error(
-        error.response?.data?.message || "Failed to update business profile"
+        error.response?.data?.message || "Failed to save business profile"
       );
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleCreateProfile = async () => {
+    console.log("Creating new business profile...");
+
+    const response = await apiClient.post(
+      "/invoice/set-business/details",
+      formData
+    );
+    console.log("Create response:", response.data);
+
+    if (response.data.success) {
+      const createdProfile = response.data.data || formData;
+      console.log("Created profile:", createdProfile);
+
+      setProfile(createdProfile);
+      updateFormData(createdProfile);
+      setIsEditing(false);
+
+      toast.success("Business profile created successfully!");
+      await fetchBusinessProfile();
+    } else {
+      toast.error(
+        "Failed to create: " + (response.data.message || "Unknown error")
+      );
+    }
+  };
+
+  const handleUpdateProfile = async () => {
+    console.log("Updating existing business profile...");
+
+    const response = await apiClient.put(
+      "/invoice/update-business/details",
+      formData
+    );
+    console.log("Update response:", response.data);
+
+    if (response.data.success) {
+      const updatedProfile = response.data.data || formData;
+      console.log("Updated profile:", updatedProfile);
+
+      setProfile(updatedProfile);
+      updateFormData(updatedProfile);
+      setIsEditing(false);
+
+      toast.success("Business profile updated successfully!");
+      await fetchBusinessProfile();
+    } else {
+      toast.error(
+        "Failed to update: " + (response.data.message || "Unknown error")
+      );
+    }
+  };
+
+  const updateFormData = (profileData: any) => {
+    setFormData({
+      businessName: profileData.businessName || formData.businessName,
+      contactNo: profileData.contactNo || formData.contactNo,
+      website: profileData.website || formData.website,
+      address: profileData.address || formData.address,
+      logoUrl: profileData.logoUrl || formData.logoUrl,
+    });
   };
 
   const handleCancel = () => {
@@ -257,10 +287,14 @@ const BusinessSettings: React.FC = () => {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">
-                    Business Settings
+                    {!profile && isEditing
+                      ? "Create Business Profile"
+                      : "Business Settings"}
                   </h1>
                   <p className="text-sm text-gray-600">
-                    Manage your business information
+                    {!profile && isEditing
+                      ? "Set up your business information"
+                      : "Manage your business information"}
                   </p>
                 </div>
               </div>
@@ -292,7 +326,11 @@ const BusinessSettings: React.FC = () => {
                   icon={<FaSave />}
                   disabled={saving}
                 >
-                  {saving ? "Saving..." : "Save Changes"}
+                  {saving
+                    ? "Saving..."
+                    : profile
+                      ? "Update Business"
+                      : "Create Business"}
                 </SpecialButton>
               </div>
             )}
@@ -304,33 +342,60 @@ const BusinessSettings: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Debug Info - Remove in production */}
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          {/* Form Header */}
+          {!profile && isEditing && (
+            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#03414C] to-[#0f4d57] rounded-t-xl">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                  <FaBuilding className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-white">
+                    Setup Your Business Profile
+                  </h2>
+                  <p className="text-sm text-white/80">
+                    Fill in your business details to get started
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Business Name */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Business Name
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Business Name <span className="text-red-500">*</span>
                 </label>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    name="businessName"
-                    value={formData.businessName}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#03414C]/20 focus:border-[#03414C] transition-colors duration-200"
-                    placeholder="Enter your business name"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="businessName"
+                      value={formData.businessName}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#03414C]/20 focus:border-[#03414C] transition-all duration-200 text-gray-900 placeholder-gray-500"
+                      placeholder="Enter your business name"
+                      required
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <FaBuilding className="w-4 h-4 text-gray-400" />
+                    </div>
+                  </div>
                 ) : (
-                  <p className="text-gray-900 py-2">
-                    {profile?.businessName || "Not provided"}
-                  </p>
+                  <div className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-200">
+                    <p className="text-gray-900 font-medium">
+                      {profile?.businessName || "Not provided"}
+                    </p>
+                  </div>
                 )}
               </div>
 
               {/* Contact Number */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Contact Number
                 </label>
                 {isEditing ? (
@@ -339,19 +404,21 @@ const BusinessSettings: React.FC = () => {
                     name="contactNo"
                     value={formData.contactNo}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#03414C]/20 focus:border-[#03414C] transition-colors duration-200"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#03414C]/20 focus:border-[#03414C] transition-all duration-200 text-gray-900 placeholder-gray-500"
                     placeholder="Enter contact number"
                   />
                 ) : (
-                  <p className="text-gray-900 py-2">
-                    {profile?.contactNo || "Not provided"}
-                  </p>
+                  <div className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-200">
+                    <p className="text-gray-900">
+                      {profile?.contactNo || "Not provided"}
+                    </p>
+                  </div>
                 )}
               </div>
 
               {/* Website */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Website
                 </label>
                 {isEditing ? (
@@ -360,31 +427,31 @@ const BusinessSettings: React.FC = () => {
                     name="website"
                     value={formData.website}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#03414C]/20 focus:border-[#03414C] transition-colors duration-200"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#03414C]/20 focus:border-[#03414C] transition-all duration-200 text-gray-900 placeholder-gray-500"
                     placeholder="https://your-website.com"
                   />
                 ) : (
-                  <p className="text-gray-900 py-2">
+                  <div className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-200">
                     {profile?.website ? (
                       <a
                         href={profile.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#03414C] hover:underline"
+                        className="text-[#03414C] hover:underline font-medium"
                       >
                         {profile.website}
                       </a>
                     ) : (
-                      "Not provided"
+                      <p className="text-gray-900">Not provided</p>
                     )}
-                  </p>
+                  </div>
                 )}
               </div>
 
               {/* Address */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Address
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Business Address
                 </label>
                 {isEditing ? (
                   <textarea
@@ -392,33 +459,40 @@ const BusinessSettings: React.FC = () => {
                     value={formData.address}
                     onChange={handleInputChange}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#03414C]/20 focus:border-[#03414C] transition-colors duration-200"
-                    placeholder="Enter your business address"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#03414C]/20 focus:border-[#03414C] transition-all duration-200 text-gray-900 placeholder-gray-500 resize-none"
+                    placeholder="Enter your complete business address"
                   />
                 ) : (
-                  <p className="text-gray-900 py-2">
-                    {profile?.address || "Not provided"}
-                  </p>
+                  <div className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-200">
+                    <p className="text-gray-900 whitespace-pre-wrap">
+                      {profile?.address || "Not provided"}
+                    </p>
+                  </div>
                 )}
               </div>
 
               {/* Business Logo */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Business Logo
                 </label>
                 {isEditing ? (
                   <div className="space-y-4">
                     {/* Current Logo Preview */}
                     {formData.logoUrl && (
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-4 p-4 bg-green-50 border border-green-200 rounded-xl">
                         <img
                           src={formData.logoUrl}
                           alt="Current Logo"
-                          className="w-16 h-16 rounded-lg object-cover border border-gray-200"
+                          className="w-16 h-16 rounded-xl object-cover border-2 border-green-200"
                         />
-                        <div className="text-sm text-gray-600">
-                          Current logo
+                        <div>
+                          <p className="text-sm font-medium text-green-800">
+                            Current logo
+                          </p>
+                          <p className="text-xs text-green-600">
+                            Click below to change
+                          </p>
                         </div>
                       </div>
                     )}
@@ -428,21 +502,30 @@ const BusinessSettings: React.FC = () => {
                       type="button"
                       onClick={triggerImageUpload}
                       disabled={uploading}
-                      className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-[#03414C] transition-colors duration-200 flex flex-col items-center space-y-2 text-gray-600 hover:text-[#03414C]"
+                      className="w-full px-6 py-8 border-2 border-dashed border-gray-300 rounded-xl hover:border-[#03414C] hover:bg-[#03414C]/5 transition-all duration-200 flex flex-col items-center space-y-3 text-gray-600 hover:text-[#03414C] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {uploading ? (
                         <>
-                          <FaSpinner className="animate-spin w-6 h-6" />
-                          <span className="text-sm">Uploading...</span>
+                          <FaSpinner className="animate-spin w-8 h-8" />
+                          <span className="text-sm font-medium">
+                            Uploading...
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            Please wait
+                          </span>
                         </>
                       ) : (
                         <>
-                          <FaUpload className="w-6 h-6" />
-                          <span className="text-sm font-medium">
-                            {formData.logoUrl ? "Change Logo" : "Upload Logo"}
+                          <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                            <FaUpload className="w-6 h-6" />
+                          </div>
+                          <span className="text-sm font-semibold">
+                            {formData.logoUrl
+                              ? "Change Logo"
+                              : "Upload Business Logo"}
                           </span>
                           <span className="text-xs text-gray-500">
-                            PNG, JPG up to 5MB
+                            PNG, JPG, JPEG up to 5MB
                           </span>
                         </>
                       )}
@@ -458,29 +541,29 @@ const BusinessSettings: React.FC = () => {
                     />
                   </div>
                 ) : (
-                  <div className="flex items-center space-x-3">
-                    {profile?.logoUrl ? (
-                      <img
-                        src={profile.logoUrl}
-                        alt="Business Logo"
-                        className="w-16 h-16 rounded-lg object-cover border border-gray-200"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <FaBuilding className="w-8 h-8 text-gray-400" />
-                      </div>
-                    )}
-                    <div>
-                      {/* <p className="text-gray-900 font-medium">
-                        {profile?.logoUrl
-                          ? "Logo uploaded"
-                          : "No logo uploaded"}
-                      </p>
-                      {profile?.logoUrl && (
-                        <p className="text-sm text-gray-500">
-                          Click edit to change
+                  <div className="bg-gray-50 rounded-xl px-4 py-6 border border-gray-200">
+                    <div className="flex items-center space-x-4">
+                      {profile?.logoUrl ? (
+                        <img
+                          src={profile.logoUrl}
+                          alt="Business Logo"
+                          className="w-20 h-20 rounded-xl object-cover border-2 border-gray-200 shadow-sm"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 bg-gray-200 rounded-xl flex items-center justify-center">
+                          <FaBuilding className="w-10 h-10 text-gray-400" />
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-gray-900 font-semibold">
+                          {profile?.logoUrl ? "Business Logo" : "No Logo"}
                         </p>
-                      )} */}
+                        <p className="text-sm text-gray-500">
+                          {profile?.logoUrl
+                            ? "Logo is set for your business"
+                            : "Click edit to upload a logo"}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}

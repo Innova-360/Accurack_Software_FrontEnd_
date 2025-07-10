@@ -5,6 +5,7 @@ import React, { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
 import { BASE_URL } from "../../services/api";
+import { extractErrorMessage } from "../../utils/lastUpdatedUtils";
 
 interface UploadInventoryModalProps {
   isOpen: boolean;
@@ -109,10 +110,10 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
       toast.success("Inventory uploaded successfully!");
       // Call the success callback to refetch products
       onUploadSuccess?.();
-    } catch (error) {
+    } catch (error: any) {
       // Dismiss processing toast and show error
       toast.dismiss(processingToast);
-      toast.error("Upload failed. Please try again.");
+      toast.error(extractErrorMessage(error));
       console.error("Upload error:", error);
     }
   };
@@ -195,7 +196,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
       <div className="relative bg-white rounded-xl shadow-2xl p-6 m-4 w-full max-w-lg animate-modal-enter">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-[#0f4d57]">Upload Inventory</h2>
+          <h2 className="text-xl font-bold text-[#0f4d57]">Upload Inventory File</h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors p-1"

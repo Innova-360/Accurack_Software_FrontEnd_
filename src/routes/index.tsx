@@ -10,6 +10,7 @@ import StoreForm from "../components/StoreForm";
 import ExpensePage from "../pages/expensePage/Expense";
 import SalesPage from "../pages/salesPage/Sales";
 import CreateInventory from "../pages/Inventory/CreateInventory";
+import UpdateInventory from "../pages/Inventory/UpdateInventory";
 import ProductDetails from "../pages/Inventory/ProductDetails";
 import UploadInventory from "../pages/Inventory/UploadInventory";
 import UpdateProduct from "../pages/Inventory/UpdateProduct";
@@ -30,7 +31,6 @@ import ViewOrdersPage from "../pages/OrderProcessing/ViewOrders";
 import UpdateOrderPage from "../pages/OrderProcessing/UpdateOrder";
 import DriverManagementPage from "../pages/OrderProcessing/DriverManagement";
 import OrderTrackingVerification from "../pages/OrderTrackingVerification/OrderTrackingVerification";
-
 import RolePage from "../pages/RolePage/RolePage";
 import Srole from "../pages/RolePage/RolePermissionsPage";
 import EditRolePage from "../pages/RolePage/EditRolePage";
@@ -41,6 +41,7 @@ import CreateCustomer from "../pages/Customer/CreateCustomer";
 import CustomerBalanceSheet from "../pages/Customer/CustomerBalanceSheet";
 import ProtectedRoute from "../components/ProtectedRoute";
 import ReturnPage from "../pages/Return/Return";
+import CreateReturn from "../pages/Return/CreateReturn";
 import Tax from "../pages/Tax/index";
 import AddTax from "../pages/Tax/AddTax";
 import StoreDetails from "../pages/Stores/StoreDetails";
@@ -48,8 +49,10 @@ import ProfileSettings from "../pages/ProfileSettings/ProfileSettings";
 import BusinessSettings from "../pages/BusinessSettings/BusinessSettings";
 import ChangePassword from "../pages/ChangePassword/ChangePassword";
 import NotFound from "../pages/NotFound/NotFound";
-import Invoice from "../pages/Invoice/Invoice";
-import InvoicePreview from "../pages/Invoice/invoicePreview";
+import Invoice from "../pages/Invoice/invoices";
+import InvoiceId from "../pages/Invoice/InvoiceID";
+import InventoryDashboard from "../pages/Inventory/InventoryDashboard";
+
 
 
 const AppRoutes = () => {
@@ -62,7 +65,6 @@ const AppRoutes = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
       <Route path="/term" element={<Terms />} />
-      <Route path="/invoice" element={<InvoicePreview />} />
 
       {/* Protected Routes - Authentication required */}
       <Route
@@ -204,6 +206,15 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      
+      <Route
+        path="/store/:id/inventory/dashboard"
+        element={
+          <ProtectedRoute>
+            <InventoryDashboard />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/store/:id/inventory/create"
         element={
@@ -217,6 +228,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <ProductDetails />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/inventory/product/:productId/update"
+        element={
+          <ProtectedRoute>
+            <UpdateInventory />
           </ProtectedRoute>
         }
       />
@@ -281,6 +300,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Invoice />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/invoice/:invoiceId"
+        element={
+          <ProtectedRoute>
+            <InvoiceId />
           </ProtectedRoute>
         }
       />
@@ -417,6 +444,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <ReturnPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/return/create"
+        element={
+          <ProtectedRoute>
+            <CreateReturn />
           </ProtectedRoute>
         }
       />

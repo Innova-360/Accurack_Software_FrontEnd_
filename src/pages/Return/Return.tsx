@@ -1,395 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState, AppDispatch } from "../../store";
+import { fetchReturns, type DisplayReturnItem, type ReturnItem } from "../../store/slices/returnSlice";
 import Header from "../../components/Header";
-import { returnedProductsData } from "../../data/returnData";
-
-interface ReturnedProduct {
-  id: string;
-  saleId: string;
-  productName: string;
-  pluUpc: string;
-  sellingPrice: number;
-  vendorPrice: number;
-  quantity: number;
-  returnDate: string;
-  reason: string;
-  status: "saleable" | "no_saleable" | "scrap";
-  customerInfo?: {
-    name: string;
-    phone: string;
-  };
-}
 
 interface GroupedReturn {
   saleId: string;
   returnDate: string;
   customerName: string;
-  products: ReturnedProduct[];
+  products: DisplayReturnItem[];
   totalAmountReturned: number;
 }
-
-// Mock product data for selection
-const availableProducts = [
-  {
-    id: "prod-001",
-    name: "Samsung Galaxy S24",
-    plu: "123456789012",
-    price: 899.99,
-    vendorPrice: 750.0,
-  },
-  {
-    id: "prod-002",
-    name: "Apple iPhone 15 Pro",
-    plu: "234567890123",
-    price: 1199.99,
-    vendorPrice: 950.0,
-  },
-  {
-    id: "prod-003",
-    name: "Sony WH-1000XM5 Headphones",
-    plu: "345678901234",
-    price: 399.99,
-    vendorPrice: 280.0,
-  },
-  {
-    id: "prod-004",
-    name: "Dell XPS 13 Laptop",
-    plu: "456789012345",
-    price: 1299.99,
-    vendorPrice: 1050.0,
-  },
-  {
-    id: "prod-005",
-    name: "Nintendo Switch OLED",
-    plu: "567890123456",
-    price: 349.99,
-    vendorPrice: 280.0,
-  },
-];
-
-interface AddReturnModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (returnData: any) => void;
-  availableProducts: any[];
-}
-
-const AddReturnModal: React.FC<AddReturnModalProps> = ({
-  isOpen,
-  onClose,
-  onSave,
-  availableProducts,
-}) => {
-  const [formData, setFormData] = useState({
-    selectedProductId: "",
-    saleId: "",
-    quantity: 1,
-    returnDate: new Date().toISOString().split("T")[0],
-    reason: "",
-    status: "saleable" as "saleable" | "no_saleable" | "scrap",
-    customerName: "",
-    customerPhone: "",
-  });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  if (!isOpen) return null;
-
-  const selectedProduct = availableProducts.find(
-    (p) => p.id === formData.selectedProductId
-  );
-
-  const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === "quantity" ? parseInt(value) || 1 : value,
-    }));
-
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-  };
-
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.selectedProductId) {
-      newErrors.selectedProductId = "Please select a product";
-    }
-    if (!formData.saleId.trim()) {
-      newErrors.saleId = "Sale ID is required";
-    }
-    if (formData.quantity < 1) {
-      newErrors.quantity = "Quantity must be at least 1";
-    }
-    if (!formData.returnDate) {
-      newErrors.returnDate = "Return date is required";
-    }
-    if (!formData.reason.trim()) {
-      newErrors.reason = "Reason is required";
-    }
-    if (formData.reason.length > 100) {
-      newErrors.reason = "Reason must be 100 characters or less";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (validateForm() && selectedProduct) {
-      const returnData = {
-        saleId: formData.saleId,
-        productName: selectedProduct.name,
-        pluUpc: selectedProduct.plu,
-        sellingPrice: selectedProduct.price,
-        vendorPrice: selectedProduct.vendorPrice,
-        quantity: formData.quantity,
-        returnDate: new Date(formData.returnDate).toISOString(),
-        reason: formData.reason,
-        status: formData.status,
-        customerInfo: formData.customerName
-          ? {
-              name: formData.customerName,
-              phone: formData.customerPhone,
-            }
-          : undefined,
-      };
-      onSave(returnData);
-      handleClose();
-    }
-  };
-
-  const handleClose = () => {
-    setFormData({
-      selectedProductId: "",
-      saleId: "",
-      quantity: 1,
-      returnDate: new Date().toISOString().split("T")[0],
-      reason: "",
-      status: "saleable",
-      customerName: "",
-      customerPhone: "",
-    });
-    setErrors({});
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 bg-white/80 backdrop-blur-md overflow-y-auto">
-      <div className="absolute inset-0" onClick={handleClose} />
-      <div className="relative bg-white rounded-xl shadow-2xl p-6 m-4 mx-auto w-full max-w-2xl my-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-[#0f4d57]">
-            Add Returned Product
-          </h2>
-          <button
-            onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Product *
-              </label>
-              <select
-                name="selectedProductId"
-                value={formData.selectedProductId}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] ${
-                  errors.selectedProductId
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
-              >
-                <option value="">Select a product</option>
-                {availableProducts.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name} - ${product.price} ({product.plu})
-                  </option>
-                ))}
-              </select>
-              {errors.selectedProductId && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.selectedProductId}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Sale ID *
-              </label>
-              <input
-                type="text"
-                name="saleId"
-                value={formData.saleId}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] ${
-                  errors.saleId ? "border-red-500" : "border-gray-300"
-                }`}
-                placeholder="Enter sale ID"
-              />
-              {errors.saleId && (
-                <p className="text-red-500 text-xs mt-1">{errors.saleId}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Quantity *
-              </label>
-              <input
-                type="number"
-                name="quantity"
-                value={formData.quantity}
-                onChange={handleInputChange}
-                min="1"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] ${
-                  errors.quantity ? "border-red-500" : "border-gray-300"
-                }`}
-              />
-              {errors.quantity && (
-                <p className="text-red-500 text-xs mt-1">{errors.quantity}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Return Date *
-              </label>
-              <input
-                type="date"
-                name="returnDate"
-                value={formData.returnDate}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] ${
-                  errors.returnDate ? "border-red-500" : "border-gray-300"
-                }`}
-              />
-              {errors.returnDate && (
-                <p className="text-red-500 text-xs mt-1">{errors.returnDate}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Status *
-              </label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57]"
-              >
-                <option value="saleable">Saleable</option>
-                <option value="no_saleable">No Saleable</option>
-                <option value="scrap">Scrap</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Customer Name
-              </label>
-              <input
-                type="text"
-                name="customerName"
-                value={formData.customerName}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57]"
-                placeholder="Enter customer name"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Customer Phone
-              </label>
-              <input
-                type="tel"
-                name="customerPhone"
-                value={formData.customerPhone}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57]"
-                placeholder="Enter customer phone"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Reason * (max 100 characters)
-            </label>
-            <textarea
-              name="reason"
-              value={formData.reason}
-              onChange={handleInputChange}
-              rows={3}
-              maxLength={100}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] ${
-                errors.reason ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder="Enter reason for return"
-            />
-            <div className="flex justify-between items-center mt-1">
-              {errors.reason && (
-                <p className="text-red-500 text-xs">{errors.reason}</p>
-              )}
-              <p className="text-gray-400 text-xs ml-auto">
-                {formData.reason.length}/100
-              </p>
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-4 pt-4 border-t">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-2 bg-[#0f4d57] text-white rounded-lg hover:bg-[#0d3f47] transition-colors"
-            >
-              Add Return
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
 
 interface SaleDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   saleId: string;
-  products: ReturnedProduct[];
+  products: DisplayReturnItem[];
+  saleData?: ReturnItem;
 }
 
 const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
@@ -397,6 +26,7 @@ const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
   onClose,
   saleId,
   products,
+  saleData,
 }) => {
   if (!isOpen) return null;
 
@@ -407,6 +37,13 @@ const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
   const customerName = products[0]?.customerInfo?.name || "N/A";
   const customerPhone = products[0]?.customerInfo?.phone || "N/A";
   const returnDate = products[0]?.returnDate || "";
+
+  // Get additional sale information from the raw API data
+  const saleInfo = saleData?.sale;
+  const cashierName = saleInfo?.cashierName || saleInfo?.user?.firstName || saleInfo?.user?.name || "N/A";
+  const paymentMethod = saleInfo?.paymentMethod || "N/A";
+  const originalSaleAmount = saleInfo?.totalAmount || 0;
+  const storeName = saleInfo?.store?.name || "N/A";
 
   return (
     <div className="fixed inset-0 z-50 bg-gray-50 overflow-y-auto">
@@ -455,7 +92,7 @@ const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
         {/* Sale Summary */}
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Sale Summary</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <div>
               <p className="text-sm font-medium text-gray-600">Customer Name</p>
               <p className="text-lg font-semibold text-gray-900 mt-1">{customerName}</p>
@@ -475,6 +112,24 @@ const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
               <p className="text-lg font-semibold text-gray-900 mt-1">
                 ${totalAmount.toFixed(2)}
               </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Cashier</p>
+              <p className="text-lg font-semibold text-gray-900 mt-1">{cashierName}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Payment Method</p>
+              <p className="text-lg font-semibold text-gray-900 mt-1">{paymentMethod}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Original Sale Amount</p>
+              <p className="text-lg font-semibold text-gray-900 mt-1">
+                ${originalSaleAmount.toFixed(2)}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Store</p>
+              <p className="text-lg font-semibold text-gray-900 mt-1">{storeName}</p>
             </div>
           </div>
         </div>
@@ -596,17 +251,30 @@ const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
 };
 
 const Return: React.FC = () => {
-  const [returnedProducts, setReturnedProducts] =
-    useState<ReturnedProduct[]>(returnedProductsData);
+  const navigate = useNavigate();
+  const { id: storeId } = useParams<{ id: string }>();
+  const dispatch = useDispatch<AppDispatch>();
+  
+  // Redux selectors
+  const { displayReturns: returnedProducts, returns: rawReturns, loading, error } = useSelector(
+    (state: RootState) => state.returns
+  );
+  
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "saleable" | "no_saleable" | "scrap">(
     "all"
   );
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  // Fetch returns on component mount
+  useEffect(() => {
+    if (storeId) {
+      dispatch(fetchReturns({ storeId }));
+    }
+  }, [dispatch, storeId]);
 
   // Group products by sale ID
   const groupedReturns = returnedProducts.reduce((acc, product) => {
@@ -668,14 +336,49 @@ const Return: React.FC = () => {
     setCurrentPage(page);
   };
 
-  const handleAddReturn = (newReturn: any) => {
-    const returnData: ReturnedProduct = {
-      ...newReturn,
-      id: `ret-${Date.now()}`,
-    };
-    setReturnedProducts((prev) => [...prev, returnData]);
-    setIsAddModalOpen(false);
-  };
+  // Handle loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0f4d57]"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Error Loading Returns</h3>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+                <button
+                  onClick={() => storeId && dispatch(fetchReturns({ storeId }))}
+                  className="mt-2 text-sm text-red-600 hover:text-red-500 font-medium"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -691,25 +394,27 @@ const Return: React.FC = () => {
               Manage returned products and process refunds
             </p>
           </div>
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="bg-[#0f4d57] hover:bg-[#0d3f47] text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="flex gap-3">
+            <button
+              onClick={() => navigate(`/store/${storeId}/return/create`)}
+              className="bg-teal-800 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
-            Add Returned Product
-          </button>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+              Create Return
+            </button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -1007,7 +712,7 @@ const Return: React.FC = () => {
                       }}
                     >
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">
-                        {groupedReturn.saleId}
+                        {groupedReturn.saleId.slice(0, 8)}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
                         {groupedReturn.customerName}
@@ -1031,7 +736,11 @@ const Return: React.FC = () => {
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          Cash Refund
+                          {groupedReturn.products.some(product => product.status === "saleable")
+                            ? "Saleable"
+                            : groupedReturn.products.some(product => product.status === "no_saleable")
+                            ? "No Saleable"
+                            : "Scrap"}
                         </span>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -1121,16 +830,6 @@ const Return: React.FC = () => {
         )}
       </div>
 
-      {/* Add Return Modal */}
-      {isAddModalOpen && (
-        <AddReturnModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onSave={handleAddReturn}
-          availableProducts={availableProducts}
-        />
-      )}
-
       {/* Sale Detail Modal */}
       {isDetailModalOpen && selectedSaleId && (
         <SaleDetailModal
@@ -1141,6 +840,7 @@ const Return: React.FC = () => {
           }}
           saleId={selectedSaleId}
           products={groupedReturns[selectedSaleId]?.products || []}
+          saleData={rawReturns.find(r => r.saleId === selectedSaleId)}
         />
       )}
     </div>

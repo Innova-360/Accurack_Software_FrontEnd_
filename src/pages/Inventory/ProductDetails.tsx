@@ -4,6 +4,9 @@ import Header from "../../components/Header";
 import type { Product } from "../../data/inventoryData";
 import { productAPI } from "../../services/productAPI";
 import Barcode from "react-barcode";
+import { useStoreFromUrl } from "../../hooks/useStoreFromUrl";
+import jsPDF from "jspdf";
+import JsBarcode from "jsbarcode";
 
 const ProductDetails: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -12,6 +15,7 @@ const ProductDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const { storeId } = useStoreFromUrl();
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -38,52 +42,61 @@ const ProductDetails: React.FC = () => {
   };
 
   const handleEdit = () => {
-    navigate(`/inventory/edit/${productId}`);
+    navigate(`/store/${storeId}/inventory/product/${productId}/update`);
   };
 
   const handlePrintBarcode = () => {
-    if (product) {
+    if (product && product.plu && product.plu.toString().trim() !== "") {
+      const pluValue = product.plu.toString();
+
       const printWindow = window.open("", "_blank");
       if (printWindow) {
         printWindow.document.write(`
-          <html>
-            <head>
-              <title>Barcode - ${product.name}</title>
-              <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-                .barcode { font-size: 24px; font-family: 'Courier New', monospace; margin: 20px 0; }
-                .product-info { margin: 10px 0; }
-              </style>
-            </head>
-            <body>
-              <h2>${product.name}</h2>
-              <div class="product-info">SKU: ${product.sku}</div>
-              <div class="product-info">PLU: ${product.pluUpc}</div>
-              ${product.ean ? `<div class="product-info">EAN: ${product.ean}</div>` : ""}
-              <div class="barcode">${product.ean || product.pluUpc || product.sku}</div>
-              <div class="product-info">Price: $${product.price || "0.00"}</div>
-            </body>
-          </html>
-        `);
+        <html>
+          <head>
+            <title>Barcode Print</title>
+            <style>
+              @media print {
+                @page { margin: 0; }
+                body { margin: 0; padding: 0; }
+              }
+              body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+              }
+              svg {
+                width: 80%;
+                height: auto;
+              }
+            </style>
+          </head>
+          <body>
+            <svg id="barcode"></svg>
+            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+            <script>
+              JsBarcode("#barcode", "${pluValue}", {
+                format: "CODE128",
+                width: 2,
+                height: 100,
+                displayValue: false
+              });
+              window.onload = function() {
+                window.print();
+                setTimeout(function() { window.close(); }, 500);
+              };
+            </script>
+          </body>
+        </html>
+      `);
         printWindow.document.close();
-        printWindow.print();
       }
+    } else {
+      alert(
+        `This product doesn't have a valid PLU code to print. PLU value: \${product?.plu || "undefined"}`
+      );
     }
-  };
-
-  const handleUpdateInventory = () => {
-    // TODO: Implement update inventory functionality
-    console.log("Update inventory clicked");
-  };
-
-  const handleCreatePurchaseOrder = () => {
-    // TODO: Implement create purchase order functionality
-    console.log("Create purchase order clicked");
-  };
-
-  const handleViewSalesReport = () => {
-    // TODO: Implement view sales report functionality
-    console.log("View sales report clicked");
   };
 
   if (loading) {
@@ -215,13 +228,26 @@ const ProductDetails: React.FC = () => {
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => {
-                            // Download barcode functionality
-                            const link = document.createElement("a");
-                            link.href =
-                              "data:text/plain;charset=utf-8,Barcode: " +
-                              (product.ean || product.pluUpc || product.sku);
-                            link.download = `barcode-${product.sku}.txt`;
-                            link.click();
+                            if (!product.plu) {
+                              alert("No PLU available to generate barcode.");
+                              return;
+                            }
+
+                            const canvas = document.createElement("canvas");
+                            JsBarcode(canvas, product.plu, {
+                              format: "CODE128",
+                              width: 2,
+                              height: 60,
+                              displayValue: true,
+                              fontSize: 14,
+                            });
+
+                            const imgData = canvas.toDataURL("image/png");
+                            const pdf = new jsPDF();
+                            pdf.addImage(imgData, "PNG", 20, 30, 170, 40); // adjust position and size if needed
+                            pdf.save(
+                              `barcode-${product.plu}.pdf`
+                            );
                           }}
                         >
                           <svg
@@ -807,7 +833,7 @@ const ProductDetails: React.FC = () => {
                 Edit Product
               </button>
 
-              <button
+              {/* <button
                 onClick={handleUpdateInventory}
                 className="bg-[#003f4a] text-white px-4 py-2 rounded hover:bg-[#002a32] transition-colors flex items-center gap-2 text-sm font-medium border border-[#003f4a]"
               >
@@ -825,9 +851,9 @@ const ProductDetails: React.FC = () => {
                   />
                 </svg>
                 Update Inventory
-              </button>
+              </button> */}
 
-              <button
+              {/* <button
                 onClick={handleCreatePurchaseOrder}
                 className="bg-[#003f4a] text-white px-4 py-2 rounded hover:bg-[#002a32] transition-colors flex items-center gap-2 text-sm font-medium border border-[#003f4a]"
               >
@@ -845,9 +871,9 @@ const ProductDetails: React.FC = () => {
                   />
                 </svg>
                 Create Purchase Order
-              </button>
+              </button> */}
 
-              <button
+              {/* <button
                 onClick={handleViewSalesReport}
                 className="bg-[#003f4a] text-white px-4 py-2 rounded hover:bg-[#002a32] transition-colors flex items-center gap-2 text-sm font-medium border border-[#003f4a]"
               >
@@ -865,7 +891,7 @@ const ProductDetails: React.FC = () => {
                   />
                 </svg>
                 View Sales Report
-              </button>
+              </button> */}
 
               <button
                 onClick={handlePrintBarcode}
