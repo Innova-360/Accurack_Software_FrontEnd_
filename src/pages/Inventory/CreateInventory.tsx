@@ -226,6 +226,14 @@ const CreateInventory: React.FC = () => {
     []
   );
 
+  const handleNumericInput = (key: keyof ProductFormData, rawValue: string) => {
+    const cleaned = rawValue.replace(/[^0-9]/g, ""); // removes everything except digits
+    setFormData((prev) => ({
+      ...prev,
+      [key]: cleaned,
+    }));
+  };
+
   const showOptionalFields = !shouldHideFields(
     formData.hasAttributes,
     formData.attributes,
@@ -529,6 +537,7 @@ const CreateInventory: React.FC = () => {
                   <ProductBasicInfo
                     formData={formData}
                     onFormDataChange={handleFormDataChange}
+                    onHandleNumericInput={handleNumericInput}
                     showOptionalFields={
                       hasVariants ? false : showOptionalFields
                     }
