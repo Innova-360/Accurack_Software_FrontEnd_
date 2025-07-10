@@ -83,7 +83,7 @@ export interface Product {
   percentDiscount: number;
   hasVariants: boolean;
   packIds: string[];
-  variants: any[]; 
+  variants: []; 
   createdAt: string;
   updatedAt: string;
   fileUploadId: string | null;

@@ -108,7 +108,7 @@ const SalesPage: React.FC = () => {
   const [activeStatusTab, setActiveStatusTab] = useState("All"); // New state for status tabs
   const [statusFilter, setStatusFilter] = useState("All");
   const [paymentFilter, setPaymentFilter] = useState("All");
-  const [cashierFilter, setCashierFilter] = useState("All");
+  // const [cashierFilter, setCashierFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("Today");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -236,7 +236,7 @@ const SalesPage: React.FC = () => {
     setActiveStatusTab("All"); // Reset status tab
     setStatusFilter("All");
     setPaymentFilter("All");
-    setCashierFilter("All");
+    // setCashierFilter("All");
     setDateFilter("Today");
     setCurrentPage(1);
   };
@@ -301,7 +301,6 @@ const SalesPage: React.FC = () => {
             <p style="font-size: 16px;"><strong>Total:</strong> $${transaction.total.toFixed(2)}</p>
             <p><strong>Payment Method:</strong> ${transaction.payment}</p>
             <p><strong>Status:</strong> ${transaction.status}</p>
-            <p><strong>Cashier:</strong> ${transaction.cashier}</p>
           </div>
           <hr style="border: 1px solid #03414C;" />
           <p style="text-align: center; color: #666; margin-top: 20px;">Thank you for your business!</p>
@@ -409,7 +408,7 @@ const SalesPage: React.FC = () => {
             onAnalytics={handleAnalytics}
             onCreateSale={handleOpenSaleCreationModal}
           />
-          {/* Stats Grid */}
+          {/* Stats Grid */}``
           <StatsGrid stats={stats} loading={loading} />
           
           {/* Status Tabs */}
@@ -425,12 +424,12 @@ const SalesPage: React.FC = () => {
               searchTerm={searchTerm}
               statusFilter={statusFilter}
               paymentFilter={paymentFilter}
-              cashierFilter={cashierFilter}
+              // cashierFilter={cashierFilter}
               dateFilter={dateFilter}
               onSearchChange={setSearchTerm}
               onStatusChange={handleStatusFilterChange}
               onPaymentChange={setPaymentFilter}
-              onCashierChange={setCashierFilter}
+              // onCashierChange={setCashierFilter}
               onDateChange={setDateFilter}
               onClearFilters={handleClearFilters}
             />

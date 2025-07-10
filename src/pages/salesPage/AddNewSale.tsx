@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { FaPlus, FaTrash, FaArrowLeft, FaSearch } from "react-icons/fa";
+import { FaPlus, FaTrash, FaArrowLeft, FaSearch, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import toast from "react-hot-toast";
 import Header from "../../components/Header";
 import { SpecialButton } from "../../components/buttons";
