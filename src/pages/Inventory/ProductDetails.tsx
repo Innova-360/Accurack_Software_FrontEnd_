@@ -807,7 +807,7 @@ const ProductDetails: React.FC = () => {
                 Edit Product
               </button>
 
-              <button
+              {/* <button
                 onClick={handleUpdateInventory}
                 className="bg-[#003f4a] text-white px-4 py-2 rounded hover:bg-[#002a32] transition-colors flex items-center gap-2 text-sm font-medium border border-[#003f4a]"
               >
@@ -825,7 +825,7 @@ const ProductDetails: React.FC = () => {
                   />
                 </svg>
                 Update Inventory
-              </button>
+              </button> */}
 
               {/* <button
                 onClick={handleCreatePurchaseOrder}
