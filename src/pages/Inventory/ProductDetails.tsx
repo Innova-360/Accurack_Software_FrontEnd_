@@ -827,7 +827,7 @@ const ProductDetails: React.FC = () => {
                 Update Inventory
               </button>
 
-              <button
+              {/* <button
                 onClick={handleCreatePurchaseOrder}
                 className="bg-[#003f4a] text-white px-4 py-2 rounded hover:bg-[#002a32] transition-colors flex items-center gap-2 text-sm font-medium border border-[#003f4a]"
               >
@@ -845,9 +845,9 @@ const ProductDetails: React.FC = () => {
                   />
                 </svg>
                 Create Purchase Order
-              </button>
+              </button> */}
 
-              <button
+              {/* <button
                 onClick={handleViewSalesReport}
                 className="bg-[#003f4a] text-white px-4 py-2 rounded hover:bg-[#002a32] transition-colors flex items-center gap-2 text-sm font-medium border border-[#003f4a]"
               >
@@ -865,7 +865,7 @@ const ProductDetails: React.FC = () => {
                   />
                 </svg>
                 View Sales Report
-              </button>
+              </button> */}
 
               <button
                 onClick={handlePrintBarcode}
