@@ -33,11 +33,6 @@ const InventoryControls: React.FC<InventoryControlsProps> = ({
             value={searchTerm}
             onChange={onSearchChange}
           />
-          {isSearching && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <div className="inline-block rounded-full h-4 w-4 border-b-2 border-[#0f4d57] animate-spin"></div>
-            </div>
-          )}
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 lg:space-x-6 w-full lg:w-auto">
           <div className="flex items-center space-x-2">
