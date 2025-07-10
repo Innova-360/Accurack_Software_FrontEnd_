@@ -367,7 +367,7 @@ const Inventory: React.FC = () => {
         {/* Header Section */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 lg:mb-6 space-y-4 lg:space-y-0">
           <h1 className="text-xl sm:text-2xl font-bold text-[#0f4d57]">
-            Inventory Management
+            View Inventory
           </h1>
         </div>
         {/* Horizontal line */}
