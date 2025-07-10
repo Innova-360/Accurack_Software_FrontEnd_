@@ -563,7 +563,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">
-                Vendor *
+                Vendor
               </label>
               <select
                 value={formData.supplierId}
@@ -578,7 +578,6 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                     ? "bg-gray-100 cursor-not-allowed text-gray-500"
                     : ""
                 }`}
-                required={suppliers && suppliers.length > 0}
                 disabled={
                   !suppliersLoading &&
                   !suppliersError &&
