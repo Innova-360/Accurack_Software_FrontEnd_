@@ -38,7 +38,7 @@ const ProductDetails: React.FC = () => {
   };
 
   const handleEdit = () => {
-    navigate(`/inventory/edit/${productId}`);
+    navigate(`/inventory/product/${productId}/update`);
   };
 
   const handlePrintBarcode = () => {
