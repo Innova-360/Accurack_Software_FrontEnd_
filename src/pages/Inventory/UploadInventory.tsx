@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import Header from "../../components/Header";
 import { BASE_URL } from "../../services/api";
+import { extractErrorMessage } from "../../utils/lastUpdatedUtils";
 
 const UploadInventory: React.FC = () => {
   const navigate = useNavigate();
@@ -96,10 +97,10 @@ const UploadInventory: React.FC = () => {
 
       // Navigate back to inventory page
       navigate(`/store/${id}/inventory`);
-    } catch (error) {
+    } catch (error: any) {
       // Dismiss processing toast and show error
       toast.dismiss(processingToast);
-      toast.error("Upload failed. Please try again.");
+      toast.error(extractErrorMessage(error));
       console.error("Upload error:", error);
     }
   };
