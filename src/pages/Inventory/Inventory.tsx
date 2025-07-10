@@ -123,8 +123,7 @@ const Inventory: React.FC = () => {
 
   // Show loading state only for initial load (when we have no products and no search term)
   const isInitialLoading =
-    (loading && products.length === 0 && !searchTerm && !debouncedSearchTerm) ||
-    (searchLoading && debouncedSearchTerm && !searchResults);
+    (loading && products.length === 0 && !searchTerm && !debouncedSearchTerm);
 
   // Show error state only for initial load
   const isInitialError = (error && !searchTerm) || searchError;
