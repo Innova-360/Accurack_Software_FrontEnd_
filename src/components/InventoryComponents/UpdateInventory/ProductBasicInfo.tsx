@@ -578,7 +578,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                     ? "bg-gray-100 cursor-not-allowed text-gray-500"
                     : ""
                 }`}
-                required={suppliers && suppliers.length > 0}
+
                 disabled={
                   !suppliersLoading &&
                   !suppliersError &&

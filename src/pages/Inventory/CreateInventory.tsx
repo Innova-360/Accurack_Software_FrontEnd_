@@ -77,7 +77,7 @@ const CreateInventory: React.FC = () => {
       categoryId: formData.category, // Now using categoryId instead of category
       ean: hasVariants ? "" : formData.ean, // Clear EAN for variants as each variant will have its own
       pluUpc: hasVariants ? "" : formData.pluUpc, // Clear PLU for variants as each variant will have its own
-      supplierId: (!hasVariants && formData.supplierId) || "",
+      supplierId: formData.supplierId, // Supplier is now always optional
       sku: hasVariants ? "" : formData.customSku, // Clear SKU for variants as each variant will have its own
       singleItemCostPrice: hasVariants ? 0 : parseFloat(formData.itemCost) || 0, // Clear cost for variants
       itemQuantity: hasVariants ? 0 : parseInt(formData.quantity) || 0, // Clear quantity for variants
