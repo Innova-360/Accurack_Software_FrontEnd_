@@ -24,7 +24,7 @@ const SalesPage: React.FC = () => {
   const currentStore = useRequireStore();
 
   // Redux state
-  const { sales, loading, error } = useSelector(
+  const { sales, loading, error, pagination } = useSelector(
     (state: RootState) => state.sales
   );
 
@@ -210,17 +210,107 @@ const SalesPage: React.FC = () => {
   const displayTransactions = getDisplayTransactions();
   const paginatedTransactions = displayTransactions;
 
-  // For pagination display
-  const totalPages = Math.ceil(
-    displayTransactions.length > 0
-      ? displayTransactions.length / rowsPerPage
-      : 1
-  );
-  const startIndex = (currentPage - 1) * rowsPerPage + 1;
-  const endIndex = Math.min(
-    currentPage * rowsPerPage,
-    displayTransactions.length
-  );
+  // Debug pagination data
+  console.log("🔍 Pagination Debug:", {
+    paginationFromRedux: pagination,
+    searchTerm,
+    currentPage,
+    rowsPerPage,
+    displayTransactionsLength: displayTransactions.length,
+    salesLength: sales.length
+  });
+
+  // For pagination display - simplified robust approach
+  const isServerSidePagination = !searchTerm; // Server-side when no search filter
+  
+  let totalPages, totalItems, startIndex, endIndex;
+  
+  if (isServerSidePagination) {
+    // Server-side pagination
+    if (pagination && pagination.total !== undefined && pagination.total > 0) {
+      // We have proper pagination metadata from backend
+      totalItems = pagination.total;
+      totalPages = pagination.totalPages || Math.ceil(pagination.total / (pagination.limit || rowsPerPage));
+      startIndex = ((pagination.page - 1) * (pagination.limit || rowsPerPage)) + 1;
+      endIndex = Math.min(pagination.page * (pagination.limit || rowsPerPage), pagination.total);
+    } else {
+      // No pagination metadata from backend - use smart estimation
+      const currentResultsCount = sales.length;
+      
+      if (currentResultsCount < rowsPerPage) {
+        // We got fewer results than requested, likely this is all of them or the last page
+        if (currentPage === 1) {
+          // First page with fewer than rowsPerPage results = total results
+          totalItems = currentResultsCount;
+          totalPages = 1;
+          startIndex = 1;
+          endIndex = currentResultsCount;
+        } else {
+          // Later page with fewer results = last page
+          totalItems = ((currentPage - 1) * rowsPerPage) + currentResultsCount;
+          totalPages = currentPage;
+          startIndex = ((currentPage - 1) * rowsPerPage) + 1;
+          endIndex = totalItems;
+        }
+      } else if (currentResultsCount === rowsPerPage) {
+        // Full page - there might be more pages
+        // Conservative estimate: assume at least one more item exists
+        const estimatedTotal = currentPage * rowsPerPage + 1;
+        totalItems = estimatedTotal;
+        totalPages = Math.ceil(estimatedTotal / rowsPerPage);
+        startIndex = ((currentPage - 1) * rowsPerPage) + 1;
+        endIndex = currentPage * rowsPerPage;
+      } else {
+        // More results than rowsPerPage (shouldn't happen with proper pagination)
+        totalItems = currentResultsCount;
+        totalPages = Math.ceil(currentResultsCount / rowsPerPage);
+        startIndex = 1;
+        endIndex = currentResultsCount;
+      }
+    }
+  } else {
+    // Client-side pagination for search results
+    totalItems = displayTransactions.length;
+    totalPages = Math.ceil(totalItems / rowsPerPage);
+    startIndex = (currentPage - 1) * rowsPerPage + 1;
+    endIndex = Math.min(currentPage * rowsPerPage, totalItems);
+  }
+
+  console.log("📊 Final Pagination Values:", {
+    isServerSidePagination,
+    totalPages,
+    totalItems,
+    startIndex,
+    endIndex,
+    currentPage
+  });
+
+  // Effect to fetch total count when needed - simplified approach
+  useEffect(() => {
+    // For debugging: just log what we have
+    console.log("🔢 Current pagination state:", {
+      hasBackendPagination: !!(pagination && pagination.total !== undefined),
+      backendTotal: pagination?.total,
+      backendTotalPages: pagination?.totalPages,
+      currentSalesLength: sales.length,
+      isServerSidePagination,
+    });
+  }, [pagination, sales.length, isServerSidePagination]);
+
+  // Debug: Add debugging information to see what's happening
+  useEffect(() => {
+    console.log("🔍 Sales Page Debug Info:", {
+      salesCount: sales.length,
+      paginationFromRedux: pagination,
+      rowsPerPage,
+      currentPage,
+      searchTerm,
+      totalItemsCalculated: isServerSidePagination && pagination?.total !== undefined ? pagination.total : displayTransactions.length,
+      totalPagesCalculated: isServerSidePagination && pagination?.total !== undefined 
+        ? (pagination.totalPages || Math.ceil(pagination.total / pagination.limit))
+        : Math.ceil(displayTransactions.length / rowsPerPage)
+    });
+  }, [sales, pagination, rowsPerPage, currentPage, searchTerm, displayTransactions.length, isServerSidePagination]);
 
   // Action handlers
   const handleSalesReport = () => {
@@ -390,6 +480,19 @@ const SalesPage: React.FC = () => {
     }
   };
 
+  // Custom handler for rows per page change
+  const handleRowsPerPageChange = (newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
+    setCurrentPage(1); // Reset to first page when changing rows per page
+  };
+
+  // Handle navigation to invalid pages
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   return (
     <>
       <Header />
@@ -475,16 +578,16 @@ const SalesPage: React.FC = () => {
             )}
 
             {/* Pagination */}
-            {displayTransactions.length > 0 && (
+            {totalItems > 0 && (
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
                 startIndex={startIndex}
                 endIndex={endIndex}
-                totalItems={displayTransactions.length}
+                totalItems={totalItems}
                 rowsPerPage={rowsPerPage}
                 onPageChange={setCurrentPage}
-                onRowsPerPageChange={setRowsPerPage}
+                onRowsPerPageChange={handleRowsPerPageChange}
               />
             )}
           </div>

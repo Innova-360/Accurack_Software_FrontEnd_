@@ -61,6 +61,12 @@ interface SalesState {
   loading: boolean;
   error: string | null;
   lastCreatedSale: SaleResponseData | null;
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 
 
@@ -70,6 +76,12 @@ const initialState: SalesState = {
   loading: false,
   error: null,
   lastCreatedSale: null,
+  pagination: {
+    total: 0,
+    page: 1,
+    limit: 20,
+    totalPages: 0,
+  },
 };
 
 // Async thunk for creating a new sale
@@ -94,7 +106,15 @@ export const createSale = createAsyncThunk<
 
 // Async thunk for fetching sales
 export const fetchSales = createAsyncThunk<
-  SaleResponseData[],
+  {
+    sales: SaleResponseData[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  },
   { 
     storeId: string; 
     page?: number; 
@@ -118,7 +138,7 @@ export const fetchSales = createAsyncThunk<
 }, { rejectWithValue }) => {
   try {
     // Build query parameters object, only including defined values
-    const params: any = { 
+    const params: Record<string, string | number> = { 
       storeId, 
       page,
       limit
@@ -136,16 +156,47 @@ export const fetchSales = createAsyncThunk<
       params
     });
     console.log("📊 Sales API response:", JSON.stringify(response.data, null, 2));
+    
     // Handle the new response format: extract sales array from data.sales
-    const salesData = response.data?.data?.sales || response.data?.sales || response.data?.data || response.data;
+    const responseData = response.data?.data || response.data;
+    const salesData = responseData?.sales || responseData;
     const salesArray = Array.isArray(salesData) ? salesData : [];
     
+    // Extract pagination data if available, otherwise calculate based on current data
+    let paginationData;
+    if (responseData?.pagination) {
+      paginationData = responseData.pagination;
+    } else if (responseData?.total !== undefined) {
+      // If we have a total field but no pagination object
+      paginationData = {
+        total: responseData.total,
+        page: page,
+        limit: limit,
+        totalPages: Math.ceil(responseData.total / limit)
+      };
+    } else {
+      // Fallback: assume this is the full dataset if we don't have pagination info
+      // This is likely wrong for server-side pagination, but we need to handle it
+      paginationData = {
+        total: salesArray.length, // This might be wrong, but it's our best guess
+        page: page,
+        limit: limit,
+        totalPages: Math.ceil(salesArray.length / limit)
+      };
+      console.warn("⚠️ No pagination metadata from backend. Falling back to client-side calculation.");
+    }
+    
+    console.log("📄 Pagination data:", paginationData);
+    
     // Debug: Log the status of each sale
-    salesArray.forEach((sale: any, index: number) => {
+    salesArray.forEach((sale: SaleResponseData, index: number) => {
       console.log(`🔍 Sale ${index + 1} status:`, sale.status, `(type: ${typeof sale.status})`);
     });
     
-    return salesArray;
+    return {
+      sales: salesArray,
+      pagination: paginationData
+    };
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message || "Failed to fetch sales"
@@ -240,7 +291,8 @@ const salesSlice = createSlice({
       })
       .addCase(fetchSales.fulfilled, (state, action) => {
         state.loading = false;
-        state.sales = action.payload;
+        state.sales = action.payload.sales;
+        state.pagination = action.payload.pagination;
         state.error = null;
       })
       .addCase(fetchSales.rejected, (state, action) => {
