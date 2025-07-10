@@ -4,16 +4,25 @@ import toast from "react-hot-toast";
 import { useStoreFromUrl } from "../../hooks/useStoreFromUrl";
 import { useProducts } from "../../hooks/useProducts";
 import Header from "../../components/Header";
+import InventoryStats from "../../components/InventoryComponents/InventoryStats";
 import InventoryControls from "../../components/InventoryComponents/InventoryControls";
 import InventoryTable from "../../components/InventoryComponents/InventoryTable";
 import InventoryMobileView from "../../components/InventoryComponents/InventoryMobileView";
 import GroupedTableView from "../../components/InventoryComponents/GroupedTableView";
 import Pagination from "../../components/InventoryComponents/Pagination";
 import LowStockSection from "../../components/InventoryComponents/LowStockSection";
-
+import {
+  AddInventoryOptionsModal,
+  UploadInventoryModal,
+  BarcodeScanModal, 
+  EditProductModal,
+  DeleteAllInventoryModal,
+} from "../../components/InventoryComponents";
 import { productAPI } from "../../services/productAPI";
 import type { Product } from "../../data/inventoryData";
+import type { EditProductFormData } from "../../components/InventoryComponents/EditProductModal";
 import {
+  useInventoryStats,
   useGroupedProducts,
   useLowStockProducts,
 } from "../../hooks/useInventory";
@@ -61,7 +70,19 @@ const Inventory: React.FC = () => {
   const [mobileViewType, setMobileViewType] = useState<"cards" | "table">(
     "cards"
   );
+  // Modal states
+  const [isAddInventoryModalOpen, setIsAddInventoryModalOpen] = useState(false);
+  const [isUploadInventoryModalOpen, setIsUploadInventoryModalOpen] =
+    useState(false);
+  const [isBarcodeScanModalOpen, setIsBarcodeScanModalOpen] = useState(false);
+  const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
+  const [selectedProductToEdit, setSelectedProductToEdit] =
+    useState<Product | null>(null);
+  const [isDeletingAllProducts, setIsDeletingAllProducts] = useState(false);
+  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
 
+  // Use custom hooks for data processing
+  const inventoryStats = useInventoryStats(products, pagination);
   // Server-side pagination - use products directly from API
   const groupedProducts = useGroupedProducts(products, groupBy);
   const lowStockProducts = useLowStockProducts(products);
@@ -317,6 +338,45 @@ const Inventory: React.FC = () => {
     } else {
       setSelectedItems(selectedItems.filter((id) => id !== index));
     }
+  }; // Modal handlers
+  const handleAddInventoryClick = () => {
+    setIsAddInventoryModalOpen(true);
+  };
+
+  const handleUploadInventory = () => {
+    setIsAddInventoryModalOpen(false);
+    setIsUploadInventoryModalOpen(true);
+  };
+
+  const handleCreateInventory = () => {
+    setIsAddInventoryModalOpen(false);
+    // Navigate to create inventory page
+    const currentPath = window.location.pathname;
+    if (currentPath.includes("/store/")) {
+      // Extract store ID from path
+      const storeId = currentPath.split("/store/")[1].split("/")[0];
+      navigate(`/store/${storeId}/inventory/create`);
+    } else {
+      navigate("/inventory/create");
+    }
+  };
+
+  const handleScanInventory = () => {
+    setIsAddInventoryModalOpen(false);
+    setIsBarcodeScanModalOpen(true);
+  };
+  const handleBarcodeScanned = (barcode: string) => {
+    setIsBarcodeScanModalOpen(false);
+    const currentPath = window.location.pathname;
+    if (currentPath.includes("/store/")) {
+      // Extract store ID from path
+      const storeId = currentPath.split("/store/")[1].split("/")[0];
+      navigate(`/store/${storeId}/inventory/create`, {
+        state: { scannedPLU: barcode },
+      });
+    } else {
+      navigate("/inventory/create", { state: { scannedPLU: barcode } });
+    }
   };
 
   // Edit product handlers
@@ -338,7 +398,36 @@ const Inventory: React.FC = () => {
     }
   };
 
+  const handleUpdateProduct = async (
+    productData: EditProductFormData,
+    productId: string
+  ) => {
+    try {
+      // Ensure each variant has purchaseOrders property to match ApiProduct type
+      const fixedProductData = {
+        ...productData,
+        variants: productData.variants?.map((variant: any) => ({
+          ...variant,
+          purchaseOrders: variant.purchaseOrders ?? [],
+        })),
+      };
+      await productAPI.updateProduct(productId, fixedProductData as any);
 
+      toast.success("Product updated successfully!");
+      refetch(); // Refresh the product lis
+      setIsEditProductModalOpen(false);
+      setSelectedProductToEdit(null);
+    } catch (error) {
+      const errorMessage = extractErrorMessage(error);
+      console.error("Failed to update product:", error);
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditProductModalOpen(false);
+    setSelectedProductToEdit(null);
+  };
 
   // View product handler
   const handleViewProduct = (product: Product) => {
@@ -359,6 +448,44 @@ const Inventory: React.FC = () => {
     }
   };
 
+  // Delete all inventory handler
+  const handleDeleteAllInventory = async () => {
+    if (!storeId) {
+      toast.error("Store ID not found. Cannot delete inventory.");
+      return;
+    }
+
+    if (products.length === 0) {
+      toast("No products to delete.", { icon: "ℹ️" });
+      return;
+    }
+
+    // Open the custom confirmation modal
+    setIsDeleteAllModalOpen(true);
+  };
+
+  // Confirm delete all inventory
+  const confirmDeleteAllInventory = async () => {
+    if (!storeId) {
+      toast.error("Store ID not found. Cannot delete inventory.");
+      setIsDeleteAllModalOpen(false);
+      return;
+    }
+
+    try {
+      setIsDeletingAllProducts(true);
+      await productAPI.deleteAllProducts(storeId);
+      toast.success("All inventory items have been successfully deleted!");
+      refetch(); // Refresh the product list
+      setIsDeleteAllModalOpen(false);
+    } catch (error) {
+      const errorMessage = extractErrorMessage(error);
+      console.error("Failed to delete all inventory:", error);
+      toast.error(`Failed to delete inventory: ${errorMessage}`);
+    } finally {
+      setIsDeletingAllProducts(false);
+    }
+  };
 
   return (
     <>
@@ -368,12 +495,44 @@ const Inventory: React.FC = () => {
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 lg:mb-6 space-y-4 lg:space-y-0">
           <h1 className="text-xl sm:text-2xl font-bold text-[#0f4d57]">
             Inventory Management
-          </h1>
+          </h1>{" "}
+          <div className="flex flex-wrap gap-2 sm:gap-4">
+            <button
+              onClick={handleAddInventoryClick}
+              className="bg-[#0f4d57] text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base hover:bg-[#0d3f47] transition-colors"
+            >
+              + Add Inventory
+            </button>
+            <button
+              onClick={handleDeleteAllInventory}
+              disabled={isDeletingAllProducts || products.length === 0}
+              className={`px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base transition-colors ${
+                isDeletingAllProducts || products.length === 0
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-red-700 hover:bg-red-800 text-white"
+              }`}
+            >
+              {isDeletingAllProducts ? (
+                <>
+                  <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Deleting...
+                </>
+              ) : (
+                "Delete Inventory"
+              )}
+            </button>
+          </div>
         </div>
         {/* Horizontal line */}
         <hr className="border-gray-300 mb-6" />
         {/* Stats Cards Section */}
-        
+        <div>
+          <InventoryStats
+            totalProducts={inventoryStats.totalProducts}
+            totalItems={inventoryStats.totalItems}
+            totalValue={inventoryStats.totalValue}
+          />
+        </div>
         {/* Inventory Controls */}
         <div>
           <InventoryControls
@@ -488,7 +647,7 @@ const Inventory: React.FC = () => {
                     onSort={handleSort}
                     onProductEdited={handleEditProduct}
                     onProductViewed={handleViewProduct}
-                    showActions={false}
+                    showActions={true}
                   />
                 )}
               </div>
@@ -506,13 +665,15 @@ const Inventory: React.FC = () => {
               <InventoryTable
                 products={paginatedProducts}
                 selectedItems={selectedItems}
+                onProductDeleted={refetch}
                 startIndex={startIndex}
                 sortConfig={sortConfig}
                 onSelectAll={handleSelectAll}
                 onSelectItem={handleSelectItem}
                 onSort={handleSort}
+                onProductEdited={handleEditProduct}
                 onProductViewed={handleViewProduct}
-                showActions={false}
+                showActions={true}
               />
             )}
           </div>
@@ -542,6 +703,37 @@ const Inventory: React.FC = () => {
           isPageChanging={isLowStockPageChanging}
         />
       </div>
+      {/* Modals */}
+      <AddInventoryOptionsModal
+        isOpen={isAddInventoryModalOpen}
+        onClose={() => setIsAddInventoryModalOpen(false)}
+        onUploadInventory={handleUploadInventory}
+        onCreateInventory={handleCreateInventory}
+        onScanInventory={handleScanInventory}
+      />
+      <UploadInventoryModal
+        isOpen={isUploadInventoryModalOpen}
+        onClose={() => setIsUploadInventoryModalOpen(false)}
+        onUploadSuccess={refetch}
+      />{" "}
+      <BarcodeScanModal
+        isOpen={isBarcodeScanModalOpen}
+        onClose={() => setIsBarcodeScanModalOpen(false)}
+        onBarcodeScanned={handleBarcodeScanned}
+      />
+      <EditProductModal
+        isOpen={isEditProductModalOpen}
+        onClose={handleCloseEditModal}
+        onSave={handleUpdateProduct}
+        product={selectedProductToEdit}
+      />
+      <DeleteAllInventoryModal
+        isOpen={isDeleteAllModalOpen}
+        onClose={() => setIsDeleteAllModalOpen(false)}
+        onConfirm={confirmDeleteAllInventory}
+        productCount={products.length}
+        isDeleting={isDeletingAllProducts}
+      />
     </>
   );
 };

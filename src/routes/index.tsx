@@ -51,6 +51,7 @@ import ChangePassword from "../pages/ChangePassword/ChangePassword";
 import NotFound from "../pages/NotFound/NotFound";
 import Invoice from "../pages/Invoice/invoices";
 import InvoiceId from "../pages/Invoice/InvoiceID";
+import InventoryDashboard from "../pages/Inventory/InventoryDashboard";
 
 
 
@@ -202,6 +203,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Inventory />
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="/store/:id/inventory/dashboard"
+        element={
+          <ProtectedRoute>
+            <InventoryDashboard />
           </ProtectedRoute>
         }
       />
