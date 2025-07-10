@@ -76,10 +76,6 @@ export interface MSASalesData {
   shippedToPostalCode: string;
   shipmentDate: string;
   totalValue: number;
-  transactionId: string;
-  paymentMethod: string;
-  cashierName: string;
-  status: string;
 }
 
 const MSASalesReport: React.FC = () => {
@@ -137,11 +133,7 @@ const MSASalesReport: React.FC = () => {
         month: "short",
         day: "2-digit"
       }),
-      totalValue: sale.totalAmount || 0,
-      transactionId: sale.transactionId || sale.id,
-      paymentMethod: sale.paymentMethod || "Unknown",
-      cashierName: sale.cashierName || "Unknown",
-      status: sale.status || "Unknown"
+      totalValue: sale.totalAmount || 0
     };
   });
 
@@ -150,8 +142,7 @@ const MSASalesReport: React.FC = () => {
     const matchesSearch = searchTerm === "" || 
       item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.phoneNumber.includes(searchTerm) ||
-      item.transactionId.toLowerCase().includes(searchTerm.toLowerCase());
+      item.phoneNumber.includes(searchTerm);
 
     const matchesDate = dateFilter === "all" || 
       (dateFilter === "today" && new Date(item.shipmentDate).toDateString() === new Date().toDateString()) ||
@@ -167,7 +158,7 @@ const MSASalesReport: React.FC = () => {
       "S.No", "Client Name", "Company Name", "Phone Number", "Shipped From",
       "Business Street 1", "Business Street 2", "Business City", "Business State", "Business Postal Code",
       "Shipped To", "Shipped To Street 1", "Shipped To Street 2", "Shipped To City", "Shipped To State", "Shipped To Postal Code",
-      "Shipment Date", "Total Value", "Transaction ID", "Payment Method", "Cashier Name", "Status"
+      "Shipment Date", "Total Value"
     ];
 
     const csvContent = [
@@ -190,11 +181,7 @@ const MSASalesReport: React.FC = () => {
         `"${row.shippedToState}"`,
         `"${row.shippedToPostalCode}"`,
         `"${row.shipmentDate}"`,
-        row.totalValue,
-        `"${row.transactionId}"`,
-        `"${row.paymentMethod}"`,
-        `"${row.cashierName}"`,
-        `"${row.status}"`
+        row.totalValue
       ].join(","))
     ].join("\n");
 
@@ -242,7 +229,7 @@ const MSASalesReport: React.FC = () => {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search by name, phone, or transaction ID..."
+                  placeholder="Search by name or phone..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full sm:w-80 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"

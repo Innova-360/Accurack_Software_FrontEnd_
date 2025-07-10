@@ -20,10 +20,6 @@ export interface MSASalesData {
   shippedToPostalCode: string;
   shipmentDate: string;
   totalValue: number;
-  transactionId: string;
-  paymentMethod: string;
-  cashierName: string;
-  status: string;
 }
 
 interface MSASalesTableProps {
@@ -376,42 +372,6 @@ const MSASalesTable: React.FC<MSASalesTableProps> = ({ data }) => {
                   {getSortIcon('totalValue')}
                 </div>
               </th>
-              <th 
-                className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('transactionId')}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Transaction ID</span>
-                  {getSortIcon('transactionId')}
-                </div>
-              </th>
-              <th 
-                className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('paymentMethod')}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Payment Method</span>
-                  {getSortIcon('paymentMethod')}
-                </div>
-              </th>
-              <th 
-                className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('cashierName')}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Cashier Name</span>
-                  {getSortIcon('cashierName')}
-                </div>
-              </th>
-              <th 
-                className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('status')}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Status</span>
-                  {getSortIcon('status')}
-                </div>
-              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -471,29 +431,6 @@ const MSASalesTable: React.FC<MSASalesTableProps> = ({ data }) => {
                 <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
                   ${item.totalValue.toFixed(2)}
                 </td>
-                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {item.transactionId}
-                  </span>
-                </td>
-                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    {item.paymentMethod}
-                  </span>
-                </td>
-                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {item.cashierName}
-                </td>
-                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    item.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                    item.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                    item.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {item.status}
-                  </span>
-                </td>
               </tr>
             ))}
           </tbody>
@@ -519,18 +456,6 @@ const MSASalesTable: React.FC<MSASalesTableProps> = ({ data }) => {
                 <div>
                   <span className="text-gray-500">Phone:</span>
                   <span className="ml-1 text-gray-900">{item.phoneNumber}</span>
-                </div>
-                <div>
-                  <span className="text-gray-500">Transaction ID:</span>
-                  <span className="ml-1 text-gray-900">{item.transactionId}</span>
-                </div>
-                <div>
-                  <span className="text-gray-500">Payment:</span>
-                  <span className="ml-1 text-gray-900">{item.paymentMethod}</span>
-                </div>
-                <div>
-                  <span className="text-gray-500">Status:</span>
-                  <span className="ml-1 text-gray-900">{item.status}</span>
                 </div>
                 <div className="col-span-2">
                   <span className="text-gray-500">Shipped From:</span>
