@@ -242,6 +242,7 @@ const Inventory: React.FC = () => {
         search: "", // Don't include searchTerm for normal pagination
         sortBy: sortConfig?.key,
         sortOrder: sortConfig?.direction,
+        storeId: storeId,
       });
     } catch (error) {
       console.error("Error fetching page:", error);
@@ -280,6 +281,7 @@ const Inventory: React.FC = () => {
         search: "", // Don't include searchTerm for normal pagination
         sortBy: sortConfig?.key,
         sortOrder: sortConfig?.direction,
+        storeId: storeId,
       });
     } catch (error) {
       console.error("Error changing rows per page:", error);
@@ -402,17 +404,17 @@ const Inventory: React.FC = () => {
   ) => {
     try {
       // Ensure each variant has purchaseOrders property to match ApiProduct type
-      const fixedProductData: Partial<ApiProduct> = {
+      const fixedProductData = {
         ...productData,
         variants: productData.variants?.map((variant: any) => ({
           ...variant,
           purchaseOrders: variant.purchaseOrders ?? [],
         })),
       };
-      await productAPI.updateProduct(productId, fixedProductData);
+      await productAPI.updateProduct(productId, fixedProductData as any);
 
       toast.success("Product updated successfully!");
-      refetch(); // Refresh the product list
+      refetch(); // Refresh the product lis
       setIsEditProductModalOpen(false);
       setSelectedProductToEdit(null);
     } catch (error) {
