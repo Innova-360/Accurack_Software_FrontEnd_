@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { FaArrowLeft, FaCheck, FaPrint, FaCloudUploadAlt, FaTrash, FaPlus } from 'react-icons/fa';
@@ -7,14 +7,11 @@ import toast from 'react-hot-toast';
 import Header from '../../components/Header';
 import { SpecialButton } from '../../components/buttons';
 import { createSale } from '../../store/slices/salesSlice';
-// import { fetchBusinessDetails, setBusinessDetails } from '../../store/slices/businessSlice';
 import type { RootState } from '../../store';
 import type { SaleRequestData, SaleItem } from '../../store/slices/salesSlice';
 import useRequireStore from '../../hooks/useRequireStore';
 import apiClient from '../../services/api';
 import { uploadImageToCloudinary } from '../../services/cloudinary';
-// import { QRCode } from "qrcode.react";
-// import html2pdf from 'html2pdf.js';
 
 interface BusinessDetails {
   companyName: string;
@@ -57,6 +54,7 @@ interface InvoiceData {
   discountType: 'percentage' | 'amount';
   discountAmount: number;
   taxRate: number;
+  allowance: number;
   taxAmount: number;
   finalTotal: number;
   paymentMethod: string;
@@ -76,7 +74,8 @@ const CreateInvoice: React.FC = () => {
   const invoiceData = location.state?.invoiceData as InvoiceData;
   console.log('Invoice Data:', invoiceData);
 
-  const [currentStep, setCurrentStep] = useState(1);
+
+  const [currentStep, setCurrentStep] = useState(1); // Start at Product Details
   const [isCreatingSale, setIsCreatingSale] = useState(false);
   const [invoiceResponse, setInvoiceResponse] = useState(null);
   const [showBusinessForm, setShowBusinessForm] = useState(false);
@@ -99,11 +98,7 @@ const CreateInvoice: React.FC = () => {
     deliveryDate: new Date().toISOString().split('T')[0] + 'T09:00'
   });
 
-  // Add delivery message state
-  const [deliveryMessage, setDeliveryMessage] = useState('Thank you for your business!');
-
-  // Business details state
-  const [businessDetails, setBusinessDetails] = useState<BusinessDetails>({
+  const [storeBusinessDetails, setStoreBusinessDetails] = useState<BusinessDetails>({
     companyName: '',
     companyAddress: '',
     companyPhone: '',
@@ -124,19 +119,9 @@ const CreateInvoice: React.FC = () => {
     companyWebsite: ''
   });
 
-  useEffect(() => {
-    if (!invoiceData) {
-      navigate('/sales/add-new-sale');
-      return;
-    }
+  console.log(invoiceData.products[0].selectedProduct.packs.length);
 
-    // Check if business details are already saved (simulate localStorage check)
-    const savedBusinessDetails = localStorage.getItem('businessDetails');
-    if (savedBusinessDetails) {
-      setBusinessDetails(JSON.parse(savedBusinessDetails));
-      setCurrentStep(2); // Skip business details if already filled
-    }
-  }, [invoiceData, navigate]);
+
 
   const handleBusinessDetailsSubmit = () => {
     // Validate business details
@@ -152,7 +137,7 @@ const CreateInvoice: React.FC = () => {
   };
 
   const handleProductDetailsNext = () => {
-    setCurrentStep(3);
+    setCurrentStep(2);
   };
 
   const handleCustomerDetailsNext = async () => {
@@ -161,9 +146,17 @@ const CreateInvoice: React.FC = () => {
       toast.error('Customer name and phone are required');
       return;
     }
+    try {
+      await checkBusinessDetails();
+    } catch (error) {
+      console.error('Error checking business details:', error);
+      toast.error('Failed to check business details');
+      return;
+    }
 
-    // Check business details first
-    await checkBusinessDetails();
+
+
+
   };
 
   const checkBusinessDetails = async () => {
@@ -175,8 +168,10 @@ const CreateInvoice: React.FC = () => {
       if (businessResponse.data.showBusinessForm) {
         setShowBusinessForm(true);
       } else {
-        // Business exists, proceed with invoice creation
-        await handleCreateSaleAndInvoice();
+        setStoreBusinessDetails(businessResponse.data.data);
+        console.log('Business details fetched:', storeBusinessDetails);
+        setCurrentStep(3);
+
       }
     } catch (error) {
       console.error('Error checking business details:', error);
@@ -213,7 +208,9 @@ const CreateInvoice: React.FC = () => {
       toast.success('Business details saved successfully!');
       setShowBusinessForm(false);
       // Now proceed with invoice creation
-      await handleCreateSaleAndInvoice();
+      // await handleCreateSaleAndInvoice();
+      // Show invoice preview first without generating
+      setCurrentStep(3);
     } catch (error) {
       console.log("error", error)
       // Error is handled by the slice
@@ -224,6 +221,8 @@ const CreateInvoice: React.FC = () => {
   const handleCreateSaleAndInvoice = async () => {
     if (!currentStore?.id || !user?.clientId) {
       toast.error('Store or user information is missing');
+      console.log("Current Store", currentStore);
+      console.log("Current User", user);
       return;
     }
     if (isCreatingSale) return; // Prevent double call
@@ -258,6 +257,7 @@ const CreateInvoice: React.FC = () => {
         paymentMethod: invoiceData.paymentMethod as "CASH" | "CARD" | "BANK_TRANSFER" | "CHECK" | "DIGITAL_WALLET",
         totalAmount: Math.round(invoiceData.finalTotal * 100) / 100,
         tax: Math.round(invoiceData.taxAmount * 100) / 100,
+        allowance: invoiceData.allowance,
         cashierName: user.firstName && user.lastName
           ? `${user.firstName} ${user.lastName}`
           : user.email || "Current User",
@@ -292,7 +292,6 @@ const CreateInvoice: React.FC = () => {
       console.log('Invoice generated:', response.data);
       setInvoiceResponse(response.data);
       toast.success('Invoice generated successfully!');
-      setCurrentStep(4);
     } catch (error: any) {
       console.log('Error:', error);
       const errorMessage = error.response?.data?.message || error.message || 'An unexpected error occurred.';
@@ -302,196 +301,178 @@ const CreateInvoice: React.FC = () => {
     }
   };
 
-  const handlePrint = () => {
-    const invoiceElement = document.querySelector('.invoice-print');
-    if (!invoiceElement) {
-      toast.error('Invoice content not found');
-      return;
-    }
-
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      toast.error('Unable to open print window');
-      return;
-    }
-
-    const invoiceHTML = invoiceElement.innerHTML;
-
-    printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Invoice</title>
-        <style>
-          * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-print-color-adjust: exact !important;
-            color-adjust: exact !important;
-          }
-          body {
-            font-family: 'Courier New', Courier, monospace !important;
-            background: #fff !important;
-            color: #111827;
-            margin: 0;
-            padding: 0;
-            font-size: 13px;
-            line-height: 1.5;
-          }
-          .invoice-logo {
-            height: 80px !important;
-            width: auto !important;
-            margin-top: 20px !important;
-            margin-bottom: 20px !important;
-            object-fit: contain !important;
-            display: block !important;
-            max-width: 100% !important;
-          }
-          .invoice-print {
-            background: #fff !important;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 24px;
-            box-shadow: none;
-            border-radius: 0;
-          }
-
-          /* Layout */
-          .flex { display: flex; }
-          .justify-between { justify-content: space-between; }
-          .justify-end { justify-content: flex-end; }
-          .text-right { text-align: right; }
-          .text-center { text-align: center; }
-          .text-left { text-align: left; }
-
-          /* Colors and Borders */
-          .border-t-4 { border-top: 4px solid #03414C !important; }
-          .border-t-2 { border-top: 2px solid #03414C !important; }
-          .border-b-2 { border-bottom: 2px solid #03414C !important; }
-          .border-black { border-color: #03414C !important; }
-          .border-gray-200 { border-color: #e5e7eb !important; }
-          .border-gray-300 { border-color: #d1d5db !important; }
-          .border-b { border-bottom: 1px solid #d1d5db !important; }
-          .border-t { border-top: 1px solid #d1d5db !important; }
-          .bg-white { background: #fff !important; }
-          .text-gray-600 { color: #4b5563 !important; }
-          .text-gray-900 { color: #111827 !important; }
-          .text-blue-800 { color: #03414C !important; }
-
-          /* Typography */
-          .text-2xl { font-size: 24px !important; }
-          .text-lg { font-size: 18px !important; }
-          .text-sm { font-size: 14px !important; }
-          .font-medium { font-weight: 500 !important; }
-          .font-semibold { font-weight: 600 !important; }
-          .font-bold { font-weight: 700 !important; }
-
-          /* Spacing */
-          .my-6 { margin-top: 24px !important; margin-bottom: 24px !important; }
-          .mb-6 { margin-bottom: 24px !important; }
-          .mb-8 { margin-bottom: 32px !important; }
-          .mb-3 { margin-bottom: 12px !important; }
-          .mt-6 { margin-top: 24px !important; }
-          .pt-2\.5 { padding-top: 10px !important; }
-          .pt-2 { padding-top: 8px !important; }
-          .pb-4 { padding-bottom: 16px !important; }
-          .px-6 { padding-left: 24px !important; padding-right: 24px !important; }
-          .py-7 { padding-top: 28px !important; padding-bottom: 28px !important; }
-          .py-2 { padding-top: 8px !important; padding-bottom: 8px !important; }
-          .py-4 { padding-top: 16px !important; padding-bottom: 16px !important; }
-          .p-4 { padding: 16px !important; }
-
-          /* Width */
-          .w-1\/2 { width: 50% !important; }
-          .w-1\/6 { width: 16.666667% !important; }
-          .w-64 { width: 256px !important; }
-
-          /* Space between */
-          .space-y-1 > * + * { margin-top: 4px !important; }
-          .space-y-2 > * + * { margin-top: 8px !important; }
-
-          /* Shadow */
-          .shadow-lg { box-shadow: none !important; }
-
-          /* Print specific */
-          .print\:hidden { display: none !important; }
-          .bg-green-50 { background: #fff !important; }
-          .border-green-200 { border-color: #d1d5db !important; }
-          .rounded-lg { border-radius: 0 !important; }
-
-          /* Fix for escaped classes */
-          .pt-2\\.5 { padding-top: 10px !important; }
-          .w-1\\/2 { width: 50% !important; }
-          .w-1\\/6 { width: 16.666667% !important; }
-
-          @page { 
-            margin: 0.5in;
-            size: A4;
-          }
-
-          @media print {
-            * {
-              -webkit-print-color-adjust: exact !important;
-              color-adjust: exact !important;
-            }
-            body {
-              background: #fff !important;
-              color: #111827 !important;
-              margin: 0;
-              padding: 0;
-              font-size: 13px;
-            }
-            .invoice-print {
-              box-shadow: none !important;
-              border-radius: 0 !important;
-              padding: 16px !important;
-              margin: 0 !important;
-              width: 100% !important;
-              max-width: 100% !important;
-            }
-            .print\:hidden { display: none !important; }
-            .shadow-lg { box-shadow: none !important; }
-            .bg-white { background: #fff !important; }
-            .bg-green-50 { background: #fff !important; }
-            .rounded-lg { border-radius: 0 !important; }
-          }
-        </style>
-      </head>
-      <body>
-        ${invoiceHTML}
-      </body>
-    </html>
-  `);
-
-    printWindow.document.close();
-    printWindow.focus();
-
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
-  };
-
-  // const handleDownloadInvoice = () => {
+  // const handlePrint = () => {
   //   const invoiceElement = document.querySelector('.invoice-print');
-
   //   if (!invoiceElement) {
   //     toast.error('Invoice content not found');
   //     return;
   //   }
 
-  //   const opt = {
-  //     margin: 0.5,
-  //     filename: 'invoice.pdf',
-  //     image: { type: 'jpeg', quality: 0.98 },
-  //     html2canvas: { scale: 2 },
-  //     jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-  //   };
+  //   const printWindow = window.open('', '_blank');
+  //   if (!printWindow) {
+  //     toast.error('Unable to open print window');
+  //     return;
+  //   }
 
-  //   html2pdf().set(opt).from(invoiceElement).save();
+  //   const invoiceHTML = invoiceElement.innerHTML;
+
+  //   printWindow.document.write(`
+  //   <!DOCTYPE html>
+  //   <html>
+  //     <head>
+  //       <title>Invoice</title>
+  //       <style>
+  //         * {
+  //           margin: 0;
+  //           padding: 0;
+  //           box-sizing: border-box;
+  //           -webkit-print-color-adjust: exact !important;
+  //           color-adjust: exact !important;
+  //         }
+  //         body {
+  //           font-family: 'Courier New', Courier, monospace !important;
+  //           background: #fff !important;
+  //           color: #111827;
+  //           margin: 0;
+  //           padding: 0;
+  //           font-size: 13px;
+  //           line-height: 1.5;
+  //         }
+  //         .invoice-logo {
+  //           height: 80px !important;
+  //           width: auto !important;
+  //           margin-top: 20px !important;
+  //           margin-bottom: 20px !important;
+  //           object-fit: contain !important;
+  //           display: block !important;
+  //           max-width: 100% !important;
+  //         }
+  //         .invoice-print {
+  //           background: #fff !important;
+  //           max-width: 900px;
+  //           margin: 0 auto;
+  //           padding: 24px;
+  //           box-shadow: none;
+  //           border-radius: 0;
+  //         }
+
+  //         /* Layout */
+  //         .flex { display: flex; }
+  //         .justify-between { justify-content: space-between; }
+  //         .justify-end { justify-content: flex-end; }
+  //         .text-right { text-align: right; }
+  //         .text-center { text-align: center; }
+  //         .text-left { text-align: left; }
+
+  //         /* Colors and Borders */
+  //         .border-t-4 { border-top: 4px solid #03414C !important; }
+  //         .border-t-2 { border-top: 2px solid #03414C !important; }
+  //         .border-b-2 { border-bottom: 2px solid #03414C !important; }
+  //         .border-black { border-color: #03414C !important; }
+  //         .border-gray-200 { border-color: #e5e7eb !important; }
+  //         .border-gray-300 { border-color: #d1d5db !important; }
+  //         .border-b { border-bottom: 1px solid #d1d5db !important; }
+  //         .border-t { border-top: 1px solid #d1d5db !important; }
+  //         .bg-white { background: #fff !important; }
+  //         .text-gray-600 { color: #4b5563 !important; }
+  //         .text-gray-900 { color: #111827 !important; }
+  //         .text-blue-800 { color: #03414C !important; }
+
+  //         /* Typography */
+  //         .text-2xl { font-size: 24px !important; }
+  //         .text-lg { font-size: 18px !important; }
+  //         .text-sm { font-size: 14px !important; }
+  //         .font-medium { font-weight: 500 !important; }
+  //         .font-semibold { font-weight: 600 !important; }
+  //         .font-bold { font-weight: 700 !important; }
+
+  //         /* Spacing */
+  //         .my-6 { margin-top: 24px !important; margin-bottom: 24px !important; }
+  //         .mb-6 { margin-bottom: 24px !important; }
+  //         .mb-8 { margin-bottom: 32px !important; }
+  //         .mb-3 { margin-bottom: 12px !important; }
+  //         .mt-6 { margin-top: 24px !important; }
+  //         .pt-2\.5 { padding-top: 10px !important; }
+  //         .pt-2 { padding-top: 8px !important; }
+  //         .pb-4 { padding-bottom: 16px !important; }
+  //         .px-6 { padding-left: 24px !important; padding-right: 24px !important; }
+  //         .py-7 { padding-top: 28px !important; padding-bottom: 28px !important; }
+  //         .py-2 { padding-top: 8px !important; padding-bottom: 8px !important; }
+  //         .py-4 { padding-top: 16px !important; padding-bottom: 16px !important; }
+  //         .p-4 { padding: 16px !important; }
+
+  //         /* Width */
+  //         .w-1\/2 { width: 50% !important; }
+  //         .w-1\/6 { width: 16.666667% !important; }
+  //         .w-64 { width: 256px !important; }
+
+  //         /* Space between */
+  //         .space-y-1 > * + * { margin-top: 4px !important; }
+  //         .space-y-2 > * + * { margin-top: 8px !important; }
+
+  //         /* Shadow */
+  //         .shadow-lg { box-shadow: none !important; }
+
+  //         /* Print specific */
+  //         .print\:hidden { display: none !important; }
+  //         .bg-green-50 { background: #fff !important; }
+  //         .border-green-200 { border-color: #d1d5db !important; }
+  //         .rounded-lg { border-radius: 0 !important; }
+
+  //         /* Fix for escaped classes */
+  //         .pt-2\\.5 { padding-top: 10px !important; }
+  //         .w-1\\/2 { width: 50% !important; }
+  //         .w-1\\/6 { width: 16.666667% !important; }
+
+  //         @page { 
+  //           margin: 0.5in;
+  //           size: A4;
+  //         }
+
+  //         @media print {
+  //           * {
+  //             -webkit-print-color-adjust: exact !important;
+  //             color-adjust: exact !important;
+  //           }
+  //           body {
+  //             background: #fff !important;
+  //             color: #111827 !important;
+  //             margin: 0;
+  //             padding: 0;
+  //             font-size: 13px;
+  //           }
+  //           .invoice-print {
+  //             box-shadow: none !important;
+  //             border-radius: 0 !important;
+  //             padding: 16px !important;
+  //             margin: 0 !important;
+  //             width: 100% !important;
+  //             max-width: 100% !important;
+  //           }
+  //           .print\:hidden { display: none !important; }
+  //           .shadow-lg { box-shadow: none !important; }
+  //           .bg-white { background: #fff !important; }
+  //           .bg-green-50 { background: #fff !important; }
+  //           .rounded-lg { border-radius: 0 !important; }
+  //         }
+  //       </style>
+  //     </head>
+  //     <body>
+  //       ${invoiceHTML}
+  //     </body>
+  //   </html>
+  // `);
+
+  //   printWindow.document.close();
+  //   printWindow.focus();
+
+  //   setTimeout(() => {
+  //     printWindow.print();
+  //     printWindow.close();
+  //   }, 250);
   // };
 
+  
   const handleBackToSales = () => {
     navigate('/sales');
   };
@@ -503,15 +484,13 @@ const CreateInvoice: React.FC = () => {
   const renderProgressSteps = () => (
     <div className="flex items-center justify-center mb-8">
       <div className="flex items-center space-x-4">
-        {[1, 2, 3, 4].map((step) => (
+        {[1, 2, 3].map((step) => (
           <React.Fragment key={step}>
-            <div className={`flex items-center justify-center w-10 h-10 rounded-full ${currentStep >= step ? 'bg-[#03414C] text-white' : 'bg-gray-200 text-gray-600'
-              }`}>
+            <div className={`flex items-center justify-center w-10 h-10 rounded-full ${currentStep >= step ? 'bg-[#03414C] text-white' : 'bg-gray-200 text-gray-600'}`}>
               {currentStep > step ? <FaCheck size={16} /> : step}
             </div>
-            {step < 4 && (
-              <div className={`w-16 h-1 ${currentStep > step ? 'bg-[#03414C]' : 'bg-gray-200'
-                }`} />
+            {step < 3 && (
+              <div className={`w-16 h-1 ${currentStep > step ? 'bg-[#03414C]' : 'bg-gray-200'}`} />
             )}
           </React.Fragment>
         ))}
@@ -523,110 +502,14 @@ const CreateInvoice: React.FC = () => {
     <div className="flex justify-center mb-6">
       <div className="flex space-x-12 text-sm">
         <span className={currentStep >= 1 ? 'text-[#03414C] font-medium' : 'text-gray-500'}>
-          Business Details
-        </span>
-        <span className={currentStep >= 2 ? 'text-[#03414C] font-medium' : 'text-gray-500'}>
           Product Details
         </span>
-        <span className={currentStep >= 3 ? 'text-[#03414C] font-medium' : 'text-gray-500'}>
+        <span className={currentStep >= 2 ? 'text-[#03414C] font-medium' : 'text-gray-500'}>
           Customer Details
         </span>
-        <span className={currentStep >= 4 ? 'text-[#03414C] font-medium' : 'text-gray-500'}>
+        <span className={currentStep >= 3 ? 'text-[#03414C] font-medium' : 'text-gray-500'}>
           Invoice Preview
         </span>
-      </div>
-    </div>
-  );
-
-  const renderBusinessDetailsStep = () => (
-    <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">Business Details</h2>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Company Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={businessDetails.companyName}
-            onChange={(e) => setBusinessDetails({ ...businessDetails, companyName: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-            placeholder="Enter company name"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Company Address <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            value={businessDetails.companyAddress}
-            onChange={(e) => setBusinessDetails({ ...businessDetails, companyAddress: e.target.value })}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-            placeholder="Enter complete business address"
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Phone Number <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="tel"
-              value={businessDetails.companyPhone}
-              onChange={(e) => setBusinessDetails({ ...businessDetails, companyPhone: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-              placeholder="Enter phone number"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="email"
-              value={businessDetails.companyEmail}
-              onChange={(e) => setBusinessDetails({ ...businessDetails, companyEmail: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-              placeholder="Enter email address"
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Website (Optional)
-            </label>
-            <input
-              type="url"
-              value={businessDetails.companyWebsite}
-              onChange={(e) => setBusinessDetails({ ...businessDetails, companyWebsite: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-              placeholder="Enter website URL"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tax ID (Optional)
-            </label>
-            <input
-              type="text"
-              value={businessDetails.taxId}
-              onChange={(e) => setBusinessDetails({ ...businessDetails, taxId: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-              placeholder="Enter tax ID"
-            />
-          </div>
-        </div>
-      </div>
-      <div className="flex justify-end mt-6">
-        <SpecialButton
-          variant="primary"
-          onClick={handleBusinessDetailsSubmit}
-          className="px-6 py-2 bg-[#03414C] hover:bg-[#025561] text-white"
-        >
-          Next Step
-        </SpecialButton>
       </div>
     </div>
   );
@@ -931,69 +814,13 @@ const CreateInvoice: React.FC = () => {
             placeholder="Enter customer address"
           />
         </div>
-
-        {/* <div className="border-t border-gray-200 pt-4 mt-6">
-          <h3 className="text-md font-medium text-gray-900 mb-4">Company Information (Optional)</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Company Name
-              </label>
-              <input
-                type="text"
-                value={customerDetails.companyName}
-                onChange={(e) => setCustomerDetails({...customerDetails, companyName: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-                placeholder="Enter company name"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Company Phone
-                </label>
-                <input
-                  type="tel"
-                  value={customerDetails.companyPhone}
-                  onChange={(e) => setCustomerDetails({...customerDetails, companyPhone: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-                  placeholder="Enter company phone"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Company Email
-                </label>
-                <input
-                  type="email"
-                  value={customerDetails.companyEmail}
-                  onChange={(e) => setCustomerDetails({...customerDetails, companyEmail: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-                  placeholder="Enter company email"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Company Website
-              </label>
-              <input
-                type="url"
-                value={customerDetails.companyWebsite}
-                onChange={(e) => setCustomerDetails({...customerDetails, companyWebsite: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-                placeholder="Enter company website"
-              />
-            </div>
-          </div>
-        </div> */}
       </div>
 
 
       <div className="flex justify-between mt-6">
         <SpecialButton
           variant="secondary"
-          onClick={() => setCurrentStep(2)}
+          onClick={() => setCurrentStep(1)}
           className="px-6 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50"
         >
           Previous
@@ -1004,7 +831,7 @@ const CreateInvoice: React.FC = () => {
           className="px-6 py-2 bg-[#03414C] hover:bg-[#025561] text-white"
           disabled={isCreatingSale || checkingBusinessDetails}
         >
-          {isCreatingSale ? 'Creating Sale & Invoice...' : 'Generate Invoice'}
+          Preview Invoice
         </SpecialButton>
       </div>
     </div>
@@ -1012,13 +839,56 @@ const CreateInvoice: React.FC = () => {
 
   const renderInvoicePreview = () => (
     <div className=" p-6">
-      {/* Success Message */}
-      <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 print:hidden">
-        <div className="flex items-center">
-          <FaCheck className="text-green-600 mr-2" />
-          <span className="text-green-800 font-medium">Invoice generated successfully!</span>
+      {/* Preview/Success Message 
+      {!invoiceResponse ? (
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 print:hidden">
+          <div className="flex items-center">
+            <div className="text-blue-600 mr-2">👁️</div>
+            <span className="text-blue-800 font-medium">Invoice Preview - Review and generate your invoice</span>
+          </div>
+        </div>
+      ) : (
+        <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 print:hidden">
+          <div className="flex items-center">
+            <FaCheck className="text-green-600 mr-2" />
+            <span className="text-green-800 font-medium">Invoice generated successfully!</span>
+          </div>
+        </div>
+      )}
+        */}
+
+      {/* Action Buttons */}
+      <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200 print:hidden">
+        <SpecialButton
+          variant="secondary"
+          onClick={() => setCurrentStep(2)}
+          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+        >
+          <FaArrowLeft size={16} />
+          Back to Edit
+        </SpecialButton>
+        <div className="flex gap-3">
+              <SpecialButton
+                variant="secondary"
+                onClick={handleCreateSaleAndInvoice}
+                className="flex items-center gap-2  py-2 border border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                <FaPrint size={16} />
+                Generate Invoice
+              </SpecialButton>
+              <SpecialButton
+                variant="primary"
+                onClick={handleBackToSales}
+                className="px-4 py-2 bg-[#03414C] hover:bg-[#025561] text-white"
+              >
+                Back to Sales
+              </SpecialButton>
+            
+          
         </div>
       </div>
+
+
 
       {/* Custom Fields Input Section */}
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 print:hidden">
@@ -1071,54 +941,30 @@ const CreateInvoice: React.FC = () => {
         </button>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200 print:hidden">
-        <button
-          onClick={() => setCurrentStep(3)}
-          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-        >
-          <FaArrowLeft size={16} />
-          Back to Edit
-        </button>
-        <div className="flex gap-3">
-          <SpecialButton
-            variant="secondary"
-            onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50"
-          >
-            <FaPrint size={16} />
-            Print Invoice
-          </SpecialButton>
-          {/* <SpecialButton
-            variant="secondary"
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50"
-            onClick={handleDownloadInvoice}>
-            Download Invoice
-          </SpecialButton> */}
-          <SpecialButton
-            variant="primary"
-            onClick={handleBackToSales}
-            className="px-4 py-2 bg-[#03414C] hover:bg-[#025561] text-white"
-          >
-            Back to Sales
-          </SpecialButton>
-        </div>
-      </div>
+
       <h3 className='text-2xl my-6'>Customer Copy</h3>
-      <div className="invoice-print bg-white px-6 py-7 shadow-lg" style={{ fontFamily: "'Courier New', Courier, monospace" }}>
-        <div className="border-t-4 border-black pb-4">
-          <img src={invoiceResponse?.data?.logoUrl} alt="" className='invoice-logo h-28 w-auto pt-5' />
+      <div
+        className="invoice-print bg-white px-6 py-7 shadow-lg border border-gray-200"
+        style={{
+          fontFamily: "'Courier New', Courier, monospace",
+          backgroundColor: '#ffffff',
+          color: '#000000',
+          borderColor: '#e5e7eb'
+        }}
+      >
+        <div className="border-t-4 border-black pb-4" style={{ borderTopColor: '#03414C', borderTopWidth: '4px', borderTopStyle: 'solid' }}>
+          <img src={storeBusinessDetails?.logoUrl} alt="" className='invoice-logo h-28 w-auto pt-5' />
         </div>
 
         <div className="flex justify-between mb-6">
           <div>
             <h2 className="font-semibold">
-              {invoiceResponse?.data?.business?.businessName || 'Your Company Name'}
+              {storeBusinessDetails?.businessName}
             </h2>
-            <p>{invoiceResponse?.data?.business?.address || '89 Your Company Street, City, State, Country'}</p>
-            <p>{invoiceResponse?.data?.business?.contactNo || '123-456-7890'}</p>
-            <p>{invoiceResponse?.data?.customerMail || 'your@companyemail.com'}</p>
-            <p>{invoiceResponse?.data?.business?.website || 'yourwebsite.com'}</p>
+            <p></p>
+            <p>{storeBusinessDetails?.address}</p>
+            <p>{storeBusinessDetails?.contactNo}</p>
+            <p>{storeBusinessDetails?.website}</p>
           </div>
 
           <div className="text-right text-sm space-y-1">
@@ -1157,20 +1003,34 @@ const CreateInvoice: React.FC = () => {
         <div className="border-t-2 border-b-2 border-black py-2 font-semibold flex text-sm">
           <div className="w-1/2">Item Details</div>
           <div className="w-1/6 text-center">Qty</div>
+          <div className="w-1/6 text-center">Unit</div>
+          {invoiceData.products[0].selectedProduct.packs.length > 0 && (
+            <div className="w-1/6 text-center">Pack Size</div>
+          )}
           <div className="w-1/6 text-center">Unit Price</div>
-          <div className="w-1/6 text-right">Total</div>
+          {/* <div className="w-1/6">Allowance</div> */}
+          <div className="w-1/6 text-right">Extended Price</div>
         </div>
 
-        {(invoiceResponse?.data?.sale?.saleItems || invoiceData.products).map((item: any, idx: number) => (
+        {(invoiceData.products).map((item: any, idx: number) => (
           <div
             key={item.id || idx}
             className="flex py-4 border-b border-gray-200 text-sm"
           >
             <div className="w-1/2">
               <p className="font-semibold">{item.productName || item.name}</p>
-              <p className="text-gray-600">Your Product Detailed Description</p>
+              {/* <p className="text-gray-600">Your Product Detailed Description</p> */}
             </div>
             <div className="w-1/6 text-center">{item.quantity}</div>
+            <div className="w-1/6 text-center">
+            {item.selectedProduct.packs.length > 0 ? "Box" : "Item"}
+            </div>
+            {item.selectedProduct?.packs.length > 0 && (
+              <div className="w-1/6 text-center">
+                {item.selectedProduct.packs[0].totalPacksQuantity}
+              </div>
+            )}
+
             <div className="w-1/6 text-center">
               $ {(item.sellingPrice || item.price)?.toFixed(2)}
             </div>
@@ -1209,21 +1069,28 @@ const CreateInvoice: React.FC = () => {
 
       </div>
       <h3 className='text-2xl my-6'>Company Copy</h3>
-      <div className=" bg-white px-6 py-7 shadow-lg" style={{ fontFamily: "'Courier New', Courier, monospace" }}>
-        <div className="border-t-4 border-black pb-4">
-
-          <img src={invoiceResponse?.data?.logoUrl} alt="" className='invoice-logo h-28 w-auto pt-5' />
+      <div
+        className=" bg-white px-6 py-7 shadow-lg border border-gray-200"
+        style={{
+          fontFamily: "'Courier New', Courier, monospace",
+          backgroundColor: '#ffffff',
+          color: '#000000',
+          borderColor: '#e5e7eb'
+        }}
+      >
+        <div className="border-t-4 border-black pb-4" style={{ borderTopColor: '#03414C', borderTopWidth: '4px', borderTopStyle: 'solid' }}>
+          <img src={storeBusinessDetails?.logoUrl} alt="" className='invoice-logo h-28 w-auto pt-5' />
         </div>
 
         <div className="flex justify-between mb-6">
           <div>
             <h2 className="font-semibold">
-              {invoiceResponse?.data?.business?.businessName || 'Your Company Name'}
+              {storeBusinessDetails?.businessName}
             </h2>
-            <p>{invoiceResponse?.data?.business?.address || '89 Your Company Street, City, State, Country'}</p>
-            <p>{invoiceResponse?.data?.business?.contactNo || '123-456-7890'}</p>
-            <p>{invoiceResponse?.data?.customerMail || 'your@companyemail.com'}</p>
-            <p>{invoiceResponse?.data?.business?.website || 'yourwebsite.com'}</p>
+            <p></p>
+            <p>{storeBusinessDetails?.address}</p>
+            <p>{storeBusinessDetails?.contactNo}</p>
+            <p>{storeBusinessDetails?.website}</p>
           </div>
 
           <div className="text-right text-sm space-y-1">
@@ -1233,14 +1100,28 @@ const CreateInvoice: React.FC = () => {
             <p><strong>Due Date:</strong> {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
           </div>
         </div>
-        <div className='flex justify-between mb-6'>
-          <div className="mb-6">
+
+        <div className="flex justify-between mb-6">
+          <div className="mb-6 w-1/2">
             <h3 className="font-semibold">Billed To</h3>
             <p>{invoiceResponse?.data?.customerName || customerDetails.name}</p>
             <p>{invoiceResponse?.data?.customerAddress || customerDetails.address}</p>
             <p>{invoiceResponse?.data?.customerPhone || customerDetails.phone}</p>
             <p>{invoiceResponse?.data?.customerMail || customerDetails.email}</p>
           </div>
+          {/* Custom Fields */}
+          {customFields.filter(f => f.name && f.value).length > 0 && (
+            <div className="mb-6 w-1/2">
+              <div className="space-y-2">
+                {customFields.filter(f => f.name && f.value).map((field, idx) => (
+                  <div key={idx} className="flex justify-end gap-x-4 text-sm">
+                    <span className="font-medium"><strong>{field.name}:</strong></span>
+                    <span>{field.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
 
@@ -1248,20 +1129,32 @@ const CreateInvoice: React.FC = () => {
         <div className="border-t-2 border-b-2 border-black py-2 font-semibold flex text-sm">
           <div className="w-1/2">Item Details</div>
           <div className="w-1/6 text-center">Qty</div>
+          <div className="w-1/6 text-center">Unit</div>
+          {invoiceData.products[0].selectedProduct.packs.length > 0 && (
+            <div className="w-1/6 text-center">Pack Size</div>
+          )}
           <div className="w-1/6 text-center">Unit Price</div>
-          <div className="w-1/6 text-right">Total</div>
+          {/* <div className="w-1/6">Allowance</div> */}
+          <div className="w-1/6 text-right">Extended Price</div>
         </div>
 
-        {(invoiceResponse?.data?.sale?.saleItems || invoiceData.products).map((item: any, idx: number) => (
+        {(invoiceData.products).map((item: any, idx: number) => (
           <div
             key={item.id || idx}
             className="flex py-4 border-b border-gray-200 text-sm"
           >
             <div className="w-1/2">
               <p className="font-semibold">{item.productName || item.name}</p>
-              <p className="text-gray-600">Your Product Detailed Description</p>
+              {/* <p className="text-gray-600">Your Product Detailed Description</p> */}
             </div>
             <div className="w-1/6 text-center">{item.quantity}</div>
+            <div className="w-1/6 text-center">{item.selectedProduct.packs.length > 0 ? "Box" : "Item"}</div>
+            {item.selectedProduct?.packs.length > 0 && (
+              <div className="w-1/6 text-center">
+                {item.selectedProduct.packs[0].totalPacksQuantity}
+              </div>
+            )}
+
             <div className="w-1/6 text-center">
               $ {(item.sellingPrice || item.price)?.toFixed(2)}
             </div>
@@ -1297,6 +1190,7 @@ const CreateInvoice: React.FC = () => {
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
@@ -1320,8 +1214,8 @@ const CreateInvoice: React.FC = () => {
                   <FaArrowLeft className="text-gray-600" size={20} />
                 </button>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Create Invoice</h1>
-                  <p className="text-gray-600">Generate professional invoice</p>
+                  <h1 className="text-2xl font-bold text-gray-900">Professional Invoice</h1>
+                  {/* <p className="text-gray-600">Generate professional invoice</p> */}
                 </div>
               </div>
             </div>
@@ -1335,10 +1229,9 @@ const CreateInvoice: React.FC = () => {
         {/* Step Content */}
         {showBusinessForm ? renderBusinessForm() : (
           <>
-            {currentStep === 1 && renderBusinessDetailsStep()}
-            {currentStep === 2 && renderProductDetailsStep()}
-            {currentStep === 3 && renderCustomerDetailsStep()}
-            {currentStep === 4 && renderInvoicePreview()}
+            {currentStep === 1 && renderProductDetailsStep()}
+            {currentStep === 2 && renderCustomerDetailsStep()}
+            {currentStep === 3 && renderInvoicePreview()}
           </>
         )}
       </div>
