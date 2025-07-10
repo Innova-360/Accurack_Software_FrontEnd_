@@ -41,6 +41,7 @@ import CustomerBalanceSheet from "../pages/Customer/CustomerBalanceSheet";
 import ProtectedRoute from "../components/ProtectedRoute";
 import ReturnPage from "../pages/Return/Return";
 import CreateReturn from "../pages/Return/CreateReturn";
+import MSAInventoryReport from "../pages/MSA/MSAInventoryReport";
 import Tax from "../pages/Tax/index";
 import AddTax from "../pages/Tax/AddTax";
 import StoreDetails from "../pages/Stores/StoreDetails";
@@ -428,10 +429,28 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/store/:id/msa/inventory-report"
+        element={
+          <ProtectedRoute>
+            <MSAInventoryReport />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/store/:id/invoice/create"
         element={
           <ProtectedRoute>
             <BusinessForm />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Store-specific MSA Routes */}
+      <Route
+        path="/store/:id/msa/inventory-report"
+        element={
+          <ProtectedRoute>
+            <MSAInventoryReport />
           </ProtectedRoute>
         }
       />
@@ -489,6 +508,16 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <OrderTrackingVerification />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* MSA Routes */}
+      <Route
+        path="/msa/inventory-report"
+        element={
+          <ProtectedRoute>
+            <MSAInventoryReport />
           </ProtectedRoute>
         }
       />
