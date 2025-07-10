@@ -50,6 +50,7 @@ import BusinessSettings from "../pages/BusinessSettings/BusinessSettings";
 import ChangePassword from "../pages/ChangePassword/ChangePassword";
 import NotFound from "../pages/NotFound/NotFound";
 import Invoice from "../pages/Invoice/invoices";
+import InvoiceId from "../pages/Invoice/InvoiceID";
 
 
 
@@ -289,6 +290,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Invoice />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/invoice/:invoiceId"
+        element={
+          <ProtectedRoute>
+            <InvoiceId />
           </ProtectedRoute>
         }
       />

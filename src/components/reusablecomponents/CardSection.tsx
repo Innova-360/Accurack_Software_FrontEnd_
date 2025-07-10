@@ -93,14 +93,14 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
               // Invoice routes
               else if (card.title === "Upload Invoice*") {
                 navigate(`/store/${activeStoreId}/sales/create-invoice`);
-              } else if (card.title === "Create Invoice*") {
-                navigate(`/store/${activeStoreId}/sales/create-invoice`);
-              } else if (card.title === "View Invoice*") {
-                navigate(`/store/${activeStoreId}/sales`);
+              } else if (card.title === "Create Invoice") {
+                navigate(`/store/${activeStoreId}/sales/new`);
+              } else if (card.title === "View Invoices") {
+                navigate(`/store/${activeStoreId}/invoices`);
               } else if (card.title === "Update Invoice*") {
                 navigate(`/store/${activeStoreId}/sales`);
               } else if (card.title === "Invoice Dashboard") {
-                navigate(`/store/${activeStoreId}/sales`);
+                navigate(`/store/${activeStoreId}/invoices`);
               }
               // Customer routes
               else if (card.title === "Add Customer") {
@@ -210,6 +210,10 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
               } else if (card.title === "Return Dashboard") {
                 navigate(`/store/${activeStoreId}/return`);
               }
+
+             
+
+
             }}
             className="group bg-white rounded-xl shadow-lg border-2 border-[#f5f4f4] shadow-[#D1D1D1] hover:shadow-xl hover:border-[#03414C]/20 transition-all duration-300 cursor-pointer
                        flex flex-row lg:flex-col items-center lg:items-center

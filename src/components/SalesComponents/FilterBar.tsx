@@ -65,7 +65,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
           </select>
         </div>
 
-        {/* Cashier Filter */}
+        {/* Cashier Filter 
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600 font-medium">Cashier:</span>
           <select
@@ -79,6 +79,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
             <option>Mike Johnson</option>
           </select>
         </div>
+        */}
 
         {/* Date Filter */}
         <div className="flex items-center gap-2">

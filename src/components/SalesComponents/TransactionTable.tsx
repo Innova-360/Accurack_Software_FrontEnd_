@@ -135,8 +135,8 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               <td className="px-4 py-3 text-sm text-gray-900">
                 <div>{transaction.dateTime}</div>
               </td>
-              <td className="px-4 py-3 text-sm text-gray-900">
-                {transaction.cashier}
+              <td className="px-4 py-3 text-sm text-gray-900 text-center">
+                {(transaction.cashier === undefined || transaction.cashier === null || isNaN(transaction.cashier)) ? "-" : transaction.cashier}
               </td>
               <td className="px-4 py-3 text-center">
                 <span className="text-sm text-gray-500">N/A</span>

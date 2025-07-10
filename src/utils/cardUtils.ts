@@ -64,16 +64,16 @@ export const getAllCards = (): CardSection[] => {
         { title: "Sales Dashboard", iconComponent: "FiTrendingUp" },
       ],
     },
-    //  {
-    //   sectionTitle: "Invoice",
-    //   cards: [
-    //     { title: "Upload Invoice*", iconComponent: "FiUpload" },
-    //     { title: "Create Invoice*", iconComponent: "FiFileText" },
-    //     { title: "View Invoice*", iconComponent: "FiFile" },
-    //     { title: "Update Invoice*", iconComponent: "FiEdit3" },
-    //     { title: "Invoice Dashboard", iconComponent: "FiPieChart" },
-    //   ],
-    // },
+     {
+      sectionTitle: "Invoice",
+      cards: [
+        // { title: "Upload Invoice*", iconComponent: "FiUpload" },
+        { title: "Create Invoice", iconComponent: "FiFileText" },
+        { title: "View Invoices", iconComponent: "FiFile" },
+        // { title: "Update Invoice*", iconComponent: "FiEdit3" },
+        // { title: "Invoice Dashboard", iconComponent: "FiPieChart" },
+      ],
+    },
     {
       sectionTitle: "Customers",
       cards: [
