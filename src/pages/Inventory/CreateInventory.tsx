@@ -187,6 +187,7 @@ const CreateInventory: React.FC = () => {
   // Form state management
   const [showVariations, setShowVariations] = useState(false);
   const [hasVariants, setHasVariants] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   // Main form data
   const [formData, setFormData] = useState<ProductFormData>({
     productName: "",
@@ -247,13 +248,18 @@ const CreateInventory: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     const payload = buildApiPayload();
 
     dispatch(createProduct(payload) as any).then((result: any) => {
+      setIsSubmitting(false);
       if (!result.error) {
         // Navigate to the correct inventory page using the actual storeId
-        navigate(`/store/${storeId}/inventory`);
+        navigate(`/store/${storeId}/inventory/dashboard`);
       }
+    }).catch((error: any) => {
+      setIsSubmitting(false);
+      console.error("Error creating product:", error);
     });
   };
 
@@ -690,29 +696,59 @@ const CreateInventory: React.FC = () => {
                       // For simple product mode
                       <button
                         type="submit"
-                        disabled={progress < 100}
+                        disabled={progress < 100 || isSubmitting}
                         className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 ${
-                          progress >= 100
+                          progress >= 100 && !isSubmitting
                             ? "bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md"
                             : "bg-gray-300 text-gray-500 cursor-not-allowed"
                         }`}
                       >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                          />
-                        </svg>
-                        <span className="text-sm sm:text-base">
-                          Create Product
-                        </span>
+                        {isSubmitting ? (
+                          <>
+                            <svg
+                              className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                            <span className="text-sm sm:text-base">
+                              Creating Product...
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                              />
+                            </svg>
+                            <span className="text-sm sm:text-base">
+                              Create Product
+                            </span>
+                          </>
+                        )}
                       </button>
                     )}
                   </div>
@@ -771,24 +807,59 @@ const CreateInventory: React.FC = () => {
                     </button>
                     <button
                       type="submit"
-                      className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-[#0f4d57] text-white rounded-lg font-medium hover:bg-[#0f4d57]/90 transition-all duration-200 transform hover:scale-105 hover:shadow-lg flex items-center justify-center space-x-2"
+                      disabled={isSubmitting}
+                      className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg flex items-center justify-center space-x-2 ${
+                        isSubmitting
+                          ? "bg-gray-400 text-white cursor-not-allowed"
+                          : "bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90"
+                      }`}
                     >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      <span className="text-sm sm:text-base">
-                        Create Product with Variations
-                      </span>
+                      {isSubmitting ? (
+                        <>
+                          <svg
+                            className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          <span className="text-sm sm:text-base">
+                            Creating Product...
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                          <span className="text-sm sm:text-base">
+                            Create Product with Variations
+                          </span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
