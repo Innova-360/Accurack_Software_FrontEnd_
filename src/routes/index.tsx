@@ -48,8 +48,8 @@ import ProfileSettings from "../pages/ProfileSettings/ProfileSettings";
 import BusinessSettings from "../pages/BusinessSettings/BusinessSettings";
 import ChangePassword from "../pages/ChangePassword/ChangePassword";
 import NotFound from "../pages/NotFound/NotFound";
-import Invoice from "../pages/Invoice/Invoice";
-import InvoicePreview from "../pages/Invoice/invoicePreview";
+import Invoice from "../pages/Invoice/invoices";
+
 
 
 const AppRoutes = () => {
@@ -62,7 +62,6 @@ const AppRoutes = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
       <Route path="/term" element={<Terms />} />
-      <Route path="/invoice" element={<InvoicePreview />} />
 
       {/* Protected Routes - Authentication required */}
       <Route
