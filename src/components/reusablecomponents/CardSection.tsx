@@ -213,6 +213,8 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
               // MSA routes
               else if (card.title === "MSA Inventory Report") {
                 navigate(`/store/${activeStoreId}/msa/inventory-report`);
+              } else if (card.title === "MSA Sales Report") {
+                navigate(`/store/${activeStoreId}/msa/sales-report`);
               }
             }}
             className="group bg-white rounded-xl shadow-lg border-2 border-[#f5f4f4] shadow-[#D1D1D1] hover:shadow-xl hover:border-[#03414C]/20 transition-all duration-300 cursor-pointer

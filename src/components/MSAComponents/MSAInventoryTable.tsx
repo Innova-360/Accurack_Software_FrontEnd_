@@ -150,7 +150,7 @@ const MSAInventoryTable: React.FC<MSAInventoryTableProps> = ({ data }) => {
             style={{
               borderLeft: '144px solid transparent',
               borderTop: '144px solid #fbbf24',
-              filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15))'
+              filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15))',
             }}
           ></div>
           {/* MSA Standard Text */}

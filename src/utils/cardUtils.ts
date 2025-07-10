@@ -138,6 +138,7 @@ export const getAllCards = (): CardSection[] => {
       sectionTitle: "MSA",
       cards: [
         { title: "MSA Inventory Report", iconComponent: "FiFileText" },
+        { title: "MSA Sales Report", iconComponent: "FiDollarSign" },
       ],
     },
   ];
