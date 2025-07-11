@@ -14,6 +14,7 @@ interface InventoryTableProps {
   onProductEdited?: (product: Product) => void;
   onProductViewed?: (product: Product) => void;
   showActions?: boolean; // New prop to control action buttons visibility
+  showDeleteButton?: boolean; // New prop to control delete button visibility
 }
 
 const InventoryTable: React.FC<InventoryTableProps> = ({
@@ -28,6 +29,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
   onProductEdited,
   onProductViewed,
   showActions = true, // Default to true for backward compatibility
+  showDeleteButton = true, // Default to true for backward compatibility
 }) => {
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(
     new Set()
@@ -555,16 +557,50 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                               />
                             </svg>
                           </button>
-                          {/* Edit and Delete Buttons - Only visible when showActions is true */}
+                          {/* Edit Button - Always visible when showActions is true */}
                           {showActions && (
-                            <>
-                              {/* Edit Button */}
-                              <button
-                                onClick={() => handleEditProduct(product)}
-                                disabled={false}
-                                className="text-blue-500 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed p-1 rounded transition-colors"
-                                title="Edit product"
+                            <button
+                              onClick={() => handleEditProduct(product)}
+                              disabled={false}
+                              className="text-blue-500 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed p-1 rounded transition-colors"
+                              title="Edit product"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
                               >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
+                              </svg>
+                            </button>
+                          )}
+                          {/* Delete Button - Only visible when showDeleteButton is true */}
+                          {showActions && showDeleteButton && (
+                            <button
+                              onClick={() => {
+                                const id =
+                                  product.id || product.sku || product.plu;
+                                if (id) {
+                                  handleDeleteProduct(id, product.name);
+                                }
+                              }}
+                              disabled={
+                                (!product.id && !product.sku && !product.plu) ||
+                                deletingProductId ===
+                                  (product.id || product.sku || product.plu)
+                              }
+                              className="text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed p-1 rounded transition-colors"
+                              title="Delete product"
+                            >
+                              {deletingProductId === product.id ? (
+                                <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
                                 <svg
                                   className="w-4 h-4"
                                   fill="none"
@@ -575,46 +611,11 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                     strokeWidth={2}
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                                   />
                                 </svg>
-                              </button>
-                              {/* Delete Button */}
-                              <button
-                                onClick={() => {
-                                  const id =
-                                    product.id || product.sku || product.plu;
-                                  if (id) {
-                                    handleDeleteProduct(id, product.name);
-                                  }
-                                }}
-                                disabled={
-                                  (!product.id && !product.sku && !product.plu) ||
-                                  deletingProductId ===
-                                    (product.id || product.sku || product.plu)
-                                }
-                                className="text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed p-1 rounded transition-colors"
-                                title="Delete product"
-                              >
-                                {deletingProductId === product.id ? (
-                                  <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
-                                ) : (
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                    />
-                                  </svg>
-                                )}
-                              </button>
-                            </>
+                              )}
+                            </button>
                           )}
                         </div>
                       </td>

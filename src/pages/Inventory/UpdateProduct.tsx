@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useProducts } from "../../hooks/useProducts";
 import Header from "../../components/Header";
-import UpdateProductControls from "../../components/InventoryComponents/UpdateProductControls";
-import UpdateProductTable from "../../components/InventoryComponents/UpdateProductTable";
+import InventoryControls from "../../components/InventoryComponents/InventoryControls";
+import InventoryTable from "../../components/InventoryComponents/InventoryTable";
 import InventoryMobileView from "../../components/InventoryComponents/InventoryMobileView";
 import Pagination from "../../components/InventoryComponents/Pagination";
 import LowStockSection from "../../components/InventoryComponents/LowStockSection";
@@ -13,9 +13,11 @@ import type { Product } from "../../data/inventoryData";
 import type { EditProductFormData } from "../../components/InventoryComponents/EditProductModal";
 import { useLowStockProducts } from "../../hooks/useInventory";
 import { extractErrorMessage } from "../../utils/lastUpdatedUtils";
-extractErrorMessage
+import useRequireStore from "../../hooks/useRequireStore";
 
 const UpdateProduct: React.FC = () => {
+  const currentStore = useRequireStore();
+  
   // State for main inventory pagination and filters
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,6 +25,8 @@ const UpdateProduct: React.FC = () => {
     key: string;
     direction: "asc" | "desc";
   } | null>(null);
+  const [groupBy, setGroupBy] = useState("");
+  const [selectedItems, setSelectedItems] = useState<number[]>([]);
 
   // Fixed rows per page for UpdateProduct
   const rowsPerPage = 10;
@@ -35,6 +39,7 @@ const UpdateProduct: React.FC = () => {
       search: searchTerm,
       sortBy: sortConfig?.key,
       sortOrder: sortConfig?.direction,
+      storeId: currentStore?.id
     });
 
   // State for low stock pagination
@@ -46,12 +51,12 @@ const UpdateProduct: React.FC = () => {
     "cards"
   );
 
-  // Modal states - removed add inventory and delete all modals
+  // Modal states
   const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
   const [selectedProductToEdit, setSelectedProductToEdit] =
     useState<Product | null>(null);
 
-  // Use custom hooks for data processing - removed inventory stats and grouping
+  // Use custom hooks for data processing
   const lowStockProducts = useLowStockProducts(products);
 
   // Debounced search state
@@ -76,6 +81,7 @@ const UpdateProduct: React.FC = () => {
       search: debouncedSearchTerm,
       sortBy: sortConfig?.key,
       sortOrder: sortConfig?.direction,
+      storeId: currentStore?.id
     });
     setCurrentPage(1);
   }, [
@@ -84,6 +90,7 @@ const UpdateProduct: React.FC = () => {
     sortConfig?.key,
     sortConfig?.direction,
     fetchWithParams,
+    currentStore?.id
   ]);
 
   // Show loading state only for initial load (when we have no products and no search term)
@@ -163,6 +170,7 @@ const UpdateProduct: React.FC = () => {
         search: debouncedSearchTerm,
         sortBy: sortConfig?.key,
         sortOrder: sortConfig?.direction,
+        storeId: currentStore?.id
       });
     } catch (error) {
       toast.error("Failed to load page");
@@ -197,6 +205,14 @@ const UpdateProduct: React.FC = () => {
     setSearchTerm(event.target.value);
   };
 
+  const handleGroupByChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setGroupBy(event.target.value);
+  };
+
+  const handleRowsPerPageChange = (newRowsPerPage: number) => {
+    // Handle rows per page change if needed
+  };
+
   // Server-side sorting function
   const handleSort = (key: string) => {
     let direction: "asc" | "desc" = "asc";
@@ -210,8 +226,26 @@ const UpdateProduct: React.FC = () => {
     setSortConfig({ key, direction });
   };
 
-  // Edit product handlers - now called when row is clicked
-  const handleProductClicked = (product: Product) => {
+  // Checkbox handlers
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = currentProducts.map((_, index: number) => index);
+      setSelectedItems(allIds);
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleSelectItem = (index: number, checked: boolean) => {
+    if (checked) {
+      setSelectedItems([...selectedItems, index]);
+    } else {
+      setSelectedItems(selectedItems.filter((id) => id !== index));
+    }
+  };
+
+  // Edit product handlers
+  const handleEditProduct = (product: Product) => {
     setSelectedProductToEdit(product);
     setIsEditProductModalOpen(true);
   };
@@ -238,14 +272,24 @@ const UpdateProduct: React.FC = () => {
     setSelectedProductToEdit(null);
   };
 
+  // View product handler
+  const handleViewProduct = (product: Product) => {
+    // Handle view product if needed
+  };
+
+  // Product deleted handler
+  const handleProductDeleted = () => {
+    refetch(); // Refresh the product list
+  };
+
   return (
     <>
       <Header />
       <div className="p-4 sm:p-6 bg-white min-h-screen animate-fadeIn">
-        {/* Header Section - No Add/Delete buttons */}
+        {/* Header Section */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 lg:mb-6 space-y-4 lg:space-y-0 animate-slideDown">
           <h1 className="text-xl sm:text-2xl font-bold text-[#0f4d57]">
-            Update Products
+            Update Inventory
           </h1>
         </div>
         {/* Horizontal line */}
@@ -253,9 +297,13 @@ const UpdateProduct: React.FC = () => {
 
         {/* Inventory Controls */}
         <div className="animate-slideUp" style={{ animationDelay: "200ms" }}>
-          <UpdateProductControls
+          <InventoryControls
             searchTerm={searchTerm}
             onSearchChange={handleSearchChange}
+            groupBy={groupBy}
+            onGroupByChange={handleGroupByChange}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleRowsPerPageChange}
             isSearching={
               loading &&
               (searchTerm !== debouncedSearchTerm ||
@@ -330,15 +378,23 @@ const UpdateProduct: React.FC = () => {
                   groupBy=""
                   expandedCategories={[]}
                   onToggleCategory={() => {}}
-                  onProductViewed={handleProductClicked}
+                  onProductViewed={handleEditProduct}
                 />
               ) : (
                 <div className="overflow-x-auto">
-                  <UpdateProductTable
+                  <InventoryTable
                     products={currentProducts}
+                    selectedItems={selectedItems}
+                    startIndex={startIndex}
                     sortConfig={sortConfig}
+                    onSelectAll={handleSelectAll}
+                    onSelectItem={handleSelectItem}
                     onSort={handleSort}
-                    onProductClicked={handleProductClicked}
+                    onProductDeleted={handleProductDeleted}
+                    onProductEdited={handleEditProduct}
+                    onProductViewed={handleViewProduct}
+                    showActions={true}
+                    showDeleteButton={false}
                   />
                 </div>
               )}
@@ -346,11 +402,19 @@ const UpdateProduct: React.FC = () => {
 
             {/* Desktop View */}
             <div className="hidden md:block overflow-x-auto">
-              <UpdateProductTable
+              <InventoryTable
                 products={currentProducts}
+                selectedItems={selectedItems}
+                startIndex={startIndex}
                 sortConfig={sortConfig}
+                onSelectAll={handleSelectAll}
+                onSelectItem={handleSelectItem}
                 onSort={handleSort}
-                onProductClicked={handleProductClicked}
+                onProductDeleted={handleProductDeleted}
+                onProductEdited={handleEditProduct}
+                onProductViewed={handleViewProduct}
+                showActions={true}
+                showDeleteButton={false}
               />
             </div>
           </div>

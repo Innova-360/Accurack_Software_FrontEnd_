@@ -272,6 +272,14 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/store/:id/sales/create"
+        element={
+          <ProtectedRoute>
+            <AddNewSale />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/store/:id/sales/:saleid"
         element={
           <ProtectedRoute>
