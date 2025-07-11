@@ -1,5 +1,6 @@
-import { Eye } from "lucide-react";
+import { Eye, Edit } from "lucide-react";
 import React from "react";
+import EditableStatus from "./EditableStatus";
 
 interface TransactionTableProps {
   transactions: any[]; // Using any to support both old and new transaction formats
@@ -7,40 +8,23 @@ interface TransactionTableProps {
   onEdit: (transaction: any) => void;
   onPrint: (transaction: any) => void;
   onDelete: (transaction: any) => void;
+  onStatusChange?: (transactionId: string, newStatus: string) => void;
+  onEditNavigation?: (transaction: any) => void;
+  isUpdating?: boolean;
 }
 
 const TransactionTable: React.FC<TransactionTableProps> = ({
   transactions,
   onView,
+  onStatusChange,
+  onEditNavigation,
+  isUpdating = false,
 }) => {
   const formatCurrency = (amount: number): string => {
     if (typeof amount !== "number" || isNaN(amount)) {
       return "$0.00";
     }
     return `$${amount.toFixed(2)}`;
-  };
-  const getStatusBadge = (status: string) => {
-    const statusConfig: { [key: string]: { color: string; text: string } } = {
-      completed: { color: "bg-green-500", text: "Completed" },
-      pending: { color: "bg-yellow-500", text: "Pending" },
-      refunded: { color: "bg-red-500", text: "Refunded" },
-      shipped: { color: "bg-blue-500", text: "Shipped" },
-      delivered: { color: "bg-green-500", text: "Delivered" },
-      cancelled: { color: "bg-gray-500", text: "Cancelled" },
-    };
-
-    const normalizedStatus = status?.toLowerCase() || "pending";
-    const config = statusConfig[normalizedStatus] || {
-      color: "bg-gray-500",
-      text: status || "Unknown",
-    };
-
-    return (
-      <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">
-        <div className={`w-2 h-2 rounded-full mr-1 ${config.color}`}></div>
-        {config.text}
-      </span>
-    );
   };
 
   const getPaymentMethodBadge = (paymentMethod: string) => {
@@ -61,8 +45,8 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     // Format display name
     const displayName = paymentMethod
       ? paymentMethod
-          .replace(/_/g, " ")
-          .replace(/\b\w/g, (l) => l.toUpperCase())
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase())
       : "Cash";
 
     return (
@@ -91,7 +75,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
               Products
             </th>
-
             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
               Total Amount
             </th>
@@ -101,9 +84,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
               Payment
             </th>
-            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Status
-            </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Date & Time
             </th>
@@ -112,6 +92,9 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             </th>
             <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
               Return
+            </th>
+            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Status
             </th>
             <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
               Actions
@@ -149,25 +132,41 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               <td className="px-4 py-3 text-center">
                 {getPaymentMethodBadge(transaction.payment)}
               </td>
-              <td className="px-4 py-3 text-center">
-                {getStatusBadge(transaction.status)}
-              </td>
               <td className="px-4 py-3 text-sm text-gray-900">
                 <div>{transaction.dateTime}</div>
               </td>
-              <td className="px-4 py-3 text-sm text-gray-900">
-                {transaction.cashier}
+              <td className="px-4 py-3 text-sm text-gray-900 text-center">
+                {(transaction.cashier === undefined || transaction.cashier === null || isNaN(transaction.cashier)) ? "-" : transaction.cashier}
               </td>
               <td className="px-4 py-3 text-center">
                 <span className="text-sm text-gray-500">N/A</span>
               </td>
               <td className="px-4 py-3 text-center">
-                <span
-                  className="text-sm text-gray-500 cursor-pointer"
-                  onClick={() => onView(transaction)}
-                >
-                  <Eye />
-                </span>
+                <EditableStatus
+                  status={transaction.status}
+                  onStatusChange={(newStatus) => onStatusChange?.(transaction.id, newStatus)}
+                  isUpdating={isUpdating}
+                />
+              </td>
+              <td className="px-4 py-3 text-center">
+                <div className="flex items-center justify-center space-x-2">
+                  <span
+                    className="text-sm text-gray-500 cursor-pointer hover:text-blue-600 transition-colors"
+                    onClick={() => onView(transaction)}
+                    title="View Details"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </span>
+                  {onEditNavigation && (
+                    <span
+                      className="text-sm text-gray-500 cursor-pointer hover:text-green-600 transition-colors"
+                      onClick={() => onEditNavigation(transaction)}
+                      title="Edit Sale"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </span>
+                  )}
+                </div>
               </td>
             </tr>
           ))}

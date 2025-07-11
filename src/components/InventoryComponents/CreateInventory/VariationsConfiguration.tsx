@@ -779,7 +779,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
         <div>
           {" "}
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Vendor *
+            Vendor
           </label>
           <select
             value={variation.supplierId}
@@ -794,7 +794,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
                 ? "bg-gray-100 cursor-not-allowed text-gray-500"
                 : ""
             }`}
-            required={suppliers && suppliers.length > 0}
+            
             disabled={
               !suppliersLoading &&
               !suppliersError &&

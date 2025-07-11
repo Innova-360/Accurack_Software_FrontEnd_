@@ -31,7 +31,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
         {
           title: "Today's Sales",
           value: "$0.00",
-          change: "Loading...",
+          change: "",
           changeType: 'positive',
           icon: <FaChartLine />,
           color: 'bg-teal-600'
@@ -39,7 +39,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
         {
           title: "Transactions",
           value: "0",
-          change: "Loading...",
+          change: "",
           changeType: 'positive',
           icon: <FaFileAlt />,
           color: 'bg-teal-600'
@@ -47,7 +47,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
         {
           title: "Customers",
           value: "0",
-          change: "Loading...",
+          change: "",
           changeType: 'positive',
           icon: <FaUsers />,
           color: 'bg-teal-600'
@@ -55,7 +55,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
         {
           title: "Avg. Transaction",
           value: "$0.00",
-          change: "Loading...",
+          change: "",
           changeType: 'positive',
           icon: <FaShoppingCart />,
           color: 'bg-teal-600'
@@ -63,7 +63,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
         {
           title: "Products Available",
           value: "0",
-          change: "of 0 total",
+          change: "",
           changeType: 'positive',
           icon: <FaBoxes />,
           color: 'bg-teal-600'
@@ -75,7 +75,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
       {
         title: "Today's Sales",
         value: formatCurrency(data.todaysSales),
-        change: "+12.5% from yesterday",
+        change: "",
         changeType: 'positive',
         icon: <FaChartLine />,
         color: 'bg-teal-600'
@@ -83,7 +83,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
       {
         title: "Transactions",
         value: data.transactions.toString(),
-        change: "+3.2% from yesterday",
+        change: "",
         changeType: 'positive',
         icon: <FaFileAlt />,
         color: 'bg-teal-600'
@@ -91,7 +91,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
       {
         title: "Customers",
         value: data.customers.toString(),
-        change: "+5.1% from yesterday",
+        change: "",
         changeType: 'positive',
         icon: <FaUsers />,
         color: 'bg-teal-600'
@@ -99,7 +99,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
       {
         title: "Avg. Transaction",
         value: formatCurrency(data.avgTransaction),
-        change: "+2.7% from yesterday",
+        change: "",
         changeType: 'positive',
         icon: <FaShoppingCart />,
         color: 'bg-teal-600'
@@ -107,7 +107,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
       {
         title: "Products Available",
         value: data.productsAvailable.toString(),
-        change: "of 5 total",
+        change: "",
         changeType: 'positive',
         icon: <FaBoxes />,
         color: 'bg-teal-600'
@@ -131,7 +131,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
             {loading ? 'Loading...' : stat.value}
           </div>
           <div className={`text-xs ${stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
-            {loading ? 'Loading...' : stat.change}
+            {loading ? '' : stat.change}
           </div>
         </div>
       ))}

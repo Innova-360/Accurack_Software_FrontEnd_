@@ -1,18 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { FaTh, FaChartPie, FaClock, FaBars } from 'react-icons/fa';
-import { FiHelpCircle } from 'react-icons/fi';
-import { MdCampaign } from 'react-icons/md';
+import React, { useState, useEffect } from "react";
+import { FaClock, FaHome, FaStore } from "react-icons/fa";
+import { MdCampaign } from "react-icons/md";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { useAppSelector } from "../store/hooks";
+import { lastUpdatedManager } from "../utils/lastUpdatedUtils";
+import LogoutButton from "./LogoutButton";
 
-const Navbar: React.FC = () => {
-  const [currentTime, setCurrentTime] = useState('');
+interface HeaderProps {
+    className?: string;
+}
+
+const Navbar:  React.FC<HeaderProps> = ({ className }) => {
+  const [currentTime, setCurrentTime] = useState("");
+  const [lastUpdatedDisplay, setLastUpdatedDisplay] = useState("");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { id } = useParams();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+
+  // Check if we're on main stores page or exact store page
+  const isOnMainStoresPage = location.pathname === "/stores";
+  const isOnExactStorePage = location.pathname === `/store/${id}`;
+  const shouldShowHomeIcon = isOnMainStoresPage || isOnExactStorePage;
+
+  // Determine icon and navigation target
+  const IconComponent = shouldShowHomeIcon ? FaHome : FaStore;
+  const handleNavigation = () => {
+    if (isOnMainStoresPage) {
+      navigate(`/store/${id}`);
+    } else if (isOnExactStorePage) {
+      navigate("/stores");
+    } else {
+      navigate(`/store/${id}`);
+    }
+  };
 
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      const timeString = now.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
+      const timeString = now.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
       });
       setCurrentTime(timeString);
     };
@@ -22,32 +52,67 @@ const Navbar: React.FC = () => {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Update last updated time when authentication state changes (login/logout)
+  useEffect(() => {
+    lastUpdatedManager.updateLastUpdated();
+  }, [isAuthenticated]);
+
+  // Subscribe to last updated changes and update display
+  useEffect(() => {
+    const updateDisplay = () => {
+      setLastUpdatedDisplay(lastUpdatedManager.formatLastUpdated());
+    };
+
+    // Initial update
+    updateDisplay();
+
+    // Subscribe to changes
+    const unsubscribe = lastUpdatedManager.subscribe(updateDisplay);
+
+    // Update display every minute to keep "Xm ago" current
+    const interval = setInterval(updateDisplay, 60000);
+
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
+  }, []);
   return (
-    
-    <div className="w-full bg-[#03414CF0] text-white text-sm font-medium px-0 py-0">
+    <div className={`${className} w-full bg-[#03414CF0] text-white text-sm font-medium px-0 py-0`}>
       <div className="hidden lg:flex items-center h-14">
-
         {/* Grid Icon */}
-        <div className="flex items-center justify-center w-[56px] h-full border-r border-[#127F92]">
-          <FaTh className="text-[20px]" />
+        <div
+          className="flex items-center justify-center w-[56px] h-full border-r border-[#127F92]"
+          onClick={handleNavigation}
+          style={{ cursor: "pointer" }}
+        >
+          <IconComponent className="text-[20px]" />
         </div>
-
         {/* Logo */}
         <div className="flex items-center px-4 h-full border-r border-[#127F92] space-x-2">
-          <div className="flex items-center gap-2.5">
-          <img src="/logo.svg" className="md:w-10 md:h-10 w-10 h-10" alt="logo" />
-          <img src="/logoName.png" className="md:w-[93px] md:h-[33px] w-24 h-10" alt="Accurack" />
+          <div
+            className="flex items-center gap-2.5"
+            onClick={handleNavigation}
+            style={{ cursor: "pointer" }}
+          >
+            <img
+              src="/logo.svg"
+              className="md:w-10 md:h-10 w-10 h-10"
+              alt="logo"
+            />
+            <img
+              src="/logoName.png"
+              className="md:w-[93px] md:h-[33px] w-24 h-10"
+              alt="Accurack"
+            />
+          </div>
         </div>
-        
-        </div>
-
         {/* Sales Info */}
-        <div className="flex items-center px-4 h-full border-r border-[#127F92] space-x-2">
+        {/* <div className="flex items-center px-4 h-full border-r border-[#127F92] space-x-2">
           <FaChartPie className="text-base" />
           <span>Sales: Mart</span>
-        </div>
-
-
+        </div> */}
         {/* Spacer */}
         <div className="flex-grow" />
         {/* Last Updated */}
@@ -55,62 +120,73 @@ const Navbar: React.FC = () => {
           <div className="bg-[#03414CF0] text-xs px-3 py-[2px] rounded-md flex items-center space-x-2">
             <span className="h-2 w-2 rounded-full bg-white" />
             <span>
-              Last Updated On: <strong>20/03/2025</strong>
+              Last Updated: <strong>{lastUpdatedDisplay}</strong>
             </span>
           </div>
-        </div>        {/* Time */}
+        </div>{" "}
+        {/* Time */}
         <div className="flex items-center px-4 h-full space-x-1">
           <FaClock className="text-base" />
           <span>{currentTime}</span>
         </div>
-
         {/* Help */}
-        <div className="flex items-center px-4 h-full border-r border-[#127F92] space-x-2">
+        {/* <div className="flex items-center px-4 h-full border-r border-[#127F92] space-x-2">
           <FiHelpCircle className="text-base" />
           <span>Help?</span>
-        </div>
-
+        </div> */}
         {/* What's New */}
         <div className="flex items-center px-4 h-full border-r border-[#127F92] space-x-2">
           <MdCampaign className="text-base" />
-          <span>Wat`s New?</span>
+          <span>
+            <a
+              href="https://accurack.ai"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Wat`s New?
+            </a>
+          </span>
         </div>
-
         {/* Clock In/Out */}
         <div className="flex items-center px-4 h-full border-r border-[#127F92] space-x-2">
           <FaClock className="text-base" />
           <span>Clock In/Out</span>
         </div>
-
-        {/* Menu Icon */}
-        <div className="flex items-center justify-center w-[56px] h-full">
-          <FaBars className="text-xl" />
+        {/* Logout Button */}
+        <div className="flex items-center justify-center px-4 h-full">
+          <LogoutButton />
         </div>
       </div>
-         {/* Mobile View */}
-<div className="flex justify-between items-center w-full h-14 px-4 lg:hidden">
-  {/* Left Icon */}
-  <div className="flex items-center justify-center w-[56px]">
-    <FaTh className="text-[20px]" />
-  </div>
-
-  {/* Logo */}
-  <div className="flex items-center space-x-2">
-     <div className="flex items-center gap-2.5">
-          <img src="/logo.svg" className="md:w-10 md:h-10 w-10 h-10" alt="logo" />
-          <img src="/logoName.png" className="md:w-[93px] md:h-[33px] w-24 h-10" alt="Accurack" />
+      {/* Mobile View */}
+      <div className="flex justify-between items-center w-full h-14 px-4 lg:hidden">
+        {/* Left Icon */}
+        <div className="flex items-center justify-center w-[56px]">
+          <FaHome className="text-[20px]" />
         </div>
-  </div>
 
-  {/* Right Icon */}
-  <div className="flex items-center justify-center w-[56px]">
-    <FaBars className="text-[20px]" />
-  </div>
-</div>
+        {/* Logo */}
+        <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/logo.svg"
+              className="md:w-10 md:h-10 w-10 h-10"
+              alt="logo"
+            />
+            <img
+              src="/logoName.png"
+              className="md:w-[93px] md:h-[33px] w-24 h-10"
+              alt="Accurack"
+            />
+          </div>
+        </div>
 
+        {/* Right Icon */}
+        <div className="flex items-center justify-center w-[56px]">
+          <LogoutButton />
+        </div>
+      </div>
     </div>
   );
 };
 
 export default Navbar;
-

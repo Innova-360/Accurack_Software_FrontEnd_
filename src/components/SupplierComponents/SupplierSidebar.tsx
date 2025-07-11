@@ -1,18 +1,18 @@
-import React from 'react';
-import { FaChevronDown, FaChevronRight, FaPlus, FaTimes } from 'react-icons/fa';
-import { SidebarButton, SpecialButton } from '../buttons';
-import type { Supplier } from './types';
+import React from "react";
+import { FaChevronDown, FaChevronRight, FaPlus, FaTimes } from "react-icons/fa";
+import { SidebarButton, SpecialButton } from "../buttons";
+import type { Supplier } from "./types";
 
 interface SupplierSidebarProps {
   suppliers: Supplier[];
   selectedSupplier: Supplier | null;
   isSidebarOpen: boolean;
-  viewMode: 'suppliers' | 'products';
+  viewMode: "suppliers" | "products";
   onSupplierSelect: (supplier: Supplier) => void;
   onBackToSuppliers: () => void;
   onToggleSidebar: () => void;
   onAddSupplier: () => void;
-  onSetViewMode: (mode: 'suppliers' | 'products') => void;
+  onSetViewMode: (mode: "suppliers" | "products") => void;
 }
 
 const SupplierSidebar: React.FC<SupplierSidebarProps> = ({
@@ -24,8 +24,33 @@ const SupplierSidebar: React.FC<SupplierSidebarProps> = ({
   onBackToSuppliers,
   onToggleSidebar,
   onAddSupplier,
-  onSetViewMode
+  onSetViewMode,
 }) => {
+  // Helper functions for mobile behavior
+  const handleSupplierSelectMobile = (supplier: Supplier) => {
+    onSupplierSelect(supplier);
+    // Auto-close sidebar on mobile after selection
+    if (window.innerWidth < 1024) {
+      onToggleSidebar();
+    }
+  };
+
+  const handleBackToSuppliersMobile = () => {
+    onBackToSuppliers();
+    // Auto-close sidebar on mobile after going back
+    if (window.innerWidth < 1024) {
+      onToggleSidebar();
+    }
+  };
+
+  const handleSetViewModeMobile = (mode: "suppliers" | "products") => {
+    onSetViewMode(mode);
+    // Auto-close sidebar on mobile after mode change
+    if (window.innerWidth < 1024) {
+      onToggleSidebar();
+    }
+  };
+
   // Group suppliers by category
   // const suppliersByCategory = suppliers.reduce((acc, supplier) => {
   //   if (!acc[supplier?.category]) {
@@ -39,24 +64,26 @@ const SupplierSidebar: React.FC<SupplierSidebarProps> = ({
     <>
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={onToggleSidebar}
         />
       )}
 
       {/* Sidebar */}
-      <aside className={`
+      <aside
+        className={`
         fixed lg:static inset-y-0 left-0 z-50
         w-64 bg-white shadow-lg border-r border-gray-200
         transform transition-transform duration-300 ease-in-out
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
+        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+      `}
+      >
         {/* Sidebar Header */}
         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
           <div className="flex items-center">
             <div className="w-4 h-4 bg-gray-400 rounded mr-2"></div>
-            <span className="font-semibold text-gray-800">Suppliers Folder</span>
+            <span className="font-semibold text-gray-800">Vendors Folder</span>
           </div>
           <button
             onClick={onToggleSidebar}
@@ -70,30 +97,45 @@ const SupplierSidebar: React.FC<SupplierSidebarProps> = ({
         <div className="p-2">
           {/* All Suppliers Option */}
           <SidebarButton
-            onClick={onBackToSuppliers}
-            active={viewMode === 'suppliers'}
-            icon={viewMode === 'suppliers' ? <FaChevronDown size={12} /> : <FaChevronRight size={12} />}
+            onClick={handleBackToSuppliersMobile}
+            active={viewMode === "suppliers"}
+            icon={
+              viewMode === "suppliers" ? (
+                <FaChevronDown size={12} />
+              ) : (
+                <FaChevronRight size={12} />
+              )
+            }
           >
-            All Suppliers
+            All Vendors
           </SidebarButton>
-            {/* Category Separator */}
+          {/* Category Separator */}
           <div className="border-t border-gray-200 my-2"></div>
-            {/* All Suppliers List */}
+          {/* All Suppliers List */}
           <div className="space-y-1">
             {suppliers.map((supplier) => (
-              <div key={supplier.supplier_id} className="group">                <SidebarButton
-                  onClick={() => onSupplierSelect(supplier)}
-                  active={selectedSupplier?.supplier_id === supplier.supplier_id}
-                  icon={selectedSupplier?.supplier_id === supplier.supplier_id ? <FaChevronDown size={12} /> : <FaChevronRight size={12} />}
+              <div key={supplier.supplier_id} className="group">
+                <SidebarButton
+                  onClick={() => handleSupplierSelectMobile(supplier)}
+                  active={
+                    selectedSupplier?.supplier_id === supplier.supplier_id
+                  }
+                  icon={
+                    selectedSupplier?.supplier_id === supplier.supplier_id ? (
+                      <FaChevronDown size={12} />
+                    ) : (
+                      <FaChevronRight size={12} />
+                    )
+                  }
                 >
                   {supplier.name}
                 </SidebarButton>
               </div>
             ))}
-            
+
             {suppliers.length === 0 && (
               <div className="text-gray-500 text-sm p-3 text-center">
-                No suppliers found. Click "Add New Supplier" to get started.
+                No vendors found. Click "Add New Vendor" to get started.
               </div>
             )}
           </div>
@@ -103,9 +145,15 @@ const SupplierSidebar: React.FC<SupplierSidebarProps> = ({
             <>
               <div className="border-t border-gray-200 my-2"></div>
               <SidebarButton
-                onClick={() => onSetViewMode('products')}
-                active={viewMode === 'products'}
-                icon={viewMode === 'products' ? <FaChevronDown size={12} /> : <FaChevronRight size={12} />}
+                onClick={() => handleSetViewModeMobile("products")}
+                active={viewMode === "products"}
+                icon={
+                  viewMode === "products" ? (
+                    <FaChevronDown size={12} />
+                  ) : (
+                    <FaChevronRight size={12} />
+                  )
+                }
               >
                 {selectedSupplier.name} - Products
               </SidebarButton>
@@ -120,7 +168,7 @@ const SupplierSidebar: React.FC<SupplierSidebarProps> = ({
             icon={<FaPlus size={10} />}
             className="text-teal-600 font-medium"
           >
-            Add New Supplier
+            Add New Vendor
           </SpecialButton>
         </div>
       </aside>

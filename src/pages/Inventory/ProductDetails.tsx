@@ -3,6 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import type { Product } from "../../data/inventoryData";
 import { productAPI } from "../../services/productAPI";
+import Barcode from "react-barcode";
+import { useStoreFromUrl } from "../../hooks/useStoreFromUrl";
+import jsPDF from "jspdf";
+import JsBarcode from "jsbarcode";
 
 const ProductDetails: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -11,6 +15,7 @@ const ProductDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const { storeId } = useStoreFromUrl();
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -37,42 +42,61 @@ const ProductDetails: React.FC = () => {
   };
 
   const handleEdit = () => {
-    navigate(`/inventory/edit/${productId}`);
+    navigate(`/store/${storeId}/inventory/product/${productId}/update`);
   };
 
-  const handleUpdateInventory = () => {};
-
-  const handleCreatePurchaseOrder = () => {};
-
-  const handleViewSalesReport = () => {};
-
   const handlePrintBarcode = () => {
-    if (product) {
+    if (product && product.plu && product.plu.toString().trim() !== "") {
+      const pluValue = product.plu.toString();
+
       const printWindow = window.open("", "_blank");
       if (printWindow) {
         printWindow.document.write(`
-          <html>
-            <head>
-              <title>Barcode - ${product.name}</title>
-              <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-                .barcode { font-size: 24px; font-family: 'Courier New', monospace; margin: 20px 0; }
-                .product-info { margin: 10px 0; }
-              </style>
-            </head>
-            <body>
-              <h2>${product.name}</h2>
-              <div class="product-info">SKU: ${product.sku}</div>
-              <div class="product-info">PLU: ${product.pluUpc}</div>
-              ${product.ean ? `<div class="product-info">EAN: ${product.ean}</div>` : ""}
-              <div class="barcode">${product.ean}</div>
-              <div class="product-info">Price: $${product.singleItemSellingPrice || "0.00"}</div>
-            </body>
-          </html>
-        `);
+        <html>
+          <head>
+            <title>Barcode Print</title>
+            <style>
+              @media print {
+                @page { margin: 0; }
+                body { margin: 0; padding: 0; }
+              }
+              body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+              }
+              svg {
+                width: 80%;
+                height: auto;
+              }
+            </style>
+          </head>
+          <body>
+            <svg id="barcode"></svg>
+            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+            <script>
+              JsBarcode("#barcode", "${pluValue}", {
+                format: "CODE128",
+                width: 2,
+                height: 100,
+                displayValue: true,
+                fontSize: 14
+              });
+              window.onload = function() {
+                window.print();
+                setTimeout(function() { window.close(); }, 500);
+              };
+            </script>
+          </body>
+        </html>
+      `);
         printWindow.document.close();
-        printWindow.print();
       }
+    } else {
+      alert(
+        `This product doesn't have a valid PLU code to print. PLU value: \${product?.plu || "undefined"}`
+      );
     }
   };
 
@@ -110,6 +134,8 @@ const ProductDetails: React.FC = () => {
       </>
     );
   }
+
+  console.log("greate product", product);
 
   return (
     <>
@@ -174,7 +200,7 @@ const ProductDetails: React.FC = () => {
                         PLU / UPC
                       </label>
                       <div className="text-md text-gray-800 font-semibold">
-                        {product.pluUpc || product.plu || "Not specified"}
+                        {product.plu || "Not specified"}
                       </div>
                     </div>
                   </div>
@@ -184,17 +210,45 @@ const ProductDetails: React.FC = () => {
                       Barcode
                     </label>
                     <div className="relative bg-[#f9fafb] flex flex-row items-center justify-between p-4 rounded-lg">
-                      <img src="/img.png" alt="img" />
+                      <span>
+                        {/* Render barcode visually using react-barcode */}
+                        {product.plu ? (
+                          <Barcode
+                            value={product.plu}
+                            height={40}
+                            width={1.5}
+                            fontSize={14}
+                            displayValue={true}
+                          />
+                        ) : (
+                          <span className="text-gray-400">
+                            No PLU available
+                          </span>
+                        )}
+                      </span>
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => {
-                            // Download barcode functionality
-                            const link = document.createElement("a");
-                            link.href =
-                              "data:text/plain;charset=utf-8,Barcode: " +
-                              (product.ean || product.pluUpc || product.plu);
-                            link.download = `barcode-${product.sku}.txt`;
-                            link.click();
+                            if (!product.plu) {
+                              alert("No PLU available to generate barcode.");
+                              return;
+                            }
+
+                            const canvas = document.createElement("canvas");
+                            JsBarcode(canvas, product.plu, {
+                              format: "CODE128",
+                              width: 2,
+                              height: 60,
+                              displayValue: true,
+                              fontSize: 14,
+                            });
+
+                            const imgData = canvas.toDataURL("image/png");
+                            const pdf = new jsPDF();
+                            pdf.addImage(imgData, "PNG", 20, 30, 170, 40); // adjust position and size if needed
+                            pdf.save(
+                              `barcode-${product.plu}.pdf`
+                            );
                           }}
                         >
                           <svg
@@ -241,15 +295,14 @@ const ProductDetails: React.FC = () => {
                           : product.category?.name || "Not specified"}
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-md font-medium text-gray-500 mb-2">
-                        Subcategory
-                      </label>
-                      <div className="text-md text-gray-800 font-semibold">
-                        {typeof product.category === "object" && product.category !== null 
-                          ? product.category.name || "Not specified" 
-                          : "Not specified"}
-                      </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Product Description
+                    </label>
+                    <div className="text-sm text-gray-800 bg-gray-50 p-3 rounded-lg">
+                      {product.description || "No description available"}
                     </div>
                   </div>
 
@@ -273,7 +326,31 @@ const ProductDetails: React.FC = () => {
                         ))
                       ) : (
                         <span className="text-sm text-gray-500">
-                          No variants available
+                          {product.hasVariants
+                            ? "No variants configured"
+                            : "Single product (no variants)"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Product Packs
+                    </label>
+                    <div className="flex gap-2 flex-wrap">
+                      {product.packs && product.packs.length > 0 ? (
+                        product.packs.map((_, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-small bg-blue-100 text-blue-700"
+                          >
+                            Pack {index + 1}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-sm text-gray-500">
+                          No packs configured
                         </span>
                       )}
                     </div>
@@ -304,7 +381,7 @@ const ProductDetails: React.FC = () => {
                         Cost Price
                       </label>
                       <div className="text-md text-gray-800 font-semibold">
-                        ${product.singleItemCostPrice?.toFixed(2) || "0.00"}
+                        ${product.costPrice?.toFixed(2) || "0.00"}
                       </div>
                     </div>
                     <div>
@@ -312,7 +389,7 @@ const ProductDetails: React.FC = () => {
                         Selling Price
                       </label>
                       <div className="text-md text-gray-800 font-semibold">
-                        ${product.singleItemSellingPrice || "0.00"}
+                        {product.price || "0.00"}
                       </div>
                     </div>
                   </div>
@@ -349,6 +426,17 @@ const ProductDetails: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-md font-medium text-gray-500 mb-2">
+                        Profit Amount
+                      </label>
+                      <div className="text-md text-gray-800 font-semibold">
+                        ${product.profitAmount?.toFixed(2) || "0.00"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-md font-medium text-gray-500 mb-2">
                         {product.percentDiscount
                           ? `Discount (${product.percentDiscount}%)`
                           : "Discount"}
@@ -359,66 +447,14 @@ const ProductDetails: React.FC = () => {
                           : "No active discounts"}
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Suppliers */}
-              <div className="bg-white rounded-lg">
-                <div className="flex justify-between items-center border-b border-gray-200 pb-5 p-5">
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    Suppliers
-                  </h2>
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                    + Add Supplier
-                  </button>
-                </div>
-
-                <div className="p-6">
-                  {/* Table Header */}
-                  <div className="grid grid-cols-5 gap-4 pb-3 mb-4 text-sm font-medium text-gray-500 border-b border-gray-200">
-                    <div>Supplier Name</div>
-                    <div>Contact</div>
-                    <div>Last Cost</div>
-                    <div>Last Purchase</div>
-                    <div>Primary</div>
-                  </div>
-
-                  {/* Table Rows */}
-                  <div className="space-y-4">
-                    {product.productSuppliers &&
-                    product.productSuppliers.length > 0 ? (
-                      product.productSuppliers.map((supplier, index) => (
-                        <div
-                          key={index}
-                          className="grid grid-cols-5 gap-4 items-center py-3"
-                        >
-                          <div className="text-sm text-gray-900 font-medium">
-                            Supplier {index + 1}
-                          </div>
-                          <div className="text-sm text-blue-600 hover:text-blue-800 cursor-pointer">
-                            Contact Info
-                          </div>
-                          <div className="text-sm text-gray-900 font-semibold">
-                            ${supplier.costPrice?.toFixed(2) || "0.00"}
-                          </div>
-                          <div className="text-sm text-gray-900">
-                            {new Date().toLocaleDateString()}
-                          </div>
-                          <div className="text-sm">
-                            <span
-                              className={`text-lg ${supplier.state === "primary" ? "text-yellow-500" : "text-gray-300"}`}
-                            >
-                              {supplier.state === "primary" ? "★" : "☆"}
-                            </span>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-6 text-gray-500">
-                        No suppliers found
+                    <div>
+                      <label className="block text-md font-medium text-gray-500 mb-2">
+                        EAN/Barcode
+                      </label>
+                      <div className="text-md text-gray-800 font-semibold">
+                        {product.ean || "Not specified"}
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -440,7 +476,7 @@ const ProductDetails: React.FC = () => {
                         Current Stock
                       </label>
                       <div className="text-lg text-gray-900 font-semibold">
-                        {product.itemQuantity || 0} units
+                        {product.quantity || 0} units
                       </div>
                     </div>
                     <div>
@@ -448,23 +484,25 @@ const ProductDetails: React.FC = () => {
                         Minimum Stock
                       </label>
                       <div className="text-lg text-gray-900 font-semibold">
-                        20 units
+                        10 units
                       </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-500 mb-1">
-                        Last Restock
+                        Created Date
                       </label>
                       <div className="text-lg text-gray-900 font-semibold">
-                        Jun 15, 2023
+                        {new Date(product.createdAt).toLocaleDateString()}
                       </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-500 mb-1">
-                        Last Sold
+                        Updated Date
                       </label>
                       <div className="text-lg text-gray-900 font-semibold">
-                        Today, 10:23 AM
+                        {product.updatedAt
+                          ? new Date(product.updatedAt).toLocaleDateString()
+                          : new Date(product.createdAt).toLocaleDateString()}
                       </div>
                     </div>
                   </div>
@@ -490,88 +528,24 @@ const ProductDetails: React.FC = () => {
                           {product.store?.name || "Main Store"}
                         </div>
                         <div className="text-sm text-gray-900 font-semibold">
-                          {product.itemQuantity || 0} units
+                          {product.quantity || 0} units
                         </div>
                         <div className="text-sm text-gray-900">10 units</div>
                         <div>
                           <span
                             className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              (product.itemQuantity || 0) > 20
+                              (product.itemQuantity || 0) > 50
                                 ? "bg-green-100 text-green-800"
-                                : (product.itemQuantity || 0) > 10
+                                : (product.itemQuantity || 0) > 20
                                   ? "bg-yellow-100 text-yellow-800"
                                   : "bg-red-100 text-red-800"
                             }`}
                           >
-                            {(product.itemQuantity || 0) > 20
+                            {(product.itemQuantity || 0) > 50
                               ? "Normal"
-                              : (product.itemQuantity || 0) > 10
+                              : (product.itemQuantity || 0) > 20
                                 ? "Low"
                                 : "Critical"}
-                          </span>
-                        </div>
-                        <div>
-                          <button className="text-gray-400 hover:text-gray-600">
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                      {/* Warehouse Row */}
-                      <div className="grid grid-cols-5 gap-4 py-3 items-center">
-                        <div className="text-sm text-gray-900 font-medium">
-                          Warehouse
-                        </div>
-                        <div className="text-sm text-gray-900 font-semibold">
-                          15 units
-                        </div>
-                        <div className="text-sm text-gray-900">20 units</div>
-                        <div>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            Low
-                          </span>
-                        </div>
-                        <div>
-                          <button className="text-gray-400 hover:text-gray-600">
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                      {/* Online Store Row */}
-                      <div className="grid grid-cols-5 gap-4 py-3 items-center">
-                        <div className="text-sm text-gray-900 font-medium">
-                          Online Store
-                        </div>
-                        <div className="text-sm text-gray-900 font-semibold">
-                          2 units
-                        </div>
-                        <div className="text-sm text-gray-900">5 units</div>
-                        <div>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                            Critical
                           </span>
                         </div>
                         <div>
@@ -633,23 +607,59 @@ const ProductDetails: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
+                      {/* Always show product creation entry */}
+                      <tr className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-3 px-4 text-sm text-gray-900">
+                          {new Date(product.createdAt).toLocaleDateString()}{" "}
+                          {new Date(product.createdAt).toLocaleTimeString()}
+                        </td>
+                        <td className="py-3 px-4 text-sm">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                            Product Created
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
+                          +{product.itemQuantity || 0}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
+                          $
+                          {(
+                            (product.singleItemCostPrice || 0) *
+                            (product.itemQuantity || 0)
+                          ).toFixed(2)}
+                        </td>
+                        <td className="py-3 px-4 text-sm">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Active
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-900 font-mono">
+                          PROD-{product.id?.substring(0, 8)}
+                        </td>
+                      </tr>
+
+                      {/* Purchase Orders */}
                       {product.purchaseOrders &&
                       product.purchaseOrders.length > 0 ? (
                         product.purchaseOrders.map((po, index) => (
                           <tr
-                            key={po.id}
+                            key={po.id || index}
                             className="border-b border-gray-100 hover:bg-gray-50"
                           >
                             <td className="py-3 px-4 text-sm text-gray-900">
-                              {new Date(product.createdAt).toLocaleDateString()}
+                              {po.createdAt
+                                ? new Date(po.createdAt).toLocaleDateString()
+                                : new Date(
+                                    product.createdAt
+                                  ).toLocaleDateString()}
                             </td>
                             <td className="py-3 px-4 text-sm">
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
                                 Purchase Order
                               </span>
                             </td>
                             <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
-                              +{po.quantity}
+                              +{po.quantity || 0}
                             </td>
                             <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
                               ${po.total?.toFixed(2) || "0.00"}
@@ -662,72 +672,138 @@ const ProductDetails: React.FC = () => {
                                     : "bg-gray-100 text-gray-800"
                                 }`}
                               >
-                                {po.status}
+                                {po.status || "Unknown"}
                               </span>
                             </td>
                             <td className="py-3 px-4 text-sm text-gray-900 font-mono">
-                              PO-{po.id.slice(-3)}
+                              PO-{po.id?.substring(0, 8) || `${index + 1}`}
                             </td>
                           </tr>
                         ))
                       ) : (
-                        <>
-                          <tr className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-3 px-4 text-sm text-gray-900">
-                              Today 10:21 AM
-                            </td>
-                            <td className="py-3 px-4 text-sm">
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                                Sale
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
-                              -1
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
-                              $25.99
-                            </td>
-                            <td className="py-3 px-4 text-sm">
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Completed
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900 font-mono">
-                              INV-001
-                            </td>
-                          </tr>
-                          <tr className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-3 px-4 text-sm text-gray-900">
-                              {new Date(product.createdAt).toLocaleDateString()}
-                            </td>
-                            <td className="py-3 px-4 text-sm">
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                                Product Created
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
-                              +{product.itemQuantity}
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
-                              $
-                              {(
-                                product.singleItemCostPrice *
-                                product.itemQuantity
-                              ).toFixed(2)}
-                            </td>
-                            <td className="py-3 px-4 text-sm">
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Active
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900 font-mono">
-                              PROD-{product.id.slice(-3)}
-                            </td>
-                          </tr>
-                        </>
+                        <tr className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-4 text-sm text-gray-900">
+                            Today 10:21 AM
+                          </td>
+                          <td className="py-3 px-4 text-sm">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                              Sale (Sample)
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
+                            -1
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
+                            ${product.singleItemSellingPrice || "0.00"}
+                          </td>
+                          <td className="py-3 px-4 text-sm">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Completed
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-900 font-mono">
+                            SAMPLE-001
+                          </td>
+                        </tr>
                       )}
                     </tbody>
                   </table>
+                </div>
+              </div>
+
+              {/* Suppliers */}
+              <div className="bg-white rounded-lg">
+                <div className="flex justify-between items-center border-b border-gray-200 pb-5 p-5">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Suppliers
+                  </h2>
+                </div>
+
+                <div className="p-6">
+                  {/* Table Header */}
+                  <div className="grid grid-cols-5 gap-4 pb-3 mb-4 text-sm font-medium text-gray-500 border-b border-gray-200">
+                    <div>Supplier Name</div>
+                    <div>Contact Info</div>
+                    <div>Address</div>
+                    <div>Cost Price</div>
+                    <div>Status</div>
+                  </div>
+
+                  {/* Table Rows */}
+                  <div className="space-y-4">
+                    {product.productSuppliers &&
+                    product.productSuppliers.length > 0 ? (
+                      product.productSuppliers.map((productSupplier, index) => (
+                        <div
+                          key={productSupplier.id || index}
+                          className="grid grid-cols-5 gap-4 items-center py-3 hover:bg-gray-50 rounded-lg px-2"
+                        >
+                          <div className="text-sm text-gray-900 font-medium">
+                            <div className="font-medium">
+                              {productSupplier.supplier?.name ||
+                                "Unknown Supplier"}
+                            </div>
+                            {/* <div className="font-mono text-xs text-gray-500 mt-1">
+                              ID:{" "}
+                              {productSupplier.supplier?.id?.substring(0, 8) ||
+                                "N/A"}
+                            </div> */}
+                          </div>
+                          <div className="text-sm">
+                            <div className="space-y-1">
+                              {productSupplier.supplier?.email && (
+                                <div className="text-blue-600 hover:text-blue-800 cursor-pointer">
+                                  {productSupplier.supplier.email}
+                                </div>
+                              )}
+                              {productSupplier.supplier?.phone && (
+                                <div className="text-gray-700">
+                                  {productSupplier.supplier.phone}
+                                </div>
+                              )}
+                              {!productSupplier.supplier?.email &&
+                                !productSupplier.supplier?.phone && (
+                                  <span className="text-gray-400">
+                                    No contact info
+                                  </span>
+                                )}
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <div
+                              className="max-w-xs truncate"
+                              title={productSupplier.supplier?.address}
+                            >
+                              {productSupplier.supplier?.address ||
+                                "No address"}
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-900 font-semibold">
+                            ${productSupplier.costPrice?.toFixed(2) || "0.00"}
+                          </div>
+
+                          <div className="text-sm">
+                            <span
+                              className={`text-md ${productSupplier.state === "primary" ? "text-black-900 font-bold" : "text-black-700"}`}
+                              title={
+                                productSupplier.state === "primary"
+                                  ? "Primary Supplier"
+                                  : "Secondary Supplier"
+                              }
+                            >
+                              {productSupplier.state === "primary"
+                                ? "Primary"
+                                : "Secondary"}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-6 text-gray-500">
+                        No vendors found
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -758,7 +834,7 @@ const ProductDetails: React.FC = () => {
                 Edit Product
               </button>
 
-              <button
+              {/* <button
                 onClick={handleUpdateInventory}
                 className="bg-[#003f4a] text-white px-4 py-2 rounded hover:bg-[#002a32] transition-colors flex items-center gap-2 text-sm font-medium border border-[#003f4a]"
               >
@@ -776,9 +852,9 @@ const ProductDetails: React.FC = () => {
                   />
                 </svg>
                 Update Inventory
-              </button>
+              </button> */}
 
-              <button
+              {/* <button
                 onClick={handleCreatePurchaseOrder}
                 className="bg-[#003f4a] text-white px-4 py-2 rounded hover:bg-[#002a32] transition-colors flex items-center gap-2 text-sm font-medium border border-[#003f4a]"
               >
@@ -796,9 +872,9 @@ const ProductDetails: React.FC = () => {
                   />
                 </svg>
                 Create Purchase Order
-              </button>
+              </button> */}
 
-              <button
+              {/* <button
                 onClick={handleViewSalesReport}
                 className="bg-[#003f4a] text-white px-4 py-2 rounded hover:bg-[#002a32] transition-colors flex items-center gap-2 text-sm font-medium border border-[#003f4a]"
               >
@@ -812,11 +888,11 @@ const ProductDetails: React.FC = () => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2v-4a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 012 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2v-4a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                   />
                 </svg>
                 View Sales Report
-              </button>
+              </button> */}
 
               <button
                 onClick={handlePrintBarcode}

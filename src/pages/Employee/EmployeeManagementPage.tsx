@@ -6,7 +6,7 @@ const EmployeeManagementPage: React.FC = () => {
   return (
     <>
       <Header />
-      <br />
+      {/* <br /> */}
       <EmployeeDashboard />
     </>
   );

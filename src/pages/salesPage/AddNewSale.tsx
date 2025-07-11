@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { FaPlus, FaTrash, FaArrowLeft, FaSearch, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import toast from "react-hot-toast";
+import Header from "../../components/Header";
 import { SpecialButton } from "../../components/buttons";
-import SaleCreationModal from "../../components/modals/SaleCreationModal";
 import { fetchProductsPaginated, setSearchQuery } from "../../store/slices/productsSlice";
 import { createSale } from "../../store/slices/salesSlice";
 import { fetchUser } from "../../store/slices/userSlice";
@@ -13,8 +13,6 @@ import useRequireStore from "../../hooks/useRequireStore";
 import type { RootState, AppDispatch } from "../../store";
 import type { Product } from "../../data/inventoryData";
 import type { SaleRequestData, SaleItem } from "../../store/slices/salesSlice";
-import Header from "../../components/Header";
-
 
 interface ProductItem {
   id: string;
@@ -30,11 +28,12 @@ interface ProductItem {
 const AddNewSale: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  
+
   // Get current store and user data
   const currentStore = useRequireStore();
   const { user } = useSelector((state: RootState) => state.user);
-  
+  const { id } = useParams(); // Get store ID from URL params
+
   // Redux state
   const {
     products: availableProducts,
@@ -44,8 +43,9 @@ const AddNewSale: React.FC = () => {
     totalPages,
     currentPage,
     hasNextPage,
+    hasPreviousPage,
   } = useSelector((state: RootState) => state.products);
-  
+
   // Sales state
   const { loading: salesLoading } = useSelector((state: RootState) => state.sales);
 
@@ -56,8 +56,8 @@ const AddNewSale: React.FC = () => {
   const [currentPageLocal, setCurrentPageLocal] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const productsPerPage = 50;
+  const [allowance, setAllowance] = useState(0);
 
   // Debounce search term
   useEffect(() => {
@@ -71,59 +71,34 @@ const AddNewSale: React.FC = () => {
 
   // Fetch products with pagination and search
   const fetchProductsData = useCallback(() => {
-    console.log("Fetching products with params:", {
-      page: currentPageLocal,
-      limit: productsPerPage,
-      search: debouncedSearchTerm || undefined,
-    });
     dispatch(fetchProductsPaginated({
       page: currentPageLocal,
       limit: productsPerPage,
+      storeId: id,
       search: debouncedSearchTerm || undefined,
     }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, currentPageLocal, debouncedSearchTerm]);
 
-  // Initial fetch on component mount
+  // Fetch products, user, and customers on component mount
   useEffect(() => {
+    fetchProductsData();
     dispatch(fetchUser());
     // Fetch customers for the dropdown
     if (currentStore?.id) {
       dispatch(fetchCustomers({ storeId: currentStore.id, page: 1, limit: 100 }));
     }
-  }, [dispatch, currentStore?.id]);
-
-  // Fetch products when page changes or search term changes
-  useEffect(() => {
-    fetchProductsData();
-  }, [fetchProductsData]);
+  }, [fetchProductsData, dispatch, currentStore?.id]);
 
   // Update search query in redux store
   useEffect(() => {
     dispatch(setSearchQuery(debouncedSearchTerm));
   }, [dispatch, debouncedSearchTerm]);
 
-  // Handle page changes
-  const handlePageChange = (newPage: number) => {
-    console.log("Changing page from", currentPageLocal, "to", newPage);
-    setCurrentPageLocal(newPage);
-  };
-
-  // Handle search clear
-  const handleClearSearch = () => {
-    setSearchTerm("");
-    setDebouncedSearchTerm("");
-    setCurrentPageLocal(1);
-  };
-  
-  // Handle refresh products
-  const handleRefreshProducts = () => {
-    fetchProductsData();
-    toast.success("Products refreshed");
-  };
-
   // Form state
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [customerName, setCustomerName] = useState("");
+  const [countryCode, setCountryCode] = useState("+1"); // Added country code state
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [street, setStreet] = useState("");
@@ -146,14 +121,8 @@ const AddNewSale: React.FC = () => {
   const subtotal = products.reduce((sum, product) => sum + product.total, 0);
   const discountAmount =
     discountType === "percentage" ? (subtotal * discount) / 100 : discount;
-  // const discountPercentage =
-  //   discountType === "amount"
-  //     ? subtotal > 0
-  //       ? (discount / subtotal) * 100
-  //       : 0
-  //     : discount;
-  const taxAmount = ((subtotal - discountAmount) * taxRate) / 100;
-  const finalTotal = subtotal - discountAmount + taxAmount;
+  const taxAmount = ((subtotal - discountAmount ) * taxRate) / 100;
+  const finalTotal = subtotal - discountAmount  + taxAmount;
 
   // Combine address fields into a single address string
   const getFullAddress = () => {
@@ -166,10 +135,11 @@ const AddNewSale: React.FC = () => {
   // Handle customer selection from dropdown
   const handleCustomerSelect = (customerId: string) => {
     setSelectedCustomerId(customerId);
-    
+
     if (customerId === "new") {
-      // Clear all fields for new customer
+      // Clear all fields for a new customer
       setCustomerName("");
+      setCountryCode("+1");
       setPhoneNumber("");
       setEmail("");
       setStreet("");
@@ -181,53 +151,51 @@ const AddNewSale: React.FC = () => {
     }
 
     if (customerId === "") {
-      return; // No selection
+      // Clear all fields when no customer is selected
+      setCustomerName("");
+      setCountryCode("+1");
+      setPhoneNumber("");
+      setEmail("");
+      setStreet("");
+      setCity("");
+      setState("");
+      setPostalCode("");
+      setCountry("");
+      return;
     }
 
     // Find the selected customer and auto-fill the form
     const selectedCustomer = customers.find(customer => customer.id === customerId);
     if (selectedCustomer) {
-      setCustomerName(selectedCustomer.customerName);
-      setPhoneNumber(selectedCustomer.phoneNumber);
+      setCustomerName(selectedCustomer.customerName || "");
+
+      // Extract country code from phone number or set default
+      const phoneStr = selectedCustomer.phoneNumber || "";
+      const phoneRegex = /^(\+\d+)(.*)$/;
+      const match = phoneStr.match(phoneRegex);
+
+      if (match) {
+        setCountryCode(match[1]);
+        setPhoneNumber(match[2]);
+      } else {
+        setCountryCode("+1");
+        setPhoneNumber(phoneStr);
+      }
+
       setEmail(selectedCustomer.customerMail || "");
-      
-      // Parse the address string back into components
+
       if (selectedCustomer.customerAddress) {
-        const addressParts = selectedCustomer.customerAddress.split(", ").filter(part => part.trim());
-        
-        // Reset all address fields first
-        setStreet("");
-        setCity("");
-        setState("");
-        setPostalCode("");
-        setCountry("");
-        
-        // Try to intelligently assign address parts
+        // Split address into components if available
+        const addressParts = selectedCustomer.customerAddress.split(', ');
         if (addressParts.length >= 5) {
-          // Full address: street, city, state, postal, country
           setStreet(addressParts[0]);
           setCity(addressParts[1]);
           setState(addressParts[2]);
           setPostalCode(addressParts[3]);
-          setCountry(addressParts[4]);
-        } else if (addressParts.length === 4) {
-          // Missing street: city, state, postal, country
-          setCity(addressParts[0]);
-          setState(addressParts[1]);
-          setPostalCode(addressParts[2]);
-          setCountry(addressParts[3]);
-        } else if (addressParts.length === 3) {
-          // city, state, country (assuming no postal code)
-          setCity(addressParts[0]);
-          setState(addressParts[1]);
-          setCountry(addressParts[2]);
-        } else if (addressParts.length === 2) {
-          // city, country
-          setCity(addressParts[0]);
-          setCountry(addressParts[1]);
-        } else if (addressParts.length === 1) {
-          // Just put it in city field
-          setCity(addressParts[0]);
+          setCountry(addressParts.slice(4).join(', '));
+        } else {
+          // If address format is unexpected, just set the full address to street
+          setStreet(selectedCustomer.customerAddress);
         }
       }
     }
@@ -285,6 +253,8 @@ const AddNewSale: React.FC = () => {
     value: string | number
   ) => {
     const updatedProducts = [...products];
+    console.log("Index",index, "Field", field, "Value", value);
+    
 
     // Handle product selection
     if (field === "name") {
@@ -366,10 +336,10 @@ const AddNewSale: React.FC = () => {
     setDiscount(0);
   };
 
-  const handleSaveDraft = () => {
-    // TODO: Implement save as draft functionality
-    console.log("Save as draft");
-  };
+  // const handleSaveDraft = () => {
+  //   // TODO: Implement save as draft functionality
+  //   console.log("Save as draft");
+  // };
 
   const handleCreateSale = async () => {
     // Validate form
@@ -378,10 +348,24 @@ const AddNewSale: React.FC = () => {
       return;
     }
 
+    if (!countryCode.trim()) {
+      toast.error("Country code is required");
+      return;
+    }
+
     if (!phoneNumber.trim()) {
       toast.error("Phone number is required");
       return;
     }
+
+    // Make sure country code is in proper format
+    if (!countryCode.startsWith('+')) {
+      toast.error("Country code must start with '+' (e.g., +1)");
+      return;
+    }
+
+    // Combine country code and phone number
+    const fullPhoneNumber = `${countryCode}${phoneNumber}`;
 
     // Validate address fields (except street which is optional)
     if (!city.trim()) {
@@ -447,12 +431,12 @@ const AddNewSale: React.FC = () => {
 
       // Prepare sale data according to API format
       const saleData: SaleRequestData = {
-        customerPhone: phoneNumber.trim(),
+        customerPhone: fullPhoneNumber,
         customerData: {
           customerName: customerName.trim(),
           customerAddress: getFullAddress(),
-          phoneNumber: phoneNumber.trim(),
-          telephoneNumber: phoneNumber.trim(),
+          phoneNumber: fullPhoneNumber,
+          telephoneNumber: fullPhoneNumber,
           customerMail: email.trim(),
           storeId: currentStore.id,
           clientId: user.clientId,
@@ -462,51 +446,131 @@ const AddNewSale: React.FC = () => {
         paymentMethod: paymentMethod as "CASH" | "CARD" | "BANK_TRANSFER" | "CHECK" | "DIGITAL_WALLET",
         totalAmount: Math.round(finalTotal * 100) / 100, // Ensure proper number format
         tax: Math.round(taxAmount * 100) / 100, // Ensure proper number format
-        cashierName: user.firstName && user.lastName 
-          ? `${user.firstName} ${user.lastName}` 
+         allowance: Math.round(allowance * 100) / 100, // Add this line
+        cashierName: user.firstName && user.lastName
+          ? `${user.firstName} ${user.lastName}`
           : user.email || "Current User",
         generateInvoice: false, // Default to false as specified
         source: "manual", // Default source as manual
         status: "PENDING", // Default status as pending (uppercase)
         saleItems,
       };
+
       console.log("📦 Prepared sale data:", JSON.stringify(saleData, null, 2));
+
+      // Dispatch create sale action
       await dispatch(createSale(saleData)).unwrap();
+
       toast.success("Sale created successfully!");
 
-      navigate(-1)
-    } catch (error: any) {
+      // Navigate back to sales page
+      navigate(-1);
+    } 
+    catch (error: axios.AxiosError) {
       console.error("Error creating sale:", error);
-      toast.error(`Failed to create sale: ${error.message || "An unexpected error occurred."}`);
+      toast.error(`Failed to create sale: ${error}`);
     }
+  };
+
+  const handleCreateInvoice = () => {
+    // Validate form before proceeding to invoice creation
+    if (!customerName.trim()) {
+      alert('Customer name is required');
+      return;
+    }
+
+    if (!phoneNumber.trim()) {
+      alert('Phone number is required');
+      return;
+    }
+
+    // Validate address fields (except street which is optional)
+    if (!city.trim()) {
+      alert('City is required');
+      return;
+    }
+
+    if (!state.trim()) {
+      alert('State/Province is required');
+      return;
+    }
+
+    if (!postalCode.trim()) {
+      alert('Postal code is required');
+      return;
+    }
+
+    if (!country.trim()) {
+      alert('Country is required');
+      return;
+    }
+
+    if (products.some(p => !p.name.trim() || p.price <= 0)) {
+      alert('Please fill in all product details');
+      return;
+    }
+
+
+
+    // Prepare invoice data
+    const invoiceData = {
+      customerDetails: {
+        name: customerName.trim(),
+        phone: phoneNumber.trim(),
+        email: email.trim(),
+        address: getFullAddress(),
+        street,
+        city,
+        state,
+        postalCode,
+        country
+      },
+      products: products.filter(p => p.name.trim() && p.price > 0).map(product => {
+        // Get the PLU/UPC from the selected product or variant
+        let pluUpc = "";
+        if (product.selectedProduct) {
+          // If it's a variant, check for variant PLU/UPC first
+          if (product.variantId && product.selectedProduct.variants) {
+            const variant = product.selectedProduct.variants.find(v => v.id === product.variantId);
+            pluUpc = variant?.pluUpc || product.selectedProduct.plu || product.selectedProduct.sku || "";
+          } else {
+            // For regular products, use pluUpc, plu, or sku as fallback
+            pluUpc = (product.selectedProduct as any).pluUpc || product.selectedProduct.plu || product.selectedProduct.sku || "";
+          }
+        }
+        return {
+          ...product,
+          pluUpc,
+          plu: product.selectedProduct?.plu || "",
+          sku: product.selectedProduct?.sku || ""
+        };
+      }),
+      subtotal,
+      discount,
+      discountType,
+      discountAmount,
+      taxRate,
+      allowance,
+      taxAmount,
+      finalTotal,
+      paymentMethod,
+      notes
+    };
+
+    console.log("Products for invoice:", products);
+
+
+    // Navigate to invoice creation with data
+    navigate(`/store/${id}/create-invoice`, { state: { invoiceData } });
   };
 
   const handleCancel = () => {
     navigate(-1);
   };
-  
-  const handleManualCreate = () => {
-    setIsModalOpen(false);
-    // The rest of the form is already visible, so no need to do anything else
-  };
-  
-  // Check if we should show modal on initial load
-  useEffect(() => {
-    setIsModalOpen(true);
-  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-
-      {/* Sale Creation Modal */}
-      <SaleCreationModal
-        isOpen={isModalOpen}
-        onClose={() => navigate(-1)} // Go back when closing without selecting an option
-        onManualCreate={handleManualCreate}
-        storeId={currentStore?.id}
-        clientId={user?.clientId}
-      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
@@ -534,9 +598,9 @@ const AddNewSale: React.FC = () => {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Customer Information
               </h2>
-              
+
               {/* Customer Selection Dropdown */}
-              <div className="mb-6 p-4 rounded-lg">
+              <div className="mb-6 py-4 rounded-lg">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Select Existing Customer
                 </label>
@@ -547,9 +611,9 @@ const AddNewSale: React.FC = () => {
                   disabled={customersLoading}
                 >
                   <option value="" className="text-gray-500">
-                    {customersLoading 
-                      ? "Loading customers..." 
-                      : customers.length > 0 
+                    {customersLoading
+                      ? "Loading customers..."
+                      : customers.length > 0
                         ? `Select from ${customers.length} existing customers or enter new details below`
                         : "No existing customers found - enter new details below"
                     }
@@ -559,7 +623,7 @@ const AddNewSale: React.FC = () => {
                       {customer.customerName} - {customer.phoneNumber}
                     </option>
                   ))}
-                {customers.length > 0 && <option className="text-gray-700 py-1.5" value="new">Add New Customer</option>}
+                  {customers.length > 0 && <option className="text-gray-700 py-1.5" value="new">Add New Customer</option>}
                 </select>
                 {selectedCustomerId === "new" && (
                   <p className="mt-2 text-sm text-green-700">
@@ -590,13 +654,23 @@ const AddNewSale: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Phone Number <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-                    placeholder="Enter phone number"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={countryCode}
+                      onChange={(e) => setCountryCode(e.target.value)}
+                      className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                      placeholder="+1"
+                      aria-label="Country Code"
+                    />
+                    <input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                      placeholder="Enter phone number"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -689,14 +763,6 @@ const AddNewSale: React.FC = () => {
                 <h2 className="text-lg font-semibold text-gray-900">
                   Products Purchased
                 </h2>
-                <button
-                  onClick={handleRefreshProducts}
-                  className="text-[#03414C] hover:text-[#025561] text-sm flex items-center gap-1"
-                  disabled={productsLoading}
-                >
-                  <FaSearch size={12} />
-                  Refresh Products
-                </button>
               </div>
 
               {/* Product Search Bar */}
@@ -718,7 +784,10 @@ const AddNewSale: React.FC = () => {
                       {debouncedSearchTerm && ` for "${debouncedSearchTerm}"`}
                     </span>
                     <button
-                      onClick={handleClearSearch}
+                      onClick={() => {
+                        setSearchTerm("");
+                        setDebouncedSearchTerm("");
+                      }}
                       className="text-[#03414C] hover:text-[#025561] underline"
                     >
                       Clear search
@@ -727,26 +796,25 @@ const AddNewSale: React.FC = () => {
                 )}
               </div>
 
-              {/* Pagination Controls - Top */}
-              {availableProducts.length > 0 && (
+              {/* Pagination Controls - Top 
+              {totalPages > 1 && (
                 <div className="mb-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                   <div className="text-sm text-gray-600">
-                    Page {currentPage || currentPageLocal} of {totalPages || Math.ceil(totalProducts / productsPerPage) || 1} 
-                    ({totalProducts} total products)
+                    Page {currentPage} of {totalPages} ({totalProducts} total products)
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handlePageChange(Math.max(1, currentPageLocal - 1))}
-                      disabled={currentPageLocal <= 1 || productsLoading}
+                      onClick={() => setCurrentPageLocal(prev => Math.max(1, prev - 1))}
+                      disabled={!hasPreviousPage || productsLoading}
                       className="p-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <FaChevronLeft size={14} />
                     </button>
                     <span className="px-3 py-1 bg-white border border-gray-300 rounded-lg text-sm">
-                      {currentPageLocal}
+                      {currentPage}
                     </span>
                     <button
-                      onClick={() => handlePageChange(currentPageLocal + 1)}
+                      onClick={() => setCurrentPageLocal(prev => prev + 1)}
                       disabled={!hasNextPage || productsLoading}
                       className="p-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -755,13 +823,14 @@ const AddNewSale: React.FC = () => {
                   </div>
                 </div>
               )}
+                */}
 
               {/* Products loading/error state */}
               {productsLoading && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                   <p className="text-blue-700 text-sm">
-                    {debouncedSearchTerm 
-                      ? `Searching for "${debouncedSearchTerm}"...` 
+                    {debouncedSearchTerm
+                      ? `Searching for "${debouncedSearchTerm}"...`
                       : "Loading products..."}
                   </p>
                 </div>
@@ -802,10 +871,12 @@ const AddNewSale: React.FC = () => {
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                           disabled={productsLoading}
                         >
+                          
+
                           <option value="">
                             {productsLoading
                               ? (debouncedSearchTerm ? `Searching "${debouncedSearchTerm}"...` : "Loading products...")
-                              : `Select from ${totalProducts} products${debouncedSearchTerm ? ` (filtered)` : ''}...`}
+                              : `Select from ${flattenedProducts.length} products${debouncedSearchTerm ? ` (filtered)` : ''}...`}
                           </option>
                           {flattenedProducts.map((flatProduct) => (
                             <option
@@ -929,6 +1000,7 @@ const AddNewSale: React.FC = () => {
                             </div>
                           </div>
                         </div>
+
                         {/* Additional product information row */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mt-3 pt-3 border-t border-blue-200">
                           <div>
@@ -937,10 +1009,10 @@ const AddNewSale: React.FC = () => {
                             </span>
                             <div className="text-gray-900">
                               {typeof product.selectedProduct.category ===
-                              "string"
+                                "string"
                                 ? product.selectedProduct.category
                                 : (product.selectedProduct.category as any)?.name ||
-                                  "Uncategorized"}
+                                "Uncategorized"}
                             </div>
                           </div>
                           <div>
@@ -949,10 +1021,10 @@ const AddNewSale: React.FC = () => {
                             </span>
                             <div className="text-gray-900">
                               {typeof product.selectedProduct.supplier ===
-                              "string"
+                                "string"
                                 ? product.selectedProduct.supplier
                                 : (product.selectedProduct.supplier as any)?.name ||
-                                  "N/A"}
+                                "N/A"}
                             </div>
                           </div>
                           <div>
@@ -972,6 +1044,7 @@ const AddNewSale: React.FC = () => {
                             </div>
                           </div>
                         </div>
+
                         {product.variantId && (
                           <div className="mt-3 pt-2 border-t border-blue-200">
                             <div className="text-xs text-blue-700">
@@ -984,30 +1057,30 @@ const AddNewSale: React.FC = () => {
                             {flattenedProducts.find(
                               (fp) => fp.displayName === product.name
                             )?.variantData && (
-                              <div className="text-xs text-gray-600 mt-1">
-                                <span className="font-medium">
-                                  Variant SKU:
-                                </span>{" "}
-                                {flattenedProducts.find(
-                                  (fp) => fp.displayName === product.name
-                                )?.variantData?.sku || "N/A"}
-                                {flattenedProducts.find(
-                                  (fp) => fp.displayName === product.name
-                                )?.variantData?.pluUpc && (
-                                  <>
-                                    {" | "}
-                                    <span className="font-medium">
-                                      Variant PLU:
-                                    </span>{" "}
-                                    {
-                                      flattenedProducts.find(
-                                        (fp) => fp.displayName === product.name
-                                      )?.variantData?.pluUpc
-                                    }
-                                  </>
-                                )}
-                              </div>
-                            )}
+                                <div className="text-xs text-gray-600 mt-1">
+                                  <span className="font-medium">
+                                    Variant SKU:
+                                  </span>{" "}
+                                  {flattenedProducts.find(
+                                    (fp) => fp.displayName === product.name
+                                  )?.variantData?.sku || "N/A"}
+                                  {flattenedProducts.find(
+                                    (fp) => fp.displayName === product.name
+                                  )?.variantData?.pluUpc && (
+                                      <>
+                                        {" | "}
+                                        <span className="font-medium">
+                                          Variant PLU:
+                                        </span>{" "}
+                                        {
+                                          flattenedProducts.find(
+                                            (fp) => fp.displayName === product.name
+                                          )?.variantData?.pluUpc
+                                        }
+                                      </>
+                                    )}
+                                </div>
+                              )}
                           </div>
                         )}
                       </div>
@@ -1032,24 +1105,24 @@ const AddNewSale: React.FC = () => {
               </div>
 
               {/* Pagination Controls - Bottom */}
-              {availableProducts.length > 0 && (
+              {totalPages > 1 && (
                 <div className="mt-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                   <div className="text-sm text-gray-600">
-                    Showing {((currentPageLocal - 1) * productsPerPage) + 1}-{Math.min(currentPageLocal * productsPerPage, totalProducts || availableProducts.length)} of {totalProducts || availableProducts.length} products
+                    Showing {((currentPage - 1) * productsPerPage) + 1}-{Math.min(currentPage * productsPerPage, totalProducts)} of {totalProducts} products
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handlePageChange(Math.max(1, currentPageLocal - 1))}
-                      disabled={currentPageLocal <= 1 || productsLoading}
+                      onClick={() => setCurrentPageLocal(prev => Math.max(1, prev - 1))}
+                      disabled={!hasPreviousPage || productsLoading}
                       className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                     >
                       Previous
                     </button>
                     <span className="px-3 py-1 bg-white border border-gray-300 rounded-lg text-sm">
-                      {currentPageLocal} / {totalPages || Math.ceil((totalProducts || availableProducts.length) / productsPerPage)}
+                      {currentPage} / {totalPages}
                     </span>
                     <button
-                      onClick={() => handlePageChange(currentPageLocal + 1)}
+                      onClick={() => setCurrentPageLocal(prev => prev + 1)}
                       disabled={!hasNextPage || productsLoading}
                       className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                     >
@@ -1163,6 +1236,28 @@ const AddNewSale: React.FC = () => {
                     </span>
                   </div>
                 </div>
+                {/* Allowance field */}
+                <div className="flex justify-between items-start text-gray-600 mt-2">
+                  <span className="font-medium">Allowance</span>
+                  <div className="flex flex-col items-end space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={allowance}
+                        onChange={(e) => setAllowance(parseFloat(e.target.value) || 0)}
+                        className="w-[100%] px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                        placeholder="0"
+                      />
+                      <span className="text-sm">$</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span></span>
+                  <span className="text-green-600">-${allowance.toFixed(2)}</span>
+                </div>
 
                 <div className="flex justify-between items-start text-gray-600">
                   <span className="font-medium">Tax</span>
@@ -1207,12 +1302,20 @@ const AddNewSale: React.FC = () => {
                 </SpecialButton>
 
                 <SpecialButton
+                  variant="primary"
+                  onClick={handleCreateInvoice}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
+                >
+                  Create Sale and make Invoice
+                </SpecialButton>
+
+                {/* <SpecialButton
                   variant="secondary"
                   onClick={handleSaveDraft}
                   className="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 py-3"
                 >
                   Save as Draft
-                </SpecialButton>
+                </SpecialButton> */}
 
                 <SpecialButton
                   variant="modal-cancel"

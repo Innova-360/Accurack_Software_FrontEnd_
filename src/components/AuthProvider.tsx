@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { fetchUser } from "../store/slices/userSlice";
 import { logout } from "../store/slices/authSlice";
+import { updateLastUpdated } from "../utils/lastUpdatedUtils";
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -26,10 +27,11 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       dispatch(fetchUser()).catch((error) => {
         // If token is invalid, logout and redirect to login
         dispatch(logout());
+        updateLastUpdated(); // Update last updated time on logout
         navigate("/login", { replace: true });
       });
     }
-  }, [dispatch, isAuthenticated, token, user, loading, navigate]);
+  }, [dispatch, isAuthenticated, token, user]);
 
   return <>{children}</>;
 };

@@ -7,6 +7,8 @@ import type {
   Customer,
   CustomerFormData,
   CustomerState,
+  SearchCustomersResponse,
+  CustomerBalanceResponse,
 } from "../../types/customer";
 import apiClient from "../../services/api";
 
@@ -20,6 +22,11 @@ const initialState: CustomerState = {
     limit: 10,
     total: 0,
     totalPages: 0,
+  },
+  balance: {
+    balanceData: null,
+    loading: false,
+    error: null,
   },
 };
 
@@ -106,7 +113,7 @@ export const fetchCustomers = createAsyncThunk(
       console.log("pagination:", pagination);
 
       return { customers, pagination };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Fetch customers error:", error);
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch customers"
@@ -156,11 +163,18 @@ export const updateCustomer = createAsyncThunk(
     { rejectWithValue, dispatch }
   ) => {
     try {
-      const response = await apiClient.put(`/sales/customers/${id}`, customerData);
+      const response = await apiClient.put(
+        `/sales/customers/${id}`,
+        customerData
+      );
       // Refresh customers list after update
       await dispatch(fetchCustomers({ storeId: customerData.storeId }));
 
-      return { success: true, message: "Customer updated successfully", data: response.data };
+      return {
+        success: true,
+        message: "Customer updated successfully",
+        data: response.data,
+      };
     } catch (error: any) {
       console.error("Update customer error:", error);
       return rejectWithValue(
@@ -252,6 +266,23 @@ export const deleteAllCustomers = createAsyncThunk(
   }
 );
 
+export const fetchCustomerBalance = createAsyncThunk(
+  "customers/fetchCustomerBalance",
+  async (customerId: string, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.get<CustomerBalanceResponse>(
+        `/sales/customers/${customerId}/balance`
+      );
+      return response.data.data;
+    } catch (error: any) {
+      console.error("Fetch customer balance error:", error);
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch customer balance"
+      );
+    }
+  }
+);
+
 export const customerSlice = createSlice({
   name: "customers",
   initialState,
@@ -273,6 +304,10 @@ export const customerSlice = createSlice({
         total: 0,
         totalPages: 0,
       };
+    },
+    clearCustomerBalance: (state) => {
+      state.balance.balanceData = null;
+      state.balance.error = null;
     },
     setPage: (state, action: PayloadAction<number>) => {
       state.pagination.page = action.payload;
@@ -353,6 +388,19 @@ export const customerSlice = createSlice({
       .addCase(deleteAllCustomers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      // Fetch customer balance
+      .addCase(fetchCustomerBalance.pending, (state) => {
+        state.balance.loading = true;
+        state.balance.error = null;
+      })
+      .addCase(fetchCustomerBalance.fulfilled, (state, action) => {
+        state.balance.loading = false;
+        state.balance.balanceData = action.payload;
+      })
+      .addCase(fetchCustomerBalance.rejected, (state, action) => {
+        state.balance.loading = false;
+        state.balance.error = action.payload as string;
       });
   },
 });
@@ -363,17 +411,18 @@ export const {
   clearError,
   clearCustomers,
   setPage,
+  clearCustomerBalance,
 } = customerSlice.actions;
 
 export default customerSlice.reducer;
-import { createApi } from '@reduxjs/toolkit/query/react';
+import { createApi } from "@reduxjs/toolkit/query/react";
 
 const customBaseQuery = async (args: any) => {
   try {
-    const apiClient = (await import('../../services/api')).default;
+    const apiClient = (await import("../../services/api")).default;
     const result = await apiClient({
-      url: typeof args === 'string' ? args : args.url,
-      method: args.method || 'GET',
+      url: typeof args === "string" ? args : args.url,
+      method: args.method || "GET",
       data: args.body,
       params: args.params,
     });
@@ -389,16 +438,19 @@ const customBaseQuery = async (args: any) => {
 };
 
 export const customerApi = createApi({
-  reducerPath: 'customerApi',
+  reducerPath: "customerApi",
   baseQuery: customBaseQuery,
-  tagTypes: ['Customer'],
+  tagTypes: ["Customer"],
   endpoints: (builder) => ({
-    searchCustomers: builder.query<{ data: any[] }, { search: string; storeId: string }>({
+    searchCustomers: builder.query<
+      SearchCustomersResponse,
+      { search: string; storeId: string }
+    >({
       query: ({ search, storeId }) => ({
-        url: '/sales/customers',
+        url: "/sales/customers",
         params: { search, storeId },
       }),
-      providesTags: ['Customer'],
+      providesTags: ["Customer"],
     }),
   }),
 });

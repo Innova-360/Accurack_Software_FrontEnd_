@@ -10,9 +10,11 @@ import {
   FaEnvelope,
   FaEdit,
   FaTrash,
+  FaEye,
 } from "react-icons/fa";
 import { SpecialButton, IconButton } from "../../components/buttons";
 import { CreateStoreModal } from "../../components/StoreComponents";
+import ProfileDropdown from "../../components/ProfileDropdown";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   fetchStores,
@@ -50,6 +52,10 @@ const StoresPage: React.FC = () => {
     navigate(`/store/edit/${store.id}`);
   };
 
+  const handleViewStoreDetails = (store: Store) => {
+    navigate(`/store/details/${store.id}`);
+  };
+
   const handleDeleteStore = async (storeId: string) => {
     if (
       window.confirm(
@@ -71,6 +77,7 @@ const StoresPage: React.FC = () => {
       setIsCreateModalOpen(false);
       // Show success message
       toast.success("Store created successfully!");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Failed to create store:", error);
       // Show error message
@@ -112,14 +119,18 @@ const StoresPage: React.FC = () => {
                   Manage your store locations and settings
                 </p>
               </div>
-            </div>{" "}
-            <SpecialButton
-              variant="inventory-primary"
-              onClick={handleCreateStore}
-              icon={<FaPlus />}
-            >
-              Create New Store
-            </SpecialButton>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <SpecialButton
+                variant="inventory-primary"
+                onClick={handleCreateStore}
+                icon={<FaPlus />}
+              >
+                Create New Store
+              </SpecialButton>
+              <ProfileDropdown />
+            </div>
           </div>
         </div>
       </div>{" "}
@@ -178,7 +189,7 @@ const StoresPage: React.FC = () => {
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center">
                       <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mr-3 overflow-hidden">
-                        {store.logoUrl? (
+                        {store.logoUrl ? (
                           <img
                             src={store.logoUrl}
                             alt={`${store.name} logo`}
@@ -198,6 +209,13 @@ const StoresPage: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex space-x-1">
+                      <IconButton
+                        icon={<FaEye />}
+                        onClick={() => handleViewStoreDetails(store)}
+                        variant="secondary"
+                        size="sm"
+                        title="View Store details"
+                      />
                       <IconButton
                         icon={<FaEdit />}
                         onClick={() => handleEditStore(store)}

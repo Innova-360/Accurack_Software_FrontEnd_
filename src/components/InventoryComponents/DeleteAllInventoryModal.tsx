@@ -67,35 +67,6 @@ const DeleteAllInventoryModal: React.FC<DeleteAllInventoryModalProps> = ({
 
             {/* Warning Content */}
             <div className="mb-6">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                <div className="flex items-start space-x-3">
-                  <FaExclamationTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-red-800 mb-2">
-                      ⚠️ DANGER ZONE - Irreversible Action
-                    </h3>
-                    <p className="text-red-700 text-sm leading-relaxed">
-                      You are about to permanently delete{" "}
-                      <strong>ALL {productCount} products</strong> from this
-                      store's inventory.
-                    </p>
-                    <p className="text-red-700 text-sm leading-relaxed mt-2">
-                      <strong>This action CANNOT be undone!</strong> All product
-                      data, including:
-                    </p>
-                    <ul className="text-red-700 text-sm mt-2 ml-4 space-y-1">
-                      <li>• Product information and descriptions</li>
-                      <li>• Pricing and cost data</li>
-                      <li>• Stock quantities</li>
-                      <li>• Supplier relationships</li>
-                      <li>• Historical data</li>
-                    </ul>
-                    <p className="text-red-700 text-sm leading-relaxed mt-2">
-                      will be <strong>permanently lost</strong>.
-                    </p>
-                  </div>
-                </div>
-              </div>
 
               {/* Confirmation Input */}
               <div className="space-y-4">

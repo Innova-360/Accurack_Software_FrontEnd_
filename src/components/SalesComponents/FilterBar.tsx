@@ -1,5 +1,5 @@
-import React from 'react';
-import { FaSearch } from 'react-icons/fa';
+import React from "react";
+import { FaSearch } from "react-icons/fa";
 
 interface FilterBarProps {
   searchTerm: string;
@@ -17,23 +17,24 @@ interface FilterBarProps {
 
 const FilterBar: React.FC<FilterBarProps> = ({
   searchTerm,
-  statusFilter,
   paymentFilter,
   cashierFilter = "All",
   dateFilter = "Today",
   onSearchChange,
-  onStatusChange,
   onPaymentChange,
   onCashierChange,
   onDateChange,
-  onClearFilters
+  onClearFilters,
 }) => {
   return (
     <div className="p-0">
       {/* Search Input */}
       <div className="mb-4">
         <div className="relative">
-          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
+          <FaSearch
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={14}
+          />
           <input
             type="text"
             placeholder="Search sales by name, ID, phone..."
@@ -41,26 +42,11 @@ const FilterBar: React.FC<FilterBarProps> = ({
             onChange={(e) => onSearchChange(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
           />
-        </div> 
+        </div>
       </div>
 
       {/* Filter Dropdowns */}
       <div className="flex flex-wrap items-center gap-6">
-        {/* Status Filter */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600 font-medium">Status:</span>
-          <select
-            value={statusFilter}
-            onChange={(e) => onStatusChange(e.target.value)}
-            className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-          >
-            <option>All</option>
-            <option>Paid</option>
-            <option>Pending</option>
-            <option>Partially Paid</option>
-            <option>Refunded</option>
-          </select>
-        </div>
 
         {/* Payment Filter */}
         <div className="flex items-center gap-2">
@@ -79,7 +65,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
           </select>
         </div>
 
-        {/* Cashier Filter */}
+        {/* Cashier Filter 
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600 font-medium">Cashier:</span>
           <select
@@ -93,6 +79,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
             <option>Mike Johnson</option>
           </select>
         </div>
+        */}
 
         {/* Date Filter */}
         <div className="flex items-center gap-2">

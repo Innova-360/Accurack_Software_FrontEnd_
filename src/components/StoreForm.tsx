@@ -114,7 +114,8 @@ const StoreForm: React.FC = () => {
       setLogoPreview(imageUrl);
       toast.success("Logo uploaded successfully");
     } catch (error) {
-      toast.error("Failed to upload logoUrl", error);
+      console.error("Image upload failed:", error); // <-- Log the error
+      toast.error("Failed to upload logo");
     } finally {
       setUploading(false);
     }
@@ -134,7 +135,6 @@ const StoreForm: React.FC = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -146,6 +146,10 @@ const StoreForm: React.FC = () => {
       } else {
         await dispatch(createStore(formData)).unwrap();
       }
+
+      console.log(
+        isEditing ? "Store updated successfully" : "Store created successfully"
+      );
 
       // Navigate to stores page after successful submission
       navigate("/stores");

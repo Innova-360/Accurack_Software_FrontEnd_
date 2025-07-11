@@ -52,15 +52,77 @@ export interface CreateProductPayload {
   }>;
 }
 
+
+// Define the payload type for product update
+export interface UpdateProductPayload {
+  name: string;
+  categoryId: string; // Changed from category to categoryId
+  ean: string;
+  pluUpc: string;
+  supplierId: string;
+  sku: string;
+  singleItemCostPrice: number;
+  itemQuantity: number;
+  msrpPrice: number;
+  singleItemSellingPrice: number;
+  discountAmount: number;
+  percentDiscount: number;
+  clientId: string;
+  storeId: string;
+  hasVariants: boolean;
+  packs: Array<{
+    minimumSellingQuantity: number;
+    totalPacksQuantity: number;
+    orderedPacksPrice: number;
+    discountAmount: number;
+    percentDiscount: number;
+  }>;
+  variants: Array<{
+    name: string;
+    price: number;
+    sku: string;
+    pluUpc: string;
+    supplierId: string;
+    quantity: number;
+    packs: Array<{
+      minimumSellingQuantity: number;
+      totalPacksQuantity: number;
+      orderedPacksPrice: number;
+      percentDiscount: number;
+      discountAmount?: number;
+    }>;
+    msrpPrice?: number;
+    discountAmount?: number;
+    percentDiscount?: number;
+  }>;
+}
+
 // Async thunk for fetching products
 export const fetchProducts = createAsyncThunk(
   "products/fetchProducts",
-  async (_, { rejectWithValue }) => {
+  async (params: ProductSearchParams, { rejectWithValue }) => {
     try {
-      const products = await productAPI.getProducts();
+      const products = await productAPI.getProducts(params);
       return products;
     } catch (error: any) {
       console.error("Error fetching products:", error);
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch products"
+      );
+    }
+  }
+);
+
+// Async thunk for fetching products By ID
+export const fetchProductById = createAsyncThunk(
+  "products/fetchProductById",
+  async (productId: string, { rejectWithValue }) => {
+    try {
+      const product = await productAPI.getProductById(productId);
+      console.log("Fetched product:", product);
+      return product;
+    } catch (error: any) {
+      console.error("Error fetching product:", error);
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch products"
       );
@@ -110,6 +172,30 @@ export const createProduct = createAsyncThunk(
   }
 );
 
+// Async thunk for Updating a product
+export const updateProduct = createAsyncThunk(
+  "products/updateProduct",
+  
+  async (
+    { productId, productData }: { productId: string; productData: UpdateProductPayload },
+    { rejectWithValue }
+  ) => {
+    try {
+      // updateProduct(productId, productData as any) use this
+      // const response = await apiClient.put(`/product/${productId}`, productData);
+      const response = await productAPI.updateProduct(productId, productData as any);
+
+      console.log(response.data);
+      return response.data;
+    } catch (error: any) {
+      console.log(error);
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to update product"
+      );
+    }
+  }
+);
+
 // You can add the rest of your slice logic here as needed
 const productsSlice = createSlice({
   name: "products",
@@ -146,7 +232,7 @@ const productsSlice = createSlice({
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.products = action.payload;
+        state.products = action.payload.products;
         state.error = null;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
