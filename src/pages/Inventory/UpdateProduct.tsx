@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useProducts } from "../../hooks/useProducts";
 import Header from "../../components/Header";
@@ -16,6 +17,7 @@ import { extractErrorMessage } from "../../utils/lastUpdatedUtils";
 import useRequireStore from "../../hooks/useRequireStore";
 
 const UpdateProduct: React.FC = () => {
+  const navigate = useNavigate();
   const currentStore = useRequireStore();
   
   // State for main inventory pagination and filters
@@ -246,8 +248,15 @@ const UpdateProduct: React.FC = () => {
 
   // Edit product handlers
   const handleEditProduct = (product: Product) => {
-    setSelectedProductToEdit(product);
-    setIsEditProductModalOpen(true);
+    const productId = product.id || product.sku || product.plu;
+
+    if (!productId) {
+      toast.error("Cannot edit product: No ID available");
+      return;
+    }
+
+    // Navigate to individual product update page
+    navigate(`/store/${currentStore?.id}/inventory/product/${productId}/update`);
   };
 
   const handleUpdateProduct = async (
