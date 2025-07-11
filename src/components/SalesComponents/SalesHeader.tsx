@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaUpload } from "react-icons/fa";
 import { Button } from "../buttons";
 
 interface SalesHeaderProps {
@@ -26,6 +26,12 @@ const SalesHeader: React.FC<SalesHeaderProps> = ({ onCreateSale }) => {
     }
   };
 
+  const handleUploadSales = () => {
+    if (storeId) {
+      navigate(`/store/${storeId}/sales/upload`);
+    }
+  };
+
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
       <div>
@@ -34,7 +40,15 @@ const SalesHeader: React.FC<SalesHeaderProps> = ({ onCreateSale }) => {
           Manage and track all your sales transactions
         </p>
       </div>
-      <div className="mt-4 sm:mt-0">
+      <div className="mt-4 sm:mt-0 flex space-x-3">
+        <Button
+          onClick={handleUploadSales}
+          variant="secondary"
+          icon={<FaUpload size={14} />}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          Upload Sales
+        </Button>
         <Button
           onClick={handleNewSale}
           variant="primary"
