@@ -96,9 +96,13 @@ const SupplierPage: React.FC = () => {
     console.log("View assigned products for:", supplier.name);
   };
 
-  // Add supplier - placeholder function since modal is not implemented
+  // Add supplier - navigate to add supplier page
   const handleAddSupplier = () => {
-    console.log("Add supplier functionality not implemented in this view");
+    if (currentStore?.id) {
+      navigate(`/store/${currentStore.id}/supplier/add`);
+    } else {
+      toast.error("Store not found");
+    }
   };
 
   // Edit supplier

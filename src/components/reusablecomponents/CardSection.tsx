@@ -90,7 +90,7 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
               } else if (card.title === "View Sales*") {
                 navigate(`/store/${activeStoreId}/sales`);
               } else if (card.title === "Update Sales*") {
-                navigate(`/store/${activeStoreId}/sales`);
+                navigate(`/store/${activeStoreId}/sales/update`);
               } else if (card.title === "Sales Dashboard") {
                 navigate(`/store/${activeStoreId}/sales`);
               }
