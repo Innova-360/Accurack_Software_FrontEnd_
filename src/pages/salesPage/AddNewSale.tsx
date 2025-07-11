@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { FaPlus, FaTrash, FaArrowLeft, FaSearch, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaPlus, FaTrash, FaArrowLeft, FaSearch} from "react-icons/fa";
 import toast from "react-hot-toast";
 import Header from "../../components/Header";
 import { SpecialButton } from "../../components/buttons";
@@ -74,7 +74,7 @@ const AddNewSale: React.FC = () => {
       page: currentPageLocal,
       limit: productsPerPage,
       search: debouncedSearchTerm || undefined,
-      storeId: currentStore?.id
+      storeId: id
     }));
   }, [dispatch, currentPageLocal, debouncedSearchTerm]);
 
@@ -789,35 +789,6 @@ const AddNewSale: React.FC = () => {
                 )}
               </div>
 
-              {/* Pagination Controls - Top 
-              {totalPages > 1 && (
-                <div className="mb-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                  <div className="text-sm text-gray-600">
-                    Page {currentPage} of {totalPages} ({totalProducts} total products)
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCurrentPageLocal(prev => Math.max(1, prev - 1))}
-                      disabled={!hasPreviousPage || productsLoading}
-                      className="p-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <FaChevronLeft size={14} />
-                    </button>
-                    <span className="px-3 py-1 bg-white border border-gray-300 rounded-lg text-sm">
-                      {currentPage}
-                    </span>
-                    <button
-                      onClick={() => setCurrentPageLocal(prev => prev + 1)}
-                      disabled={!hasNextPage || productsLoading}
-                      className="p-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <FaChevronRight size={14} />
-                    </button>
-                  </div>
-                </div>
-              )}
-                */}
-
               {/* Products loading/error state */}
               {productsLoading && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
@@ -832,7 +803,7 @@ const AddNewSale: React.FC = () => {
               {productsError && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
                   <p className="text-red-700 text-sm">
-                    Error loading products: {productsError}
+                    Error loading products
                   </p>
                 </div>
               )}
