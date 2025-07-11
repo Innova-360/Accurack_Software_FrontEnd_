@@ -182,14 +182,6 @@ const UploadInventory: React.FC = () => {
           <h1 className="text-xl sm:text-2xl font-bold text-[#0f4d57]">
             Upload Inventory Files
           </h1>
-          <div className="flex flex-wrap gap-2 sm:gap-4">
-            <button
-              onClick={handleBackToInventory}
-              className="bg-gray-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base hover:bg-gray-700 transition-all duration-300 hover:scale-105 hover:shadow-lg transform"
-            >
-              ← Back to Inventory
-            </button>
-          </div>
         </div>
 
         {/* Horizontal line */}
