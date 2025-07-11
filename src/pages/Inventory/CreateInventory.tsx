@@ -229,6 +229,12 @@ const CreateInventory: React.FC = () => {
 
   const handleNumericInput = (key: keyof ProductFormData, rawValue: string) => {
     const cleaned = rawValue.replace(/[^0-9]/g, ""); // removes everything except digits
+    
+    // Special handling for PLU field - if it was set from a scanned barcode, preserve it
+    if (key === "pluUpc" && !cleaned && formData.pluUpc) {
+      return; // Don't update if we're trying to clear a valid PLU
+    }
+    
     setFormData((prev) => ({
       ...prev,
       [key]: cleaned,
@@ -338,6 +344,30 @@ const CreateInventory: React.FC = () => {
       }));
     }
   }, [location.state]);
+
+  // Additional effect to handle state that might be lost on navigation
+  useEffect(() => {
+    // Check if we have scanned PLU in state and form is empty
+    if (location.state?.scannedPLU && !formData.pluUpc) {
+      setFormData((prev) => ({
+        ...prev,
+        pluUpc: location.state.scannedPLU,
+      }));
+    }
+    
+    // Fallback: Check localStorage if navigation state is not available
+    if (!location.state?.scannedPLU && !formData.pluUpc) {
+      const storedPLU = localStorage.getItem("scannedPLU");
+      if (storedPLU) {
+        setFormData((prev) => ({
+          ...prev,
+          pluUpc: storedPLU,
+        }));
+        // Clear localStorage after using it
+        localStorage.removeItem("scannedPLU");
+      }
+    }
+  }, [location.state, formData.pluUpc]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">

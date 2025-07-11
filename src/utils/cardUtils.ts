@@ -48,7 +48,7 @@ export const getAllCards = (): CardSection[] => {
       sectionTitle: "Inventory",
       cards: [
         { title: "Upload Inventory*", iconComponent: "FiUpload" },
-        { title: "Scan Inventory", iconComponent: "FiScan" },
+        { title: "Scan Barcode", iconComponent: "FiScan" },
         { title: "Create Inventory", iconComponent: "FiPlus" },
         { title: "View Inventory*", iconComponent: "FiPackage" },
         { title: "Update Inventory*", iconComponent: "FiEdit3" },

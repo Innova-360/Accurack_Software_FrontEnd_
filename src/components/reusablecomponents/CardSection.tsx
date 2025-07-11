@@ -65,7 +65,7 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
                 navigate(`/store/${activeStoreId}/inventory/upload`);
               } else if (card.title === "Delete Inventory*") {
                 navigate(`/store/${activeStoreId}/inventory`);
-              } else if (card.title === "Scan Inventory") {
+              } else if (card.title === "Scan Barcode") {
                 navigate(`/store/${activeStoreId}/inventory/scan`);
               }
               // Supplier routes
