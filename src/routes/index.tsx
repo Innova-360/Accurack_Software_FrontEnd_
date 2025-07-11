@@ -53,6 +53,7 @@ import Invoice from "../pages/Invoice/invoices";
 import InvoiceId from "../pages/Invoice/InvoiceID";
 import InventoryDashboard from "../pages/Inventory/InventoryDashboard";
 import ScanInventory from "../pages/Inventory/ScanInventory";
+import DeleteInventory from "../pages/Inventory/DeleteInventory";
 
 
 const AppRoutes = () => {
@@ -260,6 +261,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <ScanInventory />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/inventory/delete"
+        element={
+          <ProtectedRoute>
+            <DeleteInventory />
           </ProtectedRoute>
         }
       />

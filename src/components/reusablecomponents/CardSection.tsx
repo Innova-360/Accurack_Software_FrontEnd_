@@ -64,7 +64,7 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
               } else if (card.title === "Upload Inventory*") {
                 navigate(`/store/${activeStoreId}/inventory/upload`);
               } else if (card.title === "Delete Inventory*") {
-                navigate(`/store/${activeStoreId}/inventory`);
+                navigate(`/store/${activeStoreId}/inventory/delete`);
               } else if (card.title === "Scan Barcode") {
                 navigate(`/store/${activeStoreId}/inventory/scan`);
               }

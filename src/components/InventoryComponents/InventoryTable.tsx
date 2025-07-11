@@ -15,6 +15,7 @@ interface InventoryTableProps {
   onProductViewed?: (product: Product) => void;
   showActions?: boolean; // New prop to control action buttons visibility
   showDeleteButton?: boolean; // New prop to control delete button visibility
+  showUpdateButton?: boolean; // New prop to control update button visibility
 }
 
 const InventoryTable: React.FC<InventoryTableProps> = ({
@@ -30,6 +31,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
   onProductViewed,
   showActions = true, // Default to true for backward compatibility
   showDeleteButton = true, // Default to true for backward compatibility
+  showUpdateButton = true, // Default to true for backward compatibility
 }) => {
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(
     new Set()
@@ -557,8 +559,8 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                               />
                             </svg>
                           </button>
-                          {/* Edit Button - Always visible when showActions is true */}
-                          {showActions && (
+                          {/* Edit Button - Only visible when showUpdateButton is true */}
+                          {showActions && showUpdateButton && (
                             <button
                               onClick={() => handleEditProduct(product)}
                               disabled={false}
