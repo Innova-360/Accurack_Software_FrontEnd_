@@ -523,51 +523,19 @@ export const productAPI = {
   // Get a single product by ID
   async getProductById(id: string): Promise<Product> {
     try {
-      // Try to get the product by ID from the API
       const response = await apiClient.get(`/product/${id}`);
-      console.log("Product by ID API Response:", response.data.data); // Debug log
-
-      // Handle the response structure based on the API format provided
-      let apiProduct: ApiProduct;
-
-      // if (
-      //   response.data?.data?.products &&
-      //   Array.isArray(response.data.data.products) &&
-      //   response.data.data.products.length > 0
-      // ) {
-      //   // If the response has products array (as per the API response structure), take the first one
-      //   apiProduct = response.data.data.products[0];
-      // } else if (response.data?.data && !Array.isArray(response.data.data)) {
-      //   // If data is a single product object
-      //   apiProduct = response.data.data;
-      // } else if (response.data && !response.data.data) {
-      //   // If the product is directly in response.data
-      //   apiProduct = response.data;
-      // } else {
-      //   throw new Error("Invalid API response structure");
-      // }
-      apiProduct = response.data.data;
-
+      if (!response.data || !response.data.data) {
+        throw new Error("Invalid API response structure");
+      }
+      const apiProduct = response.data.data;
+      // Validate required fields
+      if (!apiProduct.id || !apiProduct.name) {
+        throw new Error("Product data is incomplete");
+      }
       return transformApiProduct(apiProduct);
     } catch (error) {
       console.error("Error fetching product by ID:", error);
-
-      // Fallback: Get all products and find the one with matching ID
-      try {
-        const allProductsResponse = await this.getAllProducts();
-        const product = allProductsResponse.find(
-          (p) => p.id === id || p.sku === id || p.plu === id
-        );
-
-        if (product) {
-          return product;
-        }
-
-        throw new Error("Product not found");
-      } catch (fallbackError) {
-        console.error("Fallback error:", fallbackError);
-        throw new Error("Product not found");
-      }
+      throw new Error("Product not found or access denied");
     }
   },
 

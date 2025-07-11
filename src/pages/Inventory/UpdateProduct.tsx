@@ -16,6 +16,20 @@ import { useLowStockProducts } from "../../hooks/useInventory";
 import { extractErrorMessage } from "../../utils/lastUpdatedUtils";
 import useRequireStore from "../../hooks/useRequireStore";
 
+// Utility function for safe product ID extraction
+const getProductId = (product: Product): string | null => {
+  if (product.id && typeof product.id === 'string' && product.id.trim()) {
+    return product.id.trim();
+  }
+  if (product.sku && typeof product.sku === 'string' && product.sku.trim()) {
+    return product.sku.trim();
+  }
+  if (product.plu && typeof product.plu === 'string' && product.plu.trim()) {
+    return product.plu.trim();
+  }
+  return null;
+};
+
 const UpdateProduct: React.FC = () => {
   const navigate = useNavigate();
   const currentStore = useRequireStore();
@@ -248,14 +262,11 @@ const UpdateProduct: React.FC = () => {
 
   // Edit product handlers
   const handleEditProduct = (product: Product) => {
-    const productId = product.id || product.sku || product.plu;
-
+    const productId = getProductId(product);
     if (!productId) {
-      toast.error("Cannot edit product: No ID available");
+      toast.error("Cannot edit product: No valid ID available");
       return;
     }
-
-    // Navigate to individual product update page
     navigate(`/store/${currentStore?.id}/inventory/product/${productId}/update`);
   };
 

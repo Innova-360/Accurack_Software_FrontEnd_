@@ -31,6 +31,14 @@ const UpdateInventory: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    setError(null);
+    loadProductData();
+  };
 
   const getStoreIdFromUrl = () => {
     const match = location.pathname.match(/store\/([a-f0-9-]+)\//i);
@@ -223,92 +231,101 @@ const UpdateInventory: React.FC = () => {
   });
 
   // Load existing product data
-  useEffect(() => {
-    const loadProductData = async () => {
-      if (!productId) {
-        setError("Product ID is required");
-        setLoading(false);
+  const loadProductData = useCallback(async () => {
+    if (!productId) {
+      setError("Product ID is required");
+      setLoading(false);
+      return;
+    }
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(productId)) {
+      setError("Invalid product ID format");
+      setLoading(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      const result = await dispatch(fetchProductById(productId) as any);
+      if (result.error) {
+        setError("Product not found or access denied");
+        return;
+      }
+      const product = result.payload;
+      if (!product) {
+        setError("Product not found");
         return;
       }
 
-      try {
-        setLoading(true);
-        const result = await dispatch(fetchProductById(productId) as any);
+      // Map product data to form data
+      setFormData({
+        productName: product.name || "",
+        category: product.categoryId || "",
+        price: product.singleItemSellingPrice?.toString() || "",
+        customSku: product.sku || "",
+        ean: product.ean || "",
+        pluUpc: product.pluUpc || "",
+        individualItemQuantity: "1",
+        itemCost: product.singleItemCostPrice?.toString() || "",
+        itemSellingCost: product.singleItemSellingPrice?.toString() || "",
+        minSellingQuantity: "1",
+        minOrderValue: "",
+        msrpPrice: product.msrpPrice?.toString() || "",
+        supplierId: product.supplierId || "",
+        orderValueDiscountType: product.percentDiscount
+          ? "percentage"
+          : product.discountAmount
+            ? "fixed"
+            : "",
+        orderValueDiscountValue:
+          product.percentDiscount?.toString() ||
+          product.discountAmount?.toString() ||
+          "",
+        quantity: product.itemQuantity?.toString() || "",
+        description: product.description || "",
+        imageFile: null,
+        imagePreview: product.imageUrl || "",
+        hasPackSettings: product.packs && product.packs.length > 0,
+        packDiscounts: product.packs || [],
+        hasDiscountSettings: false,
+        discountTiers: [],
+        hasAttributes: product.attributes && product.attributes.length > 0,
+        attributes: product.attributes || [],
+        variations: (product.variants || []).map((variant: any) => ({
+          ...variant,
+          packDiscounts: variant.packDiscounts || [], // Ensure packDiscounts is always an array
+          hasPackSettings:
+            variant.packDiscounts && variant.packDiscounts.length > 0,
+          discountTiers: variant.discountTiers || [], // Ensure discountTiers is always an array
+          hasDiscountTiers:
+            variant.discountTiers && variant.discountTiers.length > 0,
+          imageFile: null, // Initialize imageFile
+          imagePreview: variant.imagePreview || "", // Initialize imagePreview
+        })),
+      });
 
-        if (result.error) {
-          setError("Failed to load product data");
-          return;
-        }
+      setHasVariants(product.hasVariants || false);
 
-        const product = result.payload;
-
-        // Map product data to form data
-        setFormData({
-          productName: product.name || "",
-          category: product.categoryId || "",
-          price: product.singleItemSellingPrice?.toString() || "",
-          customSku: product.sku || "",
-          ean: product.ean || "",
-          pluUpc: product.pluUpc || "",
-          individualItemQuantity: "1",
-          itemCost: product.singleItemCostPrice?.toString() || "",
-          itemSellingCost: product.singleItemSellingPrice?.toString() || "",
-          minSellingQuantity: "1",
-          minOrderValue: "",
-          msrpPrice: product.msrpPrice?.toString() || "",
-          supplierId: product.supplierId || "",
-          orderValueDiscountType: product.percentDiscount
-            ? "percentage"
-            : product.discountAmount
-              ? "fixed"
-              : "",
-          orderValueDiscountValue:
-            product.percentDiscount?.toString() ||
-            product.discountAmount?.toString() ||
-            "",
-          quantity: product.itemQuantity?.toString() || "",
-          description: product.description || "",
-          imageFile: null,
-          imagePreview: product.imageUrl || "",
-          hasPackSettings: product.packs && product.packs.length > 0,
-          packDiscounts: product.packs || [],
-          hasDiscountSettings: false,
-          discountTiers: [],
-          hasAttributes: product.attributes && product.attributes.length > 0,
-          attributes: product.attributes || [],
-          variations: (product.variants || []).map((variant: any) => ({
-            ...variant,
-            packDiscounts: variant.packDiscounts || [], // Ensure packDiscounts is always an array
-            hasPackSettings:
-              variant.packDiscounts && variant.packDiscounts.length > 0,
-            discountTiers: variant.discountTiers || [], // Ensure discountTiers is always an array
-            hasDiscountTiers:
-              variant.discountTiers && variant.discountTiers.length > 0,
-            imageFile: null, // Initialize imageFile
-            imagePreview: variant.imagePreview || "", // Initialize imagePreview
-          })),
-        });
-
-        setHasVariants(product.hasVariants || false);
-
-        // If product has variants, show variations step
-        if (
-          product.hasVariants &&
-          product.variants &&
-          product.variants.length > 0
-        ) {
-          setShowVariations(true);
-        }
-      } catch (err) {
-        setError("Failed to load product data");
-        console.error("Error loading product:", err);
-      } finally {
-        setLoading(false);
+      // If product has variants, show variations step
+      if (
+        product.hasVariants &&
+        product.variants &&
+        product.variants.length > 0
+      ) {
+        setShowVariations(true);
       }
-    };
-
-    loadProductData();
+    } catch (err) {
+      setError("Failed to load product data. Please try again.");
+      console.error("Error loading product:", err);
+    } finally {
+      setLoading(false);
+    }
   }, [dispatch, productId]);
+
+  useEffect(() => {
+    loadProductData();
+    // eslint-disable-next-line
+  }, [dispatch, productId, retryCount]);
 
   // Helper functions
   const handleFormDataChange = useCallback(
@@ -337,15 +354,20 @@ const UpdateInventory: React.FC = () => {
       return;
     }
 
+    setIsSubmitting(true);
     const payload = buildApiPayload();
 
     dispatch(updateProduct({ productId, productData: payload }) as any).then(
       (result: any) => {
         if (!result.error) {
           navigate(`/store/${storeId}/inventory`);
+        } else {
+          setIsSubmitting(false);
         }
       }
-    );
+    ).catch(() => {
+      setIsSubmitting(false);
+    });
   };
 
   const handleNext = () => {
@@ -436,30 +458,33 @@ const UpdateInventory: React.FC = () => {
   // Show error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-500 mb-4">
-            <svg
-              className="w-12 h-12 mx-auto"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+      <div className="min-h-screen bg-gray-50">
+        {/* Assuming Header component is available or needs to be imported */}
+        {/* <Header /> */}
+        <div className="px-4 py-8 mx-auto max-w-7xl">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="text-red-500 text-6xl mb-4">⚠️</div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                Error Loading Product
+              </h2>
+              <p className="text-gray-600 mb-4">{error}</p>
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={handleRetry}
+                  className="bg-[#0f4d57] text-white px-6 py-2 rounded-lg hover:bg-[#0d3f47] transition-colors"
+                >
+                  Try Again
+                </button>
+                <button
+                  onClick={() => navigate(`/store/${storeId}/inventory`)}
+                  className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Back to Inventory
+                </button>
+              </div>
+            </div>
           </div>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => navigate(-1)}
-            className="px-4 py-2 bg-[#0f4d57] text-white rounded-lg hover:bg-[#0f4d57]/90"
-          >
-            Go Back
-          </button>
         </div>
       </div>
     );
@@ -814,16 +839,25 @@ const UpdateInventory: React.FC = () => {
                       // For simple product mode
                       <button
                         type="submit"
-                        disabled={progress < 100}
+                        disabled={progress < 100 || isSubmitting}
                         className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 ${
-                          progress >= 100
+                          progress >= 100 && !isSubmitting
                             ? "bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md"
                             : "bg-gray-300 text-gray-500 cursor-not-allowed"
                         }`}
                       >
-                        <span className="text-sm sm:text-base">
-                          Update Product
-                        </span>
+                        {isSubmitting ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span className="text-sm sm:text-base">
+                              Updating...
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-sm sm:text-base">
+                            Update Product
+                          </span>
+                        )}
                       </button>
                     )}
                   </div>
@@ -882,24 +916,40 @@ const UpdateInventory: React.FC = () => {
                     </button>
                     <button
                       type="submit"
-                      className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-[#0f4d57] text-white rounded-lg font-medium hover:bg-[#0f4d57]/90 transition-all duration-200 transform hover:scale-105 hover:shadow-lg flex items-center justify-center space-x-2"
+                      disabled={isSubmitting}
+                      className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg flex items-center justify-center space-x-2 ${
+                        isSubmitting
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90"
+                      }`}
                     >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      <span className="text-sm sm:text-base">
-                        Update a Product with Variations
-                      </span>
+                      {isSubmitting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span className="text-sm sm:text-base">
+                            Updating...
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                          <span className="text-sm sm:text-base">
+                            Update a Product with Variations
+                          </span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
