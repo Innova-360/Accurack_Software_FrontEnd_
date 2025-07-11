@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { Product } from "../../data/inventoryData";
 import { productAPI } from "../../services/productAPI";
+// import { debugVariantQuantityUpdate } from "../../utils/variantQuantityUpdateTest";
 
 interface InventoryTableProps {
   products: Product[];
@@ -13,9 +14,6 @@ interface InventoryTableProps {
   onProductDeleted?: () => void;
   onProductEdited?: (product: Product) => void;
   onProductViewed?: (product: Product) => void;
-  showActions?: boolean; // New prop to control action buttons visibility
-  showDeleteButton?: boolean; // New prop to control delete button visibility
-  showUpdateButton?: boolean; // New prop to control update button visibility
 }
 
 const InventoryTable: React.FC<InventoryTableProps> = ({
@@ -29,9 +27,6 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
   onProductDeleted,
   onProductEdited,
   onProductViewed,
-  showActions = true, // Default to true for backward compatibility
-  showDeleteButton = true, // Default to true for backward compatibility
-  showUpdateButton = true, // Default to true for backward compatibility
 }) => {
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(
     new Set()
@@ -62,7 +57,6 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
         onProductDeleted?.();
       } catch (error) {
         console.error("Failed to delete product:", error);
-        alert("Failed to delete product. Please try again.");
       } finally {
         setDeletingProductId(null);
       }
@@ -147,12 +141,48 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
     try {
       setUpdatingQuantity((prev) => new Set(prev).add(updateKey));
 
-      // For now, we'll use the main product ID for API call
-      // In a real scenario, you might need variant-specific endpoints
-      await productAPI.updateProductQuantity(
-        editingQuantity.productId,
-        newQuantity
-      );
+      // Check if we're updating a variant or main product
+      if (editingQuantity.variantIndex !== undefined) {
+        // Find the variant and its PLU/UPC
+        const product = products.find(
+          (p) => p.id === editingQuantity.productId
+        );
+        if (
+          product?.variants &&
+          product.variants[editingQuantity.variantIndex]
+        ) {
+          const variant = product.variants[editingQuantity.variantIndex];
+          const pluUpc = variant.pluUpc;
+
+          
+          if (pluUpc) {
+            // Update variant quantity using PLU/UPC
+            console.log(`🔄 Updating variant quantity for PLU/UPC: ${pluUpc}`);
+            await productAPI.updateVariantQuantityByPluUpc(pluUpc, newQuantity);
+          } else {
+            // Fallback to main product quantity update if no PLU/UPC found
+            console.warn(
+              "⚠️ No PLU/UPC found for variant, falling back to product quantity update"
+            );
+           
+            await productAPI.updateProductQuantity(
+              editingQuantity.productId,
+              newQuantity
+            );
+          }
+        } else {
+          throw new Error("Variant not found in product");
+        }
+      } else {
+        // Update main product quantity
+        console.log(
+          `🔄 Updating main product quantity for ID: ${editingQuantity.productId}`
+        );
+        await productAPI.updateProductQuantity(
+          editingQuantity.productId,
+          newQuantity
+        );
+      }
 
       // Refresh the product list to get updated data
       onProductDeleted?.(); // Reusing this callback to refresh the data
@@ -160,7 +190,21 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
       setEditingQuantity(null);
     } catch (error) {
       console.error("Failed to update quantity:", error);
-      alert("Failed to update quantity. Please try again.");
+
+      // Provide more specific error messages
+      let errorMessage = "Failed to update quantity. Please try again.";
+      if (editingQuantity.variantIndex !== undefined) {
+        errorMessage =
+          "Failed to update variant quantity. Please check the PLU/UPC code and try again.";
+      }
+
+      // Check if it's a network error
+      if (error instanceof Error && error.message.includes("Network")) {
+        errorMessage =
+          "Network error. Please check your connection and try again.";
+      }
+
+      console.log(errorMessage);
     } finally {
       setUpdatingQuantity((prev) => {
         const newSet = new Set(prev);
@@ -533,7 +577,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <div className="flex items-center gap-2">
-                          {/* View Button - Always visible */}
+                          {/* View Button */}
                           <button
                             onClick={() => handleViewProduct(product)}
                             className="text-green-500 hover:text-green-700 p-1 rounded transition-colors"
@@ -559,14 +603,47 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                               />
                             </svg>
                           </button>
-                          {/* Edit Button - Only visible when showUpdateButton is true */}
-                          {showActions && showUpdateButton && (
-                            <button
-                              onClick={() => handleEditProduct(product)}
-                              disabled={false}
-                              className="text-blue-500 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed p-1 rounded transition-colors"
-                              title="Edit product"
+                          {/* Edit Button */}
+                          <button
+                            onClick={() => handleEditProduct(product)}
+                            disabled={false}
+                            className="text-blue-500 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed p-1 rounded transition-colors"
+                            title="Edit product"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
                             >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          </button>
+                          {/* Delete Button */}
+                          <button
+                            onClick={() => {
+                              const id =
+                                product.id || product.sku || product.plu;
+                              if (id) {
+                                handleDeleteProduct(id, product.name);
+                              }
+                            }}
+                            disabled={
+                              (!product.id && !product.sku && !product.plu) ||
+                              deletingProductId ===
+                                (product.id || product.sku || product.plu)
+                            }
+                            className="text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed p-1 rounded transition-colors"
+                            title="Delete product"
+                          >
+                            {deletingProductId === product.id ? (
+                              <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
                               <svg
                                 className="w-4 h-4"
                                 fill="none"
@@ -577,48 +654,11 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
                                   strokeWidth={2}
-                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                                 />
                               </svg>
-                            </button>
-                          )}
-                          {/* Delete Button - Only visible when showDeleteButton is true */}
-                          {showActions && showDeleteButton && (
-                            <button
-                              onClick={() => {
-                                const id =
-                                  product.id || product.sku || product.plu;
-                                if (id) {
-                                  handleDeleteProduct(id, product.name);
-                                }
-                              }}
-                              disabled={
-                                (!product.id && !product.sku && !product.plu) ||
-                                deletingProductId ===
-                                  (product.id || product.sku || product.plu)
-                              }
-                              className="text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed p-1 rounded transition-colors"
-                              title="Delete product"
-                            >
-                              {deletingProductId === product.id ? (
-                                <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
-                              ) : (
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                  />
-                                </svg>
-                              )}
-                            </button>
-                          )}
+                            )}
+                          </button>
                         </div>
                       </td>
                     </tr>

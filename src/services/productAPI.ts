@@ -621,4 +621,20 @@ export const productAPI = {
       throw error;
     }
   },
+
+  async updateVariantQuantityByPluUpc(
+    pluUpc: string,
+    quantity: number
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await apiClient.patch(
+        `/product/variant-quantity/${encodeURIComponent(pluUpc)}`,
+        { quantity }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating variant quantity:", error);
+      throw error;
+    }
+  },
 };
