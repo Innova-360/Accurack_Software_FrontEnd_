@@ -14,6 +14,7 @@ interface InventoryTableProps {
   onProductDeleted?: () => void;
   onProductEdited?: (product: Product) => void;
   onProductViewed?: (product: Product) => void;
+  showUpdateQuantity?: boolean; // Control update quantity icon visibility
 }
 
 const InventoryTable: React.FC<InventoryTableProps> = ({
@@ -27,6 +28,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
   onProductDeleted,
   onProductEdited,
   onProductViewed,
+  showUpdateQuantity = false, // Default to false
 }) => {
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(
     new Set()
@@ -476,7 +478,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                     product.quantity
                                   )}
                                 </span>
-                                {!updatingQuantity.has(productKey) && (
+                                {!updatingQuantity.has(productKey) && showUpdateQuantity && (
                                   <button
                                     onClick={() =>
                                       handleEditQuantity(
@@ -761,7 +763,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                   </span>
                                   {!updatingQuantity.has(
                                     `${productKey}-variant-${variantIndex}`
-                                  ) && (
+                                  ) && showUpdateQuantity && (
                                     <button
                                       onClick={() =>
                                         handleEditQuantity(
