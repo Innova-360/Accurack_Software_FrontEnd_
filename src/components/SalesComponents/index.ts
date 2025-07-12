@@ -8,5 +8,4 @@ export { default as SalesHeader } from "./SalesHeader";
 export { default as StatsGrid } from "./StatsGrid";
 export { default as StatusTabs } from "./StatusTabs";
 export { default as TransactionTable } from "./TransactionTable";
-export { default as UploadSalesModal } from "./UploadSalesModal";
 export { default as ViewTransactionModal } from "./ViewTransactionModal";
