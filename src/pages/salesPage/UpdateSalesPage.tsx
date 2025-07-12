@@ -507,7 +507,7 @@ const SalesPage: React.FC = () => {
           )}
           {/* Header Section */}
          <div className="flex items-center justify-between mb-6 bg-white p-5 rounded-lg shadow">
-            <div className="text-2xl font-bold text-[#03414C]">Sales Management</div>
+            <div className="text-2xl font-bold text-[#03414C]">Update Sales</div>
 
          </div>
           {/* Stats Grid */}

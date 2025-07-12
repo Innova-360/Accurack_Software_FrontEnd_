@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaUpload, FaDownload } from "react-icons/fa";
 import Header from "../../components/Header";
 import useRequireStore from "../../hooks/useRequireStore";
-import { UploadSalesModal } from "../../components/SalesComponents";
+// import { UploadSalesModal } from "../../components/SalesComponents";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { BASE_URL } from "../../services/api";
