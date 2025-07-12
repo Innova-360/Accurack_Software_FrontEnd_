@@ -210,6 +210,17 @@ const UploadModal: React.FC<UploadModalProps> = ({
 
     
 
+
+
+
+
+
+
+
+
+
+    
+
         {/* File Upload Area */}
         <div
           className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
