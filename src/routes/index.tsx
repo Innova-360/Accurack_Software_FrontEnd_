@@ -56,6 +56,7 @@ import InvoiceId from "../pages/Invoice/InvoiceID";
 import InventoryDashboard from "../pages/Inventory/InventoryDashboard";
 import ScanInventory from "../pages/Inventory/ScanInventory";
 import DeleteInventory from "../pages/Inventory/DeleteInventory";
+import SalesDashboard from "../pages/salesPage/SalesDashboard";
 
 const AppRoutes = () => {
   return (
@@ -278,6 +279,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <SalesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/sales/dashboard"
+        element={
+          <ProtectedRoute>
+            <SalesDashboard />
           </ProtectedRoute>
         }
       />

@@ -92,7 +92,7 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
               } else if (card.title === "Update Sales") {
                 navigate(`/store/${activeStoreId}/sales/update`);
               } else if (card.title === "Sales Dashboard") {
-                navigate(`/store/${activeStoreId}/sales`);
+                navigate(`/store/${activeStoreId}/sales/dashboard`);
               }
               // Invoice routes
               else if (card.title === "Upload Invoice*") {
@@ -149,7 +149,7 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
                 );
               } else if (card.title === "Sales\nDashboard") {
                 navigate(
-                  activeStoreId ? `/store/${activeStoreId}/sales` : "/sales"
+                  activeStoreId ? `/store/${activeStoreId}/sales/dashboard` : "/sales"
                 );
               } else if (card.title === "Total Inventory\nCount") {
                 navigate(

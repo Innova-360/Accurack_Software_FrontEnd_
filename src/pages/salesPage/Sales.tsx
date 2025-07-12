@@ -16,12 +16,16 @@ import SaleCreationModal from "../../components/modals/SaleCreationModal";
 import { fetchSales, updateSale } from "../../store/slices/salesSlice";
 import type { RootState, AppDispatch } from "../../store";
 import useRequireStore from "../../hooks/useRequireStore";
+import UploadSalesModal from "../../components/SalesComponents/UploadSalesModal";
 
 const SalesPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { id: storeId } = useParams<{ id?: string }>();
   const currentStore = useRequireStore();
+
+  const [isUploadSalesModalOpen, setIsUploadSalesModalOpen] =
+      useState(false);
 
   // Redux state
   const { sales, loading, error, pagination } = useSelector(
@@ -433,6 +437,7 @@ const SalesPage: React.FC = () => {
     setIsSaleCreationModalOpen(true);
   };
 
+
   const handleManualSaleCreate = () => {
     // Navigate to the existing manual sale creation page
     if (storeId) {
@@ -506,13 +511,12 @@ const SalesPage: React.FC = () => {
             </div>
           )}
           {/* Header Section */}
-          <SalesHeader
-            onSalesReport={handleSalesReport}
-            onAnalytics={handleAnalytics}
-            onCreateSale={handleOpenSaleCreationModal}
-          />
-          {/* Stats Grid */}``
-          <StatsGrid stats={stats} loading={loading} />
+         <div className="flex items-center justify-between mb-6 bg-white p-5 rounded-lg shadow">
+            <div className="text-2xl font-bold text-[#03414C]">View Sales</div>
+
+         </div>
+          {/* Stats Grid */}
+          {/* <StatsGrid stats={stats} loading={loading} /> */}
           
           {/* Status Tabs */}
           <StatusTabs
@@ -618,10 +622,21 @@ const SalesPage: React.FC = () => {
 
       <SaleCreationModal
         isOpen={isSaleCreationModalOpen}
+        // onUploadSales={handleUploadSales}
         onClose={() => setIsSaleCreationModalOpen(false)}
         onManualCreate={handleManualSaleCreate}
         storeId={storeId}
       />
+      {/* Upload Sales Modal */}
+      <UploadSalesModal
+        isOpen={isUploadSalesModalOpen}
+        onClose={() => setIsUploadSalesModalOpen(false)}
+        onUploadSuccess={() => {
+          setIsUploadSalesModalOpen(false);
+          fetchSalesData(); // Refresh sales data after upload
+        }}
+      />
+
     </>
   );
 };
