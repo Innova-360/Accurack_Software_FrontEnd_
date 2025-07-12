@@ -1,13 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { verifyOtp } from "../../store/slices/authSlice";
+import { verifyOtp, resendOtp } from "../../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 
 const OtpPage = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [userEmail, setUserEmail] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [resendTimer, setResendTimer] = useState(60);
+  const [canResend, setCanResend] = useState(false);
   // const [initialOtpSent, setInitialOtpSent] = useState(false);
   const inputs = [
     useRef(null),
@@ -29,45 +31,20 @@ const OtpPage = () => {
     }
   }, []);
 
-  // Get user email from localStorage and send initial OTP
-  // useEffect(() => {
-  //   const email = localStorage.getItem("userEmail");
-  //   if (email) {
-  //     setUserEmail(email);
-  //     // Send initial OTP request when component mounts
-  //     sendInitialOtp(email);
-  //   }
-  // }, []);
+  // Timer for resend OTP functionality
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendTimer > 0) {
+      timer = setTimeout(() => {
+        setResendTimer(resendTimer - 1);
+      }, 1000);
+    } else {
+      setCanResend(true);
+    }
+    return () => clearTimeout(timer);
+  }, [resendTimer]);
 
-  // Send initial OTP when user lands on OTP page
-  // const sendInitialOtp = async (email: string) => {
-  //   try {
-  //     const resultAction = await dispatch(
-  //       verifyOtp({
-  //         email: email,
-  //         // Don't include otp parameter to trigger OTP sending
-  //       })
-  //     );
-
-  //     if (verifyOtp.fulfilled.match(resultAction)) {
-  //       setSuccessMessage("OTP has been sent to your email");
-  //       setInitialOtpSent(true);
-  //       // Focus on first input
-  //       setTimeout(() => {
-  //         (inputs[0].current as any)?.focus();
-  //       }, 100);
-  //       // Clear success message after 3 seconds
-  //       setTimeout(() => setSuccessMessage(""), 3000);
-  //     } else {
-  //       console.error("Failed to send OTP", resultAction.payload);
-  //       toast.error("Failed to send OTP. Please try again.");
-  //     }
-  //   } catch (error) {
-  //     console.error("💥 Error sending OTP", error);
-  //     toast.error("An error occurred while sending OTP. Please try again.");
-  //   }
-  // };
-
+  
   // Handle OTP input change
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -160,6 +137,44 @@ const OtpPage = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (inputs[5].current as any)?.focus();
       e.preventDefault();
+    }
+  };
+
+  // Handle resend OTP
+  const handleResendOtp = async () => {
+    if (!userEmail) {
+      toast.error("Email not found. Please try signing up again.");
+      return;
+    }
+
+    if (!canResend) {
+      toast.error(`Please wait ${resendTimer} seconds before resending.`);
+      return;
+    }
+
+    try {
+      const resultAction = await dispatch(resendOtp(userEmail));
+
+      if (resendOtp.fulfilled.match(resultAction)) {
+        toast.success("OTP has been resent to your email!");
+        setResendTimer(60);
+        setCanResend(false);
+        // Clear the current OTP input
+        setOtp(["", "", "", "", "", ""]);
+        // Focus on first input
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (inputs[0].current as any)?.focus();
+      } else {
+        console.error("❌ Resend OTP failed", resultAction.payload);
+        toast.error(
+          typeof resultAction.payload === "string"
+            ? resultAction.payload
+            : "Failed to resend OTP"
+        );
+      }
+    } catch (error) {
+      console.error("💥 Error during resend OTP", error);
+      toast.error("An error occurred while resending OTP. Please try again.");
     }
   };
 
@@ -282,9 +297,31 @@ const OtpPage = () => {
                 />
               ))}
             </div>{" "}
-            <div className="text-xs text-gray-500 mb-5">
+            <div className="text-xs text-gray-500 mb-3">
               Code expires in 10 minutes
             </div>
+            
+            {/* Resend OTP Section */}
+            <div className="text-center mb-5">
+              <p className="text-sm text-gray-500 mb-2">
+                Didn't receive a code?
+              </p>
+              {canResend ? (
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={loading}
+                  className="text-[#0b5c5a] text-sm font-semibold hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? "Resending..." : "Resend Code"}
+                </button>
+              ) : (
+                <span className="text-sm text-gray-400">
+                  Resend in {resendTimer}s
+                </span>
+              )}
+            </div>
+            
             <div className="flex w-full gap-3 mt-2">
               <button
                 type="button"

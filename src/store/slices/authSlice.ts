@@ -232,6 +232,26 @@ export const verifyOtp = createAsyncThunk(
   }
 );
 
+export const resendOtp = createAsyncThunk(
+  "/auth/resend-otp",
+  async (email: string, { rejectWithValue }) => {
+    try {
+      console.log("📤 Resending OTP to email:", email);
+      const response = await apiClient.post("/auth/resend-otp", { email });
+      console.log("✅ OTP resent successfully:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Resend OTP failed:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to resend OTP";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 // Forgot password async thunk
 export const forgotPassword = createAsyncThunk(
   "auth/forgotPassword",
@@ -423,6 +443,18 @@ export const authSlice = createSlice({
         }
       })
       .addCase(verifyOtp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Resend OTP
+      .addCase(resendOtp.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resendOtp.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(resendOtp.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
