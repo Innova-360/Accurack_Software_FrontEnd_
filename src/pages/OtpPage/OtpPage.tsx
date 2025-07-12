@@ -1,13 +1,38 @@
 import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { verifyOtp } from "../../store/slices/authSlice";
+import { verifyOtp, resendOtp } from "../../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 
 const OtpPage = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [userEmail, setUserEmail] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [resendTimer, setResendTimer] = useState(() => {
+    // Initialize timer from localStorage
+    const savedTimer = localStorage.getItem("otpResendTimer");
+    const savedTimestamp = localStorage.getItem("otpResendTimestamp");
+    
+    if (savedTimer && savedTimestamp) {
+      const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
+      const remaining = Math.max(0, 60 - elapsed);
+      return remaining;
+    }
+    // If no timer data exists, start initial timer
+    return 60;
+  });
+  const [canResend, setCanResend] = useState(() => {
+    // Check if we can resend based on saved timer
+    const savedTimer = localStorage.getItem("otpResendTimer");
+    const savedTimestamp = localStorage.getItem("otpResendTimestamp");
+    
+    if (savedTimer && savedTimestamp) {
+      const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
+      return elapsed >= 60;
+    }
+    // If no timer data exists, start with timer running (can't resend yet)
+    return false;
+  });
   // const [initialOtpSent, setInitialOtpSent] = useState(false);
   const inputs = [
     useRef(null),
@@ -20,54 +45,52 @@ const OtpPage = () => {
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { loading, error } = useAppSelector((state) => state.auth);
+  const { verifyLoading, resendLoading, error } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     const email = localStorage.getItem("userEmail");
     if (email) {
       setUserEmail(email);
     }
+    
+    // Start initial timer if no timer data exists
+    const savedTimer = localStorage.getItem("otpResendTimer");
+    const savedTimestamp = localStorage.getItem("otpResendTimestamp");
+    
+    if (!savedTimer || !savedTimestamp) {
+      // Start initial 60-second timer
+      localStorage.setItem("otpResendTimer", "60");
+      localStorage.setItem("otpResendTimestamp", Date.now().toString());
+    }
   }, []);
 
-  // Get user email from localStorage and send initial OTP
-  // useEffect(() => {
-  //   const email = localStorage.getItem("userEmail");
-  //   if (email) {
-  //     setUserEmail(email);
-  //     // Send initial OTP request when component mounts
-  //     sendInitialOtp(email);
-  //   }
-  // }, []);
+  // Cleanup timer when component unmounts
+  useEffect(() => {
+    return () => {
+      // Don't clear timer on unmount - let it persist for page reloads
+    };
+  }, []);
 
-  // Send initial OTP when user lands on OTP page
-  // const sendInitialOtp = async (email: string) => {
-  //   try {
-  //     const resultAction = await dispatch(
-  //       verifyOtp({
-  //         email: email,
-  //         // Don't include otp parameter to trigger OTP sending
-  //       })
-  //     );
+  // Timer for resend OTP functionality
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendTimer > 0) {
+      timer = setTimeout(() => {
+        const newTimer = resendTimer - 1;
+        setResendTimer(newTimer);
+        // Update localStorage with current timer state
+        localStorage.setItem("otpResendTimer", newTimer.toString());
+      }, 1000);
+    } else {
+      setCanResend(true);
+      // Clear timer from localStorage when timer reaches 0
+      localStorage.removeItem("otpResendTimer");
+      localStorage.removeItem("otpResendTimestamp");
+    }
+    return () => clearTimeout(timer);
+  }, [resendTimer]);
 
-  //     if (verifyOtp.fulfilled.match(resultAction)) {
-  //       setSuccessMessage("OTP has been sent to your email");
-  //       setInitialOtpSent(true);
-  //       // Focus on first input
-  //       setTimeout(() => {
-  //         (inputs[0].current as any)?.focus();
-  //       }, 100);
-  //       // Clear success message after 3 seconds
-  //       setTimeout(() => setSuccessMessage(""), 3000);
-  //     } else {
-  //       console.error("Failed to send OTP", resultAction.payload);
-  //       toast.error("Failed to send OTP. Please try again.");
-  //     }
-  //   } catch (error) {
-  //     console.error("💥 Error sending OTP", error);
-  //     toast.error("An error occurred while sending OTP. Please try again.");
-  //   }
-  // };
-
+  
   // Handle OTP input change
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -124,8 +147,10 @@ const OtpPage = () => {
       if (verifyOtp.fulfilled.match(resultAction)) {
         toast.success("Email verified successfully!");
 
-        // Clear userEmail from localStorage since OTP is verified
+        // Clear userEmail and timer from localStorage since OTP is verified
         localStorage.removeItem("userEmail");
+        localStorage.removeItem("otpResendTimer");
+        localStorage.removeItem("otpResendTimestamp");
 
         // Check if user is now authenticated (has token)
         if (resultAction.payload.token) {
@@ -160,6 +185,47 @@ const OtpPage = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (inputs[5].current as any)?.focus();
       e.preventDefault();
+    }
+  };
+
+  // Handle resend OTP
+  const handleResendOtp = async () => {
+    if (!userEmail) {
+      toast.error("Email not found. Please try signing up again.");
+      return;
+    }
+
+    if (!canResend) {
+      toast.error(`Please wait ${resendTimer} seconds before resending.`);
+      return;
+    }
+
+    try {
+      const resultAction = await dispatch(resendOtp(userEmail));
+
+      if (resendOtp.fulfilled.match(resultAction)) {
+        toast.success("OTP has been resent to your email!");
+        setResendTimer(60);
+        setCanResend(false);
+        // Store timer state in localStorage
+        localStorage.setItem("otpResendTimer", "60");
+        localStorage.setItem("otpResendTimestamp", Date.now().toString());
+        // Clear the current OTP input
+        setOtp(["", "", "", "", "", ""]);
+        // Focus on first input
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (inputs[0].current as any)?.focus();
+      } else {
+        console.error("❌ Resend OTP failed", resultAction.payload);
+        toast.error(
+          typeof resultAction.payload === "string"
+            ? resultAction.payload
+            : "Failed to resend OTP"
+        );
+      }
+    } catch (error) {
+      console.error("💥 Error during resend OTP", error);
+      toast.error("An error occurred while resending OTP. Please try again.");
     }
   };
 
@@ -282,23 +348,50 @@ const OtpPage = () => {
                 />
               ))}
             </div>{" "}
-            <div className="text-xs text-gray-500 mb-5">
+            <div className="text-xs text-gray-500 mb-3">
               Code expires in 10 minutes
             </div>
+            
+            {/* Resend OTP Section */}
+            <div className="text-center mb-5">
+              <p className="text-sm text-gray-500 mb-2">
+                Didn't receive a code?
+              </p>
+              {canResend ? (
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={resendLoading}
+                  className="text-[#0b5c5a] text-sm font-semibold hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {resendLoading ? "Resending..." : "Resend Code"}
+                </button>
+              ) : (
+                <span className="text-sm text-gray-400">
+                  Resend in {resendTimer}s
+                </span>
+              )}
+            </div>
+            
             <div className="flex w-full gap-3 mt-2">
               <button
                 type="button"
-                onClick={() => navigate("/signup")}
+                onClick={() => {
+                  // Clear timer when user cancels
+                  localStorage.removeItem("otpResendTimer");
+                  localStorage.removeItem("otpResendTimestamp");
+                  navigate("/signup");
+                }}
                 className="flex-1 border border-gray-200 rounded-lg py-2 font-semibold text-gray-700 hover:bg-gray-100 transition"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={verifyLoading}
                 className="flex-1 bg-[#0b5c5a] text-white py-2 rounded-lg font-semibold hover:bg-[#094543] transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "Verifying..." : "Verify"}
+                {verifyLoading ? "Verifying..." : "Verify"}
               </button>
             </div>
           </form>

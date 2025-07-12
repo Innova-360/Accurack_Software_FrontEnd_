@@ -17,6 +17,8 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   loading: boolean;
+  verifyLoading: boolean;
+  resendLoading: boolean;
   error: string | null;
 }
 
@@ -25,6 +27,8 @@ const initialState: AuthState = {
   token: localStorage.getItem("authToken"),
   isAuthenticated: !!localStorage.getItem("authToken"),
   loading: false,
+  verifyLoading: false,
+  resendLoading: false,
   error: null,
 };
 
@@ -232,6 +236,26 @@ export const verifyOtp = createAsyncThunk(
   }
 );
 
+export const resendOtp = createAsyncThunk(
+  "/auth/resend-otp",
+  async (email: string, { rejectWithValue }) => {
+    try {
+      console.log("📤 Resending OTP to email:", email);
+      const response = await apiClient.post("/auth/resend-otp", { email });
+      console.log("✅ OTP resent successfully:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Resend OTP failed:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to resend OTP";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 // Forgot password async thunk
 export const forgotPassword = createAsyncThunk(
   "auth/forgotPassword",
@@ -409,11 +433,11 @@ export const authSlice = createSlice({
       })
       // Verify OTP
       .addCase(verifyOtp.pending, (state) => {
-        state.loading = true;
+        state.verifyLoading = true;
         state.error = null;
       })
       .addCase(verifyOtp.fulfilled, (state, action) => {
-        state.loading = false;
+        state.verifyLoading = false;
         // Handle OTP verification success - this might complete registration
         if (action.payload.user && action.payload.token) {
           state.user = action.payload.user;
@@ -423,7 +447,19 @@ export const authSlice = createSlice({
         }
       })
       .addCase(verifyOtp.rejected, (state, action) => {
-        state.loading = false;
+        state.verifyLoading = false;
+        state.error = action.payload as string;
+      })
+      // Resend OTP
+      .addCase(resendOtp.pending, (state) => {
+        state.resendLoading = true;
+        state.error = null;
+      })
+      .addCase(resendOtp.fulfilled, (state) => {
+        state.resendLoading = false;
+      })
+      .addCase(resendOtp.rejected, (state, action) => {
+        state.resendLoading = false;
         state.error = action.payload as string;
       })
       // Forgot Password

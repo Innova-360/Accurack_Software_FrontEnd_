@@ -39,7 +39,7 @@ apiClient.interceptors.response.use(
       localStorage.removeItem("userEmail");
       localStorage.removeItem("clientId");
 
-      // Only redirect if we're not already on the login page
+      // // Only redirect if we're not already on the login page
       // if (!window.location.pathname.includes("/login")) {
       //   // Redirect to login page
       //   window.location.href = "/login";
