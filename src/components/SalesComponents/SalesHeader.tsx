@@ -1,15 +1,17 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FaPlus, FaUpload } from "react-icons/fa";
+import {  FaPlus, FaUpload } from "react-icons/fa";
 import { Button } from "../buttons";
 
 interface SalesHeaderProps {
   onSalesReport?: () => void;
   onAnalytics?: () => void;
   onCreateSale?: () => void;
+  handleUploadSalesModal?: () => void; 
+  addNewSale?: boolean; 
 }
 
-const SalesHeader: React.FC<SalesHeaderProps> = ({ onCreateSale }) => {
+const SalesHeader: React.FC<SalesHeaderProps> = ({ onCreateSale,addNewSale = true }) => {
   const navigate = useNavigate();
   const { id: storeId } = useParams();
 
@@ -41,23 +43,25 @@ const SalesHeader: React.FC<SalesHeaderProps> = ({ onCreateSale }) => {
         </p>
       </div>
       <div className="mt-4 sm:mt-0 flex space-x-3">
-        <Button
+        {/* <Button
           onClick={handleUploadSales}
           variant="secondary"
           icon={<FaUpload size={14} />}
           className="!bg-[#0f4d57]  hover:bg-[#0d3f47] text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base"
         >
           Upload Sales
-        </Button>
-         
-        <Button
-          onClick={handleNewSale}
-          variant="primary"
-          icon={<FaPlus size={14} />}
-          className="bg-[#0f4d57] text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base hover:bg-[#0d3f47]"
-        >
-          New Sale
-        </Button>
+        </Button> */}
+
+        {addNewSale && (
+          <Button
+            onClick={handleNewSale}
+            variant="primary"
+            icon={<FaPlus size={14} />}
+            className="!bg-[#0f4d57] text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base hover:bg-[#0d3f47]"
+          >
+            New Sale
+          </Button>
+        )}
       </div>
     </div>
   );

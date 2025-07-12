@@ -86,7 +86,7 @@ const UploadSalesPage: React.FC = () => {
 
       // Navigate back to sales page
       handleUploadSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Dismiss processing toast and show error
       toast.dismiss(processingToast);
       toast.error(extractErrorMessage(error));

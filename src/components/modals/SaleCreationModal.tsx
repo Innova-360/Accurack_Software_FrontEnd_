@@ -10,6 +10,7 @@ interface SaleCreationModalProps {
   onManualCreate: () => void;
   storeId?: string;
   clientId?: string;
+  handleUploadSalesModal?: () => void;
 }
 
 const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
@@ -18,6 +19,7 @@ const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
   onManualCreate,
   storeId,
   clientId,
+  handleUploadSalesModal
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -127,97 +129,101 @@ const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
   };
 
   const handleUploadClick = () => {
-    handleFileInputClick();
+    // handleFileInputClick();
+
+    if (handleUploadSalesModal) {
+      handleUploadSalesModal();
+    } 
   };
 
   if (!isOpen) return null;
 
   return (
     <>
-     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop with blur */}
-      <div className="absolute inset-0 modal-overlay" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        {/* Backdrop with blur */}
+        <div className="absolute inset-0 modal-overlay" onClick={onClose} />
 
-      {/* Modal Content */}
-      <div className="relative bg-white rounded-xl shadow-2xl p-6 m-4 w-full max-w-md animate-modal-enter">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-[#0f4d57]">Create New Sale</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        {/* Modal Content */}
+        <div className="relative bg-white rounded-xl shadow-2xl p-6 m-4 w-full max-w-md animate-modal-enter">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-[#0f4d57]">Create New Sale</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
 
-        {/* Options */}
-        <div className="space-y-4">
-          {/* Add Product Option */}
-          <button
-            onClick={onManualCreate}
-            className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#0f4d57]  hover:text-white transition-all duration-300 group"
-          >
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-[#0f4d57] group-hover:text-white transition-colors">
-                <FaPlus className="w-6 h-6 text-green-600 group-hover:text-white" />
+          {/* Options */}
+          <div className="space-y-4">
+            {/* Add Product Option */}
+            <button
+              onClick={onManualCreate}
+              className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#0f4d57]  hover:text-white transition-all duration-300 group"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-[#0f4d57] group-hover:text-white transition-colors">
+                  <FaPlus className="w-6 h-6 text-green-600 group-hover:text-white" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-gray-900 group-hover:text-[#0f4d57]"> Make Sales Manually</h3>
+                  <p className="text-sm text-gray-500 group-hover:text-gray-600">
+                    Manually add a new sale transaction.
+                  </p>
+                </div>
               </div>
-              <div className="text-left">
-                <h3 className="font-semibold text-gray-900 group-hover:text-[#0f4d57]"> Make Sales Manually</h3>
-                <p className="text-sm text-gray-500 group-hover:text-gray-600">
-                Manually add a new sale transaction.
-                </p>
+            </button>
+            {/* Upload Sales Option */}
+            <button
+              onClick={handleUploadClick}
+              disabled={isUploading}
+              className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#0f4d57]  hover:text-white transition-all duration-300 group"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-[#0f4d57] group-hover:text-white transition-colors">
+                  {isUploading ? (
+                    <FaSpinner className="w-6 h-6 text-white group-hover:text-green-600 animate-spin" />
+                  ) : (
+                    <FaUpload className="w-6 h-6 text-blue-600 group-hover:text-white" />
+                  )}
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-gray-900 group-hover:text-[#0f4d57]">
+                    {isUploading ? "Uploading..." : "Upload From File"}
+                  </h3>
+                  <p className="text-sm text-gray-500 group-hover:text-gray-600">
+                    Upload sales data from an Excel (.xlsx, .xls) or CSV file.
+                  </p>
+                </div>
               </div>
-            </div>
-          </button>
-          {/* Upload Sales Option */}
-          <button
-            onClick={handleUploadClick}
-            disabled={isUploading}
-            className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#0f4d57]  hover:text-white transition-all duration-300 group"
-          >
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-[#0f4d57] group-hover:text-white transition-colors">
-                {isUploading ? (
-                  <FaSpinner className="w-6 h-6 text-white group-hover:text-green-600 animate-spin" />
-                ) : (
-                  <FaUpload className="w-6 h-6 text-blue-600 group-hover:text-white" />
-                )}
-              </div>
-              <div className="text-left">
-                <h3 className="font-semibold text-gray-900 group-hover:text-[#0f4d57]">
-                  {isUploading ? "Uploading..." : "Upload From File"}
-                </h3>
-                <p className="text-sm text-gray-500 group-hover:text-gray-600">
-                Upload sales data from an Excel (.xlsx, .xls) or CSV file.
-                </p>
-              </div>
-            </div>
-          </button>
-        </div>
+            </button>
+          </div>
 
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".xlsx,.xls,.csv"
-          onChange={handleFileUpload}
-          className="hidden"
-        />
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+        </div>
       </div>
-    </div>
 
     </>
   );

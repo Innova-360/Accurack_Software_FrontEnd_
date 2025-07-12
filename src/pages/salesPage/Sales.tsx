@@ -16,12 +16,16 @@ import SaleCreationModal from "../../components/modals/SaleCreationModal";
 import { fetchSales, updateSale } from "../../store/slices/salesSlice";
 import type { RootState, AppDispatch } from "../../store";
 import useRequireStore from "../../hooks/useRequireStore";
+import UploadSalesModal from "../../components/SalesComponents/UploadSalesModal";
 
 const SalesPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { id: storeId } = useParams<{ id?: string }>();
   const currentStore = useRequireStore();
+
+  const [isUploadSalesModalOpen, setIsUploadSalesModalOpen] =
+      useState(false);
 
   // Redux state
   const { sales, loading, error, pagination } = useSelector(
@@ -433,6 +437,7 @@ const SalesPage: React.FC = () => {
     setIsSaleCreationModalOpen(true);
   };
 
+
   const handleManualSaleCreate = () => {
     // Navigate to the existing manual sale creation page
     if (storeId) {
@@ -510,6 +515,7 @@ const SalesPage: React.FC = () => {
             onSalesReport={handleSalesReport}
             onAnalytics={handleAnalytics}
             onCreateSale={handleOpenSaleCreationModal}
+            addNewSale={false} 
           />
           {/* Stats Grid */}``
           <StatsGrid stats={stats} loading={loading} />
@@ -618,10 +624,21 @@ const SalesPage: React.FC = () => {
 
       <SaleCreationModal
         isOpen={isSaleCreationModalOpen}
+        // onUploadSales={handleUploadSales}
         onClose={() => setIsSaleCreationModalOpen(false)}
         onManualCreate={handleManualSaleCreate}
         storeId={storeId}
       />
+      {/* Upload Sales Modal */}
+      <UploadSalesModal
+        isOpen={isUploadSalesModalOpen}
+        onClose={() => setIsUploadSalesModalOpen(false)}
+        onUploadSuccess={() => {
+          setIsUploadSalesModalOpen(false);
+          fetchSalesData(); // Refresh sales data after upload
+        }}
+      />
+
     </>
   );
 };

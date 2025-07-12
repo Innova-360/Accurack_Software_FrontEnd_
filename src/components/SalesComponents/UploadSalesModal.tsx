@@ -1,28 +1,28 @@
-// only for backup, not used
-
-import axios from "axios";
 import React, { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import toast from "react-hot-toast";
-import { useParams } from "react-router-dom";
 import { BASE_URL } from "../../services/api";
 import { extractErrorMessage } from "../../utils/lastUpdatedUtils";
+import useRequireStore from "../../hooks/useRequireStore";
 
-interface UploadInventoryModalProps {
+interface UploadSalesModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUploadSuccess?: () => void;
 }
 
-const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
+const UploadSalesModal: React.FC<UploadSalesModalProps> = ({
   isOpen,
   onClose,
   onUploadSuccess,
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const { id } = useParams();
+  const navigate = useNavigate();
+  const currentStore = useRequireStore();
 
   if (!isOpen) return null;
 
@@ -45,11 +45,10 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
       if (isValidFileType(file)) {
         setSelectedFile(file);
       } else {
-        toast.error("Please upload only Excel files (.xlsx, .xls)");
+        toast.error("Please upload only Excel files (.xlsx, .xls, .csv)");
       }
     }
   };
-
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -57,7 +56,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
       if (isValidFileType(file)) {
         setSelectedFile(file);
       } else {
-        toast.error("Please upload only Excel files (.xlsx, .xls)");
+        toast.error("Please upload only Excel files (.xlsx, .xls, .csv)");
       }
     }
   };
@@ -66,6 +65,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
     const validTypes = [
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "application/vnd.ms-excel",
+      "text/csv",
     ];
     return (
       validTypes.includes(file.type) ||
@@ -76,7 +76,9 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || !currentStore?.id) return;
+
+    setUploading(true);
 
     // Close modal immediately
     handleClose();
@@ -89,17 +91,18 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
       }
     );
 
-    const url = `${BASE_URL}/product/uploadsheet?storeId=${id}`;
-    console.log("Uploading inventory file:", {
+    const url = `${BASE_URL}/sales/uploadsheet?storeId=${currentStore.id}`;
+    console.log("Uploading sales file:", {
       fileName: selectedFile.name,
       fileType: selectedFile.type,
       fileSize: selectedFile.size,
-      storeId: id,
+      storeId: currentStore.id,
     });
+
     try {
-      // Send as multipart/form-data for multer
       const formData = new FormData();
       formData.append("file", selectedFile);
+
       await axios.post(url, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -109,10 +112,16 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
 
       // Dismiss processing toast and show success
       toast.dismiss(processingToast);
-      toast.success("Inventory uploaded successfully!");
-      // Call the success callback to refetch products
+      toast.success("Sales uploaded successfully!");
+      
+      // Call the success callback to refetch data
       onUploadSuccess?.();
-    } catch (error: any) {
+
+      // Navigate back to sales page if needed
+      if (currentStore?.id) {
+        navigate(`/store/${currentStore.id}/sales/dashboard`);
+      }
+    } catch (error: unknown) {
       // Dismiss processing toast and show error
       toast.dismiss(processingToast);
       toast.error(extractErrorMessage(error));
@@ -128,63 +137,61 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
     onClose();
   };
 
-  
+
   const handleDownloadTemplate = () => {
-    // Create a sample Excel template matching inventory structure
-    const templateData = [
+    // Sales template data
+    const salesTemplateData = [
       [
         "Product Name",
         "PLU",
         "SKU",
         "Category",
-        "Quantity",
-        "Price",
-        "Items Per Unit",
-        "Supplier",
-        "Description",
+        "Quantity Sold",
+        "Unit Price",
+        "Total Amount",
+        "Sale Date",
+        "Customer Name",
+        "Payment Method",
+        "Discount",
+        "Tax Amount",
       ],
       [
         "Premium Coffee Beans",
         "PLU001",
         "SKU-CF-001",
         "BEVERAGES",
-        "150",
-        "$24.99",
-        "1",
-        "Coffee Co.",
-        "High-quality arabica coffee beans sourced from premium farms",
+        "10",
+        "24.99",
+        "249.90",
+        "2024-01-15",
+        "John Smith",
+        "Credit Card",
+        "0.00",
+        "24.99",
       ],
       [
         "Organic Milk",
         "PLU002",
         "SKU-ML-002",
         "DAIRY",
-        "75",
-        "$5.49",
-        "1",
-        "Dairy Farm Inc.",
-        "Fresh organic whole milk, 1 gallon",
-      ],
-      [
-        "Artisan Bread",
-        "PLU003",
-        "SKU-BR-003",
-        "BAKERY",
-        "25",
-        "$7.99",
-        "1",
-        "Local Bakery",
-        "Freshly baked sourdough bread",
+        "5",
+        "5.49",
+        "27.45",
+        "2024-01-15",
+        "Jane Doe",
+        "Cash",
+        "2.75",
+        "2.47",
       ],
     ];
 
-    // Convert to CSV for download (simple implementation)
-    const csvContent = templateData.map((row) => row.join(",")).join("\n");
+    // Convert to CSV for download
+    const csvContent = salesTemplateData.map((row) => row.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "inventory_template.csv";
+    link.download = "sales_upload_template.csv";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -200,7 +207,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
       <div className="relative bg-white rounded-xl shadow-2xl p-6 m-4 w-full max-w-lg animate-modal-enter">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-[#0f4d57]">Upload Inventory File</h2>
+          <h2 className="text-xl font-bold text-[#0f4d57]">Upload Sales Files</h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors p-1"
@@ -302,12 +309,13 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
               </div>
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="px-6 py-2 bg-[#0f4d57] text-white rounded-lg hover:bg-[#0d3f47] transition-colors"
+                disabled={uploading}
+                className="px-6 py-2 bg-[#0f4d57] text-white rounded-lg hover:bg-[#0d3f47] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Choose File
+                {uploading ? "Uploading..." : "Choose File"}
               </button>
               <p className="text-xs text-gray-500">
-                Supported formats: .xlsx, .xls (Max 10MB)
+                Supported formats: .xlsx, .xls, .csv (Max 10MB)
               </p>
             </div>
           )}
@@ -317,7 +325,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".xlsx,.xls"
+          accept=".xlsx,.xls,.csv"
           onChange={handleFileSelect}
           className="hidden"
         />
@@ -332,10 +340,10 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
           </button>
           <button
             onClick={handleUpload}
-            disabled={!selectedFile}
+            disabled={!selectedFile || uploading}
             className="px-6 py-2 bg-[#0f4d57] text-white rounded-lg hover:bg-[#0d3f47] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Upload
+            {uploading ? "Uploading..." : "Upload"}
           </button>
         </div>
       </div>
@@ -343,4 +351,4 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
   );
 };
 
-export default UploadInventoryModal;
+export default UploadSalesModal;
