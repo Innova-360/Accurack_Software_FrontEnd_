@@ -53,9 +53,12 @@ const UploadSalesPage: React.FC = () => {
     setUploading(true);
 
     // Show processing toast
-    const processingToast = toast.loading(`Processing ${selectedFile.name}...`, {
-      duration: Infinity,
-    });
+    const processingToast = toast.loading(
+      `Processing ${selectedFile.name}...`,
+      {
+        duration: Infinity,
+      }
+    );
 
     const url = `${BASE_URL}/sales/uploadsheet?storeId=${currentStore.id}`;
 
@@ -325,9 +328,24 @@ const UploadSalesPage: React.FC = () => {
               >
                 {uploading ? (
                   <>
-                    <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    <svg
+                      className="animate-spin h-5 w-5 mr-2 text-white"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8z"
+                      />
                     </svg>
                     Uploading...
                   </>
