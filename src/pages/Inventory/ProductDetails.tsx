@@ -189,7 +189,6 @@ const ProductDetails: React.FC = () => {
 
   const displayData = getDisplayData();
 
-
   console.log("Product Data:", product);
   console.log("Display Data:", displayData);
   return (
@@ -262,10 +261,9 @@ const ProductDetails: React.FC = () => {
                       key={variant.id || index}
                       onClick={() => setSelectedVariant(variant)}
                       className={`p-3 rounded-lg border transition-all duration-200 text-left ${
-                        selectedVariant?.id === variant.id ||
-                        (selectedVariant?.name === variant.name && index === 0)
-                          ? "border-blue-500 bg-blue-50 shadow-md"
-                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                        selectedVariant?.pluUpc === variant.pluUpc
+                          ? "border-blue-500 bg-blue-50 shadow-md" // Highlight selected variant
+                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50" // Default styling
                       }`}
                     >
                       <div className="font-medium text-gray-900">
@@ -448,23 +446,26 @@ const ProductDetails: React.FC = () => {
                     </div>
                   </div>
 
-                   <div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                       Variants
                     </label>
                     <div className="flex gap-2 flex-wrap">
-                      {isVariantProduct && product.variants && product.variants.length > 0 ? (
+                      {isVariantProduct &&
+                      product.variants &&
+                      product.variants.length > 0 ? (
                         product.variants.map((variant, index) => (
                           <button
                             key={variant.id || index}
                             onClick={() => setSelectedVariant(variant)}
                             className={`inline-flex items-center px-3 py-2 rounded-full text-sm font-medium transition-all ${
-                              selectedVariant?.id === variant.id || 
-                              (selectedVariant?.name === variant.name && index === 0)
-                                ? 'bg-blue-100 text-blue-700 border border-blue-300 shadow-sm'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                              selectedVariant?.id === variant.id ||
+                              (selectedVariant?.name === variant.name &&
+                                index === 0)
+                                ? "bg-blue-100 text-blue-700 border border-blue-300 shadow-sm"
+                                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
                             }`}
-                            title={`Price: $${variant.price || '0.00'} | Stock: ${variant.quantity || 0} | ${variant.color ? `Color: ${variant.color}` : ''} ${variant.origin ? `| Origin: ${variant.origin}` : ''}`}
+                            title={`Price: $${variant.price || "0.00"} | Stock: ${variant.quantity || 0} | ${variant.color ? `Color: ${variant.color}` : ""} ${variant.origin ? `| Origin: ${variant.origin}` : ""}`}
                           >
                             {variant.name}
                             {variant.color && ` - ${variant.color}`}
@@ -571,7 +572,7 @@ const ProductDetails: React.FC = () => {
                         Profit Margin
                       </label>
                       <div className="text-md text-gray-800 font-semibold">
-                        {displayData.costPrice > 0 
+                        {displayData.costPrice > 0
                           ? `${(((displayData.price - displayData.costPrice) / displayData.price) * 100).toFixed(2)}%`
                           : "0%"}
                       </div>
@@ -581,7 +582,11 @@ const ProductDetails: React.FC = () => {
                         Profit Amount
                       </label>
                       <div className="text-md text-gray-800 font-semibold">
-                        ${Math.max(0, displayData.price - displayData.costPrice).toFixed(2)}
+                        $
+                        {Math.max(
+                          0,
+                          displayData.price - displayData.costPrice
+                        ).toFixed(2)}
                       </div>
                     </div>
                   </div>
@@ -625,21 +630,6 @@ const ProductDetails: React.FC = () => {
                 </div>
               </div>
             </div>
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
 
             {/* Right Column - 60% width (3/5) */}
             <div className="lg:col-span-3 space-y-6">
@@ -696,7 +686,9 @@ const ProductDetails: React.FC = () => {
                   {/* Store-wise Stock Section */}
                   <div>
                     <h3 className="text-sm font-medium text-gray-900 mb-4">
-                      {isVariantProduct ? 'Variant Stock by Location' : 'Store-wise Stock'}
+                      {isVariantProduct
+                        ? "Variant Stock by Location"
+                        : "Store-wise Stock"}
                     </h3>
                     {/* Table Header */}
                     <div className="grid grid-cols-5 gap-4 py-3 text-sm font-medium text-gray-500 border-b border-gray-200">
@@ -815,13 +807,14 @@ const ProductDetails: React.FC = () => {
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {product.variants.map((variant, index) => (
-                          <div 
+                          <div
                             key={variant.id || index}
                             className={`p-4 rounded-lg border transition-all ${
-                              selectedVariant?.id === variant.id || 
-                              (selectedVariant?.name === variant.name && index === 0)
-                                ? 'border-blue-500 bg-blue-50'
-                                : 'border-gray-200 bg-gray-50'
+                              selectedVariant?.id === variant.id ||
+                              (selectedVariant?.name === variant.name &&
+                                index === 0)
+                                ? "border-blue-500 bg-blue-50"
+                                : "border-gray-200 bg-gray-50"
                             }`}
                           >
                             <div className="flex justify-between items-start mb-2">
@@ -841,7 +834,7 @@ const ProductDetails: React.FC = () => {
                               </span>
                             </div>
                             <div className="text-sm text-gray-600">
-                              Price: ${variant.price || '0.00'}
+                              Price: ${variant.price || "0.00"}
                             </div>
                             {variant.color && (
                               <div className="text-sm text-gray-600">
@@ -972,15 +965,18 @@ const ProductDetails: React.FC = () => {
                           </td>
                           <td className="py-3 px-4 text-sm">
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                              {isVariantProduct ? 'Variant Sale (Sample)' : 'Sale (Sample)'}
+                              {isVariantProduct
+                                ? "Variant Sale (Sample)"
+                                : "Sale (Sample)"}
                             </span>
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
                             -1
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
-                            ${isVariantProduct && selectedVariant 
-                              ? selectedVariant.price?.toFixed(2) || '0.00'
+                            $
+                            {isVariantProduct && selectedVariant
+                              ? selectedVariant.price?.toFixed(2) || "0.00"
                               : product.singleItemSellingPrice || "0.00"}
                           </td>
                           <td className="py-3 px-4 text-sm">
@@ -989,9 +985,9 @@ const ProductDetails: React.FC = () => {
                             </span>
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-900 font-mono">
-                            {isVariantProduct && selectedVariant 
+                            {isVariantProduct && selectedVariant
                               ? `VAR-${selectedVariant.name.substring(0, 3).toUpperCase()}-001`
-                              : 'SAMPLE-001'}
+                              : "SAMPLE-001"}
                           </td>
                         </tr>
                       )}
@@ -1097,7 +1093,6 @@ const ProductDetails: React.FC = () => {
               </div>
             </div>
           </div>
-
         </div>
 
         {/* Fixed Action Footer */}
