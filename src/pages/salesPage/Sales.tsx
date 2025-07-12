@@ -511,7 +511,7 @@ const SalesPage: React.FC = () => {
             onAnalytics={handleAnalytics}
             onCreateSale={handleOpenSaleCreationModal}
           />
-          {/* Stats Grid */}``
+          {/* Stats Grid */}
           <StatsGrid stats={stats} loading={loading} />
           
           {/* Status Tabs */}
