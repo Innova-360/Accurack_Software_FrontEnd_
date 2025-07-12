@@ -45,15 +45,16 @@ const SalesHeader: React.FC<SalesHeaderProps> = ({ onCreateSale }) => {
           onClick={handleUploadSales}
           variant="secondary"
           icon={<FaUpload size={14} />}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="!bg-[#0f4d57]  hover:bg-[#0d3f47] text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base"
         >
           Upload Sales
         </Button>
+         
         <Button
           onClick={handleNewSale}
           variant="primary"
           icon={<FaPlus size={14} />}
-          className="bg-teal-600 hover:bg-teal-700 text-white"
+          className="bg-[#0f4d57] text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl shadow-md text-sm sm:text-base hover:bg-[#0d3f47]"
         >
           New Sale
         </Button>
