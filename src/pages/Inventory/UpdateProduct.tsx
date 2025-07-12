@@ -402,20 +402,20 @@ const UpdateProduct: React.FC = () => {
                 />
               ) : (
                 <div className="overflow-x-auto">
-                  <InventoryTable
-                    products={currentProducts}
-                    selectedItems={selectedItems}
-                    startIndex={startIndex}
-                    sortConfig={sortConfig}
-                    onSelectAll={handleSelectAll}
-                    onSelectItem={handleSelectItem}
-                    onSort={handleSort}
-                    onProductDeleted={handleProductDeleted}
-                    onProductEdited={handleEditProduct}
-                    onProductViewed={handleViewProduct}
-                    showActions={true}
-                    showDeleteButton={false}
-                  />
+                              <InventoryTable
+              products={currentProducts}
+              selectedItems={selectedItems}
+              startIndex={startIndex}
+              sortConfig={sortConfig}
+              onSelectAll={handleSelectAll}
+              onSelectItem={handleSelectItem}
+              onSort={handleSort}
+              onProductDeleted={handleProductDeleted}
+              onProductEdited={handleEditProduct}
+              onProductViewed={handleViewProduct}
+              showDeleteButton={false}
+              showUpdateQuantity={true}
+            />
                 </div>
               )}
             </div>
@@ -435,6 +435,7 @@ const UpdateProduct: React.FC = () => {
                 onProductViewed={handleViewProduct}
                 showActions={true}
                 showDeleteButton={false}
+                showUpdateQuantity={true}
               />
             </div>
           </div>

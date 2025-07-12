@@ -11,6 +11,8 @@ interface TransactionTableProps {
   onStatusChange?: (transactionId: string, newStatus: string) => void;
   onEditNavigation?: (transaction: any) => void;
   isUpdating?: boolean;
+  canEdit?: boolean; 
+  
 }
 
 const TransactionTable: React.FC<TransactionTableProps> = ({
@@ -19,6 +21,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   onStatusChange,
   onEditNavigation,
   isUpdating = false,
+  canEdit = true
 }) => {
   const formatCurrency = (amount: number): string => {
     if (typeof amount !== "number" || isNaN(amount)) {
@@ -146,6 +149,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                   status={transaction.status}
                   onStatusChange={(newStatus) => onStatusChange?.(transaction.id, newStatus)}
                   isUpdating={isUpdating}
+                  canEdit={canEdit}
                 />
               </td>
               <td className="px-4 py-3 text-center">
@@ -157,7 +161,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                   >
                     <Eye className="h-4 w-4" />
                   </span>
-                  {onEditNavigation && (
+                  {onEditNavigation && canEdit && (
                     <span
                       className="text-sm text-gray-500 cursor-pointer hover:text-green-600 transition-colors"
                       onClick={() => onEditNavigation(transaction)}

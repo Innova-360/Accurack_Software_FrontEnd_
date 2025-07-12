@@ -12,8 +12,8 @@ import { formatCurrency } from '../../services/salesService';
 interface StatsCard {
   title: string;
   value: string;
-  change: string;
-  changeType: 'positive' | 'negative';
+  change?: string;
+  changeType?: 'positive' | 'negative';
   icon: React.ReactNode;
   color: string;
 }
@@ -75,40 +75,40 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
       {
         title: "Today's Sales",
         value: formatCurrency(data.todaysSales),
-        change: "+12.5% from yesterday",
-        changeType: 'positive',
+        // change: "+12.5% from yesterday",
+        // changeType: 'positive',
         icon: <FaChartLine />,
         color: 'bg-teal-600'
       },
       {
         title: "Transactions",
         value: data.transactions.toString(),
-        change: "+3.2% from yesterday",
-        changeType: 'positive',
+        // change: "+3.2% from yesterday",
+        // changeType: 'positive',
         icon: <FaFileAlt />,
         color: 'bg-teal-600'
       },
       {
         title: "Customers",
         value: data.customers.toString(),
-        change: "+5.1% from yesterday",
-        changeType: 'positive',
+        // change: "+5.1% from yesterday",
+        // changeType: 'positive',
         icon: <FaUsers />,
         color: 'bg-teal-600'
       },
       {
         title: "Avg. Transaction",
         value: formatCurrency(data.avgTransaction),
-        change: "+2.7% from yesterday",
-        changeType: 'positive',
+        // change: "+2.7% from yesterday",
+        // changeType: 'positive',
         icon: <FaShoppingCart />,
         color: 'bg-teal-600'
       },
       {
         title: "Products Available",
         value: data.productsAvailable.toString(),
-        change: "of 5 total",
-        changeType: 'positive',
+        // change: "of 5 total",
+        // changeType: 'positive',
         icon: <FaBoxes />,
         color: 'bg-teal-600'
       },
@@ -130,9 +130,9 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats, loading }) => {
           <div className="text-2xl font-bold text-gray-900 mb-1">
             {loading ? 'Loading...' : stat.value}
           </div>
-          <div className={`text-xs ${stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
+          {/* <div className={`text-xs ${stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
             {loading ? 'Loading...' : stat.change}
-          </div>
+          </div> */}
         </div>
       ))}
     </div>

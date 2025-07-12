@@ -18,6 +18,7 @@ import useSuppliers from "../../hooks/useSuppliers";
 import { fetchUser } from "../../store/slices/userSlice";
 // import { fetchProductCategories } from "../../store/slices/productCategoriesSlice";
 import { useProductCategories } from "../../hooks/useProductCategories";
+import { useRef } from "react";
 
 const CreateInventory: React.FC = () => {
   const dispatch = useDispatch();
@@ -35,6 +36,18 @@ const CreateInventory: React.FC = () => {
     loading: suppliersLoading,
     error: suppliersError,
   } = useSuppliers(storeId);
+
+  // Refs for Required fields
+  const productNameRef = useRef<HTMLInputElement>(null);
+  const categoryRef = useRef<HTMLSelectElement>(null);
+  const priceRef = useRef<HTMLInputElement>(null);
+  const pluRef = useRef<HTMLInputElement>(null);
+  const quantityRef = useRef<HTMLInputElement>(null);
+  const itemQuantityRef = useRef<HTMLInputElement>(null);
+  const minOrderValueRef = useRef<HTMLInputElement>(null);
+  const itemCost = useRef<HTMLInputElement>(null);
+  const itemSellingCost = useRef<HTMLInputElement>(null);
+  const minSellingQuantityRef = useRef<HTMLInputElement>(null);
 
   // const user = useAppSelector((state) => state.user.user);
 
@@ -138,7 +151,7 @@ const CreateInventory: React.FC = () => {
           const mappedVariant = {
             name: variant.name || `Variant ${index + 1}`,
             price,
-            costPrice, // Include cost price for variants
+            costPrice: costPrice, // Include cost price for variants
             sku: variant.customSku || "",
             ean: variant.ean || "", // Include EAN for variants
             pluUpc: variant.plu || variant.pluUpc || "",
@@ -197,10 +210,10 @@ const CreateInventory: React.FC = () => {
     customSku: "",
     ean: "",
     pluUpc: "",
-    individualItemQuantity: "1",
+    individualItemQuantity: "",
     itemCost: "",
     itemSellingCost: "",
-    minSellingQuantity: "1",
+    minSellingQuantity: "",
     minOrderValue: "",
     msrpPrice: "",
     supplierId: "",
@@ -222,23 +235,91 @@ const CreateInventory: React.FC = () => {
   // Helper functions
   const handleFormDataChange = useCallback(
     (field: keyof ProductFormData, value: any) => {
-      setFormData((prev) => ({ ...prev, [field]: value }));
+      setFormData((prev) => {
+        const updatedFormData = { ...prev, [field]: value };
+
+        // Remove red border if the field is filled
+        const fieldRefMap: Partial<
+          Record<
+            keyof ProductFormData,
+            React.RefObject<HTMLInputElement | HTMLSelectElement | null>
+          >
+        > = {
+          productName: productNameRef,
+          category: categoryRef,
+          price: priceRef,
+          pluUpc: pluRef,
+          individualItemQuantity: itemQuantityRef,
+          minOrderValue: minOrderValueRef,
+          quantity: quantityRef,
+          itemCost: itemCost,
+          itemSellingCost: itemSellingCost,
+          minSellingQuantity: minSellingQuantityRef,
+        };
+
+        const ref = fieldRefMap[field];
+        if (ref?.current && value) {
+          // Special validation for minSellingQuantity - should be > 0
+          const isValid =
+            field === "minSellingQuantity"
+              ? parseInt(value.toString()) > 0
+              : value.toString().trim() !== "" && value !== "0";
+
+          if (isValid) {
+            ref.current.classList.remove("border-red-500", "border-2");
+          }
+        }
+
+        return updatedFormData;
+      });
     },
     []
   );
 
   const handleNumericInput = (key: keyof ProductFormData, rawValue: string) => {
     const cleaned = rawValue.replace(/[^0-9]/g, ""); // removes everything except digits
-    
+
     // Special handling for PLU field - if it was set from a scanned barcode, preserve it
     if (key === "pluUpc" && !cleaned && formData.pluUpc) {
       return; // Don't update if we're trying to clear a valid PLU
     }
-    
+
     setFormData((prev) => ({
       ...prev,
       [key]: cleaned,
     }));
+
+    // Remove red border if the field is filled
+    const fieldRefMap: Partial<
+      Record<
+        keyof ProductFormData,
+        React.RefObject<HTMLInputElement | HTMLSelectElement | null>
+      >
+    > = {
+      productName: productNameRef,
+      category: categoryRef,
+      price: priceRef,
+      pluUpc: pluRef,
+      individualItemQuantity: itemQuantityRef,
+      minOrderValue: minOrderValueRef,
+      quantity: quantityRef,
+      itemCost: itemCost,
+      itemSellingCost: itemSellingCost,
+      minSellingQuantity: minSellingQuantityRef,
+    };
+
+    const ref = fieldRefMap[key];
+    if (ref?.current && cleaned) {
+      // Special validation for minSellingQuantity - should be > 0
+      const isValid =
+        key === "minSellingQuantity"
+          ? parseInt(cleaned) > 0
+          : cleaned.trim() !== "" && cleaned !== "0";
+
+      if (isValid) {
+        ref.current.classList.remove("border-red-500", "border-2");
+      }
+    }
   };
 
   const showOptionalFields = !shouldHideFields(
@@ -257,16 +338,18 @@ const CreateInventory: React.FC = () => {
     setIsSubmitting(true);
     const payload = buildApiPayload();
 
-    dispatch(createProduct(payload) as any).then((result: any) => {
-      setIsSubmitting(false);
-      if (!result.error) {
-        // Navigate to the correct inventory page using the actual storeId
-        navigate(`/store/${storeId}/inventory/dashboard`);
-      }
-    }).catch((error: any) => {
-      setIsSubmitting(false);
-      console.error("Error creating product:", error);
-    });
+    dispatch(createProduct(payload) as any)
+      .then((result: any) => {
+        setIsSubmitting(false);
+        if (!result.error) {
+          // Navigate to the correct inventory page using the actual storeId
+          navigate(`/store/${storeId}/inventory/dashboard`);
+        }
+      })
+      .catch((error: any) => {
+        setIsSubmitting(false);
+        console.error("Error creating product:", error);
+      });
   };
 
   const handleNext = () => {
@@ -314,6 +397,8 @@ const CreateInventory: React.FC = () => {
         formData.minSellingQuantity,
         formData.minOrderValue,
         formData.quantity,
+        formData.itemCost,
+        formData.itemSellingCost,
       ];
 
       const filledFields = requiredFields.filter(
@@ -354,7 +439,7 @@ const CreateInventory: React.FC = () => {
         pluUpc: location.state.scannedPLU,
       }));
     }
-    
+
     // Fallback: Check localStorage if navigation state is not available
     if (!location.state?.scannedPLU && !formData.pluUpc) {
       const storedPLU = localStorage.getItem("scannedPLU");
@@ -368,6 +453,66 @@ const CreateInventory: React.FC = () => {
       }
     }
   }, [location.state, formData.pluUpc]);
+
+  const scrollToFirstEmptyField = () => {
+    type FieldRef = React.RefObject<
+      HTMLInputElement | HTMLSelectElement | null
+    >;
+    type FieldOrderItem = { ref: FieldRef; value: any };
+
+    const fieldOrder: FieldOrderItem[] = hasVariants
+      ? [
+          // For variant mode - only basic fields required
+          { ref: productNameRef, value: formData.productName },
+          { ref: categoryRef, value: formData.category },
+          { ref: priceRef, value: formData.price },
+        ]
+      : [
+          // For regular mode - all fields required
+          { ref: productNameRef, value: formData.productName },
+          { ref: categoryRef, value: formData.category },
+          { ref: priceRef, value: formData.price },
+          { ref: pluRef, value: formData.pluUpc },
+          { ref: itemQuantityRef, value: formData.individualItemQuantity },
+          { ref: minOrderValueRef, value: formData.minOrderValue },
+          { ref: quantityRef, value: formData.quantity },
+          { ref: itemCost, value: formData.itemCost },
+          { ref: itemSellingCost, value: formData.itemSellingCost },
+          { ref: minSellingQuantityRef, value: formData.minSellingQuantity },
+        ];
+
+    // First, highlight all empty fields
+    let firstEmptyField: FieldRef | null = null;
+
+    fieldOrder.forEach(({ ref, value }) => {
+      // Special validation for minSellingQuantity - should be > 0
+      const isEmpty =
+        ref === minSellingQuantityRef
+          ? !value ||
+            value.toString().trim() === "" ||
+            parseInt(value.toString()) <= 0
+          : !value || value.toString().trim() === "" || value === "0";
+
+      if (isEmpty) {
+        ref.current?.classList.add("border-red-500", "border-2");
+        if (!firstEmptyField) {
+          firstEmptyField = ref;
+        }
+      } else {
+        ref.current?.classList.remove("border-red-500", "border-2");
+      }
+    });
+
+    // Scroll to the first empty field
+    const firstField = firstEmptyField as FieldRef | null;
+    if (firstField && firstField.current) {
+      firstField.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      firstField.current.focus();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
@@ -583,6 +728,18 @@ const CreateInventory: React.FC = () => {
                     suppliersError={suppliersError}
                     categories={productCategories}
                     categoriesLoading={categoriesLoading}
+                    fieldRefs={{
+                      productName: productNameRef,
+                      category: categoryRef,
+                      price: priceRef,
+                      pluUpc: pluRef,
+                      quantity: quantityRef,
+                      individualItemQuantity: itemQuantityRef,
+                      minOrderValue: minOrderValueRef,
+                      minSellingQuantity: minSellingQuantityRef,
+                      itemCost: itemCost,
+                      itemSellingCost: itemSellingCost,
+                    }}
                   />
                 </div>{" "}
                 {/* Configuration Sections - Only show if optional fields are visible and not in variant mode */}
@@ -644,7 +801,10 @@ const CreateInventory: React.FC = () => {
                   </button>{" "}
                   <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
                     {progress < 100 && (
-                      <div className="flex items-center space-x-2 text-amber-600 bg-amber-50 px-3 sm:px-4 py-2 rounded-lg border border-amber-200">
+                      <div
+                        onClick={scrollToFirstEmptyField}
+                        className="cursor-pointer flex items-center space-x-2 text-amber-600 bg-amber-50 px-3 sm:px-4 py-2 rounded-lg border border-amber-200 hover:bg-amber-100 transition-colors"
+                      >
                         <svg
                           className="w-4 h-4 flex-shrink-0"
                           fill="currentColor"
@@ -658,8 +818,8 @@ const CreateInventory: React.FC = () => {
                         </svg>
                         <span className="text-xs sm:text-sm font-medium text-center sm:text-left">
                           {hasVariants
-                            ? "Please complete basic info and configure attributes with at least 2 options each"
-                            : "Please complete all required fields"}
+                            ? "Click to see missing fields"
+                            : "Click to see missing fields"}
                         </span>
                       </div>
                     )}
@@ -668,13 +828,15 @@ const CreateInventory: React.FC = () => {
                       // For variant mode, always show Next button
                       <button
                         type="button"
-                        onClick={handleNext}
-                        disabled={progress < 100}
-                        className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 ${
-                          progress >= 100
-                            ? "bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md"
-                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        }`}
+                        onClick={(e) => {
+                          if (progress < 100) {
+                            e.preventDefault();
+                            scrollToFirstEmptyField();
+                            return;
+                          }
+                          handleNext();
+                        }}
+                        className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md transition-all duration-200 transform hover:scale-105"
                       >
                         <span className="text-sm sm:text-base">
                           Next: Configure Variations
@@ -697,13 +859,15 @@ const CreateInventory: React.FC = () => {
                       // For non-variant mode with attributes
                       <button
                         type="button"
-                        onClick={handleNext}
-                        disabled={progress < 100}
-                        className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 ${
-                          progress >= 100
-                            ? "bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md"
-                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        }`}
+                        onClick={(e) => {
+                          if (progress < 100) {
+                            e.preventDefault();
+                            scrollToFirstEmptyField();
+                            return;
+                          }
+                          handleNext();
+                        }}
+                        className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md transition-all duration-200 transform hover:scale-105"
                       >
                         <span className="text-sm sm:text-base">
                           Next: Configure Variations
@@ -723,14 +887,24 @@ const CreateInventory: React.FC = () => {
                         </svg>
                       </button>
                     ) : (
-                      // For simple product mode
+                      // For simple product mode - Always visible Create Product button
                       <button
-                        type="submit"
-                        disabled={progress < 100 || isSubmitting}
-                        className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 ${
-                          progress >= 100 && !isSubmitting
-                            ? "bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md"
-                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        type="button"
+                        onClick={(e) => {
+                          if (progress < 100) {
+                            e.preventDefault();
+                            scrollToFirstEmptyField();
+                            return;
+                          }
+                          if (!isSubmitting) {
+                            handleSubmit(e);
+                          }
+                        }}
+                        disabled={isSubmitting}
+                        className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-200 transform hover:scale-105 hover:shadow-lg ${
+                          isSubmitting
+                            ? "bg-gray-400 text-white cursor-not-allowed"
+                            : "bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md"
                         }`}
                       >
                         {isSubmitting ? (
