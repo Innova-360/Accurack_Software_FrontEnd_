@@ -1,7 +1,6 @@
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaTimes, FaFileUpload, FaEdit, FaSpinner } from "react-icons/fa";
-import { SpecialButton } from "../buttons";
+import { FaPlus, FaSpinner, FaUpload } from "react-icons/fa";
 import apiClient from "../../services/api";
 import toast from "react-hot-toast";
 
@@ -97,16 +96,19 @@ const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
         toast.success("Sales file uploaded successfully!");
         onClose();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error uploading sales file:", error);
 
       let errorMessage = "Failed to upload sales file";
 
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.data?.error) {
-        errorMessage = error.response.data.error;
-      } else if (error.message) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const errorResponse = error as { response?: { data?: { message?: string; error?: string } } };
+        if (errorResponse.response?.data?.message) {
+          errorMessage = errorResponse.response.data.message;
+        } else if (errorResponse.response?.data?.error) {
+          errorMessage = errorResponse.response.data.error;
+        }
+      } else if (error instanceof Error && error.message) {
         errorMessage = error.message;
       }
 
@@ -124,121 +126,100 @@ const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
     fileInputRef.current?.click();
   };
 
+  const handleUploadClick = () => {
+    handleFileInputClick();
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-transparent backdrop-blur-[2px] bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+    <>
+     <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop with blur */}
+      <div className="absolute inset-0 modal-overlay" onClick={onClose} />
+
+      {/* Modal Content */}
+      <div className="relative bg-white rounded-xl shadow-2xl p-6 m-4 w-full max-w-md animate-modal-enter">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Create New Sale
-          </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-[#0f4d57]">Create New Sale</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            disabled={isUploading}
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1"
           >
-            <FaTimes className="text-gray-500" size={20} />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6">
-          <p className="text-gray-600 mb-6">
-            Choose how you would like to create a new sale:
-          </p>
-
-          <div className="space-y-4">
-            {/* Manual Creation Option */}
-            <div className="border border-gray-200 rounded-lg p-4 hover:border-[#03414C] transition-colors">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <FaEdit className="text-blue-600" size={20} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-900 mb-2">
-                    Make sales Manually
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Fill out the sale details manually using our form interface.
-                  </p>
-                  <SpecialButton
-                    variant="primary"
-                    onClick={onManualCreate}
-                    className="w-full bg-[#03414C] hover:bg-[#025561] text-white py-2"
-                    disabled={isUploading}
-                  >
-                    Make sales Manually
-                  </SpecialButton>
-                </div>
-              </div>
-            </div>
-
-            {/* File Upload Option */}
-            <div className="border border-gray-200 rounded-lg p-4 hover:border-[#03414C] transition-colors">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <FaFileUpload className="text-green-600" size={20} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-900 mb-2">
-                    Upload from File
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Upload sales data from an Excel (.xlsx, .xls) or CSV file.
-                  </p>
-
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".xlsx,.xls,.csv"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-
-                  <SpecialButton
-                    variant="secondary"
-                    onClick={handleFileInputClick}
-                    className="w-full border border-green-600 text-green-600 hover:bg-green-50 py-2"
-                    disabled={isUploading}
-                  >
-                    {isUploading ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <FaSpinner className="animate-spin" size={16} />
-                        Uploading...
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center gap-2">
-                        <FaFileUpload size={16} />
-                        Choose File
-                      </div>
-                    )}
-                  </SpecialButton>
-
-                  <div className="mt-2 text-xs text-gray-500">
-                    <p>Supported formats: Excel (.xlsx, .xls), CSV</p>
-                    <p>Maximum file size: 10MB</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
-          <SpecialButton
-            variant="modal-cancel"
-            onClick={onClose}
-            className="px-4 py-2 text-gray-600 hover:bg-gray-50"
-            disabled={isUploading}
+        {/* Options */}
+        <div className="space-y-4">
+          {/* Add Product Option */}
+          <button
+            onClick={onManualCreate}
+            className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#0f4d57]  hover:text-white transition-all duration-300 group"
           >
-            Cancel
-          </SpecialButton>
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-[#0f4d57] group-hover:text-white transition-colors">
+                <FaPlus className="w-6 h-6 text-green-600 group-hover:text-white" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-gray-900 group-hover:text-[#0f4d57]"> Make Sales Manually</h3>
+                <p className="text-sm text-gray-500 group-hover:text-gray-600">
+                Manually add a new sale transaction.
+                </p>
+              </div>
+            </div>
+          </button>
+          {/* Upload Sales Option */}
+          <button
+            onClick={handleUploadClick}
+            disabled={isUploading}
+            className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#0f4d57]  hover:text-white transition-all duration-300 group"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-[#0f4d57] group-hover:text-white transition-colors">
+                {isUploading ? (
+                  <FaSpinner className="w-6 h-6 text-white group-hover:text-green-600 animate-spin" />
+                ) : (
+                  <FaUpload className="w-6 h-6 text-blue-600 group-hover:text-white" />
+                )}
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-gray-900 group-hover:text-[#0f4d57]">
+                  {isUploading ? "Uploading..." : "Upload From File"}
+                </h3>
+                <p className="text-sm text-gray-500 group-hover:text-gray-600">
+                Upload sales data from an Excel (.xlsx, .xls) or CSV file.
+                </p>
+              </div>
+            </div>
+          </button>
         </div>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
       </div>
     </div>
+
+    </>
   );
 };
 
