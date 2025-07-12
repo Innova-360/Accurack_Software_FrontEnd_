@@ -18,6 +18,7 @@ import useSuppliers from "../../hooks/useSuppliers";
 import { fetchUser } from "../../store/slices/userSlice";
 // import { fetchProductCategories } from "../../store/slices/productCategoriesSlice";
 import { useProductCategories } from "../../hooks/useProductCategories";
+import { useRef } from "react";
 
 const CreateInventory: React.FC = () => {
   const dispatch = useDispatch();
@@ -35,6 +36,15 @@ const CreateInventory: React.FC = () => {
     loading: suppliersLoading,
     error: suppliersError,
   } = useSuppliers(storeId);
+
+  // Refs for Required fields
+  const productNameRef = useRef<HTMLInputElement>(null);
+  const categoryRef = useRef<HTMLSelectElement>(null);
+  const priceRef = useRef<HTMLInputElement>(null);
+  const pluRef = useRef<HTMLInputElement>(null);
+  const quantityRef = useRef<HTMLInputElement>(null);
+  const itemQuantityRef = useRef<HTMLInputElement>(null);
+  const minOrderValueRef = useRef<HTMLInputElement>(null);
 
   // const user = useAppSelector((state) => state.user.user);
 
@@ -229,12 +239,12 @@ const CreateInventory: React.FC = () => {
 
   const handleNumericInput = (key: keyof ProductFormData, rawValue: string) => {
     const cleaned = rawValue.replace(/[^0-9]/g, ""); // removes everything except digits
-    
+
     // Special handling for PLU field - if it was set from a scanned barcode, preserve it
     if (key === "pluUpc" && !cleaned && formData.pluUpc) {
       return; // Don't update if we're trying to clear a valid PLU
     }
-    
+
     setFormData((prev) => ({
       ...prev,
       [key]: cleaned,
@@ -257,16 +267,18 @@ const CreateInventory: React.FC = () => {
     setIsSubmitting(true);
     const payload = buildApiPayload();
 
-    dispatch(createProduct(payload) as any).then((result: any) => {
-      setIsSubmitting(false);
-      if (!result.error) {
-        // Navigate to the correct inventory page using the actual storeId
-        navigate(`/store/${storeId}/inventory/dashboard`);
-      }
-    }).catch((error: any) => {
-      setIsSubmitting(false);
-      console.error("Error creating product:", error);
-    });
+    dispatch(createProduct(payload) as any)
+      .then((result: any) => {
+        setIsSubmitting(false);
+        if (!result.error) {
+          // Navigate to the correct inventory page using the actual storeId
+          navigate(`/store/${storeId}/inventory/dashboard`);
+        }
+      })
+      .catch((error: any) => {
+        setIsSubmitting(false);
+        console.error("Error creating product:", error);
+      });
   };
 
   const handleNext = () => {
@@ -354,7 +366,7 @@ const CreateInventory: React.FC = () => {
         pluUpc: location.state.scannedPLU,
       }));
     }
-    
+
     // Fallback: Check localStorage if navigation state is not available
     if (!location.state?.scannedPLU && !formData.pluUpc) {
       const storedPLU = localStorage.getItem("scannedPLU");
@@ -368,6 +380,31 @@ const CreateInventory: React.FC = () => {
       }
     }
   }, [location.state, formData.pluUpc]);
+
+  const scrollToFirstEmptyField = () => {
+    const fieldOrder = [
+      { ref: productNameRef, value: formData.productName },
+      { ref: categoryRef, value: formData.category },
+      { ref: priceRef, value: formData.price },
+      { ref: pluRef, value: formData.pluUpc },
+      { ref: itemQuantityRef, value: formData.individualItemQuantity },
+      { ref: minOrderValueRef, value: formData.minOrderValue },
+      { ref: quantityRef, value: formData.quantity },
+    ];
+
+    for (const { ref, value } of fieldOrder) {
+      if (!value || value.trim?.() === "") {
+        ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        ref.current?.focus();
+        ref.current?.classList.add("border-red-500");
+
+        setTimeout(() => {
+          ref.current?.classList.remove("border-red-500");
+        }, 2000);
+        break;
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
@@ -583,6 +620,15 @@ const CreateInventory: React.FC = () => {
                     suppliersError={suppliersError}
                     categories={productCategories}
                     categoriesLoading={categoriesLoading}
+                    fieldRefs={{
+                      productName: productNameRef,
+                      category: categoryRef,
+                      price: priceRef,
+                      pluUpc: pluRef,
+                      quantity: quantityRef,
+                      individualItemQuantity: itemQuantityRef,
+                      minOrderValue: minOrderValueRef,
+                    }}
                   />
                 </div>{" "}
                 {/* Configuration Sections - Only show if optional fields are visible and not in variant mode */}
@@ -642,7 +688,11 @@ const CreateInventory: React.FC = () => {
                     </svg>
                     <span>Cancel</span>
                   </button>{" "}
-                  <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+                  <div
+                    onClick={scrollToFirstEmptyField}
+                    className="cursor-pointer flex items-center space-x-2 text-amber-600 bg-amber-50 px-3 sm:px-4 py-2 rounded-lg border border-amber-200"
+                    // className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full sm:w-auto"
+                  >
                     {progress < 100 && (
                       <div className="flex items-center space-x-2 text-amber-600 bg-amber-50 px-3 sm:px-4 py-2 rounded-lg border border-amber-200">
                         <svg
