@@ -25,13 +25,16 @@ interface ProductBasicInfoProps {
   missingFields?: string[];
   // Refs for Required Fields
   fieldRefs?: {
-    productName?: React.RefObject<HTMLInputElement>;
-    category?: React.RefObject<HTMLSelectElement>;
-    price?: React.RefObject<HTMLInputElement>;
-    pluUpc?: React.RefObject<HTMLInputElement>;
-    quantity?: React.RefObject<HTMLInputElement>;
-    individualItemQuantity?: React.RefObject<HTMLInputElement>;
-    minOrderValue?: React.RefObject<HTMLInputElement>;
+    productName?: React.RefObject<HTMLInputElement | null>;
+    category?: React.RefObject<HTMLSelectElement | null>;
+    price?: React.RefObject<HTMLInputElement | null>;
+    pluUpc?: React.RefObject<HTMLInputElement | null>;
+    quantity?: React.RefObject<HTMLInputElement | null>;
+    individualItemQuantity?: React.RefObject<HTMLInputElement | null>;
+    minOrderValue?: React.RefObject<HTMLInputElement | null>;
+    itemCost?: React.RefObject<HTMLInputElement | null>;
+    itemSellingCost?: React.RefObject<HTMLInputElement | null>;
+    minSellingQuantity?: React.RefObject<HTMLInputElement | null>;
   };
 }
 
@@ -795,6 +798,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                   type="number"
                   min="0"
                   value={formData.itemCost}
+                  ref={fieldRefs?.itemCost} // Added ref
                   onChange={(e) =>
                     onHandleNumericInput("itemCost", e.target.value)
                   }
@@ -825,6 +829,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                   type="number"
                   min="0"
                   value={formData.itemSellingCost}
+                  ref={fieldRefs?.itemSellingCost} // Added ref
                   onChange={(e) =>
                     onHandleNumericInput("itemSellingCost", e.target.value)
                   }
@@ -877,6 +882,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                 type="number"
                 min="0"
                 value={formData.minSellingQuantity}
+                ref={fieldRefs?.minSellingQuantity} // Added ref
                 onChange={(e) =>
                   onHandleNumericInput("minSellingQuantity", e.target.value)
                 }
