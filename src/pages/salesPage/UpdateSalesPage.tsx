@@ -12,7 +12,6 @@ import Pagination from "../../components/SalesComponents/Pagination";
 import EditTransactionModal from "../../components/SalesComponents/EditTransactionModal";
 import ViewTransactionModal from "../../components/SalesComponents/ViewTransactionModal";
 import DeleteConfirmModal from "../../components/SalesComponents/DeleteConfirmModal";
-import SaleCreationModal from "../../components/modals/SaleCreationModal";
 import { fetchSales, updateSale } from "../../store/slices/salesSlice";
 import type { RootState, AppDispatch } from "../../store";
 import useRequireStore from "../../hooks/useRequireStore";
@@ -429,20 +428,7 @@ const SalesPage: React.FC = () => {
     }
   };
 
-  const handleOpenSaleCreationModal = () => {
-    setIsSaleCreationModalOpen(true);
-  };
 
-  const handleManualSaleCreate = () => {
-    // Navigate to the existing manual sale creation page
-    if (storeId) {
-      navigate(`/store/${storeId}/sales/new`);
-    } else {
-      toast.error("Store not found");
-    }
-    // Close the modal
-    setIsSaleCreationModalOpen(false);
-  };
 
   const handleStatusChange = async (transactionId: string, newStatus: string) => {
     try {
@@ -561,12 +547,6 @@ const SalesPage: React.FC = () => {
                   <p className="mt-1 text-sm text-gray-500">
                     Get started by creating a new sale.
                   </p>
-                    <button
-                        onClick={handleOpenSaleCreationModal}
-                        className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-[#03414C] hover:bg-[#022f3a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#03414C]"
-                    >
-                        Create New Sale
-                    </button>
                 </div>
               </div>
             ) : (
@@ -621,12 +601,6 @@ const SalesPage: React.FC = () => {
         onConfirm={handleDeleteConfirm}
       />
 
-      <SaleCreationModal
-        isOpen={isSaleCreationModalOpen}
-        onClose={() => setIsSaleCreationModalOpen(false)}
-        onManualCreate={handleManualSaleCreate}
-        storeId={storeId}
-      />
     </>
   );
 };
