@@ -33,9 +33,9 @@ const UpdateInventory: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const handleRetry = () => {
-    setRetryCount(prev => prev + 1);
+    setRetryCount((prev) => prev + 1);
     setError(null);
     loadProductData();
   };
@@ -107,7 +107,7 @@ const UpdateInventory: React.FC = () => {
       packs: hasVariants
         ? []
         : (formData.packDiscounts || []).map((pack: any) => {
-            const { discountAmount, percentAmount } = calculateDiscounts(
+            const { discountAmount } = calculateDiscounts(
               pack.discountType,
               pack.discountValue,
               formData.itemSellingCost
@@ -186,12 +186,6 @@ const UpdateInventory: React.FC = () => {
           return mappedVariant;
         }
       );
-
-      console.log("Product with Variants Update Payload:", {
-        hasVariants: basePayload.hasVariants,
-        variantCount: basePayload.variants.length,
-        variants: basePayload.variants,
-      });
     }
 
     return basePayload;
@@ -238,7 +232,8 @@ const UpdateInventory: React.FC = () => {
       return;
     }
     // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(productId)) {
       setError("Invalid product ID format");
       setLoading(false);
@@ -247,60 +242,173 @@ const UpdateInventory: React.FC = () => {
     try {
       setLoading(true);
       const result = await dispatch(fetchProductById(productId) as any);
+
       if (result.error) {
+        console.error("❌ Redux Error:", result.error);
         setError("Product not found or access denied");
         return;
       }
+
       const product = result.payload;
+
       if (!product) {
         setError("Product not found");
         return;
       }
 
+      // Handle different property names from API vs transformed product
+      const getSellingPrice = () => {
+        return (
+          product.singleItemSellingPrice ||
+          (typeof product.price === "string"
+            ? parseFloat(product.price.replace("$", ""))
+            : product.price) ||
+          0
+        );
+      };
+
+      const getCostPrice = () => {
+        return product.costPrice || product.singleItemCostPrice || 0;
+      };
+
+      const getQuantity = () => {
+        return product.quantity || product.itemQuantity || 0;
+      };
+
+      const getPluUpc = () => {
+        return product.pluUpc || product.plu || "";
+      };
+
+      const getBrandName = () => {
+        return product.brandName || product.brand || "";
+      };
+
+      const getMinOrderValue = () => {
+        if (product.minOrderValue && product.minOrderValue > 0) {
+          return product.minOrderValue;
+        }
+
+        // Otherwise calculate: sellingPrice × minSellingQuantity (default 1)
+        const sellingPrice = product.singleItemSellingPrice || 0;
+        const minSellingQuantity = 1; // Default minimum selling quantity
+        const calculatedMinOrderValue = sellingPrice * minSellingQuantity;
+
+        return calculatedMinOrderValue;
+      };
+
+      const getDescription = () => {
+        return product.description || "";
+      };
+
+      const getSupplierId = () => {
+        // Check if supplier ID is directly available
+        if (product.supplierId) {
+          return product.supplierId;
+        }
+        // Check in productSuppliers array
+        if (product.productSuppliers && product.productSuppliers.length > 0) {
+          return (
+            product.productSuppliers[0].supplierId ||
+            product.productSuppliers[0].id ||
+            ""
+          );
+        }
+        return "";
+      };
+
+      const getPackDiscounts = () => {
+        if (!product.packs || product.packs.length === 0) {
+          return [];
+        }
+
+        const mappedPacks = product.packs.map((pack: any) => ({
+          id: pack.id || `pack-${Date.now()}-${Math.random()}`,
+          quantity: pack.minimumSellingQuantity || 0,
+          discountType:
+            pack.percentDiscount && pack.percentDiscount > 0
+              ? "percentage"
+              : "fixed",
+          discountValue:
+            pack.percentDiscount && pack.percentDiscount > 0
+              ? pack.percentDiscount
+              : pack.discountAmount || 0,
+          totalPacksQuantity: pack.totalPacksQuantity || 0,
+          orderedPacksPrice: pack.orderedPacksPrice || 0,
+        }));
+
+        return mappedPacks;
+      };
+
       // Map product data to form data
       setFormData({
         productName: product.name || "",
         category: product.categoryId || "",
-        price: product.singleItemSellingPrice?.toString() || "",
+        brandName: getBrandName(),
+        price: getSellingPrice().toString(),
         customSku: product.sku || "",
         ean: product.ean || "",
-        pluUpc: product.pluUpc || "",
+        pluUpc: getPluUpc(),
         individualItemQuantity: "1",
-        itemCost: product.singleItemCostPrice?.toString() || "",
-        itemSellingCost: product.singleItemSellingPrice?.toString() || "",
+        itemCost: getCostPrice().toString(),
+        itemSellingCost: getSellingPrice().toString(),
         minSellingQuantity: "1",
-        minOrderValue: "",
+        minOrderValue: getMinOrderValue().toString(),
         msrpPrice: product.msrpPrice?.toString() || "",
-        supplierId: product.supplierId || "",
-        orderValueDiscountType: product.percentDiscount
-          ? "percentage"
-          : product.discountAmount
-            ? "fixed"
-            : "",
+        supplierId: getSupplierId(),
+        orderValueDiscountType:
+          product.percentDiscount && product.percentDiscount > 0
+            ? "percentage"
+            : product.discountAmount && product.discountAmount > 0
+              ? "fixed"
+              : "",
         orderValueDiscountValue:
-          product.percentDiscount?.toString() ||
-          product.discountAmount?.toString() ||
+          (product.percentDiscount && product.percentDiscount > 0
+            ? product.percentDiscount?.toString()
+            : "") ||
+          (product.discountAmount && product.discountAmount > 0
+            ? product.discountAmount?.toString()
+            : "") ||
           "",
-        quantity: product.itemQuantity?.toString() || "",
-        description: product.description || "",
+        quantity: getQuantity().toString(),
+        description: getDescription(),
         imageFile: null,
         imagePreview: product.imageUrl || "",
         hasPackSettings: product.packs && product.packs.length > 0,
-        packDiscounts: product.packs || [],
+        packDiscounts: getPackDiscounts(),
         hasDiscountSettings: false,
         discountTiers: [],
         hasAttributes: product.attributes && product.attributes.length > 0,
         attributes: product.attributes || [],
         variations: (product.variants || []).map((variant: any) => ({
-          ...variant,
-          packDiscounts: variant.packDiscounts || [], // Ensure packDiscounts is always an array
+          id: variant.id,
+          name: variant.name || `Variant ${variant.id}`,
+          customSku: variant.sku || "",
+          ean: variant.ean || "",
+          plu: variant.pluUpc || variant.plu || "",
+          pluUpc: variant.pluUpc || variant.plu || "",
+          itemCost: (
+            variant.costPrice ||
+            variant.singleItemCostPrice ||
+            ""
+          ).toString(),
+          itemSellingCost: (
+            variant.price ||
+            variant.singleItemSellingPrice ||
+            ""
+          ).toString(),
+          msrpPrice: (variant.msrpPrice || "").toString(),
+          quantity: (variant.quantity || variant.itemQuantity || "").toString(),
+          supplierId: variant.supplierId || "",
+          discount: (variant.discountAmount || "").toString(),
+          orderValueDiscount: (variant.percentDiscount || "").toString(),
+          attributes: variant.attributes || {},
+          packDiscounts: variant.packs || variant.packDiscounts || [],
           hasPackSettings:
-            variant.packDiscounts && variant.packDiscounts.length > 0,
-          discountTiers: variant.discountTiers || [], // Ensure discountTiers is always an array
-          hasDiscountTiers:
-            variant.discountTiers && variant.discountTiers.length > 0,
-          imageFile: null, // Initialize imageFile
-          imagePreview: variant.imagePreview || "", // Initialize imagePreview
+            (variant.packs || variant.packDiscounts || []).length > 0,
+          discountTiers: variant.discountTiers || [],
+          hasDiscountTiers: (variant.discountTiers || []).length > 0,
+          imageFile: null,
+          imagePreview: variant.imagePreview || "",
         })),
       });
 
@@ -335,6 +443,61 @@ const UpdateInventory: React.FC = () => {
     []
   );
 
+  useEffect(() => {
+    // Only recalculate if we have the necessary data and minOrderValue is 0 or empty
+    const currentMinOrderValue = parseFloat(formData.minOrderValue) || 0;
+    const sellingCost = parseFloat(formData.itemSellingCost) || 0;
+    const minQuantity = parseInt(formData.minSellingQuantity) || 1;
+
+    // Recalculate if minOrderValue is 0 (likely from API) and we have valid selling data
+    if (currentMinOrderValue === 0 && sellingCost > 0 && minQuantity > 0) {
+      const calculatedMinOrder = sellingCost * minQuantity;
+      setFormData((prev) => ({
+        ...prev,
+        minOrderValue: calculatedMinOrder.toFixed(2),
+      }));
+    }
+  }, [
+    formData.itemSellingCost,
+    formData.minSellingQuantity,
+    formData.minOrderValue,
+  ]);
+
+  // Step 2: Recalculate minOrderValue for variants after form data is loaded from API
+  useEffect(() => {
+    if (formData.variations && formData.variations.length > 0) {
+      const updatedVariations = formData.variations.map((variation) => {
+        const currentMinOrderValue =
+          parseFloat(String(variation.minOrderValue)) || 0;
+        const sellingCost = parseFloat(String(variation.itemSellingCost)) || 0;
+        const minQuantity = parseInt(String(variation.minSellingQuantity)) || 1;
+
+        // Recalculate if minOrderValue is 0 (likely from API) and we have valid selling data
+        if (currentMinOrderValue === 0 && sellingCost > 0 && minQuantity > 0) {
+          const calculatedMinOrder = sellingCost * minQuantity;
+          return {
+            ...variation,
+            minOrderValue: calculatedMinOrder,
+          };
+        }
+        return variation;
+      });
+
+      // Only update if there were changes
+      const hasChanges = updatedVariations.some(
+        (variation, index) =>
+          variation.minOrderValue !== formData.variations![index].minOrderValue
+      );
+
+      if (hasChanges) {
+        setFormData((prev) => ({
+          ...prev,
+          variations: updatedVariations,
+        }));
+      }
+    }
+  }, [formData.variations]);
+
   const showOptionalFields = !shouldHideFields(
     formData.hasAttributes,
     formData.attributes,
@@ -357,17 +520,17 @@ const UpdateInventory: React.FC = () => {
     setIsSubmitting(true);
     const payload = buildApiPayload();
 
-    dispatch(updateProduct({ productId, productData: payload }) as any).then(
-      (result: any) => {
+    dispatch(updateProduct({ productId, productData: payload }) as any)
+      .then((result: any) => {
         if (!result.error) {
           navigate(`/store/${storeId}/inventory`);
         } else {
           setIsSubmitting(false);
         }
-      }
-    ).catch(() => {
-      setIsSubmitting(false);
-    });
+      })
+      .catch(() => {
+        setIsSubmitting(false);
+      });
   };
 
   const handleNext = () => {
