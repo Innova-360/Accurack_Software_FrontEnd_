@@ -5,12 +5,14 @@ interface EditableStatusProps {
   status: string;
   onStatusChange: (newStatus: string) => void;
   isUpdating?: boolean;
+  canEdit?: boolean;
 }
 
 const EditableStatus: React.FC<EditableStatusProps> = ({
   status,
   onStatusChange,
   isUpdating = false,
+  canEdit = true
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempStatus, setTempStatus] = useState(status || "Pending");
@@ -43,7 +45,9 @@ const EditableStatus: React.FC<EditableStatusProps> = ({
       <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded cursor-pointer hover:bg-gray-200 transition-colors">
         <div className={`w-2 h-2 rounded-full mr-1 ${config.color}`}></div>
         {config.text}
-        <Edit2 className="w-3 h-3 ml-1 text-gray-500" />
+        {canEdit && (
+          <Edit2 className="w-3 h-3 ml-1 text-gray-500 cursor-pointer" />
+        )}
       </span>
     );
   };
@@ -60,6 +64,7 @@ const EditableStatus: React.FC<EditableStatusProps> = ({
   }, [status]);
 
   const handleStartEdit = () => {
+    if (!canEdit) return;
     const currentStatus = status || "Pending";
     setTempStatus(currentStatus);
     setIsEditing(true);
