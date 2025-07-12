@@ -90,9 +90,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Date & Time
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Cashier
-            </th>
             <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
               Return
             </th>
@@ -138,9 +135,9 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               <td className="px-4 py-3 text-sm text-gray-900">
                 <div>{transaction.dateTime}</div>
               </td>
-              <td className="px-4 py-3 text-sm text-gray-900 text-center">
+              {/* <td className="px-4 py-3 text-sm text-gray-900 text-center">
                 {(transaction.cashier === undefined || transaction.cashier === null || isNaN(transaction.cashier)) ? "-" : transaction.cashier}
-              </td>
+              </td> */}
               <td className="px-4 py-3 text-center">
                 <span className="text-sm text-gray-500">N/A</span>
               </td>
