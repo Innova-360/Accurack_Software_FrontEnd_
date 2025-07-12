@@ -578,6 +578,7 @@ const SalesPage: React.FC = () => {
                 onStatusChange={handleStatusChange}
                 onEditNavigation={handleNavigateToEdit}
                 isUpdating={loading}
+                canEdit={false}
               />
             )}
 

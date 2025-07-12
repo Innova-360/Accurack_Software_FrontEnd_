@@ -561,6 +561,7 @@ const SalesDashboard: React.FC = () => {
                                 onStatusChange={handleStatusChange}
                                 onEditNavigation={handleNavigateToEdit}
                                 isUpdating={loading}
+                                canEdit={true} 
                             />
                         )}
 
