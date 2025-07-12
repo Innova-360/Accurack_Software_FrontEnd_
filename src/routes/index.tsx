@@ -15,7 +15,9 @@ import ProductDetails from "../pages/Inventory/ProductDetails";
 import UploadInventory from "../pages/Inventory/UploadInventory";
 import UpdateProduct from "../pages/Inventory/UpdateProduct";
 import AddNewSale from "../pages/salesPage/AddNewSale";
+import UpdateSale from "../pages/salesPage/UpdateSalesPage";
 import EditSalePage from "../pages/salesPage/EditSale";
+import UploadSalesPage from "../pages/salesPage/UploadSalesPage";
 import GoogleAuthCallback from "../components/GoogleAuthCallback";
 import Supplier from "../pages/Supplier/Supplier";
 import AddSupplierPage from "../pages/Supplier/AddSupplierPage";
@@ -54,7 +56,6 @@ import InvoiceId from "../pages/Invoice/InvoiceID";
 import InventoryDashboard from "../pages/Inventory/InventoryDashboard";
 import ScanInventory from "../pages/Inventory/ScanInventory";
 import DeleteInventory from "../pages/Inventory/DeleteInventory";
-
 
 const AppRoutes = () => {
   return (
@@ -207,7 +208,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      
+
       <Route
         path="/store/:id/inventory/dashboard"
         element={
@@ -285,6 +286,22 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <AddNewSale />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/sales/upload"
+        element={
+          <ProtectedRoute>
+            <UploadSalesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/sales/update"
+        element={
+          <ProtectedRoute>
+            <UpdateSale />
           </ProtectedRoute>
         }
       />

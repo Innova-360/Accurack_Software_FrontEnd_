@@ -5,7 +5,6 @@ import {
   FaEye,
   FaEdit,
   FaTrash,
-  FaLink,
   FaSearch,
 } from "react-icons/fa";
 
@@ -28,8 +27,6 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
   onViewSupplier,
   onEditSupplier,
   onDeleteSupplier,
-  onViewProducts,
-  onViewAssignedProducts,
   onAddSupplier,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -77,7 +74,7 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
           <FaBars className="text-white" size={28} />
         </div>
         <h3 className="text-2xl font-bold text-gray-800 mb-3">
-          No Suppliers Found
+          No Vendors Found
         </h3>
         <p className="text-gray-600 mb-8 max-w-md mx-auto">
           You haven't added any suppliers yet. Start by adding your first
@@ -120,8 +117,8 @@ const SupplierTable: React.FC<SupplierTableProps> = ({
             No Search Results
           </h3>
           <p className="text-gray-600 mb-8 max-w-md mx-auto">
-            No suppliers found matching "{searchTerm}". Try adjusting your
-            search terms.
+            No vendors found matching "{searchTerm}". Try adjusting your search
+            terms.
           </p>
           <SpecialButton
             variant="expense-add"
