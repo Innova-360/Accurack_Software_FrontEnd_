@@ -310,7 +310,6 @@ const SalesDashboard: React.FC = () => {
   const handleEditSave = async (updatedTransaction: any) => {
     try {
       // TODO: Implement update transaction API call
-
       toast.success("Transaction update functionality will be implemented");
       setIsEditModalOpen(false);
       setSelectedTransaction(null);

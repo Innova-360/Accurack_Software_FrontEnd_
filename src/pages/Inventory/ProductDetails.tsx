@@ -36,7 +36,6 @@ const ProductDetails: React.FC = () => {
         );
         setIsVariantProduct(hasVariants);
 
-        // Set first variant as selected if product has variants
         if (hasVariants && productData.variants) {
           setSelectedVariant(productData.variants[0]);
         }

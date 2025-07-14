@@ -53,7 +53,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
   fieldRefs,
 }) => {
   const dispatch = useDispatch();
-  // Use suppliers from props if available, otherwise fall back to Redux
+
   const {
     suppliers: reduxSuppliers,
     loading: reduxSuppliersLoading,
@@ -64,7 +64,6 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
     error: string | null;
   };
 
-  // Get categories from Redux store
   const {
     categories: reduxCategories,
     loading: reduxCategoriesLoading,
@@ -76,12 +75,10 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
   const [newCategoryName, setNewCategoryName] = React.useState("");
   const [loadingTimeout, setLoadingTimeout] = React.useState(false);
 
-  // Use prop suppliers if available, otherwise use Redux suppliers
   const suppliers = propSuppliers || reduxSuppliers;
   const suppliersLoading = propSuppliersLoading ?? reduxSuppliersLoading;
   const suppliersError = propSuppliersError || reduxSuppliersError;
 
-  // Use prop categories if available, otherwise use Redux categories
   const categories = propCategories || reduxCategories;
   // Handle loading state - if no categories loading is explicitly provided, assume not loading
   const categoriesLoading =
@@ -103,7 +100,6 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
     }
   }, [categoriesLoading]);
 
-  // Use effective loading state (false if timeout occurred)
   const effectiveCategoriesLoading = categoriesLoading && !loadingTimeout;
 
   // Only fetch suppliers if not provided as props and not already loading/loaded
@@ -126,10 +122,6 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
     } else if (inventoryMatch) {
       storeId = inventoryMatch[1];
     }
-
-    //
-    //
-
     // Only fetch if we have a storeId and suppliers haven't been loaded yet
     if (
       storeId &&

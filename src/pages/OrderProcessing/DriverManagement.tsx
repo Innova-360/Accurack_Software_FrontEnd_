@@ -165,7 +165,6 @@ const DriverManagementPage: React.FC = () => {
   };
 
   useEffect(() => {
-    // If the store is not available, redirect to stores page
     if (!currentStore?.id) {
       navigate("/stores");
     }

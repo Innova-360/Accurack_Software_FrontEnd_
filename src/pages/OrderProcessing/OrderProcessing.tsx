@@ -19,7 +19,7 @@ import {
   validateOrder,
   clearError,
 } from "../../store/slices/orderProcessingSlice";
-// import { addOrderToTracking } from "../../store/slices/orderTrackingSlice";
+
 import type { AppDispatch, RootState } from "../../store";
 import type {
   OrderItem,
@@ -39,7 +39,6 @@ const OrderProcessingPage: React.FC = () => {
     (state: RootState) => state.orders
   );
 
-  // Get customers for the dropdown
   const { customers, loading: customersLoading } = useCustomers(
     currentStore?.id,
     {
@@ -169,7 +168,7 @@ const OrderProcessingPage: React.FC = () => {
         ).unwrap();
 
         // // Then move the order to tracking verification
-        // await dispatch(addOrderToTracking({
+
         //   id: order.id,
         //   customerId: order.customerId,
         //   customerName: order.customerName,

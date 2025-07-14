@@ -171,7 +171,6 @@ const Permissions: React.FC<PermissionsProps> = ({
 
   // Helper function to generate/display employee code
   const getDisplayEmployeeCode = (employee: any) => {
-    // If backend provides employeeCode, use it
     if (employee?.employeeCode) {
       return employee.employeeCode;
     }

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Search, Filter, User, FileText, Eye } from "lucide-react";
-// import { SpecialButton } from '../../components/buttons';
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import type { InvoiceResponseData } from "../../types/invoice";
 import { fetchInvoices } from "../../store/slices/invoiceSlice";
@@ -114,10 +113,6 @@ const Invoices: React.FC = () => {
     navigate(`/store/${id}/invoice/${invoiceId}`);
   };
 
-  // const handleDownloadInvoice = (invoiceId: string) => {
-  //     // Download invoice PDF
-  //
-  // };
 
   if (loading) {
     return <Loading label="Invoices" />;

@@ -166,7 +166,6 @@ export const googleAuth = createAsyncThunk(
       // Redirect to Google OAuth
       window.location.href = redirectUrl;
 
-      // Return a success response since we're redirecting
       return { redirectUrl, message: "Redirecting to Google OAuth..." };
     } catch (error: any) {
       return rejectWithValue(error.message || "Google authentication failed");
@@ -350,7 +349,7 @@ export const authSlice = createSlice({
       .addCase(createClientWithAdmin.fulfilled, (state, action) => {
         state.loading = false;
         // Don't authenticate user immediately after signup
-        // User needs to verify OTP first
+
         // Just store user email for OTP verification
         if (action.payload.user && action.payload.user.email) {
         }

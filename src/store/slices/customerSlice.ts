@@ -197,8 +197,6 @@ export const deleteCustomer = createAsyncThunk(
         throw new Error("Store ID is required");
       }
 
-      // Use standard REST endpoint format
-      const response = await apiClient.delete(`/sales/customers/${id}`);
 
       // Refresh customers list after deletion
 

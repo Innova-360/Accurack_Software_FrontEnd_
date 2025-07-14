@@ -60,12 +60,11 @@ const BusinessForm = () => {
   };
 
   const handleLogoUpload = async (e) => {
-    // If called from button, trigger file input click
     if (!e || !e.target || e.type === "click") {
       fileInputRef.current?.click();
       return;
     }
-    // If called from file input change
+
     const file = e.target.files[0];
     if (!file) return;
     setLogoUploading(true);

@@ -16,7 +16,7 @@ import { useAppSelector } from "../../store/hooks";
 import { selectCurrentStore } from "../../store/selectors";
 import useSuppliers from "../../hooks/useSuppliers";
 import { fetchUser } from "../../store/slices/userSlice";
-// import { fetchProductCategories } from "../../store/slices/productCategoriesSlice";
+
 import { useProductCategories } from "../../hooks/useProductCategories";
 import { useRef } from "react";
 
@@ -49,12 +49,8 @@ const CreateInventory: React.FC = () => {
   const itemSellingCost = useRef<HTMLInputElement>(null);
   const minSellingQuantityRef = useRef<HTMLInputElement>(null);
 
-  // const user = useAppSelector((state) => state.user.user);
-
-  // Get user from Redux store
   const clientId = useAppSelector((state) => state.user.user?.clientId);
 
-  // Get product categories using the hook
   const {
     categories: productCategories,
     loading: categoriesLoading,
@@ -84,7 +80,6 @@ const CreateInventory: React.FC = () => {
   };
 
   const buildApiPayload = () => {
-    // Use clientId from Redux store
     const basePayload: any = {
       name: formData.productName,
       categoryId: formData.category, // Now using categoryId instead of category
@@ -137,7 +132,6 @@ const CreateInventory: React.FC = () => {
     if (hasVariants && formData.variations && formData.variations.length > 0) {
       basePayload.variants = formData.variations.map(
         (variant: any, index: number) => {
-          // Use the correct field names from the Variation interface
           const price = parseFloat(variant.itemSellingCost) || 0; // itemSellingCost is the selling price in Variation
           const costPrice = parseFloat(variant.itemCost) || 0; // Cost price for the variant
           const msrpPrice = parseFloat(variant.msrpPrice) || 0;
@@ -404,7 +398,6 @@ const CreateInventory: React.FC = () => {
   };
 
   const progress = calculateProgress();
-
 
   // Handle barcode data from navigation state
   useEffect(() => {

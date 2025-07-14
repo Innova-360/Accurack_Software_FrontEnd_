@@ -53,10 +53,8 @@ const UpdateInventory: React.FC = () => {
     error: suppliersError,
   } = useSuppliers(storeId);
 
-  // Get user from Redux store
   const clientId = useAppSelector((state) => state.user.user?.clientId);
 
-  // Get product categories using the hook
   const {
     categories: productCategories,
     loading: categoriesLoading,
@@ -86,7 +84,6 @@ const UpdateInventory: React.FC = () => {
   };
 
   const buildApiPayload = () => {
-    // Use clientId from Redux store
     const basePayload: any = {
       id: productId, // Include product ID for update
       name: formData.productName,
@@ -414,7 +411,6 @@ const UpdateInventory: React.FC = () => {
 
       setHasVariants(product.hasVariants || false);
 
-      // If product has variants, show variations step
       if (
         product.hasVariants &&
         product.variants &&

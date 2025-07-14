@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import type { Product } from "../../data/inventoryData";
 import { productAPI } from "../../services/productAPI";
-// import { debugVariantQuantityUpdate } from "../../utils/variantQuantityUpdateTest";
 
 interface InventoryTableProps {
   products: Product[];

@@ -186,7 +186,6 @@ const BusinessSettings: React.FC = () => {
       });
       setIsEditing(false);
     } else {
-      // If no profile exists, go back or reset to empty
       setFormData({
         businessName: "",
         contactNo: "",

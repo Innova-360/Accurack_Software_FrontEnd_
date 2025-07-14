@@ -108,7 +108,7 @@ export const fetchSuppliers = createAsyncThunk(
             supplier.status === "ACTIVE"
           );
         }
-        // If no status field, assume it's active (for backward compatibility)
+
         return true;
       });
 
@@ -155,7 +155,6 @@ export const createSupplier = createAsyncThunk(
       const createdSupplier = response.data?.data || response.data;
 
       // Refresh suppliers list after creation
-
       await dispatch(
         fetchSuppliers({ storeId: supplierData.storeId })
       ).unwrap();
@@ -188,7 +187,6 @@ export const updateSupplier = createAsyncThunk(
       const response = await apiClient.put(`/supplier/${id}`, supplierData);
 
       // Refresh suppliers list after update
-
       await dispatch(
         fetchSuppliers({ storeId: supplierData.storeId })
       ).unwrap();

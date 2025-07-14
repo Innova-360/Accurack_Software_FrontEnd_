@@ -52,12 +52,11 @@ const SupplierSidebar: React.FC<SupplierSidebarProps> = ({
   };
 
   // Group suppliers by category
-  // const suppliersByCategory = suppliers.reduce((acc, supplier) => {
-  //   if (!acc[supplier?.category]) {
+
   //     acc[supplier.category] = [];
   //   }
   //   acc[supplier.category].push(supplier);
-  //   return acc;
+
   // }, {} as Record<string, Supplier[]>);
 
   return (

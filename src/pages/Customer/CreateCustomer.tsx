@@ -60,7 +60,6 @@ const CreateCustomer: React.FC = () => {
 
   const [formErrors, setFormErrors] = useState<Partial<CustomerFormData>>({});
 
-  // Function to combine address fields into a single address string
   const getFullAddress = () => {
     const addressParts = [
       addressFields.street,
@@ -72,7 +71,6 @@ const CreateCustomer: React.FC = () => {
     return addressParts.join(", ");
   };
 
-  // Function to parse existing address into separate fields
   const parseAddress = (fullAddress: string) => {
     if (!fullAddress || fullAddress.trim() === "") {
       return {

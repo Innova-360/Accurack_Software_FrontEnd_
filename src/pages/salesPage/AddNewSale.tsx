@@ -13,7 +13,7 @@ import useRequireStore from "../../hooks/useRequireStore";
 import type { RootState, AppDispatch } from "../../store";
 import type { SaleRequestData, SaleItem } from "../../store/slices/salesSlice";
 import { useDebounce } from "../../components/TaxComponents/useDebounce";
-import { useSearchProductsQuery } from '../../store/slices/productsSlice';
+import { useSearchProductsQuery } from "../../store/slices/productsSlice";
 
 interface ProductItem {
   id: string;
@@ -30,11 +30,9 @@ const AddNewSale: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
-  // Get current store and user data
   const currentStore = useRequireStore();
   const { user } = useSelector((state: RootState) => state.user);
   const { id } = useParams(); // Get store ID from URL params
-
 
   // Redux state
   const {
@@ -49,13 +47,14 @@ const AddNewSale: React.FC = () => {
   } = useSelector((state: RootState) => state.products);
 
   // Sales state
-  const { loading: salesLoading } = useSelector((state: RootState) => state.sales);
+  const { loading: salesLoading } = useSelector(
+    (state: RootState) => state.sales
+  );
 
   // Customers state
   const { customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
-// sadf
-  const [allowance, setAllowance] = useState(0);
 
+  const [allowance, setAllowance] = useState(0);
 
 
   // Form state
@@ -80,24 +79,23 @@ const AddNewSale: React.FC = () => {
   );
   const [taxRate, setTaxRate] = useState(10); // Default 10% tax, but user can change
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
 
   // Debounce the search query
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  // Use RTK Query to search products (only when we have a debounced query)
   const {
     data: searchResults,
     isLoading,
-    error
+    error,
   } = useSearchProductsQuery(
     {
       q: debouncedSearchQuery,
-      storeId: currentStore?.id || ''
+      storeId: currentStore?.id || "",
     },
     {
-      skip: !debouncedSearchQuery || !currentStore?.id
+      skip: !debouncedSearchQuery || !currentStore?.id,
     }
   );
 
@@ -108,10 +106,10 @@ const AddNewSale: React.FC = () => {
   };
 
   const handleProductSelect = (product: any) => {
-    console.log('Selected product:', product);
+    console.log("Selected product:", product);
 
     // Find the first empty product slot or add a new one
-    const emptyIndex = products.findIndex(p => !p.name || p.name === "");
+    const emptyIndex = products.findIndex((p) => !p.name || p.name === "");
 
     // Create a normalized product object that matches the expected structure
     const normalizedProduct = {
@@ -124,7 +122,7 @@ const AddNewSale: React.FC = () => {
       // Keep original properties as well
       singleItemSellingPrice: product.singleItemSellingPrice,
       itemQuantity: product.itemQuantity,
-      pluUpc: product.pluUpc
+      pluUpc: product.pluUpc,
     };
 
     if (emptyIndex !== -1) {
@@ -155,10 +153,9 @@ const AddNewSale: React.FC = () => {
     }
 
     // Clear the search
-    setSearchQuery('');
+    setSearchQuery("");
     setShowDropdown(false);
   };
-
 
   // Calculated values
   const subtotal = products.reduce((sum, product) => sum + product.total, 0);
@@ -208,7 +205,9 @@ const AddNewSale: React.FC = () => {
     }
 
     // Find the selected customer and auto-fill the form
-    const selectedCustomer = customers.find(customer => customer.id === customerId);
+    const selectedCustomer = customers.find(
+      (customer) => customer.id === customerId
+    );
     if (selectedCustomer) {
       setCustomerName(selectedCustomer.customerName || "");
 
@@ -229,15 +228,14 @@ const AddNewSale: React.FC = () => {
 
       if (selectedCustomer.customerAddress) {
         // Split address into components if available
-        const addressParts = selectedCustomer.customerAddress.split(', ');
+        const addressParts = selectedCustomer.customerAddress.split(", ");
         if (addressParts.length >= 5) {
           setStreet(addressParts[0]);
           setCity(addressParts[1]);
           setState(addressParts[2]);
           setPostalCode(addressParts[3]);
-          setCountry(addressParts.slice(4).join(', '));
+          setCountry(addressParts.slice(4).join(", "));
         } else {
-          // If address format is unexpected, just set the full address to street
           setStreet(selectedCustomer.customerAddress);
         }
       }
@@ -298,7 +296,6 @@ const AddNewSale: React.FC = () => {
     const updatedProducts = [...products];
     console.log("Index", index, "Field", field, "Value", value);
 
-
     // Handle product selection
     if (field === "name") {
       const selectedFlatProduct = flattenedProducts.find(
@@ -350,7 +347,6 @@ const AddNewSale: React.FC = () => {
     setProducts(updatedProducts);
   };
 
-
   const removeProduct = (index: number) => {
     if (products.length > 1) {
       setProducts(products.filter((_, i) => i !== index));
@@ -366,7 +362,6 @@ const AddNewSale: React.FC = () => {
     // Reset discount value when changing type to avoid confusion
     setDiscount(0);
   };
-
 
   const handleCreateSale = async () => {
     // Validate form
@@ -386,7 +381,7 @@ const AddNewSale: React.FC = () => {
     }
 
     // Make sure country code is in proper format
-    if (!countryCode.startsWith('+')) {
+    if (!countryCode.startsWith("+")) {
       toast.error("Country code must start with '+' (e.g., +1)");
       return;
     }
@@ -433,16 +428,24 @@ const AddNewSale: React.FC = () => {
     try {
       // Prepare sale items
       const saleItems: SaleItem[] = products.map((product) => {
-        // Get the PLU/UPC from the selected product or variant
         let pluUpc = "";
         if (product.selectedProduct) {
-          // If it's a variant, check for variant PLU/UPC first
           if (product.variantId && product.selectedProduct.variants) {
-            const variant = product.selectedProduct.variants.find(v => v.id === product.variantId);
-            pluUpc = variant?.pluUpc || product.selectedProduct.plu || product.selectedProduct.sku || "";
+            const variant = product.selectedProduct.variants.find(
+              (v) => v.id === product.variantId
+            );
+            pluUpc =
+              variant?.pluUpc ||
+              product.selectedProduct.plu ||
+              product.selectedProduct.sku ||
+              "";
           } else {
             // For regular products, use pluUpc, plu, or sku as fallback
-            pluUpc = (product.selectedProduct as any).pluUpc || product.selectedProduct.plu || product.selectedProduct.sku || "";
+            pluUpc =
+              (product.selectedProduct as any).pluUpc ||
+              product.selectedProduct.plu ||
+              product.selectedProduct.sku ||
+              "";
           }
         }
 
@@ -470,13 +473,19 @@ const AddNewSale: React.FC = () => {
         },
         storeId: currentStore.id,
         clientId: user.clientId,
-        paymentMethod: paymentMethod as "CASH" | "CARD" | "BANK_TRANSFER" | "CHECK" | "DIGITAL_WALLET",
+        paymentMethod: paymentMethod as
+          | "CASH"
+          | "CARD"
+          | "BANK_TRANSFER"
+          | "CHECK"
+          | "DIGITAL_WALLET",
         totalAmount: Math.round(finalTotal * 100) / 100, // Ensure proper number format
         tax: Math.round(taxAmount * 100) / 100, // Ensure proper number format
         allowance: Math.round(allowance * 100) / 100, // Add this line
-        cashierName: user.firstName && user.lastName
-          ? `${user.firstName} ${user.lastName}`
-          : user.email || "Current User",
+        cashierName:
+          user.firstName && user.lastName
+            ? `${user.firstName} ${user.lastName}`
+            : user.email || "Current User",
         generateInvoice: false, // Default to false as specified
         source: "manual", // Default source as manual
         status: "PENDING", // Default status as pending (uppercase)
@@ -492,8 +501,7 @@ const AddNewSale: React.FC = () => {
 
       // Navigate back to sales page
       navigate(-1);
-    }
-    catch (error: unknown) {
+    } catch (error: unknown) {
       console.error("Error creating sale:", error);
       toast.error(`Failed to create sale: ${error}`);
     }
@@ -502,42 +510,40 @@ const AddNewSale: React.FC = () => {
   const handleCreateInvoice = () => {
     // Validate form before proceeding to invoice creation
     if (!customerName.trim()) {
-      alert('Customer name is required');
+      alert("Customer name is required");
       return;
     }
 
     if (!phoneNumber.trim()) {
-      alert('Phone number is required');
+      alert("Phone number is required");
       return;
     }
 
     // Validate address fields (except street which is optional)
     if (!city.trim()) {
-      alert('City is required');
+      alert("City is required");
       return;
     }
 
     if (!state.trim()) {
-      alert('State/Province is required');
+      alert("State/Province is required");
       return;
     }
 
     if (!postalCode.trim()) {
-      alert('Postal code is required');
+      alert("Postal code is required");
       return;
     }
 
     if (!country.trim()) {
-      alert('Country is required');
+      alert("Country is required");
       return;
     }
 
-    if (products.some(p => !p.name.trim() || p.price <= 0)) {
-      alert('Please fill in all product details');
+    if (products.some((p) => !p.name.trim() || p.price <= 0)) {
+      alert("Please fill in all product details");
       return;
     }
-
-
 
     // Prepare invoice data
     const invoiceData = {
@@ -550,28 +556,38 @@ const AddNewSale: React.FC = () => {
         city,
         state,
         postalCode,
-        country
+        country,
       },
-      products: products.filter(p => p.name.trim() && p.price > 0).map(product => {
-        // Get the PLU/UPC from the selected product or variant
-        let pluUpc = "";
-        if (product.selectedProduct) {
-          // If it's a variant, check for variant PLU/UPC first
-          if (product.variantId && product.selectedProduct.variants) {
-            const variant = product.selectedProduct.variants.find(v => v.id === product.variantId);
-            pluUpc = variant?.pluUpc || product.selectedProduct.plu || product.selectedProduct.sku || "";
-          } else {
-            // For regular products, use pluUpc, plu, or sku as fallback
-            pluUpc = (product.selectedProduct as any).pluUpc || product.selectedProduct.plu || product.selectedProduct.sku || "";
+      products: products
+        .filter((p) => p.name.trim() && p.price > 0)
+        .map((product) => {
+          let pluUpc = "";
+          if (product.selectedProduct) {
+            if (product.variantId && product.selectedProduct.variants) {
+              const variant = product.selectedProduct.variants.find(
+                (v) => v.id === product.variantId
+              );
+              pluUpc =
+                variant?.pluUpc ||
+                product.selectedProduct.plu ||
+                product.selectedProduct.sku ||
+                "";
+            } else {
+              // For regular products, use pluUpc, plu, or sku as fallback
+              pluUpc =
+                (product.selectedProduct as any).pluUpc ||
+                product.selectedProduct.plu ||
+                product.selectedProduct.sku ||
+                "";
+            }
           }
-        }
-        return {
-          ...product,
-          pluUpc,
-          plu: product.selectedProduct?.plu || "",
-          sku: product.selectedProduct?.sku || ""
-        };
-      }),
+          return {
+            ...product,
+            pluUpc,
+            plu: product.selectedProduct?.plu || "",
+            sku: product.selectedProduct?.sku || "",
+          };
+        }),
       subtotal,
       discount,
       discountType,
@@ -581,11 +597,10 @@ const AddNewSale: React.FC = () => {
       taxAmount,
       finalTotal,
       paymentMethod,
-      notes
+      notes,
     };
 
     console.log("Products for invoice:", products);
-
 
     // Navigate to invoice creation with data
     navigate(`/store/${id}/create-invoice`, { state: { invoiceData } });
@@ -648,15 +663,18 @@ const AddNewSale: React.FC = () => {
                       ? "Loading customers..."
                       : customers.length > 0
                         ? `Select from ${customers.length} existing customers or enter new details below`
-                        : "No existing customers found - enter new details below"
-                    }
+                        : "No existing customers found - enter new details below"}
                   </option>
                   {customers.map((customer) => (
                     <option key={customer.id} value={customer.id}>
                       {customer.customerName} - {customer.phoneNumber}
                     </option>
                   ))}
-                  {customers.length > 0 && <option className="text-gray-700 py-1.5" value="new">Add New Customer</option>}
+                  {customers.length > 0 && (
+                    <option className="text-gray-700 py-1.5" value="new">
+                      Add New Customer
+                    </option>
+                  )}
                 </select>
                 {selectedCustomerId === "new" && (
                   <p className="mt-2 text-sm text-green-700">
@@ -665,7 +683,8 @@ const AddNewSale: React.FC = () => {
                 )}
                 {!customersLoading && customers.length === 0 && (
                   <p className="mt-2 text-sm text-orange-700">
-                    No existing customers found. Please enter customer details below.
+                    No existing customers found. Please enter customer details
+                    below.
                   </p>
                 )}
               </div>
@@ -810,7 +829,10 @@ const AddNewSale: React.FC = () => {
                     onFocus={() => setShowDropdown(searchQuery.length > 0)} // Show if there's already text
                     onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                   />
-                  <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                  <FaSearch
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    size={16}
+                  />
 
                   {/* Loading indicator */}
                   {isLoading && (
@@ -831,7 +853,9 @@ const AddNewSale: React.FC = () => {
                           >
                             <div className="flex justify-between items-center">
                               <div>
-                                <p className="font-medium text-gray-900">{product.name}</p>
+                                <p className="font-medium text-gray-900">
+                                  {product.name}
+                                </p>
                                 <p className="text-sm text-gray-600">
                                   SKU: {product.sku} | PLU: {product.pluUpc}
                                 </p>
@@ -858,11 +882,12 @@ const AddNewSale: React.FC = () => {
                   {/* Error handling */}
                   {error && (
                     <div className="absolute z-10 w-full mt-1 bg-red-50 border border-red-200 rounded-lg p-3">
-                      <p className="text-red-600 text-sm">Error searching products</p>
+                      <p className="text-red-600 text-sm">
+                        Error searching products
+                      </p>
                     </div>
                   )}
                 </div>
-
               </div>
 
               <div className="space-y-4 max-h-96 overflow-y-auto thin-scrollbar">
@@ -896,30 +921,29 @@ const AddNewSale: React.FC = () => {
                         </label>
                         <div className="flex items-center gap-2">
                           <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={product.price}
-                          onChange={(e) =>
-                            handleProductChange(
-                              index,
-                              "price",
-                              parseFloat(e.target.value) || 0
-                            )
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-                        />
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={product.price}
+                            onChange={(e) =>
+                              handleProductChange(
+                                index,
+                                "price",
+                                parseFloat(e.target.value) || 0
+                              )
+                            }
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                          />
                           {products.length > 1 && (
-                          <button
-                            onClick={() => removeProduct(index)}
-                            className="w-full md:w-auto px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-2"
-                          >
-                            <FaTrash size={16} />
-                            <span className="md:hidden">Remove</span>
-                          </button>
-                        )}
+                            <button
+                              onClick={() => removeProduct(index)}
+                              className="w-full md:w-auto px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+                            >
+                              <FaTrash size={16} />
+                              <span className="md:hidden">Remove</span>
+                            </button>
+                          )}
                         </div>
-                        
                       </div>
                     </div>
 
@@ -990,10 +1014,13 @@ const AddNewSale: React.FC = () => {
                             </span>
                             <div className="text-gray-900">
                               {typeof product.selectedProduct.category ===
-                                "string"
+                              "string"
                                 ? product.selectedProduct.category
-                                : (product.selectedProduct.category as { name?: string })?.name ||
-                                "Uncategorized"}
+                                : (
+                                    product.selectedProduct.category as {
+                                      name?: string;
+                                    }
+                                  )?.name || "Uncategorized"}
                             </div>
                           </div>
                           <div>
@@ -1002,10 +1029,13 @@ const AddNewSale: React.FC = () => {
                             </span>
                             <div className="text-gray-900">
                               {typeof product.selectedProduct.supplier ===
-                                "string"
+                              "string"
                                 ? product.selectedProduct.supplier
-                                : (product.selectedProduct.supplier as { name?: string })?.name ||
-                                "N/A"}
+                                : (
+                                    product.selectedProduct.supplier as {
+                                      name?: string;
+                                    }
+                                  )?.name || "N/A"}
                             </div>
                           </div>
                           <div>
@@ -1038,30 +1068,30 @@ const AddNewSale: React.FC = () => {
                             {flattenedProducts.find(
                               (fp) => fp.displayName === product.name
                             )?.variantData && (
-                                <div className="text-xs text-gray-600 mt-1">
-                                  <span className="font-medium">
-                                    Variant SKU:
-                                  </span>{" "}
-                                  {flattenedProducts.find(
-                                    (fp) => fp.displayName === product.name
-                                  )?.variantData?.sku || "N/A"}
-                                  {flattenedProducts.find(
-                                    (fp) => fp.displayName === product.name
-                                  )?.variantData?.pluUpc && (
-                                      <>
-                                        {" | "}
-                                        <span className="font-medium">
-                                          Variant PLU:
-                                        </span>{" "}
-                                        {
-                                          flattenedProducts.find(
-                                            (fp) => fp.displayName === product.name
-                                          )?.variantData?.pluUpc
-                                        }
-                                      </>
-                                    )}
-                                </div>
-                              )}
+                              <div className="text-xs text-gray-600 mt-1">
+                                <span className="font-medium">
+                                  Variant SKU:
+                                </span>{" "}
+                                {flattenedProducts.find(
+                                  (fp) => fp.displayName === product.name
+                                )?.variantData?.sku || "N/A"}
+                                {flattenedProducts.find(
+                                  (fp) => fp.displayName === product.name
+                                )?.variantData?.pluUpc && (
+                                  <>
+                                    {" | "}
+                                    <span className="font-medium">
+                                      Variant PLU:
+                                    </span>{" "}
+                                    {
+                                      flattenedProducts.find(
+                                        (fp) => fp.displayName === product.name
+                                      )?.variantData?.pluUpc
+                                    }
+                                  </>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -1228,7 +1258,9 @@ const AddNewSale: React.FC = () => {
                         min="0"
                         step="0.01"
                         value={allowance}
-                        onChange={(e) => setAllowance(parseFloat(e.target.value) || 0)}
+                        onChange={(e) =>
+                          setAllowance(parseFloat(e.target.value) || 0)
+                        }
                         className="w-20 sm:w-24 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                         placeholder="0"
                       />
@@ -1238,7 +1270,9 @@ const AddNewSale: React.FC = () => {
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span></span>
-                  <span className="text-green-600">-${allowance.toFixed(2)}</span>
+                  <span className="text-green-600">
+                    -${allowance.toFixed(2)}
+                  </span>
                 </div>
 
                 <div className="flex justify-between items-start text-gray-600">

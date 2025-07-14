@@ -6,7 +6,7 @@ import searchReducer from "./slices/searchSlice";
 import storeReducer from "./slices/storeSlice";
 import supplierReducer from "./slices/supplierSlice";
 import employeeReducer from "./slices/employeeSlice";
-// import productCategoriesReducer from "./slices/productCategoriesSlice";
+
 import salesReducer from "./slices/salesSlice";
 import userReducer from "./slices/userSlice";
 import inventorySupplierReducer from "./slices/inventorySupplierSlice";

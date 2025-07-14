@@ -188,7 +188,6 @@ export const fetchSales = createAsyncThunk<
         );
       }
 
-      // Debug: Log the status of each sale
       salesArray.forEach((sale: SaleResponseData, index: number) => {});
 
       return {

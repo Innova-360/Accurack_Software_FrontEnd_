@@ -12,28 +12,32 @@ const OtpPage = () => {
     // Initialize timer from localStorage
     const savedTimer = localStorage.getItem("otpResendTimer");
     const savedTimestamp = localStorage.getItem("otpResendTimestamp");
-    
+
     if (savedTimer && savedTimestamp) {
-      const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
+      const elapsed = Math.floor(
+        (Date.now() - parseInt(savedTimestamp)) / 1000
+      );
       const remaining = Math.max(0, 60 - elapsed);
       return remaining;
     }
-    // If no timer data exists, start initial timer
+
     return 60;
   });
   const [canResend, setCanResend] = useState(() => {
     // Check if we can resend based on saved timer
     const savedTimer = localStorage.getItem("otpResendTimer");
     const savedTimestamp = localStorage.getItem("otpResendTimestamp");
-    
+
     if (savedTimer && savedTimestamp) {
-      const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
+      const elapsed = Math.floor(
+        (Date.now() - parseInt(savedTimestamp)) / 1000
+      );
       return elapsed >= 60;
     }
-    // If no timer data exists, start with timer running (can't resend yet)
+
     return false;
   });
-  // const [initialOtpSent, setInitialOtpSent] = useState(false);
+
   const inputs = [
     useRef(null),
     useRef(null),
@@ -45,18 +49,20 @@ const OtpPage = () => {
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { verifyLoading, resendLoading, error } = useAppSelector((state) => state.auth);
+  const { verifyLoading, resendLoading, error } = useAppSelector(
+    (state) => state.auth
+  );
 
   useEffect(() => {
     const email = localStorage.getItem("userEmail");
     if (email) {
       setUserEmail(email);
     }
-    
+
     // Start initial timer if no timer data exists
     const savedTimer = localStorage.getItem("otpResendTimer");
     const savedTimestamp = localStorage.getItem("otpResendTimestamp");
-    
+
     if (!savedTimer || !savedTimestamp) {
       // Start initial 60-second timer
       localStorage.setItem("otpResendTimer", "60");
@@ -90,7 +96,6 @@ const OtpPage = () => {
     return () => clearTimeout(timer);
   }, [resendTimer]);
 
-  
   // Handle OTP input change
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -154,10 +159,8 @@ const OtpPage = () => {
 
         // Check if user is now authenticated (has token)
         if (resultAction.payload.token) {
-          // User is authenticated, redirect to stores page
           navigate("/stores");
         } else {
-          // User is verified but not authenticated, redirect to login
           navigate("/login");
         }
       } else {
@@ -351,7 +354,6 @@ const OtpPage = () => {
             <div className="text-xs text-gray-500 mb-3">
               Code expires in 10 minutes
             </div>
-            
             {/* Resend OTP Section */}
             <div className="text-center mb-5">
               <p className="text-sm text-gray-500 mb-2">
@@ -372,7 +374,6 @@ const OtpPage = () => {
                 </span>
               )}
             </div>
-            
             <div className="flex w-full gap-3 mt-2">
               <button
                 type="button"

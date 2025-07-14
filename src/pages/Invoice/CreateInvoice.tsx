@@ -76,7 +76,6 @@ const CreateInvoice: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.user);
   const [customFields, setCustomFields] = useState([{ name: "", value: "" }]);
   const [checkingBusinessDetails, setCheckingBusinessDetails] = useState(false);
-  // const { loading: salesLoading } = useSelector((state: RootState) => state.sales);
 
   const invoiceData = location.state?.invoiceData as InvoiceData;
 
@@ -173,7 +172,6 @@ const CreateInvoice: React.FC = () => {
         setShowBusinessForm(true);
       } else {
         setStoreBusinessDetails(businessResponse.data.data);
-
         setCurrentStep(3);
       }
     } catch (error) {
@@ -210,7 +208,7 @@ const CreateInvoice: React.FC = () => {
       toast.success("Business details saved successfully!");
       setShowBusinessForm(false);
       // Now proceed with invoice creation
-      // await handleCreateSaleAndInvoice();
+
       // Show invoice preview first without generating
       setCurrentStep(3);
     } catch (error) {
@@ -222,7 +220,6 @@ const CreateInvoice: React.FC = () => {
   const handleCreateSaleAndInvoice = async () => {
     if (!currentStore?.id || !user?.clientId) {
       toast.error("Store or user information is missing");
-
       return;
     }
     if (isCreatingSale) return; // Prevent double call
@@ -310,20 +307,13 @@ const CreateInvoice: React.FC = () => {
     }
   };
 
-  // const handlePrint = () => {
-  //   const invoiceElement = document.querySelector('.invoice-print');
-  //   if (!invoiceElement) {
   //     toast.error('Invoice content not found');
-  //     return;
+
   //   }
 
-  //   const printWindow = window.open('', '_blank');
-  //   if (!printWindow) {
   //     toast.error('Unable to open print window');
-  //     return;
-  //   }
 
-  //   const invoiceHTML = invoiceElement.innerHTML;
+  //   }
 
   //   printWindow.document.write(`
   //   <!DOCTYPE html>
@@ -475,7 +465,6 @@ const CreateInvoice: React.FC = () => {
   //   printWindow.document.close();
   //   printWindow.focus();
 
-  //   setTimeout(() => {
   //     printWindow.print();
   //     printWindow.close();
   //   }, 250);
@@ -635,7 +624,7 @@ const CreateInvoice: React.FC = () => {
       fileInputRef.current?.click();
       return;
     }
-    // If called from file input change
+
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
     setLogoUploading(true);

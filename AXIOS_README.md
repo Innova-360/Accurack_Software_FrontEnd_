@@ -38,37 +38,39 @@ src/
 ### Basic API Calls
 
 ```typescript
-import { api } from '../services/api';
+import { api } from "../services/api";
 
-// GET request
-const response = await api.get('/users');
+const response = await api.get("/users");
 
 // POST request
-const response = await api.post('/users', { name: 'John', email: 'john@example.com' });
+const response = await api.post("/users", {
+  name: "John",
+  email: "john@example.com",
+});
 
 // PUT request
-const response = await api.put('/users/1', { name: 'Jane' });
+const response = await api.put("/users/1", { name: "Jane" });
 
 // DELETE request
-const response = await api.delete('/users/1');
+const response = await api.delete("/users/1");
 ```
 
 ### Authentication API
 
 ```typescript
-import { authAPI } from '../services/authAPI';
+import { authAPI } from "../services/authAPI";
 
 // Login
 const loginResponse = await authAPI.login({
-  email: 'user@example.com',
-  password: 'password123'
+  email: "user@example.com",
+  password: "password123",
 });
 
 // Register
 const registerResponse = await authAPI.register({
-  name: 'John Doe',
-  email: 'john@example.com',
-  password: 'password123'
+  name: "John Doe",
+  email: "john@example.com",
+  password: "password123",
 });
 
 // Logout
@@ -78,16 +80,17 @@ await authAPI.logout();
 ### Generic API Service
 
 ```typescript
-import { APIService } from '../services/genericAPI';
+import { APIService } from "../services/genericAPI";
 
 // Create a service for your entity
-const productService = new APIService('/products');
+const productService = new APIService("/products");
 
-// Use CRUD operations
 const products = await productService.getAll();
 const product = await productService.getById(1);
-const newProduct = await productService.create({ name: 'New Product' });
-const updatedProduct = await productService.update(1, { name: 'Updated Product' });
+const newProduct = await productService.create({ name: "New Product" });
+const updatedProduct = await productService.update(1, {
+  name: "Updated Product",
+});
 await productService.delete(1);
 ```
 
@@ -96,20 +99,22 @@ await productService.delete(1);
 The auth slice has been updated to use Axios:
 
 ```typescript
-import { useAppDispatch } from '../store/hooks';
-import { loginUser, registerUser, logoutUser } from '../store/slices/authSlice';
+import { useAppDispatch } from "../store/hooks";
+import { loginUser, registerUser, logoutUser } from "../store/slices/authSlice";
 
 const dispatch = useAppDispatch();
 
 // Login user
-dispatch(loginUser({ email: 'user@example.com', password: 'password' }));
+dispatch(loginUser({ email: "user@example.com", password: "password" }));
 
 // Register user
-dispatch(registerUser({ 
-  name: 'John Doe',
-  email: 'john@example.com', 
-  password: 'password' 
-}));
+dispatch(
+  registerUser({
+    name: "John Doe",
+    email: "john@example.com",
+    password: "password",
+  })
+);
 
 // Logout user
 dispatch(logoutUser());
@@ -175,7 +180,7 @@ Add custom logic to the request/response interceptors in `src/services/api.ts`:
 // Custom request interceptor
 apiClient.interceptors.request.use((config) => {
   // Add custom headers or logic
-  config.headers['X-Custom-Header'] = 'custom-value';
+  config.headers["X-Custom-Header"] = "custom-value";
   return config;
 });
 

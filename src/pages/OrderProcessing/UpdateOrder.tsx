@@ -6,16 +6,22 @@ import Header from "../../components/Header";
 import AddEditOrderModal from "../../components/OrderProcessingComponents/AddEditOrderModal";
 import { useCustomers } from "../../hooks/useCustomers";
 import useRequireStore from "../../hooks/useRequireStore";
-import { fetchOrders, updateOrder } from "../../store/slices/orderProcessingSlice";
+import {
+  fetchOrders,
+  updateOrder,
+} from "../../store/slices/orderProcessingSlice";
 import type { AppDispatch, RootState } from "../../store";
-import type { OrderItem, UpdateOrderRequest } from "../../types/orderProcessing";
+import type {
+  OrderItem,
+  UpdateOrderRequest,
+} from "../../types/orderProcessing";
 
 const UpdateOrderPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { id: storeId, orderId } = useParams<{ id: string; orderId: string }>();
   const currentStore = useRequireStore();
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [orderIdInput, setOrderIdInput] = useState(orderId || "");
   const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
@@ -24,26 +30,30 @@ const UpdateOrderPage: React.FC = () => {
   // Redux state
   const { orders, loading } = useSelector((state: RootState) => state.orders);
 
-  // Get customers for the dropdown
-  const { customers, loading: customersLoading } = useCustomers(currentStore?.id, {
-    limit: 1000, // Get all customers for dropdown
-  });
+  const { customers, loading: customersLoading } = useCustomers(
+    currentStore?.id,
+    {
+      limit: 1000, // Get all customers for dropdown
+    }
+  );
 
   // Fetch orders when component mounts
   useEffect(() => {
     if (currentStore?.id) {
-      dispatch(fetchOrders({
-        storeId: currentStore.id,
-        page: 1,
-        limit: 1000, // Get all orders to search by ID
-      }));
+      dispatch(
+        fetchOrders({
+          storeId: currentStore.id,
+          page: 1,
+          limit: 1000, // Get all orders to search by ID
+        })
+      );
     }
   }, [currentStore?.id, dispatch]);
 
   // Auto-find and load order if orderId is provided in URL
   useEffect(() => {
     if (orderId && orders.length > 0) {
-      const order = orders.find(o => o.id === orderId);
+      const order = orders.find((o) => o.id === orderId);
       if (order) {
         setSelectedOrder(order);
         setIsModalOpen(true);
@@ -62,22 +72,23 @@ const UpdateOrderPage: React.FC = () => {
     setIsLoading(true);
     try {
       // First try to find in current orders
-      const order = orders.find(o => o.id === orderIdInput.trim());
+      const order = orders.find((o) => o.id === orderIdInput.trim());
       if (order) {
         setSelectedOrder(order);
         setIsModalOpen(true);
       } else {
-        // If not found in current orders, try to fetch more orders
         if (currentStore?.id) {
-          await dispatch(fetchOrders({
-            storeId: currentStore.id,
-            page: 1,
-            limit: 1000,
-            search: orderIdInput.trim(),
-          })).unwrap();
-          
+          await dispatch(
+            fetchOrders({
+              storeId: currentStore.id,
+              page: 1,
+              limit: 1000,
+              search: orderIdInput.trim(),
+            })
+          ).unwrap();
+
           // Check again after fetching
-          const foundOrder = orders.find(o => o.id === orderIdInput.trim());
+          const foundOrder = orders.find((o) => o.id === orderIdInput.trim());
           if (foundOrder) {
             setSelectedOrder(foundOrder);
             setIsModalOpen(true);
@@ -103,13 +114,15 @@ const UpdateOrderPage: React.FC = () => {
         isValidated: false, // Reset validation when order is edited
         validatedAt: undefined, // Clear validation timestamp
       };
-      
-      await dispatch(updateOrder({ 
-        id: selectedOrder.id, 
-        orderData: updateData, 
-        storeId: currentStore.id 
-      })).unwrap();
-      
+
+      await dispatch(
+        updateOrder({
+          id: selectedOrder.id,
+          orderData: updateData,
+          storeId: currentStore.id,
+        })
+      ).unwrap();
+
       toast.success("Order updated successfully");
       setIsModalOpen(false);
       setSelectedOrder(null);
@@ -123,17 +136,19 @@ const UpdateOrderPage: React.FC = () => {
     setIsModalOpen(false);
     setSelectedOrder(null);
     if (orderId) {
-      // If we came from a direct URL, go back to order processing
-      navigate(storeId ? `/store/${storeId}/order-processing` : "/order-processing");
+      navigate(
+        storeId ? `/store/${storeId}/order-processing` : "/order-processing"
+      );
     }
   };
 
   const handleBackToOrderProcessing = () => {
-    navigate(storeId ? `/store/${storeId}/order-processing` : "/order-processing");
+    navigate(
+      storeId ? `/store/${storeId}/order-processing` : "/order-processing"
+    );
   };
 
   useEffect(() => {
-    // If the store is not available, redirect to stores page
     if (!currentStore?.id) {
       navigate("/stores");
     }
@@ -180,7 +195,7 @@ const UpdateOrderPage: React.FC = () => {
                     placeholder="Enter order ID..."
                     className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === "Enter") {
                         handleFindOrder();
                       }
                     }}

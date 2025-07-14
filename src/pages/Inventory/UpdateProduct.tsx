@@ -18,13 +18,13 @@ import useRequireStore from "../../hooks/useRequireStore";
 
 // Utility function for safe product ID extraction
 const getProductId = (product: Product): string | null => {
-  if (product.id && typeof product.id === 'string' && product.id.trim()) {
+  if (product.id && typeof product.id === "string" && product.id.trim()) {
     return product.id.trim();
   }
-  if (product.sku && typeof product.sku === 'string' && product.sku.trim()) {
+  if (product.sku && typeof product.sku === "string" && product.sku.trim()) {
     return product.sku.trim();
   }
-  if (product.plu && typeof product.plu === 'string' && product.plu.trim()) {
+  if (product.plu && typeof product.plu === "string" && product.plu.trim()) {
     return product.plu.trim();
   }
   return null;
@@ -33,7 +33,7 @@ const getProductId = (product: Product): string | null => {
 const UpdateProduct: React.FC = () => {
   const navigate = useNavigate();
   const currentStore = useRequireStore();
-  
+
   // State for main inventory pagination and filters
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -55,7 +55,7 @@ const UpdateProduct: React.FC = () => {
       search: searchTerm,
       sortBy: sortConfig?.key,
       sortOrder: sortConfig?.direction,
-      storeId: currentStore?.id
+      storeId: currentStore?.id,
     });
 
   // State for low stock pagination
@@ -72,7 +72,6 @@ const UpdateProduct: React.FC = () => {
   const [selectedProductToEdit, setSelectedProductToEdit] =
     useState<Product | null>(null);
 
-  // Use custom hooks for data processing
   const lowStockProducts = useLowStockProducts(products);
 
   // Debounced search state
@@ -97,7 +96,7 @@ const UpdateProduct: React.FC = () => {
       search: debouncedSearchTerm,
       sortBy: sortConfig?.key,
       sortOrder: sortConfig?.direction,
-      storeId: currentStore?.id
+      storeId: currentStore?.id,
     });
     setCurrentPage(1);
   }, [
@@ -106,7 +105,7 @@ const UpdateProduct: React.FC = () => {
     sortConfig?.key,
     sortConfig?.direction,
     fetchWithParams,
-    currentStore?.id
+    currentStore?.id,
   ]);
 
   // Show loading state only for initial load (when we have no products and no search term)
@@ -186,7 +185,7 @@ const UpdateProduct: React.FC = () => {
         search: debouncedSearchTerm,
         sortBy: sortConfig?.key,
         sortOrder: sortConfig?.direction,
-        storeId: currentStore?.id
+        storeId: currentStore?.id,
       });
     } catch (error) {
       toast.error("Failed to load page");
@@ -267,7 +266,9 @@ const UpdateProduct: React.FC = () => {
       toast.error("Cannot edit product: No valid ID available");
       return;
     }
-    navigate(`/store/${currentStore?.id}/inventory/product/${productId}/update`);
+    navigate(
+      `/store/${currentStore?.id}/inventory/product/${productId}/update`
+    );
   };
 
   const handleUpdateProduct = async (
@@ -402,20 +403,20 @@ const UpdateProduct: React.FC = () => {
                 />
               ) : (
                 <div className="overflow-x-auto">
-                              <InventoryTable
-              products={currentProducts}
-              selectedItems={selectedItems}
-              startIndex={startIndex}
-              sortConfig={sortConfig}
-              onSelectAll={handleSelectAll}
-              onSelectItem={handleSelectItem}
-              onSort={handleSort}
-              onProductDeleted={handleProductDeleted}
-              onProductEdited={handleEditProduct}
-              onProductViewed={handleViewProduct}
-              showDeleteButton={false}
-              showUpdateQuantity={true}
-            />
+                  <InventoryTable
+                    products={currentProducts}
+                    selectedItems={selectedItems}
+                    startIndex={startIndex}
+                    sortConfig={sortConfig}
+                    onSelectAll={handleSelectAll}
+                    onSelectItem={handleSelectItem}
+                    onSort={handleSort}
+                    onProductDeleted={handleProductDeleted}
+                    onProductEdited={handleEditProduct}
+                    onProductViewed={handleViewProduct}
+                    showDeleteButton={false}
+                    showUpdateQuantity={true}
+                  />
                 </div>
               )}
             </div>

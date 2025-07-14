@@ -182,8 +182,6 @@ export const updateProduct = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      // updateProduct(productId, productData as any) use this
-      // const response = await apiClient.put(`/product/${productId}`, productData);
       const response = await productAPI.updateProduct(
         productId,
         productData as any

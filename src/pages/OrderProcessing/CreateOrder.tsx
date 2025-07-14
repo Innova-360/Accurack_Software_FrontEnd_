@@ -18,7 +18,6 @@ const CreateOrderPage: React.FC = () => {
   const { id: storeId } = useParams<{ id: string }>();
   const currentStore = useRequireStore();
 
-  // Get customers for the dropdown
   const { customers, loading: customersLoading } = useCustomers(
     currentStore?.id,
     {
@@ -143,7 +142,6 @@ const CreateOrderPage: React.FC = () => {
   };
 
   useEffect(() => {
-    // If the store is not available, redirect to stores page
     if (!currentStore?.id) {
       navigate("/stores");
     }

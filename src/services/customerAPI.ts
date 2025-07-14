@@ -1,5 +1,9 @@
 import apiClient from "./api";
-import type { Customer, CustomerFormData, CustomerBalanceData } from "../types/customer";
+import type {
+  Customer,
+  CustomerFormData,
+  CustomerBalanceData,
+} from "../types/customer";
 
 export const customerAPI = {
   // Fetch all customers
@@ -14,8 +18,10 @@ export const customerAPI = {
       if (params?.page) searchParams.append("page", params.page.toString());
       if (params?.limit) searchParams.append("limit", params.limit.toString());
 
-      const response = await apiClient.get(`/sales/customers?${searchParams.toString()}`);
-      
+      const response = await apiClient.get(
+        `/sales/customers?${searchParams.toString()}`
+      );
+
       // Handle different response structures
       if (response.data?.data?.customers) {
         return {
@@ -32,20 +38,23 @@ export const customerAPI = {
           customers: response.data,
         };
       }
-      
+
       return { customers: [] };
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Failed to fetch customers");
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch customers"
+      );
     }
   },
 
-  // Get customer by ID
   async getCustomerById(id: string): Promise<Customer | null> {
     try {
       const response = await apiClient.get(`/sales/customers/${id}`);
       return response.data?.data || response.data || null;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Failed to fetch customer");
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch customer"
+      );
     }
   },
 
@@ -55,47 +64,76 @@ export const customerAPI = {
       const response = await apiClient.post("/sales/customers", customerData);
       return response.data?.data || response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Failed to create customer");
+      throw new Error(
+        error.response?.data?.message || "Failed to create customer"
+      );
     }
   },
 
   // Update a customer
-  async updateCustomer(id: string, customerData: CustomerFormData): Promise<Customer> {
+  async updateCustomer(
+    id: string,
+    customerData: CustomerFormData
+  ): Promise<Customer> {
     try {
-      const response = await apiClient.put(`/sales/customers/${id}`, customerData);
+      const response = await apiClient.put(
+        `/sales/customers/${id}`,
+        customerData
+      );
       return response.data?.data || response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Failed to update customer");
+      throw new Error(
+        error.response?.data?.message || "Failed to update customer"
+      );
     }
   },
 
   // Delete a customer
-  async deleteCustomer(id: string): Promise<{ success: boolean; message: string }> {
+  async deleteCustomer(
+    id: string
+  ): Promise<{ success: boolean; message: string }> {
     try {
       const response = await apiClient.delete(`/sales/customers/${id}`);
-      return { success: true, message: response.data?.message || "Customer deleted successfully" };
+      return {
+        success: true,
+        message: response.data?.message || "Customer deleted successfully",
+      };
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Failed to delete customer");
+      throw new Error(
+        error.response?.data?.message || "Failed to delete customer"
+      );
     }
   },
 
   // Bulk delete customers
-  async deleteCustomers(ids: string[]): Promise<{ success: boolean; message: string }> {
+  async deleteCustomers(
+    ids: string[]
+  ): Promise<{ success: boolean; message: string }> {
     try {
-      const response = await apiClient.post("/sales/customers/bulk-delete", { ids });
-      return { success: true, message: response.data?.message || "Customers deleted successfully" };
+      const response = await apiClient.post("/sales/customers/bulk-delete", {
+        ids,
+      });
+      return {
+        success: true,
+        message: response.data?.message || "Customers deleted successfully",
+      };
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Failed to delete customers");
+      throw new Error(
+        error.response?.data?.message || "Failed to delete customers"
+      );
     }
   },
 
-  // Get customer balance sheet
   async getCustomerBalance(customerId: string): Promise<CustomerBalanceData> {
     try {
-      const response = await apiClient.get(`/sales/customers/${customerId}/balance`);
+      const response = await apiClient.get(
+        `/sales/customers/${customerId}/balance`
+      );
       return response.data?.data || response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Failed to fetch customer balance");
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch customer balance"
+      );
     }
   },
 };

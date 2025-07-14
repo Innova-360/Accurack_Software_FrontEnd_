@@ -106,7 +106,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
           });
       }
       setProducts(assignedProducts);
-      // if (assignedProducts.length === 0) {
+
       //   toast.success(`No products assigned to ${supplier.name}`);
       // } else {
       //   toast.success(`Found ${assignedProducts.length} assigned products`);

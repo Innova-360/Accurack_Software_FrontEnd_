@@ -196,7 +196,6 @@ const Signup = () => {
       clearTimeout(typingTimeouts[name]);
     }
 
-    // Set new timeout for debounced validation
     const timeoutId = setTimeout(() => {
       const error = validateField(name, value);
       setErrors((prev) => ({ ...prev, [name]: error }));
@@ -206,14 +205,12 @@ const Signup = () => {
     setTypingTimeouts((prev) => ({ ...prev, [name]: timeoutId }));
   };
 
-  // Function to select country from dropdown
   const selectCountry = (country: CountryWithCities) => {
     setFormData((prev) => ({ ...prev, country: country.country, state: "" }));
     setShowCountryDropdown(false);
     setErrors((prev) => ({ ...prev, country: "" }));
   };
 
-  // Function to select state from dropdown
   const selectState = (state: string) => {
     setFormData((prev) => ({ ...prev, state }));
     setShowStateDropdown(false);

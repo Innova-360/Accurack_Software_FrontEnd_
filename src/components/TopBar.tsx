@@ -7,7 +7,6 @@ const TopBar: React.FC = () => {
   const { searchTerm, updateSearchTerm } = useDebounceSearch(300);
   const { user } = useAppSelector((state) => state.user);
 
-  // Get user's display name
   const displayName = user ? `${user.firstName} ${user.lastName}` : "Guest";
 
   return (

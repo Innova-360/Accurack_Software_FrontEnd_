@@ -70,7 +70,7 @@ const userSlice = createSlice({
           if (action.payload.clientId) {
             localStorage.setItem("clientId", action.payload.clientId);
           }
-          // Set auth.isAuthenticated to true
+
           try {
             const { store } = require("../store");
             store.dispatch({ type: "auth/setAuthenticated", payload: true });
@@ -81,7 +81,7 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.authChecked = true; // Set after check
-        // Set auth.isAuthenticated to false
+
         try {
           const { store } = require("../store");
           store.dispatch({ type: "auth/setAuthenticated", payload: false });

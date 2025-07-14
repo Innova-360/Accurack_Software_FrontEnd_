@@ -1,7 +1,4 @@
-import {
-  createSlice,
-  createAsyncThunk,
-} from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import apiClient from "../../services/api";
 
 interface BusinessDetails {
@@ -42,7 +39,10 @@ export const setBusinessDetails = createAsyncThunk(
   "business/setBusinessDetails",
   async (businessData: BusinessDetails, { rejectWithValue }) => {
     try {
-      const response = await apiClient.post("/invoice/set-business/details", businessData);
+      const response = await apiClient.post(
+        "/invoice/set-business/details",
+        businessData
+      );
       return response.data.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -78,7 +78,7 @@ export const businessSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      // Set business details
+
       .addCase(setBusinessDetails.pending, (state) => {
         state.loading = true;
         state.error = null;

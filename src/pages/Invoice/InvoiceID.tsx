@@ -1,30 +1,41 @@
-import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchInvoiceById } from '../../store/slices/invoiceSlice';
-import Header from '../../components/Header';
-import { 
-  FaArrowLeft, 
-  FaEye, 
-  FaUser, 
-  FaPhone, 
+import React, { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { fetchInvoiceById } from "../../store/slices/invoiceSlice";
+import Header from "../../components/Header";
+import {
+  FaArrowLeft,
+  FaEye,
+  FaUser,
+  FaPhone,
   FaDollarSign,
   FaFileInvoice,
   FaQrcode,
   FaBarcode,
-  FaCopy
-} from 'react-icons/fa';
-import { Building2, Package, Receipt, Truck, User, Mail, MapPin, Calendar, CreditCard } from 'lucide-react';
-import toast from 'react-hot-toast';
-import Loading from '../../components/Loading';
-// import { SpecialButton } from '../../components/buttons';
+  FaCopy,
+} from "react-icons/fa";
+import {
+  Building2,
+  Package,
+  Receipt,
+  Truck,
+  User,
+  Mail,
+  MapPin,
+  Calendar,
+  CreditCard,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import Loading from "../../components/Loading";
 
 const InvoiceId: React.FC = () => {
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  
-  const { selectedInvoice, loading, error } = useAppSelector((state) => state.invoices);
+
+  const { selectedInvoice, loading, error } = useAppSelector(
+    (state) => state.invoices
+  );
 
   useEffect(() => {
     if (invoiceId) {
@@ -36,14 +47,12 @@ const InvoiceId: React.FC = () => {
     navigate(-1);
   };
 
-//   const handlePrint = () => {
-//     window.print();
-//   };
+  //     window.print();
+  //   };
 
-//   const handleDownload = () => {
-//     // TODO: Implement PDF download functionality
-//     toast('Download functionality coming soon!', { icon: 'ℹ️' });
-//   };
+  //     // TODO: Implement PDF download functionality
+  //     toast('Download functionality coming soon!', { icon: 'ℹ️' });
+  //   };
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -51,32 +60,32 @@ const InvoiceId: React.FC = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'COMPLETED':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'CANCELLED':
-        return 'bg-red-100 text-red-800 border-red-200';
+      case "COMPLETED":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "PENDING":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "CANCELLED":
+        return "bg-red-100 text-red-800 border-red-200";
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
@@ -84,7 +93,7 @@ const InvoiceId: React.FC = () => {
     return (
       <>
         <Header />
-        <Loading label="Invoice"/>
+        <Loading label="Invoice" />
       </>
     );
   }
@@ -95,7 +104,9 @@ const InvoiceId: React.FC = () => {
         <Header />
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="text-red-600 text-xl mb-4">Error loading invoice</div>
+            <div className="text-red-600 text-xl mb-4">
+              Error loading invoice
+            </div>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={handleBack}
@@ -148,11 +159,15 @@ const InvoiceId: React.FC = () => {
                 <FaArrowLeft className="text-gray-600" size={20} />
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Invoice Details</h1>
-                <p className="text-gray-600">Invoice #{invoice.invoiceNumber}</p>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Invoice Details
+                </h1>
+                <p className="text-gray-600">
+                  Invoice #{invoice.invoiceNumber}
+                </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
               {/* <SpecialButton
               variant='primary'
@@ -189,7 +204,9 @@ const InvoiceId: React.FC = () => {
                   />
                 )}
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">{invoice.businessName}</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {invoice.businessName}
+                  </h2>
                   <div className="mt-2 space-y-1 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
                       <MapPin size={14} />
@@ -199,7 +216,12 @@ const InvoiceId: React.FC = () => {
                       <FaPhone size={12} />
                       <span>{invoice.businessContact}</span>
                       <button
-                        onClick={() => copyToClipboard(invoice.businessContact, 'Phone number')}
+                        onClick={() =>
+                          copyToClipboard(
+                            invoice.businessContact,
+                            "Phone number"
+                          )
+                        }
                         className="text-blue-600 hover:text-blue-800"
                       >
                         <FaCopy size={10} />
@@ -208,9 +230,9 @@ const InvoiceId: React.FC = () => {
                     {invoice.businessWebsite && (
                       <div className="flex items-center gap-2">
                         <FaEye size={12} />
-                        <a 
-                          href={invoice.businessWebsite} 
-                          target="_blank" 
+                        <a
+                          href={invoice.businessWebsite}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:text-blue-800"
                         >
@@ -225,7 +247,9 @@ const InvoiceId: React.FC = () => {
               {/* Invoice Status & Details */}
               <div className="text-right">
                 <div className="mb-4">
-                  <span className={`inline-flex px-3 py-1 text-sm font-medium rounded-full border ${getStatusColor(invoice.status)}`}>
+                  <span
+                    className={`inline-flex px-3 py-1 text-sm font-medium rounded-full border ${getStatusColor(invoice.status)}`}
+                  >
                     {invoice.status}
                   </span>
                 </div>
@@ -235,7 +259,9 @@ const InvoiceId: React.FC = () => {
                     <span className="font-medium">Invoice #:</span>
                     <span>{invoice.invoiceNumber}</span>
                     <button
-                      onClick={() => copyToClipboard(invoice.invoiceNumber, 'Invoice number')}
+                      onClick={() =>
+                        copyToClipboard(invoice.invoiceNumber, "Invoice number")
+                      }
                       className="text-blue-600 hover:text-blue-800"
                     >
                       <FaCopy size={10} />
@@ -274,7 +300,9 @@ const InvoiceId: React.FC = () => {
                   <span className="font-medium text-gray-700">Phone:</span>
                   <span className="ml-2">{invoice.customerPhone}</span>
                   <button
-                    onClick={() => copyToClipboard(invoice.customerPhone, 'Customer phone')}
+                    onClick={() =>
+                      copyToClipboard(invoice.customerPhone, "Customer phone")
+                    }
                     className="text-blue-600 hover:text-blue-800"
                   >
                     <FaCopy size={10} />
@@ -285,7 +313,9 @@ const InvoiceId: React.FC = () => {
                   <span className="font-medium text-gray-700">Email:</span>
                   <span className="ml-2">{invoice.customerMail}</span>
                   <button
-                    onClick={() => copyToClipboard(invoice.customerMail, 'Customer email')}
+                    onClick={() =>
+                      copyToClipboard(invoice.customerMail, "Customer email")
+                    }
                     className="text-blue-600 hover:text-blue-800"
                   >
                     <FaCopy size={10} />
@@ -298,15 +328,20 @@ const InvoiceId: React.FC = () => {
                     <p className="ml-2 text-sm">{invoice.customerAddress}</p>
                   </div>
                 </div>
-                {invoice.shippingAddress && invoice.shippingAddress !== invoice.customerAddress && (
-                  <div className="flex items-start gap-2">
-                    <Truck className="text-gray-400 mt-1" size={14} />
-                    <div>
-                      <span className="font-medium text-gray-700">Shipping Address:</span>
-                      <p className="ml-2 text-sm">{invoice.shippingAddress}</p>
+                {invoice.shippingAddress &&
+                  invoice.shippingAddress !== invoice.customerAddress && (
+                    <div className="flex items-start gap-2">
+                      <Truck className="text-gray-400 mt-1" size={14} />
+                      <div>
+                        <span className="font-medium text-gray-700">
+                          Shipping Address:
+                        </span>
+                        <p className="ml-2 text-sm">
+                          {invoice.shippingAddress}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
             </div>
 
@@ -319,7 +354,9 @@ const InvoiceId: React.FC = () => {
               <div className="bg-gray-50 p-4 rounded-lg space-y-3">
                 <div className="flex items-center gap-2">
                   <CreditCard className="text-gray-400" size={14} />
-                  <span className="font-medium text-gray-700">Payment Method:</span>
+                  <span className="font-medium text-gray-700">
+                    Payment Method:
+                  </span>
                   <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
                     {invoice.paymentMethod}
                   </span>
@@ -335,7 +372,9 @@ const InvoiceId: React.FC = () => {
                   </div>
                   <div className="flex justify-between font-semibold text-lg border-t pt-2">
                     <span>Total Amount:</span>
-                    <span className="text-green-600">{formatCurrency(invoice.totalAmount)}</span>
+                    <span className="text-green-600">
+                      {formatCurrency(invoice.totalAmount)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -348,9 +387,9 @@ const InvoiceId: React.FC = () => {
                     QR Code
                   </h4>
                   <div className="flex justify-center">
-                    <img 
-                      src={invoice.qrCode} 
-                      alt="Invoice QR Code" 
+                    <img
+                      src={invoice.qrCode}
+                      alt="Invoice QR Code"
                       className="w-24 h-24 border border-gray-200 rounded"
                     />
                   </div>
@@ -370,30 +409,52 @@ const InvoiceId: React.FC = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Product</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">PLU/UPC</th>
-                      <th className="text-center py-3 px-4 font-medium text-gray-700">Quantity</th>
-                      <th className="text-right py-3 px-4 font-medium text-gray-700">Unit Price</th>
-                      <th className="text-right py-3 px-4 font-medium text-gray-700">Total</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-700">
+                        Product
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-700">
+                        PLU/UPC
+                      </th>
+                      <th className="text-center py-3 px-4 font-medium text-gray-700">
+                        Quantity
+                      </th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-700">
+                        Unit Price
+                      </th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-700">
+                        Total
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {invoice.sale.saleItems.map((item) => (
-                      <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <tr
+                        key={item.id}
+                        className="border-b border-gray-100 hover:bg-gray-50"
+                      >
                         <td className="py-3 px-4">
                           <div>
-                            <div className="font-medium text-gray-900">{item.productName}</div>
-                            {item.product?.name && item.product.name !== item.productName && (
-                              <div className="text-sm text-gray-500">{item.product.name}</div>
-                            )}
+                            <div className="font-medium text-gray-900">
+                              {item.productName}
+                            </div>
+                            {item.product?.name &&
+                              item.product.name !== item.productName && (
+                                <div className="text-sm text-gray-500">
+                                  {item.product.name}
+                                </div>
+                              )}
                           </div>
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <FaBarcode className="text-gray-400" size={14} />
-                            <span className="font-mono text-sm">{item.pluUpc}</span>
+                            <span className="font-mono text-sm">
+                              {item.pluUpc}
+                            </span>
                             <button
-                              onClick={() => copyToClipboard(item.pluUpc, 'PLU/UPC')}
+                              onClick={() =>
+                                copyToClipboard(item.pluUpc, "PLU/UPC")
+                              }
                               className="text-blue-600 hover:text-blue-800"
                             >
                               <FaCopy size={10} />
@@ -405,8 +466,12 @@ const InvoiceId: React.FC = () => {
                             {item.quantity}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-right">{formatCurrency(item.sellingPrice)}</td>
-                        <td className="py-3 px-4 text-right font-medium">{formatCurrency(item.totalPrice)}</td>
+                        <td className="py-3 px-4 text-right">
+                          {formatCurrency(item.sellingPrice)}
+                        </td>
+                        <td className="py-3 px-4 text-right font-medium">
+                          {formatCurrency(item.totalPrice)}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -425,7 +490,9 @@ const InvoiceId: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {invoice.customFields.map((field) => (
                   <div key={field.id} className="bg-gray-50 p-3 rounded-lg">
-                    <div className="font-medium text-gray-700">{field.fieldName}:</div>
+                    <div className="font-medium text-gray-700">
+                      {field.fieldName}:
+                    </div>
                     <div className="text-gray-900 mt-1">{field.fieldValue}</div>
                   </div>
                 ))}
@@ -443,9 +510,11 @@ const InvoiceId: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <span className="font-medium text-gray-700">Sale ID:</span>
-                  <div className="font-mono text-xs mt-1 break-all">{invoice.sale.id}</div>
+                  <div className="font-mono text-xs mt-1 break-all">
+                    {invoice.sale.id}
+                  </div>
                   <button
-                    onClick={() => copyToClipboard(invoice.sale.id, 'Sale ID')}
+                    onClick={() => copyToClipboard(invoice.sale.id, "Sale ID")}
                     className="text-blue-600 hover:text-blue-800 text-xs mt-1"
                   >
                     Copy
@@ -456,13 +525,17 @@ const InvoiceId: React.FC = () => {
                   <div className="mt-1 capitalize">{invoice.sale.source}</div>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-lg">
-                  <span className="font-medium text-gray-700">Confirmation:</span>
+                  <span className="font-medium text-gray-700">
+                    Confirmation:
+                  </span>
                   <div className="mt-1">
-                    <span className={`px-2 py-1 rounded text-xs ${
-                      invoice.sale.confirmation === 'CONFIRMED' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
+                    <span
+                      className={`px-2 py-1 rounded text-xs ${
+                        invoice.sale.confirmation === "CONFIRMED"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
                       {invoice.sale.confirmation}
                     </span>
                   </div>

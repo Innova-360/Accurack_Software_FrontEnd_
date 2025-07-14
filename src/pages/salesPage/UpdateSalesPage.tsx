@@ -82,8 +82,7 @@ const SalesPage: React.FC = () => {
     productsAvailable: 0, // This would need to come from inventory
     lowStockItems: 0, // This would need to come from inventory
   };
-  // Use the custom hook for sales data management
-  // const {
+
   //   transactions,
   //   stats,
   //   loading,
@@ -98,7 +97,7 @@ const SalesPage: React.FC = () => {
   const [activeStatusTab, setActiveStatusTab] = useState("All"); // New state for status tabs
   const [statusFilter, setStatusFilter] = useState("All");
   const [paymentFilter, setPaymentFilter] = useState("All");
-  // const [cashierFilter, setCashierFilter] = useState("All");
+
   const [dateFilter, setDateFilter] = useState("Today");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -207,9 +206,7 @@ const SalesPage: React.FC = () => {
   const displayTransactions = getDisplayTransactions();
   const paginatedTransactions = displayTransactions;
 
-  // Debug pagination data
-    // For pagination display - simplified robust approach
-  const isServerSidePagination = !searchTerm; // Server-side when no search filter
+  const isServerSidePagination = !searchTerm;
 
   let totalPages, totalItems, startIndex, endIndex;
 
@@ -284,7 +281,7 @@ const SalesPage: React.FC = () => {
     setActiveStatusTab("All"); // Reset status tab
     setStatusFilter("All");
     setPaymentFilter("All");
-    // setCashierFilter("All");
+
     setDateFilter("Today");
     setCurrentPage(1);
   };

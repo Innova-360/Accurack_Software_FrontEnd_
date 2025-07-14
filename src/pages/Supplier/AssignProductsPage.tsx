@@ -10,7 +10,7 @@ import {
 import { useAppSelector } from "../../store/hooks";
 import apiClient from "../../services/api";
 import Pagination from "../../components/InventoryComponents/Pagination";
-// import { getProductsBySupplierId, getProducts } from '../../services/productAPI'
+
 import toast from "react-hot-toast";
 
 interface CategoryObj {
@@ -52,12 +52,10 @@ const AssignProductsPage: React.FC = () => {
   const location = useLocation();
   const { currentStore } = useAppSelector((state) => state.stores);
 
-  // Get supplier info from navigation state or fetch from API using supplierId
   const supplierInfo = location.state?.supplier;
   const [fetchedSupplier, setFetchedSupplier] = useState<any>(null);
   const [fetchingSupplier, setFetchingSupplier] = useState(false);
 
-  // If no supplier info in state, fetch from API using supplierId
   useEffect(() => {
     const fetchSupplierInfo = async () => {
       if (!supplierInfo && supplierId) {
@@ -73,7 +71,6 @@ const AssignProductsPage: React.FC = () => {
               params: { storeId: currentStore?.id || storeId },
             });
           } catch (error) {
-            // If direct call fails, try to find in supplier list
 
             const listResponse = await apiClient.get("/supplier/list", {
               params: { storeId: currentStore?.id || storeId },
@@ -111,7 +108,6 @@ const AssignProductsPage: React.FC = () => {
     fetchSupplierInfo();
   }, [supplierInfo, supplierId, currentStore?.id, storeId]);
 
-  // Use either navigation state supplier or fetched supplier
   const currentSupplier = supplierInfo || fetchedSupplier;
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -150,7 +146,6 @@ const AssignProductsPage: React.FC = () => {
     try {
       const finalStoreId = currentStore?.id || storeId;
 
-      // Get all suppliers for this store
       const suppliersResponse = await apiClient.get("/supplier/list", {
         params: { storeId: finalStoreId },
       });
@@ -181,7 +176,6 @@ const AssignProductsPage: React.FC = () => {
             // Check for primary assignments
             assignments.forEach((assignment: any) => {
               if (assignment.state === "primary" && assignment.productId) {
-                // If this is NOT the current supplier, mark the product as having a primary
                 if (supplierIdToCheck !== currentSupplierId) {
                   primaryProductIds.add(assignment.productId);
                 }
@@ -346,7 +340,7 @@ const AssignProductsPage: React.FC = () => {
       setCategories(newCategories);
     } else {
       newSelected.add(productId);
-      // If product already has a primary supplier, this supplier can only be secondary
+
       const hasPrimary = productsWithPrimarySupplier.has(productId);
       const defaultCategory = hasPrimary ? "secondary" : "primary";
 
@@ -466,7 +460,6 @@ const AssignProductsPage: React.FC = () => {
     checkAndRedirectIfNeeded();
   }, [supplierId, currentStore?.id, storeId, supplierInfo, navigate]);
 
-  // If no supplier found anywhere, show error
   if (!currentSupplier && !fetchingSupplier && !loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
