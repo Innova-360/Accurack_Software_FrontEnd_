@@ -235,14 +235,14 @@ export const salesAPI = {
   // DELETE /api/transactions/:id
   deleteTransaction: async (id: string): Promise<void> => {
     await new Promise((resolve) => setTimeout(resolve, 400));
-    console.log(`Deleting transaction ${id}`); // Will be replaced with actual API call
+    // Will be replaced with actual API call
     return Promise.resolve();
   },
 
   // POST /api/transactions/:id/print
   printTransaction: async (id: string): Promise<string> => {
     await new Promise((resolve) => setTimeout(resolve, 200));
-    console.log(`Printing transaction ${id}`); // Will be replaced with actual API call
+    // Will be replaced with actual API call
     return Promise.resolve("Print job sent successfully");
   },
 };

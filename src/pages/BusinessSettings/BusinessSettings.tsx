@@ -45,14 +45,11 @@ const BusinessSettings: React.FC = () => {
   const fetchBusinessProfile = async () => {
     try {
       setLoading(true);
-      console.log("Fetching business profile...");
 
       const response = await apiClient.get("/invoice/get-business/details");
-      console.log("Fetch response:", response.data);
 
       if (response.data.success && response.data.data) {
         const profileData = response.data.data;
-        console.log("Setting profile data:", profileData);
 
         setProfile(profileData);
         setFormData({
@@ -62,17 +59,14 @@ const BusinessSettings: React.FC = () => {
           address: profileData.address || "",
           logoUrl: profileData.logoUrl || "",
         });
-
-        console.log("Business profile loaded successfully");
       } else {
-        console.log("No data in response or success false");
         setProfile(null);
       }
     } catch (error: any) {
       console.error("Fetch error:", error);
       if (error.response?.status === 404) {
         // No business profile exists yet
-        console.log("404 - No business profile found, starting in edit mode");
+
         setProfile(null);
         setIsEditing(true);
       } else {
@@ -88,14 +82,13 @@ const BusinessSettings: React.FC = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    console.log(`Input changed - ${name}:`, value);
 
     setFormData((prev) => {
       const newData = {
         ...prev,
         [name]: value,
       };
-      console.log("Updated form data:", newData);
+
       return newData;
     });
   };
@@ -106,8 +99,6 @@ const BusinessSettings: React.FC = () => {
       toast.error("Business name is required");
       return;
     }
-
-    console.log("Saving form data:", formData);
 
     try {
       setSaving(true);
@@ -130,17 +121,13 @@ const BusinessSettings: React.FC = () => {
   };
 
   const handleCreateProfile = async () => {
-    console.log("Creating new business profile...");
-
     const response = await apiClient.post(
       "/invoice/set-business/details",
       formData
     );
-    console.log("Create response:", response.data);
 
     if (response.data.success) {
       const createdProfile = response.data.data || formData;
-      console.log("Created profile:", createdProfile);
 
       setProfile(createdProfile);
       updateFormData(createdProfile);
@@ -156,17 +143,13 @@ const BusinessSettings: React.FC = () => {
   };
 
   const handleUpdateProfile = async () => {
-    console.log("Updating existing business profile...");
-
     const response = await apiClient.put(
       "/invoice/update-business/details",
       formData
     );
-    console.log("Update response:", response.data);
 
     if (response.data.success) {
       const updatedProfile = response.data.data || formData;
-      console.log("Updated profile:", updatedProfile);
 
       setProfile(updatedProfile);
       updateFormData(updatedProfile);
@@ -244,7 +227,6 @@ const BusinessSettings: React.FC = () => {
       }));
 
       toast.success("Image uploaded successfully", { id: "upload" });
-      console.log("Image uploaded:", imageUrl);
     } catch (error: any) {
       console.error("Image upload error:", error);
       toast.error("Failed to upload image: " + error.message, { id: "upload" });
@@ -304,8 +286,6 @@ const BusinessSettings: React.FC = () => {
               <SpecialButton
                 variant="inventory-primary"
                 onClick={() => {
-                  console.log("Edit button clicked, current profile:", profile);
-                  console.log("Current form data:", formData);
                   setIsEditing(true);
                 }}
                 icon={<FaEdit />}

@@ -27,10 +27,6 @@ const GoogleAuthCallback = () => {
             googleAuthCallback({ code, state: state || undefined })
           );
           if (googleAuthCallback.fulfilled.match(resultAction)) {
-            console.log(
-              "Google authentication successful",
-              resultAction.payload
-            );
             // Redirect to home page
             navigate("/");
           } else {

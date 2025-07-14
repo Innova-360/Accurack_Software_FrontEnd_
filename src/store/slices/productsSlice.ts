@@ -52,7 +52,6 @@ export interface CreateProductPayload {
   }>;
 }
 
-
 // Define the payload type for product update
 export interface UpdateProductPayload {
   name: string;
@@ -119,7 +118,7 @@ export const fetchProductById = createAsyncThunk(
   async (productId: string, { rejectWithValue }) => {
     try {
       const product = await productAPI.getProductById(productId);
-      console.log("Fetched product:", product);
+
       return product;
     } catch (error: any) {
       console.error("Error fetching product:", error);
@@ -161,10 +160,9 @@ export const createProduct = createAsyncThunk(
   async (productData: CreateProductPayload, { rejectWithValue }) => {
     try {
       const response = await apiClient.post("/product/create", productData);
-      console.log(response.data);
+
       return response.data;
     } catch (error: any) {
-      console.log(error);
       return rejectWithValue(
         error.response?.data?.message || "Failed to create product"
       );
@@ -175,20 +173,24 @@ export const createProduct = createAsyncThunk(
 // Async thunk for Updating a product
 export const updateProduct = createAsyncThunk(
   "products/updateProduct",
-  
+
   async (
-    { productId, productData }: { productId: string; productData: UpdateProductPayload },
+    {
+      productId,
+      productData,
+    }: { productId: string; productData: UpdateProductPayload },
     { rejectWithValue }
   ) => {
     try {
       // updateProduct(productId, productData as any) use this
       // const response = await apiClient.put(`/product/${productId}`, productData);
-      const response = await productAPI.updateProduct(productId, productData as any);
+      const response = await productAPI.updateProduct(
+        productId,
+        productData as any
+      );
 
-      console.log(response.data);
       return response.data;
     } catch (error: any) {
-      console.log(error);
       return rejectWithValue(
         error.response?.data?.message || "Failed to update product"
       );
@@ -271,7 +273,6 @@ const productsSlice = createSlice({
       .addCase(createProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        console.log(state.error);
       });
   },
 });

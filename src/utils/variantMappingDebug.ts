@@ -43,8 +43,6 @@ const sampleVariation: Variation = {
 
 // Function to map variation to API payload
 export const mapVariationToPayload = (variant: Variation) => {
-  console.log("🔍 Input variation:", variant);
-
   const mapped = {
     name: variant.name || "",
     price: variant.itemSellingCost || 0, // Use itemSellingCost as the price
@@ -64,36 +62,12 @@ export const mapVariationToPayload = (variant: Variation) => {
     }),
   };
 
-  console.log("📤 Mapped payload:", mapped);
   return mapped;
 };
 
 // Test the mapping
 export const testVariantMapping = () => {
-  console.log("🧪 Testing variant mapping...");
   const result = mapVariationToPayload(sampleVariation);
-
-  console.log("\n✅ Expected API structure:");
-  console.log({
-    name: "Dark Roast Coffee - Large",
-    price: 27.99,
-    sku: "COFFEE-001-DR-L",
-    msrpPrice: 29.99,
-    discountAmount: 2.0,
-    percentDiscount: 0,
-    packs: [
-      {
-        minimumSellingQuantity: 10,
-        totalPacksQuantity: 50,
-        orderedPacksPrice: 18.99,
-        discountAmount: 0,
-        percentDiscount: 5,
-      },
-    ],
-  });
-
-  console.log("\n🔄 Actual result:");
-  console.log(result);
 
   return result;
 };

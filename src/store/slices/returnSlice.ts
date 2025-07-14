@@ -165,12 +165,14 @@ const initialState: ReturnState = {
 };
 
 // Helper function to transform API response to display format
-const transformReturnForDisplay = (returnItem: ReturnItem): DisplayReturnItem => {
+const transformReturnForDisplay = (
+  returnItem: ReturnItem
+): DisplayReturnItem => {
   // Map returnCategory to status
   const statusMap: Record<string, "saleable" | "no_saleable" | "scrap"> = {
-    "SALEABLE": "saleable",
-    "NON_SALEABLE": "no_saleable",
-    "SCRAP": "scrap"
+    SALEABLE: "saleable",
+    NON_SALEABLE: "no_saleable",
+    SCRAP: "scrap",
   };
 
   return {
@@ -185,10 +187,15 @@ const transformReturnForDisplay = (returnItem: ReturnItem): DisplayReturnItem =>
     returnDate: returnItem.createdAt || "",
     reason: returnItem.reason || "",
     status: statusMap[returnItem.returnCategory] || "no_saleable",
-    customerInfo: returnItem.sale?.customer ? {
-      name: returnItem.sale.customer.customerName || "Unknown Customer",
-      phone: returnItem.sale.customer.phoneNumber || returnItem.sale.customer.telephoneNumber || "",
-    } : undefined,
+    customerInfo: returnItem.sale?.customer
+      ? {
+          name: returnItem.sale.customer.customerName || "Unknown Customer",
+          phone:
+            returnItem.sale.customer.phoneNumber ||
+            returnItem.sale.customer.telephoneNumber ||
+            "",
+        }
+      : undefined,
   };
 };
 
@@ -199,9 +206,8 @@ export const createReturn = createAsyncThunk<
   { rejectValue: string }
 >("returns/createReturn", async (returnData, { rejectWithValue }) => {
   try {
-    console.log("🚀 Sending return data to backend:", JSON.stringify(returnData, null, 2));
     const response = await apiClient.post("/sales/returns", returnData);
-    console.log("✅ Return creation response:", JSON.stringify(response.data, null, 2));
+
     return response.data.data || response.data;
   } catch (error: any) {
     console.error("❌ Return creation error:", error);
@@ -214,32 +220,29 @@ export const createReturn = createAsyncThunk<
 // Async thunk for fetching returns
 export const fetchReturns = createAsyncThunk<
   ReturnItem[],
-  { 
+  {
     storeId: string;
   },
   { rejectValue: string }
->("returns/fetchReturns", async ({ 
-  storeId, 
-}, { rejectWithValue }) => {
+>("returns/fetchReturns", async ({ storeId }, { rejectWithValue }) => {
   try {
     const params = new URLSearchParams({
       storeId,
     });
 
-    console.log("Fetching returns with params:", params.toString());
-    
     const response = await apiClient.get(`/sales/returns?${params.toString()}`);
-    console.log("📊 Returns API response:", JSON.stringify(response.data, null, 2));
-    
+
     // Extract the data array from the response wrapper
     const returnsData = response.data?.data || response.data;
-    
+
     if (!Array.isArray(returnsData)) {
-      console.error("❌ Invalid returns data format. Expected array, got:", typeof returnsData);
+      console.error(
+        "❌ Invalid returns data format. Expected array, got:",
+        typeof returnsData
+      );
       throw new Error("Invalid returns data format - expected array");
     }
-    
-    console.log("✅ Successfully parsed returns data:", returnsData.length, "items");
+
     return returnsData;
   } catch (error: any) {
     console.error("❌ Error fetching returns:", error);
@@ -367,10 +370,14 @@ const returnSlice = createSlice({
       })
       .addCase(updateReturn.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.returns.findIndex(r => r.id === action.payload.id);
+        const index = state.returns.findIndex(
+          (r) => r.id === action.payload.id
+        );
         if (index !== -1) {
           state.returns[index] = action.payload;
-          state.displayReturns[index] = transformReturnForDisplay(action.payload);
+          state.displayReturns[index] = transformReturnForDisplay(
+            action.payload
+          );
         }
         state.currentReturn = action.payload;
       })
@@ -385,8 +392,10 @@ const returnSlice = createSlice({
       })
       .addCase(deleteReturn.fulfilled, (state, action) => {
         state.loading = false;
-        state.returns = state.returns.filter(r => r.id !== action.payload);
-        state.displayReturns = state.displayReturns.filter(r => r.id !== action.payload);
+        state.returns = state.returns.filter((r) => r.id !== action.payload);
+        state.displayReturns = state.displayReturns.filter(
+          (r) => r.id !== action.payload
+        );
         if (state.currentReturn?.id === action.payload) {
           state.currentReturn = null;
         }
@@ -398,10 +407,7 @@ const returnSlice = createSlice({
   },
 });
 
-export const {
-  clearReturns,
-  clearCurrentReturn,
-  clearError,
-} = returnSlice.actions;
+export const { clearReturns, clearCurrentReturn, clearError } =
+  returnSlice.actions;
 
 export default returnSlice.reducer;

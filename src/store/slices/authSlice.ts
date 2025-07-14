@@ -91,7 +91,6 @@ export const createClientWithAdmin = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      console.log("🚀 API call to create-client-with-admin starting...");
       const response = await apiClient.post("/auth/create-client-with-admin", {
         firstName: userData.firstName,
         lastName: userData.lastName,
@@ -102,7 +101,7 @@ export const createClientWithAdmin = createAsyncThunk(
         companyPhone: userData.companyPhone,
         companyAddress: userData.companyAddress,
       });
-      console.log("✅ API call successful:", response.data);
+
       return response.data;
     } catch (error: any) {
       console.error("❌ API call failed:", error);
@@ -214,13 +213,11 @@ export const verifyOtp = createAsyncThunk(
       };
 
       if (otpData.otp) {
-        console.log("🔐 Verifying OTP for email:", otpData.email);
         requestData.otp = otpData.otp;
       } else {
-        console.log("📤 Sending OTP to email:", otpData.email);
       }
       const response = await apiClient.post("/auth/verify-otp", requestData);
-      console.log("✅ OTP operation successful:", response.data);
+
       return response.data;
     } catch (error: any) {
       console.error("❌ OTP operation failed:", error);
@@ -238,9 +235,8 @@ export const resendOtp = createAsyncThunk(
   "/auth/resend-otp",
   async (email: string, { rejectWithValue }) => {
     try {
-      console.log("📤 Resending OTP to email:", email);
       const response = await apiClient.post("/auth/resend-otp", { email });
-      console.log("✅ OTP resent successfully:", response.data);
+
       return response.data;
     } catch (error: any) {
       console.error("❌ Resend OTP failed:", error);
@@ -477,11 +473,6 @@ export const authSlice = createSlice({
   },
 });
 
-export const {
-  setUser,
-  setToken,
-  clearError,
-  logout,
-  setAuthenticated,
-} = authSlice.actions;
+export const { setUser, setToken, clearError, logout, setAuthenticated } =
+  authSlice.actions;
 export default authSlice.reducer;

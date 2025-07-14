@@ -21,24 +21,7 @@ export const testVariantFields = () => {
     ],
   };
 
-  console.log("Test Variant Structure:");
-  console.log("✓ id:", testVariant.id);
-  console.log("✓ name:", testVariant.name);
-  console.log("✓ price:", testVariant.price);
-  console.log("✓ sku:", testVariant.sku);
-  console.log("✓ msrpPrice:", testVariant.msrpPrice);
-  console.log("✓ discountAmount:", testVariant.discountAmount);
-  console.log("✓ percentDiscount:", testVariant.percentDiscount);
-
-  console.log("\nPack Information:");
-  testVariant.packs.forEach((pack, index) => {
-    console.log(`Pack ${index + 1}:`);
-    console.log("  ✓ minimumSellingQuantity:", pack.minimumSellingQuantity);
-    console.log("  ✓ totalPacksQuantity:", pack.totalPacksQuantity);
-    console.log("  ✓ orderedPacksPrice:", pack.orderedPacksPrice);
-    console.log("  ✓ percentDiscount:", pack.percentDiscount);
-    console.log("  ✓ discountAmount:", pack.discountAmount);
-  });
+  testVariant.packs.forEach((pack, index) => {});
 
   return testVariant;
 };
@@ -59,27 +42,22 @@ export const validateVariantStructure = (variant: Variant): boolean => {
     "percentDiscount",
   ];
 
-  console.log("Validating variant structure...");
-
   // Check required fields
   for (const field of requiredFields) {
     if (!(field in variant)) {
       console.error(`❌ Missing required field: ${field}`);
       return false;
     }
-    console.log(`✓ Required field present: ${field}`);
   }
 
   // Check optional fields (should be defined in interface)
   for (const field of optionalFields) {
     if (field in variant) {
-      console.log(`✓ Optional field present: ${field}`);
     }
   }
 
   // Check pack structure
   if (variant.packs && variant.packs.length > 0) {
-    console.log("✓ Packs array present");
     variant.packs.forEach((pack, index) => {
       for (const field of packFields) {
         if (!(field in pack)) {
@@ -87,10 +65,8 @@ export const validateVariantStructure = (variant: Variant): boolean => {
           return false;
         }
       }
-      console.log(`✓ Pack ${index} structure valid`);
     });
   }
 
-  console.log("✅ Variant structure validation passed");
   return true;
 };

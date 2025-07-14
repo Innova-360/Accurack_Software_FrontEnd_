@@ -92,8 +92,9 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
     }
     try {
       // Compose address from detailed fields
-      const composedAddress = `${formData.streetAddress}, ${formData.city}, ${formData.state} ${formData.zipCode}`.trim();
-      
+      const composedAddress =
+        `${formData.streetAddress}, ${formData.city}, ${formData.state} ${formData.zipCode}`.trim();
+
       const supplierData = {
         supplier_id: formData.name.toLowerCase().replace(/\s+/g, "-"), // Generate a simple ID from name
         name: formData.name,
@@ -131,7 +132,7 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
       if (onSupplierCreated) {
         // Extract supplier data from the Redux action result
         // Handle nested data structure or use the supplied data as fallback
-        console.log("Full result:", result);
+
         let createdSupplierData: any = supplierData;
 
         // Check if result has supplier data in different possible structures
@@ -145,19 +146,21 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
         }
 
         // If still no valid ID found, try to get it from the refreshed suppliers list
-        if (!createdSupplierData?.id && !createdSupplierData?.supplier_id && !createdSupplierData?._id) {
-          console.log("No valid ID found, using form data with temporary ID");
+        if (
+          !createdSupplierData?.id &&
+          !createdSupplierData?.supplier_id &&
+          !createdSupplierData?._id
+        ) {
           // Create a temporary supplier object with the form data
           // The actual supplier will be available after list refresh
           createdSupplierData = {
             ...supplierData,
-            id: 'temp-' + Date.now(), // Temporary ID
-            supplier_id: 'temp-' + Date.now(),
-            isTemporary: true // Flag to indicate this is temporary
+            id: "temp-" + Date.now(), // Temporary ID
+            supplier_id: "temp-" + Date.now(),
+            isTemporary: true, // Flag to indicate this is temporary
           };
         }
 
-        console.log("Final supplier data for modal:", createdSupplierData);
         onSupplierCreated(createdSupplierData);
       }
     } catch (error) {
@@ -275,13 +278,15 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
             <label className="block text-sm font-medium text-gray-700 mb-3">
               Address *
             </label>
-            
+
             {/* Street Address */}
             <div className="mb-3">
               <input
                 type="text"
                 value={formData.streetAddress}
-                onChange={(e) => handleInputChange("streetAddress", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("streetAddress", e.target.value)
+                }
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
                   errors.streetAddress ? "border-red-500" : "border-gray-300"
                 }`}
@@ -289,7 +294,9 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
                 disabled={loading}
               />
               {errors.streetAddress && (
-                <p className="mt-1 text-sm text-red-600">{errors.streetAddress}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.streetAddress}
+                </p>
               )}
             </div>
 

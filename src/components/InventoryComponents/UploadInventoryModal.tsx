@@ -50,7 +50,6 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
     }
   };
 
-
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -90,12 +89,6 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
     );
 
     const url = `${BASE_URL}/product/uploadsheet?storeId=${id}`;
-    console.log("Uploading inventory file:", {
-      fileName: selectedFile.name,
-      fileType: selectedFile.type,
-      fileSize: selectedFile.size,
-      storeId: id,
-    });
     try {
       // Send as multipart/form-data for multer
       const formData = new FormData();
@@ -128,7 +121,6 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
     onClose();
   };
 
-  
   const handleDownloadTemplate = () => {
     // Create a sample Excel template matching inventory structure
     const templateData = [
@@ -200,7 +192,9 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
       <div className="relative bg-white rounded-xl shadow-2xl p-6 m-4 w-full max-w-lg animate-modal-enter">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-[#0f4d57]">Upload Inventory File</h2>
+          <h2 className="text-xl font-bold text-[#0f4d57]">
+            Upload Inventory File
+          </h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors p-1"

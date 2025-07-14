@@ -189,8 +189,6 @@ const ProductDetails: React.FC = () => {
 
   const displayData = getDisplayData();
 
-  console.log("Product Data:", product);
-  console.log("Display Data:", displayData);
   return (
     <>
       <Header />

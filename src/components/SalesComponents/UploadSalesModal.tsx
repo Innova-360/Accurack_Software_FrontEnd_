@@ -92,13 +92,6 @@ const UploadSalesModal: React.FC<UploadSalesModalProps> = ({
     );
 
     const url = `${BASE_URL}/sales/uploadsheet?storeId=${currentStore.id}`;
-    console.log("Uploading sales file:", {
-      fileName: selectedFile.name,
-      fileType: selectedFile.type,
-      fileSize: selectedFile.size,
-      storeId: currentStore.id,
-    });
-
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
@@ -113,7 +106,7 @@ const UploadSalesModal: React.FC<UploadSalesModalProps> = ({
       // Dismiss processing toast and show success
       toast.dismiss(processingToast);
       toast.success("Sales uploaded successfully!");
-      
+
       // Call the success callback to refetch data
       onUploadSuccess?.();
 
@@ -136,7 +129,6 @@ const UploadSalesModal: React.FC<UploadSalesModalProps> = ({
     }
     onClose();
   };
-
 
   const handleDownloadTemplate = () => {
     // Sales template data
@@ -207,7 +199,9 @@ const UploadSalesModal: React.FC<UploadSalesModalProps> = ({
       <div className="relative bg-white rounded-xl shadow-2xl p-6 m-4 w-full max-w-lg animate-modal-enter">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-[#0f4d57]">Upload Sales Files</h2>
+          <h2 className="text-xl font-bold text-[#0f4d57]">
+            Upload Sales Files
+          </h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors p-1"

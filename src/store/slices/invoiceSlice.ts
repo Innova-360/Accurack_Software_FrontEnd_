@@ -1,8 +1,7 @@
-import { createAsyncThunk, createSlice  } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import apiClient from "../../services/api";
 import type { InvoiceResponseData } from "../../types/invoice";
-
 
 interface InvoiceState {
   invoices: InvoiceResponseData[];
@@ -18,20 +17,17 @@ const initialState: InvoiceState = {
   error: null,
 };
 
-
 // Async thunk for fetching invoices
 export const fetchInvoices = createAsyncThunk<
   InvoiceResponseData[],
-  { 
-    storeId: string; 
+  {
+    storeId: string;
   },
   { rejectValue: string }
->("invoices/fetchInvoices", async ({ 
-  storeId, 
-}, { rejectWithValue }) => {
+>("invoices/fetchInvoices", async ({ storeId }, { rejectWithValue }) => {
   try {
     const response = await apiClient.get(`/invoice/store/${storeId}`);
-    console.log("Invoice API response:", JSON.stringify(response.data, null, 2));
+
     return response.data;
   } catch (error: any) {
     return rejectWithValue(
@@ -40,21 +36,18 @@ export const fetchInvoices = createAsyncThunk<
   }
 });
 
-
 // Async thunk for fetching invoices
 export const fetchInvoiceById = createAsyncThunk<
   InvoiceResponseData,
-  { 
-    invoiceId: string; 
+  {
+    invoiceId: string;
   },
   { rejectValue: string }
->("invoices/fetchInvoiceById", async ({ 
-  invoiceId, 
-}, { rejectWithValue }) => {
+>("invoices/fetchInvoiceById", async ({ invoiceId }, { rejectWithValue }) => {
   try {
     const response = await apiClient.get(`/invoice/${invoiceId}`);
-    console.log("Invoice API response of ID:", JSON.stringify(response.data, null, 2));
-    return response.data.data; 
+
+    return response.data.data;
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message || "Failed to fetch invoices by ID"
@@ -93,10 +86,13 @@ const invoiceSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchInvoiceById.fulfilled, (state, action: PayloadAction<InvoiceResponseData>) => {
-        state.selectedInvoice = action.payload;
-        state.loading = false;
-      })
+      .addCase(
+        fetchInvoiceById.fulfilled,
+        (state, action: PayloadAction<InvoiceResponseData>) => {
+          state.selectedInvoice = action.payload;
+          state.loading = false;
+        }
+      )
       .addCase(fetchInvoiceById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to fetch invoice by ID";

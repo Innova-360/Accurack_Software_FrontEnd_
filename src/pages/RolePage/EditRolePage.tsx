@@ -51,7 +51,6 @@ const EditRolePage: React.FC = () => {
 
   const handleSubmitRole = (data: RoleFormData) => {
     // Here you will integrate with your API
-    console.log("Role data to be updated:", data);
 
     // For now, just go back to the list
     // In future, you can make API call here:

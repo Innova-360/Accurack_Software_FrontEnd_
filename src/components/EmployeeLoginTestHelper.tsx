@@ -18,13 +18,12 @@ const EmployeeLoginTestHelper: React.FC = () => {
   const testEmployeeLogin = async () => {
     setLoading(true);
     try {
-      console.log("Testing employee login with:", testEmail);
       const response = await apiClient.post('/auth/login', {
         email: testEmail,
         password: testPassword
       });
       
-      console.log("Test login success:", response.data);
+
       setTestResult({ success: true, data: response.data, type: 'login' });
       toast.success("Employee login test successful!");
     } catch (error: any) {
@@ -43,9 +42,7 @@ const EmployeeLoginTestHelper: React.FC = () => {
   const checkEmployeeExists = async () => {
     setLoading(true);
     try {
-      console.log("Checking if employee exists:", testEmail);
       const response = await apiClient.get(`/employees?email=${testEmail}`);
-      console.log("Employee check result:", response.data);
       setTestResult({ 
         success: true, 
         type: 'check',
@@ -68,7 +65,6 @@ const EmployeeLoginTestHelper: React.FC = () => {
   const testDirectEmployeeAuth = async () => {
     setLoading(true);
     try {
-      console.log("Testing direct employee auth API:", testEmail);
       // Try different potential employee auth endpoints
       const endpoints = [
         '/auth/employee/login',
@@ -83,7 +79,6 @@ const EmployeeLoginTestHelper: React.FC = () => {
             email: testEmail,
             password: testPassword
           });
-          console.log(`Success with endpoint ${endpoint}:`, response.data);
           setTestResult({ 
             success: true, 
             data: { endpoint, response: response.data },
@@ -92,7 +87,7 @@ const EmployeeLoginTestHelper: React.FC = () => {
           toast.success(`Employee auth successful with ${endpoint}!`);
           return;
         } catch (err) {
-          console.log(`Failed with endpoint ${endpoint}:`, err);
+          console.error(`Failed with endpoint ${endpoint}:`, err);
         }
       }
       

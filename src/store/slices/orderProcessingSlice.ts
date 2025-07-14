@@ -22,15 +22,18 @@ const initialState: OrderState = {
 
 export const fetchOrders = createAsyncThunk(
   "orders/fetchOrders",
-  async ({ storeId, page, limit, search = '' }: FetchOrdersParams, { rejectWithValue }) => {
+  async (
+    { storeId, page, limit, search = "" }: FetchOrdersParams,
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await apiClient.get(`/driver/orders?storeId=${storeId}&page=${page}&limit=${limit}&search=${search}`);
+      const response = await apiClient.get(
+        `/driver/orders?storeId=${storeId}&page=${page}&limit=${limit}&search=${search}`
+      );
 
       if (!response.data?.data) {
         throw new Error("Failed to fetch orders");
       }
-
-      console.log(response.data);
 
       return {
         orders: response.data.data.orders,
@@ -51,14 +54,16 @@ export const createOrder = createAsyncThunk(
   "orders/createOrder",
   async (orderData: CreateOrderRequest, { rejectWithValue, dispatch }) => {
     try {
-      const response = await apiClient.post('/driver/order', orderData);
+      const response = await apiClient.post("/driver/order", orderData);
 
       if (!response.data?.data) {
         throw new Error("Failed to create order");
       }
 
       // Refresh orders list after creation
-      await dispatch(fetchOrders({ storeId: orderData.storeId, page: 1, limit: 10 }));
+      await dispatch(
+        fetchOrders({ storeId: orderData.storeId, page: 1, limit: 10 })
+      );
 
       return {
         success: true,
@@ -135,7 +140,6 @@ export const validateOrder = createAsyncThunk(
     { rejectWithValue, dispatch }
   ) => {
     try {
-      console.log(id)
       const response = await apiClient.post(`/driver/order/validate/${id}`, {});
 
       if (!response.data?.data) {

@@ -258,16 +258,6 @@ const Signup = () => {
 
     const companyAddress = addressParts.join(", ");
 
-    console.log("🚀 Starting signup process with data: ", {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      companyName: formData.companyName,
-      companyEmail: formData.email,
-      companyPhone: formData.companyPhone,
-      companyAddress,
-    });
-
     // Validate all fields
     if (!validateForm()) {
       toast.error("Please fill in all required fields correctly.");

@@ -1,7 +1,10 @@
-import { useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setSearchTerm, setDebouncedSearchTerm } from '../store/slices/searchSlice';
-import { selectSearchTerm } from '../store/selectors';
+import { useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import {
+  setSearchTerm,
+  setDebouncedSearchTerm,
+} from "../store/slices/searchSlice";
+import { selectSearchTerm } from "../store/selectors";
 
 export const useDebounceSearch = (delay: number = 300) => {
   const dispatch = useAppDispatch();
@@ -16,7 +19,7 @@ export const useDebounceSearch = (delay: number = 300) => {
       clearTimeout(timer);
     };
   }, [searchTerm, delay, dispatch]);
-
+  
   const updateSearchTerm = (term: string) => {
     dispatch(setSearchTerm(term));
   };

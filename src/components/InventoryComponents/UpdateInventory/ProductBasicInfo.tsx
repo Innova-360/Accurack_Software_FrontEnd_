@@ -88,52 +88,6 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
   // Use effective loading state (false if timeout occurred)
   const effectiveCategoriesLoading = categoriesLoading && !loadingTimeout;
 
-  // Debug logging to see categories state
-  React.useEffect(() => {
-    console.log("🔍 ProductBasicInfo - Categories data:", {
-      propCategories: propCategories?.length || 0,
-      reduxCategories: reduxCategories?.length || 0,
-      finalCategories: categories?.length || 0,
-      propCategoriesLoading,
-      reduxCategoriesLoading,
-      finalCategoriesLoading: categoriesLoading,
-      effectiveCategoriesLoading,
-      loadingTimeout,
-      categoriesData: categories?.slice(0, 2),
-    });
-  }, [
-    propCategories,
-    reduxCategories,
-    categories,
-    propCategoriesLoading,
-    reduxCategoriesLoading,
-    categoriesLoading,
-    effectiveCategoriesLoading,
-    loadingTimeout,
-  ]);
-
-  // Debug logging to see supplier state
-  React.useEffect(() => {
-    // console.log("🔍 ProductBasicInfo - Suppliers data:", {
-    //   propSuppliers: propSuppliers?.length || 0,
-    //   reduxSuppliers: reduxSuppliers?.length || 0,
-    //   finalSuppliers: suppliers?.length || 0,
-    //   loading: suppliersLoading,
-    //   error: suppliersError,
-    //   isVariantMode,
-    //   propSuppliersData: propSuppliers?.slice(0, 2),
-    //   reduxSuppliersData: reduxSuppliers?.slice(0, 2),
-    //   finalSuppliersData: suppliers?.slice(0, 2),
-    // });
-  }, [
-    propSuppliers,
-    reduxSuppliers,
-    suppliers,
-    suppliersLoading,
-    suppliersError,
-    isVariantMode,
-  ]);
-
   // Only fetch suppliers if not provided as props and not already loading/loaded
   React.useEffect(() => {
     // Skip fetching if suppliers are provided as props
@@ -155,8 +109,8 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
       storeId = inventoryMatch[1];
     }
 
-    // console.log("🔍 Current pathname:", pathname);
-    // console.log("📦 Extracted storeId:", storeId);
+    //
+    //
 
     // Only fetch if we have a storeId and suppliers haven't been loaded yet
     if (
@@ -165,10 +119,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
       suppliers.length === 0 &&
       !suppliersError
     ) {
-      // console.log(
-      //   "📦 Fetching suppliers for store (ProductBasicInfo):",
-      //   storeId
-      // );
+      
       dispatch(fetchInventorySuppliers({ storeId, page: 1, limit: 50 }) as any);
     }
   }, [
@@ -578,7 +529,6 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                     ? "bg-gray-100 cursor-not-allowed text-gray-500"
                     : ""
                 }`}
-
                 disabled={
                   !suppliersLoading &&
                   !suppliersError &&

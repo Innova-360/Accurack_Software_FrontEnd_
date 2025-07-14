@@ -45,7 +45,6 @@ export const fetchEmployees = createAsyncThunk(
       params.append("limit", limit.toString());
 
       const response = await apiClient.get(`/employees`);
-      console.log(response);
 
       // Handle different response structures from backend
       let employees = [];
@@ -100,10 +99,8 @@ export const createEmployee = createAsyncThunk(
   "employees/createEmployee",
   async (employeeData: EmployeeFormData, { rejectWithValue }) => {
     try {
-      console.log("Creating employee with data:", employeeData);
       const response = await apiClient.post("/employees", employeeData);
-      console.log("Employee creation response:", response);
-      console.log("Employee creation response data:", response.data);
+
       return response.data;
     } catch (error: any) {
       console.error("Employee creation failed:", error);
@@ -275,14 +272,11 @@ export const assignRoleTemplateToUsers = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await apiClient.post(
-        `/permissions/templates/assign`,
-        {
-          userIds,
-          roleTemplateId,
-          storeId,
-        }
-      );
+      const response = await apiClient.post(`/permissions/templates/assign`, {
+        userIds,
+        roleTemplateId,
+        storeId,
+      });
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -297,9 +291,7 @@ export const deactivateEmployee = createAsyncThunk(
   "employees/deactivateEmployee",
   async (id: string, { rejectWithValue }) => {
     try {
-      const response = await apiClient.put(
-        `/employees/${id}/deactivate`
-      );
+      const response = await apiClient.put(`/employees/${id}/deactivate`);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -313,9 +305,7 @@ export const resetEmployeePassword = createAsyncThunk(
   "employees/resetEmployeePassword",
   async (id: string, { rejectWithValue }) => {
     try {
-      const response = await apiClient.post(
-        `/employees/${id}/reset-password`
-      );
+      const response = await apiClient.post(`/employees/${id}/reset-password`);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -348,10 +338,7 @@ export const inviteEmployee = createAsyncThunk(
   "employees/inviteEmployee",
   async (inviteData: any, { rejectWithValue }) => {
     try {
-      const response = await apiClient.post(
-        `/employees/invite`,
-        inviteData
-      );
+      const response = await apiClient.post(`/employees/invite`, inviteData);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(

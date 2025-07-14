@@ -69,7 +69,6 @@ interface SalesState {
   };
 }
 
-
 const initialState: SalesState = {
   sales: [],
   currentSale: null,
@@ -91,9 +90,8 @@ export const createSale = createAsyncThunk<
   { rejectValue: string }
 >("sales/createSale", async (saleData, { rejectWithValue }) => {
   try {
-    console.log("🚀 Sending sale data to backend:", JSON.stringify(saleData, null, 2));
     const response = await apiClient.post("/sales/create", saleData);
-    console.log("✅ Sale creation response:", JSON.stringify(response.data, null, 2));
+
     return response.data.data || response.data;
   } catch (error: any) {
     console.error("❌ Sale creation error:", error);
@@ -102,7 +100,6 @@ export const createSale = createAsyncThunk<
     );
   }
 });
-
 
 // Async thunk for fetching sales
 export const fetchSales = createAsyncThunk<
@@ -115,9 +112,9 @@ export const fetchSales = createAsyncThunk<
       totalPages: number;
     };
   },
-  { 
-    storeId: string; 
-    page?: number; 
+  {
+    storeId: string;
+    page?: number;
     limit?: number;
     customerId?: string;
     status?: string;
@@ -126,83 +123,85 @@ export const fetchSales = createAsyncThunk<
     dateTo?: string;
   },
   { rejectValue: string }
->("sales/fetchSales", async ({ 
-  storeId, 
-  page = 1, 
-  limit = 20,
-  customerId,
-  status,
-  paymentMethod,
-  dateFrom,
-  dateTo
-}, { rejectWithValue }) => {
-  try {
-    // Build query parameters object, only including defined values
-    const params: Record<string, string | number> = { 
-      storeId, 
-      page,
-      limit
-    };
-    
-    if (customerId) params.customerId = customerId;
-    if (status && status !== "All") params.status = status.toUpperCase();
-    if (paymentMethod && paymentMethod !== "All") params.paymentMethod = paymentMethod.toUpperCase();
-    if (dateFrom) params.dateFrom = dateFrom;
-    if (dateTo) params.dateTo = dateTo;
+>(
+  "sales/fetchSales",
+  async (
+    {
+      storeId,
+      page = 1,
+      limit = 20,
+      customerId,
+      status,
+      paymentMethod,
+      dateFrom,
+      dateTo,
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      // Build query parameters object, only including defined values
+      const params: Record<string, string | number> = {
+        storeId,
+        page,
+        limit,
+      };
 
-    console.log("Fetching sales with params:", params);
-    
-    const response = await apiClient.get("/sales/list", {
-      params
-    });
-    console.log("📊 Sales API response:", JSON.stringify(response.data, null, 2));
-    
-    // Handle the new response format: extract sales array from data.sales
-    const responseData = response.data?.data || response.data;
-    const salesData = responseData?.sales || responseData;
-    const salesArray = Array.isArray(salesData) ? salesData : [];
-    
-    // Extract pagination data if available, otherwise calculate based on current data
-    let paginationData;
-    if (responseData?.pagination) {
-      paginationData = responseData.pagination;
-    } else if (responseData?.total !== undefined) {
-      // If we have a total field but no pagination object
-      paginationData = {
-        total: responseData.total,
-        page: page,
-        limit: limit,
-        totalPages: Math.ceil(responseData.total / limit)
+      if (customerId) params.customerId = customerId;
+      if (status && status !== "All") params.status = status.toUpperCase();
+      if (paymentMethod && paymentMethod !== "All")
+        params.paymentMethod = paymentMethod.toUpperCase();
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
+
+      const response = await apiClient.get("/sales/list", {
+        params,
+      });
+
+      // Handle the new response format: extract sales array from data.sales
+      const responseData = response.data?.data || response.data;
+      const salesData = responseData?.sales || responseData;
+      const salesArray = Array.isArray(salesData) ? salesData : [];
+
+      // Extract pagination data if available, otherwise calculate based on current data
+      let paginationData;
+      if (responseData?.pagination) {
+        paginationData = responseData.pagination;
+      } else if (responseData?.total !== undefined) {
+        // If we have a total field but no pagination object
+        paginationData = {
+          total: responseData.total,
+          page: page,
+          limit: limit,
+          totalPages: Math.ceil(responseData.total / limit),
+        };
+      } else {
+        // Fallback: assume this is the full dataset if we don't have pagination info
+        // This is likely wrong for server-side pagination, but we need to handle it
+        paginationData = {
+          total: salesArray.length, // This might be wrong, but it's our best guess
+          page: page,
+          limit: limit,
+          totalPages: Math.ceil(salesArray.length / limit),
+        };
+        console.warn(
+          "⚠️ No pagination metadata from backend. Falling back to client-side calculation."
+        );
+      }
+
+      // Debug: Log the status of each sale
+      salesArray.forEach((sale: SaleResponseData, index: number) => {});
+
+      return {
+        sales: salesArray,
+        pagination: paginationData,
       };
-    } else {
-      // Fallback: assume this is the full dataset if we don't have pagination info
-      // This is likely wrong for server-side pagination, but we need to handle it
-      paginationData = {
-        total: salesArray.length, // This might be wrong, but it's our best guess
-        page: page,
-        limit: limit,
-        totalPages: Math.ceil(salesArray.length / limit)
-      };
-      console.warn("⚠️ No pagination metadata from backend. Falling back to client-side calculation.");
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch sales"
+      );
     }
-    
-    console.log("📄 Pagination data:", paginationData);
-    
-    // Debug: Log the status of each sale
-    salesArray.forEach((sale: SaleResponseData, index: number) => {
-      console.log(`🔍 Sale ${index + 1} status:`, sale.status, `(type: ${typeof sale.status})`);
-    });
-    
-    return {
-      sales: salesArray,
-      pagination: paginationData
-    };
-  } catch (error: any) {
-    return rejectWithValue(
-      error.response?.data?.message || "Failed to fetch sales"
-    );
   }
-});
+);
 
 // Async thunk for fetching sale by ID
 export const fetchSaleById = createAsyncThunk<
@@ -236,9 +235,8 @@ export const updateSale = createAsyncThunk<
   { rejectValue: string }
 >("sales/updateSale", async ({ saleId, updateData }, { rejectWithValue }) => {
   try {
-    console.log("🚀 Updating sale:", saleId, "with data:", updateData);
     const response = await apiClient.put(`/sales/${saleId}`, updateData);
-    console.log("✅ Sale update response:", response.data);
+
     return response.data.data || response.data;
   } catch (error: any) {
     console.error("❌ Sale update error:", error);
@@ -321,7 +319,9 @@ const salesSlice = createSlice({
       .addCase(updateSale.fulfilled, (state, action) => {
         state.loading = false;
         // Update the sale in the sales array
-        const index = state.sales.findIndex(sale => sale.id === action.payload.id);
+        const index = state.sales.findIndex(
+          (sale) => sale.id === action.payload.id
+        );
         if (index !== -1) {
           state.sales[index] = action.payload;
         }

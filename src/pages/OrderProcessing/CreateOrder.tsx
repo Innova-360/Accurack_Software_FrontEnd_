@@ -12,7 +12,6 @@ import type { AppDispatch } from "../../store";
 import type { OrderStatus, PaymentType } from "../../types/orderProcessing";
 import { useGetDrivers } from "../../hooks/useGetDrivers";
 
-
 const CreateOrderPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -20,60 +19,67 @@ const CreateOrderPage: React.FC = () => {
   const currentStore = useRequireStore();
 
   // Get customers for the dropdown
-  const { customers, loading: customersLoading } = useCustomers(currentStore?.id, {
-    limit: 1000, // Get all customers for dropdown
-  });
+  const { customers, loading: customersLoading } = useCustomers(
+    currentStore?.id,
+    {
+      limit: 1000, // Get all customers for dropdown
+    }
+  );
 
-
-  const { drivers, loading: driverLoading, error: driverError, refetch } = useGetDrivers(storeId, true);
-  console.log(drivers)
+  const {
+    drivers,
+    loading: driverLoading,
+    error: driverError,
+    refetch,
+  } = useGetDrivers(storeId, true);
 
   const [formData, setFormData] = useState({
-    customerId: '',
-    customerName: '',
-    status: 'pending' as OrderStatus,
+    customerId: "",
+    customerName: "",
+    status: "pending" as OrderStatus,
     paymentAmount: 0,
-    paymentType: 'CASH' as PaymentType,
-    driverName: '',
-    driverId: '',
+    paymentType: "CASH" as PaymentType,
+    driverName: "",
+    driverId: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCustomerChange = (customerId: string) => {
-    const selectedCustomer = customers.find(c => c.id === customerId);
-    setFormData(prev => ({
+    const selectedCustomer = customers.find((c) => c.id === customerId);
+    setFormData((prev) => ({
       ...prev,
       customerId,
-      customerName: selectedCustomer ? selectedCustomer.customerName : '',
+      customerName: selectedCustomer ? selectedCustomer.customerName : "",
     }));
     if (errors.customerId) {
-      setErrors(prev => ({ ...prev, customerId: '' }));
+      setErrors((prev) => ({ ...prev, customerId: "" }));
     }
   };
 
-
-    const handleDriverChange = (driverId: string) => {
-    const selectedDriver = drivers.find(d => d.id === driverId);
-    setFormData(prev => ({
+  const handleDriverChange = (driverId: string) => {
+    const selectedDriver = drivers.find((d) => d.id === driverId);
+    setFormData((prev) => ({
       ...prev,
       driverId,
-      driverName: selectedDriver ? (selectedDriver.firstName).concat(" ").concat(selectedDriver.lastName) : '',
+      driverName: selectedDriver
+        ? selectedDriver.firstName.concat(" ").concat(selectedDriver.lastName)
+        : "",
     }));
     if (errors.driverId) {
-      setErrors(prev => ({ ...prev, driverId: '' }));
+      setErrors((prev) => ({ ...prev, driverId: "" }));
     }
   };
 
   const handleInputChange = (field: string, value: string | number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
@@ -81,19 +87,19 @@ const CreateOrderPage: React.FC = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.customerId) {
-      newErrors.customerId = 'Customer is required';
+      newErrors.customerId = "Customer is required";
     }
     if (!formData.status) {
-      newErrors.status = 'Status is required';
+      newErrors.status = "Status is required";
     }
     if (!formData.paymentAmount || formData.paymentAmount <= 0) {
-      newErrors.paymentAmount = 'Payment amount must be greater than 0';
+      newErrors.paymentAmount = "Payment amount must be greater than 0";
     }
     if (!formData.paymentType) {
-      newErrors.paymentType = 'Payment type is required';
+      newErrors.paymentType = "Payment type is required";
     }
     if (!formData.driverName.trim()) {
-      newErrors.driverName = 'Driver name is required';
+      newErrors.driverName = "Driver name is required";
     }
 
     setErrors(newErrors);
@@ -102,10 +108,10 @@ const CreateOrderPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
     if (!currentStore?.id) return;
-    
+
     setIsSubmitting(true);
     try {
       const createData = {
@@ -114,11 +120,14 @@ const CreateOrderPage: React.FC = () => {
         isValidated: false, // New orders start as not validated
       };
 
-      console.log(createData);
       await dispatch(createOrder(createData)).unwrap();
       toast.success("Order created successfully");
       // Navigate back to order processing page
-      navigate(storeId ? `/store/${storeId}/order-processing/view-orders` : "/order-processing");
+      navigate(
+        storeId
+          ? `/store/${storeId}/order-processing/view-orders`
+          : "/order-processing"
+      );
     } catch (error: any) {
       toast.error(error || "Failed to create order");
     } finally {
@@ -128,9 +137,10 @@ const CreateOrderPage: React.FC = () => {
 
   const handleGoBack = () => {
     // Navigate back to order processing page
-    navigate(storeId ? `/store/${storeId}/order-processing` : "/order-processing");
+    navigate(
+      storeId ? `/store/${storeId}/order-processing` : "/order-processing"
+    );
   };
-
 
   useEffect(() => {
     // If the store is not available, redirect to stores page
@@ -151,20 +161,20 @@ const CreateOrderPage: React.FC = () => {
   }
 
   const statusOptions: Array<{ value: OrderStatus; label: string }> = [
-    { value: 'pending', label: 'Pending' },
-    { value: 'processing', label: 'Processing' },
-    { value: 'shipped', label: 'Shipped' },
-    { value: 'delivered', label: 'Delivered' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'cancelled', label: 'Cancelled' },
+    { value: "pending", label: "Pending" },
+    { value: "processing", label: "Processing" },
+    { value: "shipped", label: "Shipped" },
+    { value: "delivered", label: "Delivered" },
+    { value: "completed", label: "Completed" },
+    { value: "cancelled", label: "Cancelled" },
   ];
 
   const paymentOptions: Array<{ value: PaymentType; label: string }> = [
-    { value: 'CASH', label: 'Cash' },
-    { value: 'CARD', label: 'Card' },
-    { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
-    { value: 'CHECK', label: 'Check' },
-    { value: 'DIGITAL_WALLET', label: 'Digital Wallet' },
+    { value: "CASH", label: "Cash" },
+    { value: "CARD", label: "Card" },
+    { value: "BANK_TRANSFER", label: "Bank Transfer" },
+    { value: "CHECK", label: "Check" },
+    { value: "DIGITAL_WALLET", label: "Digital Wallet" },
   ];
 
   return (
@@ -184,7 +194,9 @@ const CreateOrderPage: React.FC = () => {
                   <span>Back to Orders</span>
                 </button>
                 <div className="h-6 w-px bg-gray-300"></div>
-                <h1 className="text-2xl font-bold text-gray-900">Create New Order</h1>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Create New Order
+                </h1>
               </div>
             </div>
 
@@ -199,12 +211,14 @@ const CreateOrderPage: React.FC = () => {
                   value={formData.customerId}
                   onChange={(e) => handleCustomerChange(e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
-                    errors.customerId ? 'border-red-500' : 'border-gray-300'
+                    errors.customerId ? "border-red-500" : "border-gray-300"
                   }`}
                   disabled={customersLoading}
                 >
                   <option value="">
-                    {customersLoading ? 'Loading customers...' : 'Select a customer'}
+                    {customersLoading
+                      ? "Loading customers..."
+                      : "Select a customer"}
                   </option>
                   {customers.map((customer) => (
                     <option key={customer.id} value={customer.id}>
@@ -213,7 +227,9 @@ const CreateOrderPage: React.FC = () => {
                   ))}
                 </select>
                 {errors.customerId && (
-                  <p className="mt-1 text-sm text-red-600">{errors.customerId}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.customerId}
+                  </p>
                 )}
               </div>
 
@@ -224,9 +240,9 @@ const CreateOrderPage: React.FC = () => {
                 </label>
                 <select
                   value={formData.status}
-                  onChange={(e) => handleInputChange('status', e.target.value)}
+                  onChange={(e) => handleInputChange("status", e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
-                    errors.status ? 'border-red-500' : 'border-gray-300'
+                    errors.status ? "border-red-500" : "border-gray-300"
                   }`}
                 >
                   {statusOptions.map((option) => (
@@ -250,14 +266,21 @@ const CreateOrderPage: React.FC = () => {
                   min="0"
                   step="0.01"
                   value={formData.paymentAmount}
-                  onChange={(e) => handleInputChange('paymentAmount', parseFloat(e.target.value) || 0)}
+                  onChange={(e) =>
+                    handleInputChange(
+                      "paymentAmount",
+                      parseFloat(e.target.value) || 0
+                    )
+                  }
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
-                    errors.paymentAmount ? 'border-red-500' : 'border-gray-300'
+                    errors.paymentAmount ? "border-red-500" : "border-gray-300"
                   }`}
                   placeholder="0.00"
                 />
                 {errors.paymentAmount && (
-                  <p className="mt-1 text-sm text-red-600">{errors.paymentAmount}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.paymentAmount}
+                  </p>
                 )}
               </div>
 
@@ -268,9 +291,11 @@ const CreateOrderPage: React.FC = () => {
                 </label>
                 <select
                   value={formData.paymentType}
-                  onChange={(e) => handleInputChange('paymentType', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("paymentType", e.target.value)
+                  }
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
-                    errors.paymentType ? 'border-red-500' : 'border-gray-300'
+                    errors.paymentType ? "border-red-500" : "border-gray-300"
                   }`}
                 >
                   {paymentOptions.map((option) => (
@@ -280,7 +305,9 @@ const CreateOrderPage: React.FC = () => {
                   ))}
                 </select>
                 {errors.paymentType && (
-                  <p className="mt-1 text-sm text-red-600">{errors.paymentType}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.paymentType}
+                  </p>
                 )}
               </div>
 
@@ -293,18 +320,19 @@ const CreateOrderPage: React.FC = () => {
                   value={formData.driverId}
                   onChange={(e) => handleDriverChange(e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
-                    errors.customerId ? 'border-red-500' : 'border-gray-300'
+                    errors.customerId ? "border-red-500" : "border-gray-300"
                   }`}
                   disabled={driverLoading}
                 >
                   <option value="">
-                    {driverLoading ? 'Loading drivers...' : 'Select a driver'}
+                    {driverLoading ? "Loading drivers..." : "Select a driver"}
                   </option>
-                  {drivers && drivers.map((driver) => (
-                    <option key={driver.id} value={driver.id}>
-                      {driver.firstName} - {driver.lastName}
-                    </option>
-                  ))}
+                  {drivers &&
+                    drivers.map((driver) => (
+                      <option key={driver.id} value={driver.id}>
+                        {driver.firstName} - {driver.lastName}
+                      </option>
+                    ))}
                 </select>
                 {errors.driverId && (
                   <p className="mt-1 text-sm text-red-600">{errors.driverId}</p>

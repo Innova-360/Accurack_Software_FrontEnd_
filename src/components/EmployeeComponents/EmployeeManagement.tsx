@@ -1,29 +1,30 @@
-import React, { useState } from 'react';
-import Employee from './Employee';
-import EmployeeForm from './EmployeeForm.tsx';
-import EmployeePermissionsModal from './EmployeePermissionsModal';
-import type { EmployeeAPIData } from '../../types/employee';
+import React, { useState } from "react";
+import Employee from "./Employee";
+import EmployeeForm from "./EmployeeForm.tsx";
+import EmployeePermissionsModal from "./EmployeePermissionsModal";
+import type { EmployeeAPIData } from "../../types/employee";
 
 interface EmployeeManagementProps {
   // Optional props for customization
 }
 
-type ViewMode = 'list' | 'create' | 'edit';
+type ViewMode = "list" | "create" | "edit";
 
 const EmployeeManagement: React.FC<EmployeeManagementProps> = () => {
-  const [currentView, setCurrentView] = useState<ViewMode>('list');
+  const [currentView, setCurrentView] = useState<ViewMode>("list");
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
-  const [viewPermissionsEmployee, setViewPermissionsEmployee] = useState<EmployeeAPIData | null>(null);
+  const [viewPermissionsEmployee, setViewPermissionsEmployee] =
+    useState<EmployeeAPIData | null>(null);
   const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
 
   const handleAddEmployee = () => {
     setSelectedEmployee(null);
-    setCurrentView('create');
+    setCurrentView("create");
   };
 
   const handleEditEmployee = (employeeData: any) => {
     setSelectedEmployee(employeeData);
-    setCurrentView('edit');
+    setCurrentView("edit");
   };
 
   const handleViewPermissions = (employee: EmployeeAPIData) => {
@@ -32,14 +33,13 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = () => {
   };
 
   const handleFormSubmit = (data: any) => {
-    console.log('Employee data submitted:', data);
     // After successful submission, go back to list view
-    setCurrentView('list');
+    setCurrentView("list");
     setSelectedEmployee(null);
   };
 
   const handleFormCancel = () => {
-    setCurrentView('list');
+    setCurrentView("list");
     setSelectedEmployee(null);
   };
 
@@ -50,7 +50,7 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = () => {
 
   const renderCurrentView = () => {
     switch (currentView) {
-      case 'create':
+      case "create":
         return (
           <EmployeeForm
             onSubmit={handleFormSubmit}
@@ -58,8 +58,8 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = () => {
             isEditMode={false}
           />
         );
-      
-      case 'edit':
+
+      case "edit":
         return (
           <EmployeeForm
             onSubmit={handleFormSubmit}
@@ -68,8 +68,8 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = () => {
             isEditMode={true}
           />
         );
-      
-      case 'list':
+
+      case "list":
       default:
         return (
           <Employee
@@ -85,7 +85,7 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = () => {
   return (
     <div className="w-full">
       {renderCurrentView()}
-      
+
       {/* Permissions Modal */}
       <EmployeePermissionsModal
         employee={viewPermissionsEmployee}

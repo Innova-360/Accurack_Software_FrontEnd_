@@ -109,9 +109,6 @@ export const fetchCustomers = createAsyncThunk(
         }
       }
 
-      console.log("customers:", customers);
-      console.log("pagination:", pagination);
-
       return { customers, pagination };
     } catch (error: any) {
       console.error("Fetch customers error:", error);
@@ -191,8 +188,6 @@ export const deleteCustomer = createAsyncThunk(
     { rejectWithValue, dispatch }
   ) => {
     try {
-      console.log("deleteCustomer thunk called with:", { id, storeId });
-
       // Basic validation
       if (!id || !id.trim()) {
         throw new Error("Customer ID is required");
@@ -202,14 +197,11 @@ export const deleteCustomer = createAsyncThunk(
         throw new Error("Store ID is required");
       }
 
-      console.log("Making DELETE request to:", `/sales/customers/${id}`);
-
       // Use standard REST endpoint format
       const response = await apiClient.delete(`/sales/customers/${id}`);
-      console.log("Delete response:", response.data);
 
       // Refresh customers list after deletion
-      console.log("Refreshing customers list for store:", storeId);
+
       await dispatch(fetchCustomers({ storeId }));
 
       return { id, success: true, message: "Customer deleted successfully" };
@@ -230,7 +222,6 @@ export const deleteAllCustomers = createAsyncThunk(
   "customers/deleteAllCustomers",
   async (storeId: string, { rejectWithValue, dispatch }) => {
     try {
-      console.log("Deleting all customers for store:", storeId);
       // Get all customers for this store (use high limit to get all customers)
       const customersResponse = await dispatch(
         fetchCustomers({ storeId, page: 1, limit: 1000 })

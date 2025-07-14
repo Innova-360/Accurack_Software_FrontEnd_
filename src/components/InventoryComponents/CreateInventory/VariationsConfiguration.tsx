@@ -86,7 +86,6 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
       suppliers.length === 0 &&
       !suppliersError
     ) {
-      console.log("📦 Fetching suppliers for store:", storeId);
       dispatch(fetchInventorySuppliers({ storeId, page: 1, limit: 50 }) as any);
     }
   }, [
@@ -794,7 +793,6 @@ const VariationCard: React.FC<VariationCardProps> = ({
                 ? "bg-gray-100 cursor-not-allowed text-gray-500"
                 : ""
             }`}
-            
             disabled={
               !suppliersLoading &&
               !suppliersError &&

@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { FaTrash, FaArrowLeft, FaSearch } from "react-icons/fa";
+import {
+  FaTrash,
+  FaArrowLeft,
+  FaSearch,
+} from "react-icons/fa";
 import toast from "react-hot-toast";
 import Header from "../../components/Header";
 import { SpecialButton } from "../../components/buttons";
-import { fetchProductsPaginated } from "../../store/slices/productsSlice";
+import {
+  fetchProductsPaginated,
+} from "../../store/slices/productsSlice";
 import { createSale } from "../../store/slices/salesSlice";
-import { fetchUser } from "../../store/slices/userSlice";
-import { fetchCustomers } from "../../store/slices/customerSlice";
 import useRequireStore from "../../hooks/useRequireStore";
 import type { RootState, AppDispatch } from "../../store";
 import type { SaleRequestData, SaleItem } from "../../store/slices/salesSlice";
@@ -42,28 +46,47 @@ const AddNewSale: React.FC = () => {
     loading: productsLoading,
     error: productsError,
     totalProducts,
-    totalPages,
-    currentPage,
-    hasNextPage,
-    hasPreviousPage,
   } = useSelector((state: RootState) => state.products);
 
   // Sales state
-  const { loading: salesLoading } = useSelector((state: RootState) => state.sales);
+  const { loading: salesLoading } = useSelector(
+    (state: RootState) => state.sales
+  );
 
   // Customers state
-  const { customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
+  const { customers, loading: customersLoading } = useSelector(
+    (state: RootState) => state.customers
+  );
 
   const [allowance, setAllowance] = useState(0);
 
-  // Separate useEffect for user and customers (run only once)
-  // useEffect(() => {
-  //   dispatch(fetchUser());
-  //   if (currentStore?.id) {
-  //     dispatch(fetchCustomers({ storeId: currentStore.id, page: 1, limit: 100 }));
-  //   }
-  // }, [dispatch, currentStore?.id]);
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPageLocal(1); // Reset to first page when searching
+    }, 300);
 
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Fetch products with pagination and search
+  const fetchProductsData = useCallback(() => {
+    dispatch(
+      fetchProductsPaginated({
+        page: currentPageLocal,
+        limit: productsPerPage,
+        storeId: id,
+        search: debouncedSearchTerm || undefined,
+      })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, currentPageLocal, debouncedSearchTerm]);
+
+  // Update search query in redux store
+  useEffect(() => {
+    dispatch(setSearchQuery(debouncedSearchTerm));
+  }, [dispatch, debouncedSearchTerm]);
 
   // Form state
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
@@ -215,7 +238,9 @@ const AddNewSale: React.FC = () => {
     }
 
     // Find the selected customer and auto-fill the form
-    const selectedCustomer = customers.find(customer => customer.id === customerId);
+    const selectedCustomer = customers.find(
+      (customer) => customer.id === customerId
+    );
     if (selectedCustomer) {
       setCustomerName(selectedCustomer.customerName || "");
 
@@ -236,13 +261,13 @@ const AddNewSale: React.FC = () => {
 
       if (selectedCustomer.customerAddress) {
         // Split address into components if available
-        const addressParts = selectedCustomer.customerAddress.split(', ');
+        const addressParts = selectedCustomer.customerAddress.split(", ");
         if (addressParts.length >= 5) {
           setStreet(addressParts[0]);
           setCity(addressParts[1]);
           setState(addressParts[2]);
           setPostalCode(addressParts[3]);
-          setCountry(addressParts.slice(4).join(', '));
+          setCountry(addressParts.slice(4).join(", "));
         } else {
           // If address format is unexpected, just set the full address to street
           setStreet(selectedCustomer.customerAddress);
@@ -303,8 +328,6 @@ const AddNewSale: React.FC = () => {
     value: string | number
   ) => {
     const updatedProducts = [...products];
-    console.log("Index", index, "Field", field, "Value", value);
-
 
     // Handle product selection
     if (field === "name") {
@@ -374,6 +397,10 @@ const AddNewSale: React.FC = () => {
     setDiscount(0);
   };
 
+  // const handleSaveDraft = () => {
+  //   // TODO: Implement save as draft functionality
+  //
+  // };
 
   const handleCreateSale = async () => {
     // Validate form
@@ -393,7 +420,7 @@ const AddNewSale: React.FC = () => {
     }
 
     // Make sure country code is in proper format
-    if (!countryCode.startsWith('+')) {
+    if (!countryCode.startsWith("+")) {
       toast.error("Country code must start with '+' (e.g., +1)");
       return;
     }
@@ -445,11 +472,21 @@ const AddNewSale: React.FC = () => {
         if (product.selectedProduct) {
           // If it's a variant, check for variant PLU/UPC first
           if (product.variantId && product.selectedProduct.variants) {
-            const variant = product.selectedProduct.variants.find(v => v.id === product.variantId);
-            pluUpc = variant?.pluUpc || product.selectedProduct.plu || product.selectedProduct.sku || "";
+            const variant = product.selectedProduct.variants.find(
+              (v) => v.id === product.variantId
+            );
+            pluUpc =
+              variant?.pluUpc ||
+              product.selectedProduct.plu ||
+              product.selectedProduct.sku ||
+              "";
           } else {
             // For regular products, use pluUpc, plu, or sku as fallback
-            pluUpc = (product.selectedProduct as any).pluUpc || product.selectedProduct.plu || product.selectedProduct.sku || "";
+            pluUpc =
+              (product.selectedProduct as any).pluUpc ||
+              product.selectedProduct.plu ||
+              product.selectedProduct.sku ||
+              "";
           }
         }
 
@@ -477,20 +514,24 @@ const AddNewSale: React.FC = () => {
         },
         storeId: currentStore.id,
         clientId: user.clientId,
-        paymentMethod: paymentMethod as "CASH" | "CARD" | "BANK_TRANSFER" | "CHECK" | "DIGITAL_WALLET",
+        paymentMethod: paymentMethod as
+          | "CASH"
+          | "CARD"
+          | "BANK_TRANSFER"
+          | "CHECK"
+          | "DIGITAL_WALLET",
         totalAmount: Math.round(finalTotal * 100) / 100, // Ensure proper number format
         tax: Math.round(taxAmount * 100) / 100, // Ensure proper number format
         allowance: Math.round(allowance * 100) / 100, // Add this line
-        cashierName: user.firstName && user.lastName
-          ? `${user.firstName} ${user.lastName}`
-          : user.email || "Current User",
+        cashierName:
+          user.firstName && user.lastName
+            ? `${user.firstName} ${user.lastName}`
+            : user.email || "Current User",
         generateInvoice: false, // Default to false as specified
         source: "manual", // Default source as manual
         status: "PENDING", // Default status as pending (uppercase)
         saleItems,
       };
-
-      console.log("📦 Prepared sale data:", JSON.stringify(saleData, null, 2));
 
       // Dispatch create sale action
       await dispatch(createSale(saleData)).unwrap();
@@ -499,8 +540,7 @@ const AddNewSale: React.FC = () => {
 
       // Navigate back to sales page
       navigate(-1);
-    }
-    catch (error: unknown) {
+    } catch (error: any) {
       console.error("Error creating sale:", error);
       toast.error(`Failed to create sale: ${error}`);
     }
@@ -509,42 +549,40 @@ const AddNewSale: React.FC = () => {
   const handleCreateInvoice = () => {
     // Validate form before proceeding to invoice creation
     if (!customerName.trim()) {
-      alert('Customer name is required');
+      alert("Customer name is required");
       return;
     }
 
     if (!phoneNumber.trim()) {
-      alert('Phone number is required');
+      alert("Phone number is required");
       return;
     }
 
     // Validate address fields (except street which is optional)
     if (!city.trim()) {
-      alert('City is required');
+      alert("City is required");
       return;
     }
 
     if (!state.trim()) {
-      alert('State/Province is required');
+      alert("State/Province is required");
       return;
     }
 
     if (!postalCode.trim()) {
-      alert('Postal code is required');
+      alert("Postal code is required");
       return;
     }
 
     if (!country.trim()) {
-      alert('Country is required');
+      alert("Country is required");
       return;
     }
 
-    if (products.some(p => !p.name.trim() || p.price <= 0)) {
-      alert('Please fill in all product details');
+    if (products.some((p) => !p.name.trim() || p.price <= 0)) {
+      alert("Please fill in all product details");
       return;
     }
-
-
 
     // Prepare invoice data
     const invoiceData = {
@@ -557,28 +595,40 @@ const AddNewSale: React.FC = () => {
         city,
         state,
         postalCode,
-        country
+        country,
       },
-      products: products.filter(p => p.name.trim() && p.price > 0).map(product => {
-        // Get the PLU/UPC from the selected product or variant
-        let pluUpc = "";
-        if (product.selectedProduct) {
-          // If it's a variant, check for variant PLU/UPC first
-          if (product.variantId && product.selectedProduct.variants) {
-            const variant = product.selectedProduct.variants.find(v => v.id === product.variantId);
-            pluUpc = variant?.pluUpc || product.selectedProduct.plu || product.selectedProduct.sku || "";
-          } else {
-            // For regular products, use pluUpc, plu, or sku as fallback
-            pluUpc = (product.selectedProduct as any).pluUpc || product.selectedProduct.plu || product.selectedProduct.sku || "";
+      products: products
+        .filter((p) => p.name.trim() && p.price > 0)
+        .map((product) => {
+          // Get the PLU/UPC from the selected product or variant
+          let pluUpc = "";
+          if (product.selectedProduct) {
+            // If it's a variant, check for variant PLU/UPC first
+            if (product.variantId && product.selectedProduct.variants) {
+              const variant = product.selectedProduct.variants.find(
+                (v) => v.id === product.variantId
+              );
+              pluUpc =
+                variant?.pluUpc ||
+                product.selectedProduct.plu ||
+                product.selectedProduct.sku ||
+                "";
+            } else {
+              // For regular products, use pluUpc, plu, or sku as fallback
+              pluUpc =
+                (product.selectedProduct as any).pluUpc ||
+                product.selectedProduct.plu ||
+                product.selectedProduct.sku ||
+                "";
+            }
           }
-        }
-        return {
-          ...product,
-          pluUpc,
-          plu: product.selectedProduct?.plu || "",
-          sku: product.selectedProduct?.sku || ""
-        };
-      }),
+          return {
+            ...product,
+            pluUpc,
+            plu: product.selectedProduct?.plu || "",
+            sku: product.selectedProduct?.sku || "",
+          };
+        }),
       subtotal,
       discount,
       discountType,
@@ -588,11 +638,8 @@ const AddNewSale: React.FC = () => {
       taxAmount,
       finalTotal,
       paymentMethod,
-      notes
+      notes,
     };
-
-    console.log("Products for invoice:", products);
-
 
     // Navigate to invoice creation with data
     navigate(`/store/${id}/create-invoice`, { state: { invoiceData } });
@@ -649,15 +696,18 @@ const AddNewSale: React.FC = () => {
                       ? "Loading customers..."
                       : customers.length > 0
                         ? `Select from ${customers.length} existing customers or enter new details below`
-                        : "No existing customers found - enter new details below"
-                    }
+                        : "No existing customers found - enter new details below"}
                   </option>
                   {customers.map((customer) => (
                     <option key={customer.id} value={customer.id}>
                       {customer.customerName} - {customer.phoneNumber}
                     </option>
                   ))}
-                  {customers.length > 0 && <option className="text-gray-700 py-1.5" value="new">Add New Customer</option>}
+                  {customers.length > 0 && (
+                    <option className="text-gray-700 py-1.5" value="new">
+                      Add New Customer
+                    </option>
+                  )}
                 </select>
                 {selectedCustomerId === "new" && (
                   <p className="mt-2 text-sm text-green-700">
@@ -666,7 +716,8 @@ const AddNewSale: React.FC = () => {
                 )}
                 {!customersLoading && customers.length === 0 && (
                   <p className="mt-2 text-sm text-orange-700">
-                    No existing customers found. Please enter customer details below.
+                    No existing customers found. Please enter customer details
+                    below.
                   </p>
                 )}
               </div>
@@ -802,6 +853,10 @@ const AddNewSale: React.FC = () => {
               {/* Product Search Bar */}
               <div className="mb-4">
                 <div className="relative">
+                  <FaSearch
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    size={16}
+                  />
                   <input
                     type="text"
                     value={searchQuery}
@@ -863,17 +918,128 @@ const AddNewSale: React.FC = () => {
                     </div>
                   )}
                 </div>
-
+                {debouncedSearchTerm && (
+                  <div className="mt-2 flex items-center justify-between text-sm text-gray-600">
+                    <span>
+                      {totalProducts} product{totalProducts !== 1 ? "s" : ""}{" "}
+                      found
+                      {debouncedSearchTerm && ` for "${debouncedSearchTerm}"`}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setSearchTerm("");
+                        setDebouncedSearchTerm("");
+                      }}
+                      className="text-[#03414C] hover:text-[#025561] underline"
+                    >
+                      Clear search
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <div className="space-y-4 max-h-96 overflow-y-auto thin-scrollbar">
+              {/* Pagination Controls - Top 
+              {totalPages > 1 && (
+                <div className="mb-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                  <div className="text-sm text-gray-600">
+                    Page {currentPage} of {totalPages} ({totalProducts} total products)
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPageLocal(prev => Math.max(1, prev - 1))}
+                      disabled={!hasPreviousPage || productsLoading}
+                      className="p-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <FaChevronLeft size={14} />
+                    </button>
+                    <span className="px-3 py-1 bg-white border border-gray-300 rounded-lg text-sm">
+                      {currentPage}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPageLocal(prev => prev + 1)}
+                      disabled={!hasNextPage || productsLoading}
+                      className="p-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <FaChevronRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+                */}
+
+              {/* Products loading/error state */}
+              {productsLoading && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <p className="text-blue-700 text-sm">
+                    {debouncedSearchTerm
+                      ? `Searching for "${debouncedSearchTerm}"...`
+                      : "Loading products..."}
+                  </p>
+                </div>
+              )}
+
+              {productsError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                  <p className="text-red-700 text-sm">
+                    Error loading products: {productsError}
+                  </p>
+                </div>
+              )}
+
+              {!productsLoading &&
+                !productsError &&
+                availableProducts.length === 0 &&
+                debouncedSearchTerm && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                    <p className="text-yellow-700 text-sm">
+                      No products found for "{debouncedSearchTerm}". Try a
+                      different search term.
+                    </p>
+                  </div>
+                )}
+
+              <div className="space-y-4">
                 {products.map((product, index) => (
                   <div
                     key={product.id}
                     className="border border-gray-200 rounded-lg p-4"
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="md:col-span-1">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Select Product <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={product.name}
+                          onChange={(e) =>
+                            handleProductChange(index, "name", e.target.value)
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                          disabled={productsLoading}
+                        >
+                          <option value="">
+                            {productsLoading
+                              ? debouncedSearchTerm
+                                ? `Searching "${debouncedSearchTerm}"...`
+                                : "Loading products..."
+                              : `Select from ${flattenedProducts.length} products${debouncedSearchTerm ? ` (filtered)` : ""}...`}
+                          </option>
+                          {flattenedProducts.map((flatProduct) => (
+                            <option
+                              key={flatProduct.id}
+                              value={flatProduct.displayName}
+                            >
+                              {flatProduct.displayName}
+                            </option>
+                          ))}
+                          {productsError && (
+                            <option value="" disabled>
+                              Error loading products
+                            </option>
+                          )}
+                        </select>
+                      </div>
+                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Quantity <span className="text-red-500">*</span>
                         </label>
@@ -991,10 +1157,10 @@ const AddNewSale: React.FC = () => {
                             </span>
                             <div className="text-gray-900">
                               {typeof product.selectedProduct.category ===
-                                "string"
+                              "string"
                                 ? product.selectedProduct.category
-                                : (product.selectedProduct.category as { name?: string })?.name ||
-                                "Uncategorized"}
+                                : (product.selectedProduct.category as any)
+                                    ?.name || "Uncategorized"}
                             </div>
                           </div>
                           <div>
@@ -1003,10 +1169,10 @@ const AddNewSale: React.FC = () => {
                             </span>
                             <div className="text-gray-900">
                               {typeof product.selectedProduct.supplier ===
-                                "string"
+                              "string"
                                 ? product.selectedProduct.supplier
-                                : (product.selectedProduct.supplier as { name?: string })?.name ||
-                                "N/A"}
+                                : (product.selectedProduct.supplier as any)
+                                    ?.name || "N/A"}
                             </div>
                           </div>
                           <div>
@@ -1039,30 +1205,30 @@ const AddNewSale: React.FC = () => {
                             {flattenedProducts.find(
                               (fp) => fp.displayName === product.name
                             )?.variantData && (
-                                <div className="text-xs text-gray-600 mt-1">
-                                  <span className="font-medium">
-                                    Variant SKU:
-                                  </span>{" "}
-                                  {flattenedProducts.find(
-                                    (fp) => fp.displayName === product.name
-                                  )?.variantData?.sku || "N/A"}
-                                  {flattenedProducts.find(
-                                    (fp) => fp.displayName === product.name
-                                  )?.variantData?.pluUpc && (
-                                      <>
-                                        {" | "}
-                                        <span className="font-medium">
-                                          Variant PLU:
-                                        </span>{" "}
-                                        {
-                                          flattenedProducts.find(
-                                            (fp) => fp.displayName === product.name
-                                          )?.variantData?.pluUpc
-                                        }
-                                      </>
-                                    )}
-                                </div>
-                              )}
+                              <div className="text-xs text-gray-600 mt-1">
+                                <span className="font-medium">
+                                  Variant SKU:
+                                </span>{" "}
+                                {flattenedProducts.find(
+                                  (fp) => fp.displayName === product.name
+                                )?.variantData?.sku || "N/A"}
+                                {flattenedProducts.find(
+                                  (fp) => fp.displayName === product.name
+                                )?.variantData?.pluUpc && (
+                                  <>
+                                    {" | "}
+                                    <span className="font-medium">
+                                      Variant PLU:
+                                    </span>{" "}
+                                    {
+                                      flattenedProducts.find(
+                                        (fp) => fp.displayName === product.name
+                                      )?.variantData?.pluUpc
+                                    }
+                                  </>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -1090,11 +1256,15 @@ const AddNewSale: React.FC = () => {
               {totalPages > 1 && (
                 <div className="mt-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                   <div className="text-sm text-gray-600">
-                    Showing {((currentPage - 1) * productsPerPage) + 1}-{Math.min(currentPage * productsPerPage, totalProducts)} of {totalProducts} products
+                    Showing {(currentPage - 1) * productsPerPage + 1}-
+                    {Math.min(currentPage * productsPerPage, totalProducts)} of{" "}
+                    {totalProducts} products
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setCurrentPageLocal(prev => Math.max(1, prev - 1))}
+                      onClick={() =>
+                        setCurrentPageLocal((prev) => Math.max(1, prev - 1))
+                      }
                       disabled={!hasPreviousPage || productsLoading}
                       className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                     >
@@ -1104,7 +1274,7 @@ const AddNewSale: React.FC = () => {
                       {currentPage} / {totalPages}
                     </span>
                     <button
-                      onClick={() => setCurrentPageLocal(prev => prev + 1)}
+                      onClick={() => setCurrentPageLocal((prev) => prev + 1)}
                       disabled={!hasNextPage || productsLoading}
                       className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                     >
@@ -1229,8 +1399,10 @@ const AddNewSale: React.FC = () => {
                         min="0"
                         step="0.01"
                         value={allowance}
-                        onChange={(e) => setAllowance(parseFloat(e.target.value) || 0)}
-                        className="w-20 sm:w-24 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                        onChange={(e) =>
+                          setAllowance(parseFloat(e.target.value) || 0)
+                        }
+                        className="w-[100%] px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                         placeholder="0"
                       />
                       <span className="text-sm">$</span>
@@ -1239,7 +1411,9 @@ const AddNewSale: React.FC = () => {
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span></span>
-                  <span className="text-green-600">-${allowance.toFixed(2)}</span>
+                  <span className="text-green-600">
+                    -${allowance.toFixed(2)}
+                  </span>
                 </div>
 
                 <div className="flex justify-between items-start text-gray-600">

@@ -28,18 +28,10 @@ const SalesPage: React.FC = () => {
   );
 
   // Convert Redux sales data to Transaction format for compatibility
-  console.log("Sales data from Redux:", sales);
 
   // Debug: Log each sale's status
   sales.forEach((sale: any, index: number) => {
-    console.log(`🔍 Processing sale ${index + 1}:`, {
-      id: sale.id,
-      status: sale.status,
-      statusType: typeof sale.status,
-      paymentMethod: sale.paymentMethod,
-      customer: sale.customer?.customerName || sale.customerData?.customerName,
-    });
-  });
+      });
 
   const transactions: any = sales.map((sale: any) => ({
     id: sale.id,
@@ -67,7 +59,6 @@ const SalesPage: React.FC = () => {
     status: sale.status || "Pending",
     cashier: sale.cashierName,
   }));
-  console.log("Converted transactions:", transactions);
 
   // Calculate stats from sales data
   const stats = {
@@ -121,9 +112,7 @@ const SalesPage: React.FC = () => {
         page: currentPage,
         limit: rowsPerPage,
       };
-      console.log("type of page:", typeof params.page);
-      console.log("type of limit:", typeof params.limit);
-      
+
       // Use activeStatusTab for filtering instead of statusFilter
       if (activeStatusTab !== "All") {
         params.status = activeStatusTab;
@@ -138,7 +127,6 @@ const SalesPage: React.FC = () => {
         // For now, we'll skip date filtering unless it's a specific date range
       }
 
-      console.log("Fetching sales with filters:", params);
       dispatch(fetchSales(params));
     }
   }, [
@@ -193,14 +181,24 @@ const SalesPage: React.FC = () => {
     // We need to fetch all sales to get accurate counts
     // For now, we'll calculate from current filtered data
     const allSales = transactions; // This should ideally be all sales, not filtered
-    
+
     return {
       all: allSales.length,
-      pending: allSales.filter((s: any) => s.status?.toLowerCase() === 'pending').length,
-      confirmed: allSales.filter((s: any) => s.status?.toLowerCase() === 'confirmed').length,
-      cancelled: allSales.filter((s: any) => s.status?.toLowerCase() === 'cancelled').length,
-      shipped: allSales.filter((s: any) => s.status?.toLowerCase() === 'shipped').length,
-      completed: allSales.filter((s: any) => s.status?.toLowerCase() === 'completed').length,
+      pending: allSales.filter(
+        (s: any) => s.status?.toLowerCase() === "pending"
+      ).length,
+      confirmed: allSales.filter(
+        (s: any) => s.status?.toLowerCase() === "confirmed"
+      ).length,
+      cancelled: allSales.filter(
+        (s: any) => s.status?.toLowerCase() === "cancelled"
+      ).length,
+      shipped: allSales.filter(
+        (s: any) => s.status?.toLowerCase() === "shipped"
+      ).length,
+      completed: allSales.filter(
+        (s: any) => s.status?.toLowerCase() === "completed"
+      ).length,
     };
   };
 
@@ -210,32 +208,29 @@ const SalesPage: React.FC = () => {
   const paginatedTransactions = displayTransactions;
 
   // Debug pagination data
-  console.log("🔍 Pagination Debug:", {
-    paginationFromRedux: pagination,
-    searchTerm,
-    currentPage,
-    rowsPerPage,
-    displayTransactionsLength: displayTransactions.length,
-    salesLength: sales.length
-  });
-
-  // For pagination display - simplified robust approach
+    // For pagination display - simplified robust approach
   const isServerSidePagination = !searchTerm; // Server-side when no search filter
-  
+
   let totalPages, totalItems, startIndex, endIndex;
-  
+
   if (isServerSidePagination) {
     // Server-side pagination
     if (pagination && pagination.total !== undefined && pagination.total > 0) {
       // We have proper pagination metadata from backend
       totalItems = pagination.total;
-      totalPages = pagination.totalPages || Math.ceil(pagination.total / (pagination.limit || rowsPerPage));
-      startIndex = ((pagination.page - 1) * (pagination.limit || rowsPerPage)) + 1;
-      endIndex = Math.min(pagination.page * (pagination.limit || rowsPerPage), pagination.total);
+      totalPages =
+        pagination.totalPages ||
+        Math.ceil(pagination.total / (pagination.limit || rowsPerPage));
+      startIndex =
+        (pagination.page - 1) * (pagination.limit || rowsPerPage) + 1;
+      endIndex = Math.min(
+        pagination.page * (pagination.limit || rowsPerPage),
+        pagination.total
+      );
     } else {
       // No pagination metadata from backend - use smart estimation
       const currentResultsCount = sales.length;
-      
+
       if (currentResultsCount < rowsPerPage) {
         // We got fewer results than requested, likely this is all of them or the last page
         if (currentPage === 1) {
@@ -246,9 +241,9 @@ const SalesPage: React.FC = () => {
           endIndex = currentResultsCount;
         } else {
           // Later page with fewer results = last page
-          totalItems = ((currentPage - 1) * rowsPerPage) + currentResultsCount;
+          totalItems = (currentPage - 1) * rowsPerPage + currentResultsCount;
           totalPages = currentPage;
-          startIndex = ((currentPage - 1) * rowsPerPage) + 1;
+          startIndex = (currentPage - 1) * rowsPerPage + 1;
           endIndex = totalItems;
         }
       } else if (currentResultsCount === rowsPerPage) {
@@ -257,7 +252,7 @@ const SalesPage: React.FC = () => {
         const estimatedTotal = currentPage * rowsPerPage + 1;
         totalItems = estimatedTotal;
         totalPages = Math.ceil(estimatedTotal / rowsPerPage);
-        startIndex = ((currentPage - 1) * rowsPerPage) + 1;
+        startIndex = (currentPage - 1) * rowsPerPage + 1;
         endIndex = currentPage * rowsPerPage;
       } else {
         // More results than rowsPerPage (shouldn't happen with proper pagination)
@@ -274,42 +269,6 @@ const SalesPage: React.FC = () => {
     startIndex = (currentPage - 1) * rowsPerPage + 1;
     endIndex = Math.min(currentPage * rowsPerPage, totalItems);
   }
-
-  console.log("📊 Final Pagination Values:", {
-    isServerSidePagination,
-    totalPages,
-    totalItems,
-    startIndex,
-    endIndex,
-    currentPage
-  });
-
-  // Effect to fetch total count when needed - simplified approach
-  useEffect(() => {
-    // For debugging: just log what we have
-    console.log("🔢 Current pagination state:", {
-      hasBackendPagination: !!(pagination && pagination.total !== undefined),
-      backendTotal: pagination?.total,
-      backendTotalPages: pagination?.totalPages,
-      currentSalesLength: sales.length,
-      isServerSidePagination,
-    });
-  }, [pagination, sales.length, isServerSidePagination]);
-
-  // Debug: Add debugging information to see what's happening
-  useEffect(() => {
-    console.log("🔍 Sales Page Debug Info:", {
-      salesCount: sales.length,
-      paginationFromRedux: pagination,
-      rowsPerPage,
-      currentPage,
-      searchTerm,
-      totalItemsCalculated: isServerSidePagination && pagination?.total !== undefined ? pagination.total : displayTransactions.length,
-      totalPagesCalculated: isServerSidePagination && pagination?.total !== undefined 
-        ? (pagination.totalPages || Math.ceil(pagination.total / pagination.limit))
-        : Math.ceil(displayTransactions.length / rowsPerPage)
-    });
-  }, [sales, pagination, rowsPerPage, currentPage, searchTerm, displayTransactions.length, isServerSidePagination]);
 
   // Action handlers
   const handleSalesReport = () => {
@@ -363,7 +322,7 @@ const SalesPage: React.FC = () => {
   const handleEditSave = async (updatedTransaction: any) => {
     try {
       // TODO: Implement update transaction API call
-      console.log("Update transaction:", updatedTransaction);
+
       toast.success("Transaction update functionality will be implemented");
       setIsEditModalOpen(false);
       setSelectedTransaction(null);
@@ -428,9 +387,10 @@ const SalesPage: React.FC = () => {
     }
   };
 
-
-
-  const handleStatusChange = async (transactionId: string, newStatus: string) => {
+  const handleStatusChange = async (
+    transactionId: string,
+    newStatus: string
+  ) => {
     try {
       // Find the transaction to get its current data
       const transaction = transactions.find((t: any) => t.id === transactionId);
@@ -448,16 +408,13 @@ const SalesPage: React.FC = () => {
         cashierName: transaction.cashier || "Unknown",
       };
 
-      console.log("Updating transaction status:", {
-        transactionId,
-        updateData,
-      });
-
-      // Dispatch the update action
-      await dispatch(updateSale({
-        saleId: transactionId,
-        updateData,
-      })).unwrap();
+            // Dispatch the update action
+      await dispatch(
+        updateSale({
+          saleId: transactionId,
+          updateData,
+        })
+      ).unwrap();
 
       toast.success("Transaction status updated successfully");
     } catch (error) {
@@ -492,20 +449,21 @@ const SalesPage: React.FC = () => {
             </div>
           )}
           {/* Header Section */}
-         <div className="flex items-center justify-between mb-6 bg-white p-5 rounded-lg shadow">
-            <div className="text-2xl font-bold text-[#03414C]">Update Sales</div>
-
-         </div>
+          <div className="flex items-center justify-between mb-6 bg-white p-5 rounded-lg shadow">
+            <div className="text-2xl font-bold text-[#03414C]">
+              Update Sales
+            </div>
+          </div>
           {/* Stats Grid */}
           {/* <StatsGrid stats={stats} loading={loading} /> */}
-          
+
           {/* Status Tabs */}
           <StatusTabs
             activeTab={activeStatusTab}
             onTabChange={handleStatusTabChange}
             salesCounts={salesCounts}
           />
-          
+
           {/* Filters Section */}
           <div className="bg-white rounded-lg p-6 mb-6">
             <FilterBar
@@ -600,7 +558,6 @@ const SalesPage: React.FC = () => {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteConfirm}
       />
-
     </>
   );
 };

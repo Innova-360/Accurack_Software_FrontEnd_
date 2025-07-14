@@ -48,7 +48,7 @@ export const fetchProductCategories = createAsyncThunk(
       const response =
         await apiClient.get<ProductCategoriesApiResponse>("/product-category");
 
-      // console.log("Product categories API response:", response.data);
+      //
 
       if (response.data.success) {
         return response.data.data;
@@ -75,7 +75,7 @@ export const createProductCategory = createAsyncThunk(
     try {
       const response = await apiClient.post("/product-category", categoryData);
 
-      // console.log("Create category API response:", response.data);
+      //
 
       if (response.data.success) {
         return response.data.data;

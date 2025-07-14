@@ -167,34 +167,30 @@ const BarcodeScanModal: React.FC<BarcodeScanModalProps> = ({
       try {
         (codeReaderRef.current as any).reset?.();
         codeReaderRef.current = null;
-      } catch (error) {
-        console.log("Error stopping code reader:", error);
-      }
+      } catch (error) {}
     }
-    
+
     // Stop all media tracks
     if (stream) {
       stream.getTracks().forEach((track) => {
         try {
           track.stop();
-        } catch (error) {
-          console.log("Error stopping track:", error);
-        }
+        } catch (error) {}
       });
       setStream(null);
     }
-    
+
     // Clear video source
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-    
+
     // Reset state
     setIsScanning(false);
     setScanSuccess(false);
     setError("");
     setHasPermission(null);
-    
+
     // Clear timeout
     if (scanTimeoutRef.current) {
       clearTimeout(scanTimeoutRef.current);
@@ -236,16 +232,16 @@ const BarcodeScanModal: React.FC<BarcodeScanModalProps> = ({
             if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
             setScanSuccess(true);
             playBeepSound();
-            
+
             // Stop scanning immediately
             setIsScanning(false);
-            
+
             // Stop the camera and close modal after a short delay
             setTimeout(() => {
               setScanSuccess(false);
               // Stop camera first
               stopCamera();
-              console.log("Detected barcode:", result.getText()); // Log the detected barcode
+              // Log the detected barcode
               onBarcodeScanned(result.getText());
               // Close modal after camera is stopped
               setTimeout(() => {

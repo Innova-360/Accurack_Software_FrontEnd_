@@ -8,13 +8,11 @@ const EmployeeTestHelper: React.FC = () => {
 
   const testEmployeeLogin = async () => {
     try {
-      console.log("Testing employee login with:", testEmail);
       const response = await apiClient.post('/auth/login', {
         email: testEmail,
         password: testPassword
       });
       
-      console.log("Test login success:", response.data);
       setTestResult({ success: true, data: response.data });
     } catch (error: any) {
       console.error("Test login failed:", error);
@@ -27,9 +25,7 @@ const EmployeeTestHelper: React.FC = () => {
 
   const checkEmployeeExists = async () => {
     try {
-      console.log("Checking if employee exists:", testEmail);
       const response = await apiClient.get(`/employees?email=${testEmail}`);
-      console.log("Employee check result:", response.data);
       setTestResult({ 
         success: true, 
         type: 'check',

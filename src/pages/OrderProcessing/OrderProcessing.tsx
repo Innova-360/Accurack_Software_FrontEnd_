@@ -21,7 +21,12 @@ import {
 } from "../../store/slices/orderProcessingSlice";
 // import { addOrderToTracking } from "../../store/slices/orderTrackingSlice";
 import type { AppDispatch, RootState } from "../../store";
-import type { OrderItem, OrderStats, UpdateOrderRequest, CreateOrderRequest } from "../../types/orderProcessing";
+import type {
+  OrderItem,
+  OrderStats,
+  UpdateOrderRequest,
+  CreateOrderRequest,
+} from "../../types/orderProcessing";
 
 const OrderProcessingPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -35,9 +40,12 @@ const OrderProcessingPage: React.FC = () => {
   );
 
   // Get customers for the dropdown
-  const { customers, loading: customersLoading } = useCustomers(currentStore?.id, {
-    limit: 1000, // Get all customers for dropdown
-  });
+  const { customers, loading: customersLoading } = useCustomers(
+    currentStore?.id,
+    {
+      limit: 1000, // Get all customers for dropdown
+    }
+  );
 
   // Local state for UI (simplified for dashboard)
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,13 +61,26 @@ const OrderProcessingPage: React.FC = () => {
   // Calculate stats from orders data
   const stats: OrderStats = {
     totalOrders: orders.length,
-    pendingOrders: orders.filter((order: OrderItem) => order.status === 'pending').length,
-    completedOrders: orders.filter((order: OrderItem) => order.status === 'completed').length,
-    shippedOrders: orders.filter((order: OrderItem) => order.status === 'shipped').length,
-    totalRevenue: orders.reduce((sum: number, order: OrderItem) => sum + order.paymentAmount, 0),
-    averageOrderValue: orders.length > 0 
-      ? orders.reduce((sum: number, order: OrderItem) => sum + order.paymentAmount, 0) / orders.length 
-      : 0,
+    pendingOrders: orders.filter(
+      (order: OrderItem) => order.status === "pending"
+    ).length,
+    completedOrders: orders.filter(
+      (order: OrderItem) => order.status === "completed"
+    ).length,
+    shippedOrders: orders.filter(
+      (order: OrderItem) => order.status === "shipped"
+    ).length,
+    totalRevenue: orders.reduce(
+      (sum: number, order: OrderItem) => sum + order.paymentAmount,
+      0
+    ),
+    averageOrderValue:
+      orders.length > 0
+        ? orders.reduce(
+            (sum: number, order: OrderItem) => sum + order.paymentAmount,
+            0
+          ) / orders.length
+        : 0,
   };
 
   // Fetch orders data function
@@ -82,16 +103,9 @@ const OrderProcessingPage: React.FC = () => {
         params.search = searchTerm.trim();
       }
 
-      console.log("Fetching orders with params:", params);
       dispatch(fetchOrders(params));
     }
-  }, [
-    currentStore?.id,
-    statusFilter,
-    paymentFilter,
-    searchTerm,
-    dispatch,
-  ]);
+  }, [currentStore?.id, statusFilter, paymentFilter, searchTerm, dispatch]);
 
   // Fetch data when dependencies change
   useEffect(() => {
@@ -109,7 +123,7 @@ const OrderProcessingPage: React.FC = () => {
   // Filter orders for display (client-side filtering for driver)
   const getDisplayOrders = () => {
     let filteredOrders = [...orders]; // Create a copy to avoid mutating Redux state
-    
+
     if (driverFilter) {
       filteredOrders = orders.filter((order: OrderItem) =>
         order.driverName.toLowerCase().includes(driverFilter.toLowerCase())
@@ -118,7 +132,10 @@ const OrderProcessingPage: React.FC = () => {
 
     // Sort by creation date (newest first) and limit to 10 for dashboard view
     return filteredOrders
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
       .slice(0, 10);
   };
 
@@ -126,7 +143,11 @@ const OrderProcessingPage: React.FC = () => {
 
   // Action handlers
   const handleCreateOrder = () => {
-    navigate(storeId ? `/store/${storeId}/order-processing/create` : "/order-processing/create");
+    navigate(
+      storeId
+        ? `/store/${storeId}/order-processing/create`
+        : "/order-processing/create"
+    );
   };
 
   const handleEditOrder = (order: OrderItem) => {
@@ -143,8 +164,10 @@ const OrderProcessingPage: React.FC = () => {
     if (currentStore?.id) {
       try {
         // First validate the order in the order processing system
-        await dispatch(validateOrder({ id: order.id, storeId: currentStore.id })).unwrap();
-        
+        await dispatch(
+          validateOrder({ id: order.id, storeId: currentStore.id })
+        ).unwrap();
+
         // // Then move the order to tracking verification
         // await dispatch(addOrderToTracking({
         //   id: order.id,
@@ -156,7 +179,7 @@ const OrderProcessingPage: React.FC = () => {
         //   createdAt: order.createdAt,
         //   storeId: currentStore.id,
         // })).unwrap();
-        
+
         toast.success("Order validated and moved to tracking verification");
       } catch (error: any) {
         toast.error(error || "Failed to validate order");
@@ -176,11 +199,13 @@ const OrderProcessingPage: React.FC = () => {
           isValidated: false, // Reset validation when order is edited
           validatedAt: undefined, // Clear validation timestamp
         };
-        await dispatch(updateOrder({ 
-          id: selectedOrder.id, 
-          orderData: updateData, 
-          storeId: currentStore.id 
-        })).unwrap();
+        await dispatch(
+          updateOrder({
+            id: selectedOrder.id,
+            orderData: updateData,
+            storeId: currentStore.id,
+          })
+        ).unwrap();
         toast.success("Order updated successfully");
       } else {
         // Create new order
@@ -202,10 +227,12 @@ const OrderProcessingPage: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (selectedOrder && currentStore?.id) {
       try {
-        await dispatch(deleteOrder({ 
-          id: selectedOrder.id, 
-          storeId: currentStore.id 
-        })).unwrap();
+        await dispatch(
+          deleteOrder({
+            id: selectedOrder.id,
+            storeId: currentStore.id,
+          })
+        ).unwrap();
         toast.success("Order deleted successfully");
         setIsDeleteModalOpen(false);
         setSelectedOrder(null);
@@ -227,7 +254,11 @@ const OrderProcessingPage: React.FC = () => {
   };
 
   const handleViewAllOrders = () => {
-    navigate(storeId ? `/store/${storeId}/order-processing/view-orders` : "/order-processing/view-orders");
+    navigate(
+      storeId
+        ? `/store/${storeId}/order-processing/view-orders`
+        : "/order-processing/view-orders"
+    );
   };
 
   return (
@@ -270,7 +301,9 @@ const OrderProcessingPage: React.FC = () => {
           {/* Table Section */}
           <div className="bg-white rounded-lg p-6 mb-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Orders</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Recent Orders
+              </h2>
               <button
                 onClick={handleViewAllOrders}
                 className="px-4 py-2 text-teal-600 hover:text-teal-800 border border-teal-600 rounded-md hover:bg-teal-50 transition-colors"
@@ -278,7 +311,7 @@ const OrderProcessingPage: React.FC = () => {
                 View All Orders
               </button>
             </div>
-            
+
             {/* Loading State */}
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -321,7 +354,7 @@ const OrderProcessingPage: React.FC = () => {
             {displayOrders.length === 10 && orders.length > 10 && (
               <div className="mt-4 text-center">
                 <p className="text-sm text-gray-500">
-                  Showing 10 most recent orders. 
+                  Showing 10 most recent orders.
                   <button
                     onClick={handleViewAllOrders}
                     className="ml-1 text-teal-600 hover:text-teal-800 underline"
