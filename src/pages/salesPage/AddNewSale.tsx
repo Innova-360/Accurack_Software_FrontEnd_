@@ -1,18 +1,19 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { FaPlus, FaTrash, FaArrowLeft, FaSearch, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaTrash, FaArrowLeft, FaSearch } from "react-icons/fa";
 import toast from "react-hot-toast";
 import Header from "../../components/Header";
 import { SpecialButton } from "../../components/buttons";
-import { fetchProductsPaginated, setSearchQuery } from "../../store/slices/productsSlice";
+import { fetchProductsPaginated } from "../../store/slices/productsSlice";
 import { createSale } from "../../store/slices/salesSlice";
 import { fetchUser } from "../../store/slices/userSlice";
 import { fetchCustomers } from "../../store/slices/customerSlice";
 import useRequireStore from "../../hooks/useRequireStore";
 import type { RootState, AppDispatch } from "../../store";
-import type { Product } from "../../data/inventoryData";
 import type { SaleRequestData, SaleItem } from "../../store/slices/salesSlice";
+import { useDebounce } from "../../components/TaxComponents/useDebounce";
+import { useSearchProductsQuery } from '../../store/slices/productsSlice';
 
 interface ProductItem {
   id: string;
@@ -22,7 +23,7 @@ interface ProductItem {
   total: number;
   productId?: string; // Add this to reference the actual product
   variantId?: string; // Add this to reference the variant if it's a variant
-  selectedProduct?: Product | null; // Store the full product/variant details
+  selectedProduct?: unknown | null; // Store the full product/variant details
 }
 
 const AddNewSale: React.FC = () => {
@@ -33,6 +34,7 @@ const AddNewSale: React.FC = () => {
   const currentStore = useRequireStore();
   const { user } = useSelector((state: RootState) => state.user);
   const { id } = useParams(); // Get store ID from URL params
+
 
   // Redux state
   const {
@@ -52,48 +54,16 @@ const AddNewSale: React.FC = () => {
   // Customers state
   const { customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
 
-  // Local state for pagination and search
-  const [currentPageLocal, setCurrentPageLocal] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const productsPerPage = 50;
   const [allowance, setAllowance] = useState(0);
 
-  // Debounce search term
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-      setCurrentPageLocal(1); // Reset to first page when searching
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  // Fetch products with pagination and search
-  const fetchProductsData = useCallback(() => {
-    dispatch(fetchProductsPaginated({
-      page: currentPageLocal,
-      limit: productsPerPage,
-      storeId: id,
-      search: debouncedSearchTerm || undefined,
-    }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, currentPageLocal, debouncedSearchTerm]);
-
-  // Fetch products, user, and customers on component mount
+  // Separate useEffect for user and customers (run only once)
   // useEffect(() => {
-  //   fetchProductsData();
   //   dispatch(fetchUser());
-  //   // Fetch customers for the dropdown
   //   if (currentStore?.id) {
   //     dispatch(fetchCustomers({ storeId: currentStore.id, page: 1, limit: 100 }));
   //   }
-  // }, [fetchProductsData, dispatch, currentStore?.id]);
+  // }, [dispatch, currentStore?.id]);
 
-  // Update search query in redux store
-  useEffect(() => {
-    dispatch(setSearchQuery(debouncedSearchTerm));
-  }, [dispatch, debouncedSearchTerm]);
 
   // Form state
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
@@ -117,12 +87,92 @@ const AddNewSale: React.FC = () => {
   );
   const [taxRate, setTaxRate] = useState(10); // Default 10% tax, but user can change
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  // Debounce the search query
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Use RTK Query to search products (only when we have a debounced query)
+  const {
+    data: searchResults,
+    isLoading,
+    error
+  } = useSearchProductsQuery(
+    {
+      q: debouncedSearchQuery,
+      storeId: currentStore?.id || ''
+    },
+    {
+      skip: !debouncedSearchQuery || !currentStore?.id
+    }
+  );
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    setShowDropdown(value.length > 0);
+  };
+
+  const handleProductSelect = (product: any) => {
+    console.log('Selected product:', product);
+
+    // Find the first empty product slot or add a new one
+    const emptyIndex = products.findIndex(p => !p.name || p.name === "");
+
+    // Create a normalized product object that matches the expected structure
+    const normalizedProduct = {
+      ...product,
+      // Map the search result properties to expected names
+      quantity: product.itemQuantity, // Stock quantity
+      price: `$${product.singleItemSellingPrice}`, // Original price with $ sign
+      plu: product.pluUpc, // PLU/UPC mapping
+      sku: product.sku || "N/A", // SKU (already correct)
+      // Keep original properties as well
+      singleItemSellingPrice: product.singleItemSellingPrice,
+      itemQuantity: product.itemQuantity,
+      pluUpc: product.pluUpc
+    };
+
+    if (emptyIndex !== -1) {
+      // Fill the first empty slot
+      const updatedProducts = [...products];
+      updatedProducts[emptyIndex] = {
+        ...updatedProducts[emptyIndex],
+        name: product.name,
+        productId: product.id,
+        selectedProduct: normalizedProduct, // Use normalized product
+        price: parseFloat(product.singleItemSellingPrice) || 0,
+        quantity: 1,
+        total: parseFloat(product.singleItemSellingPrice) || 0,
+      };
+      setProducts(updatedProducts);
+    } else {
+      // Add a new product to the list
+      const newProduct: ProductItem = {
+        id: Date.now().toString(),
+        name: product.name,
+        productId: product.id,
+        selectedProduct: normalizedProduct, // Use normalized product
+        price: parseFloat(product.singleItemSellingPrice) || 0,
+        quantity: 1,
+        total: parseFloat(product.singleItemSellingPrice) || 0,
+      };
+      setProducts([...products, newProduct]);
+    }
+
+    // Clear the search
+    setSearchQuery('');
+    setShowDropdown(false);
+  };
+
+
   // Calculated values
   const subtotal = products.reduce((sum, product) => sum + product.total, 0);
   const discountAmount =
     discountType === "percentage" ? (subtotal * discount) / 100 : discount;
-  const taxAmount = ((subtotal - discountAmount ) * taxRate) / 100;
-  const finalTotal = subtotal - discountAmount  + taxAmount;
+  const taxAmount = ((subtotal - discountAmount) * taxRate) / 100;
+  const finalTotal = subtotal - discountAmount + taxAmount;
 
   // Combine address fields into a single address string
   const getFullAddress = () => {
@@ -253,8 +303,8 @@ const AddNewSale: React.FC = () => {
     value: string | number
   ) => {
     const updatedProducts = [...products];
-    console.log("Index",index, "Field", field, "Value", value);
-    
+    console.log("Index", index, "Field", field, "Value", value);
+
 
     // Handle product selection
     if (field === "name") {
@@ -307,18 +357,6 @@ const AddNewSale: React.FC = () => {
     setProducts(updatedProducts);
   };
 
-  const addProduct = () => {
-    setProducts([
-      ...products,
-      {
-        id: Date.now().toString(),
-        name: "",
-        quantity: 1,
-        price: 0,
-        total: 0,
-      },
-    ]);
-  };
 
   const removeProduct = (index: number) => {
     if (products.length > 1) {
@@ -336,10 +374,6 @@ const AddNewSale: React.FC = () => {
     setDiscount(0);
   };
 
-  // const handleSaveDraft = () => {
-  //   // TODO: Implement save as draft functionality
-  //   console.log("Save as draft");
-  // };
 
   const handleCreateSale = async () => {
     // Validate form
@@ -446,7 +480,7 @@ const AddNewSale: React.FC = () => {
         paymentMethod: paymentMethod as "CASH" | "CARD" | "BANK_TRANSFER" | "CHECK" | "DIGITAL_WALLET",
         totalAmount: Math.round(finalTotal * 100) / 100, // Ensure proper number format
         tax: Math.round(taxAmount * 100) / 100, // Ensure proper number format
-         allowance: Math.round(allowance * 100) / 100, // Add this line
+        allowance: Math.round(allowance * 100) / 100, // Add this line
         cashierName: user.firstName && user.lastName
           ? `${user.firstName} ${user.lastName}`
           : user.email || "Current User",
@@ -465,8 +499,8 @@ const AddNewSale: React.FC = () => {
 
       // Navigate back to sales page
       navigate(-1);
-    } 
-    catch (error: axios.AxiosError) {
+    }
+    catch (error: unknown) {
       console.error("Error creating sale:", error);
       toast.error(`Failed to create sale: ${error}`);
     }
@@ -768,132 +802,78 @@ const AddNewSale: React.FC = () => {
               {/* Product Search Bar */}
               <div className="mb-4">
                 <div className="relative">
-                  <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                   <input
                     type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-                    placeholder="Search products by name, SKU, PLU, or category..."
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    placeholder="Search products..."
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+                    onFocus={() => setShowDropdown(searchQuery.length > 0)} // Show if there's already text
+                    onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                   />
+                  <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+
+                  {/* Loading indicator */}
+                  {isLoading && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#0f4d57]"></div>
+                    </div>
+                  )}
+
+                  {/* Search Results Dropdown */}
+                  {showDropdown && searchResults?.data && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {searchResults.data.length > 0 ? (
+                        searchResults.data.map((product: any) => (
+                          <div
+                            key={product.id}
+                            className="px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                            onClick={() => handleProductSelect(product)}
+                          >
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <p className="font-medium text-gray-900">{product.name}</p>
+                                <p className="text-sm text-gray-600">
+                                  SKU: {product.sku} | PLU: {product.pluUpc}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-medium text-[#0f4d57]">
+                                  ${product.singleItemSellingPrice}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  Stock: {product.itemQuantity}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-3 text-gray-500 text-center">
+                          No products found
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Error handling */}
+                  {error && (
+                    <div className="absolute z-10 w-full mt-1 bg-red-50 border border-red-200 rounded-lg p-3">
+                      <p className="text-red-600 text-sm">Error searching products</p>
+                    </div>
+                  )}
                 </div>
-                {debouncedSearchTerm && (
-                  <div className="mt-2 flex items-center justify-between text-sm text-gray-600">
-                    <span>
-                      {totalProducts} product{totalProducts !== 1 ? 's' : ''} found
-                      {debouncedSearchTerm && ` for "${debouncedSearchTerm}"`}
-                    </span>
-                    <button
-                      onClick={() => {
-                        setSearchTerm("");
-                        setDebouncedSearchTerm("");
-                      }}
-                      className="text-[#03414C] hover:text-[#025561] underline"
-                    >
-                      Clear search
-                    </button>
-                  </div>
-                )}
+
               </div>
 
-              {/* Pagination Controls - Top 
-              {totalPages > 1 && (
-                <div className="mb-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                  <div className="text-sm text-gray-600">
-                    Page {currentPage} of {totalPages} ({totalProducts} total products)
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCurrentPageLocal(prev => Math.max(1, prev - 1))}
-                      disabled={!hasPreviousPage || productsLoading}
-                      className="p-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <FaChevronLeft size={14} />
-                    </button>
-                    <span className="px-3 py-1 bg-white border border-gray-300 rounded-lg text-sm">
-                      {currentPage}
-                    </span>
-                    <button
-                      onClick={() => setCurrentPageLocal(prev => prev + 1)}
-                      disabled={!hasNextPage || productsLoading}
-                      className="p-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <FaChevronRight size={14} />
-                    </button>
-                  </div>
-                </div>
-              )}
-                */}
-
-              {/* Products loading/error state */}
-              {productsLoading && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                  <p className="text-blue-700 text-sm">
-                    {debouncedSearchTerm
-                      ? `Searching for "${debouncedSearchTerm}"...`
-                      : "Loading products..."}
-                  </p>
-                </div>
-              )}
-
-              {productsError && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-                  <p className="text-red-700 text-sm">
-                    Error loading products: {productsError}
-                  </p>
-                </div>
-              )}
-
-              {!productsLoading && !productsError && availableProducts.length === 0 && debouncedSearchTerm && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-                  <p className="text-yellow-700 text-sm">
-                    No products found for "{debouncedSearchTerm}". Try a different search term.
-                  </p>
-                </div>
-              )}
-
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-96 overflow-y-auto thin-scrollbar">
                 {products.map((product, index) => (
                   <div
                     key={product.id}
                     className="border border-gray-200 rounded-lg p-4"
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Select Product <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          value={product.name}
-                          onChange={(e) =>
-                            handleProductChange(index, "name", e.target.value)
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-                          disabled={productsLoading}
-                        >
-                          
-
-                          <option value="">
-                            {productsLoading
-                              ? (debouncedSearchTerm ? `Searching "${debouncedSearchTerm}"...` : "Loading products...")
-                              : `Select from ${flattenedProducts.length} products${debouncedSearchTerm ? ` (filtered)` : ''}...`}
-                          </option>
-                          {flattenedProducts.map((flatProduct) => (
-                            <option
-                              key={flatProduct.id}
-                              value={flatProduct.displayName}
-                            >
-                              {flatProduct.displayName}
-                            </option>
-                          ))}
-                          {productsError && (
-                            <option value="" disabled>
-                              Error loading products
-                            </option>
-                          )}
-                        </select>
-                      </div>
-                      <div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-1">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Quantity <span className="text-red-500">*</span>
                         </label>
@@ -911,34 +891,36 @@ const AddNewSale: React.FC = () => {
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                         />
                       </div>
-                      <div>
+                      <div className="md:col-span-1">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Selling Price <span className="text-red-500">*</span>
                         </label>
-                        <div className="flex items-center gap-2 w-20 max-w-36">
+                        <div className="flex items-center gap-2">
                           <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={product.price}
-                            onChange={(e) =>
-                              handleProductChange(
-                                index,
-                                "price",
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                            className="overflow-hidden w-20 max-w-36 flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-                          />
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={product.price}
+                          onChange={(e) =>
+                            handleProductChange(
+                              index,
+                              "price",
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                        />
                           {products.length > 1 && (
-                            <button
-                              onClick={() => removeProduct(index)}
-                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                            >
-                              <FaTrash size={16} />
-                            </button>
-                          )}
+                          <button
+                            onClick={() => removeProduct(index)}
+                            className="w-full md:w-auto px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+                          >
+                            <FaTrash size={16} />
+                            <span className="md:hidden">Remove</span>
+                          </button>
+                        )}
                         </div>
+                        
                       </div>
                     </div>
 
@@ -948,7 +930,7 @@ const AddNewSale: React.FC = () => {
                         <h4 className="text-sm font-semibold text-blue-900 mb-3">
                           Product Details
                         </h4>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 text-sm">
                           <div>
                             <span className="font-medium text-gray-600">
                               Product Name:
@@ -1002,7 +984,7 @@ const AddNewSale: React.FC = () => {
                         </div>
 
                         {/* Additional product information row */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mt-3 pt-3 border-t border-blue-200">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm mt-3 pt-3 border-t border-blue-200">
                           <div>
                             <span className="font-medium text-gray-600">
                               Category:
@@ -1011,7 +993,7 @@ const AddNewSale: React.FC = () => {
                               {typeof product.selectedProduct.category ===
                                 "string"
                                 ? product.selectedProduct.category
-                                : (product.selectedProduct.category as any)?.name ||
+                                : (product.selectedProduct.category as { name?: string })?.name ||
                                 "Uncategorized"}
                             </div>
                           </div>
@@ -1023,7 +1005,7 @@ const AddNewSale: React.FC = () => {
                               {typeof product.selectedProduct.supplier ===
                                 "string"
                                 ? product.selectedProduct.supplier
-                                : (product.selectedProduct.supplier as any)?.name ||
+                                : (product.selectedProduct.supplier as { name?: string })?.name ||
                                 "N/A"}
                             </div>
                           </div>
@@ -1095,16 +1077,16 @@ const AddNewSale: React.FC = () => {
                   </div>
                 ))}
 
-                <button
+                {/* <button
                   onClick={addProduct}
                   className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-[#03414C] hover:text-[#03414C] transition-colors flex items-center justify-center gap-2"
                 >
                   <FaPlus size={16} />
                   Add Another Product
-                </button>
+                </button> */}
               </div>
 
-              {/* Pagination Controls - Bottom */}
+              {/* Pagination Controls - Bottom 
               {totalPages > 1 && (
                 <div className="mt-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                   <div className="text-sm text-gray-600">
@@ -1131,6 +1113,7 @@ const AddNewSale: React.FC = () => {
                   </div>
                 </div>
               )}
+                */}
             </div>
 
             {/* Payment & Additional Details */}
@@ -1183,7 +1166,7 @@ const AddNewSale: React.FC = () => {
 
           {/* Order Summary - Right Column */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 lg:sticky lg:top-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Order Summary
               </h2>{" "}
@@ -1197,7 +1180,7 @@ const AddNewSale: React.FC = () => {
                   <div className="flex justify-between items-start text-gray-600 mb-3">
                     <span className="font-medium">Discount</span>
                     <div className="flex flex-col items-end space-y-2">
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
                         <select
                           value={discountType}
                           onChange={(e) =>
@@ -1205,7 +1188,7 @@ const AddNewSale: React.FC = () => {
                               e.target.value as "percentage" | "amount"
                             )
                           }
-                          className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                          className="w-full sm:w-auto px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                         >
                           <option value="percentage">Percentage</option>
                           <option value="amount">Amount</option>
@@ -1221,7 +1204,7 @@ const AddNewSale: React.FC = () => {
                               parseFloat(e.target.value) || 0
                             )
                           }
-                          className="w-24 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                          className="w-full sm:w-24 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                           placeholder={
                             discountType === "percentage" ? "0" : "0.00"
                           }
@@ -1247,7 +1230,7 @@ const AddNewSale: React.FC = () => {
                         step="0.01"
                         value={allowance}
                         onChange={(e) => setAllowance(parseFloat(e.target.value) || 0)}
-                        className="w-[100%] px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                        className="w-20 sm:w-24 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                         placeholder="0"
                       />
                       <span className="text-sm">$</span>
@@ -1272,7 +1255,7 @@ const AddNewSale: React.FC = () => {
                         onChange={(e) =>
                           setTaxRate(parseFloat(e.target.value) || 0)
                         }
-                        className="w-[100%] px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                        className="w-20 sm:w-24 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                         placeholder="0"
                       />
                       <span className="text-sm">%</span>
