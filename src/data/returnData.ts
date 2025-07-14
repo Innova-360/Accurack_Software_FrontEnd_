@@ -18,6 +18,22 @@ export const returnedProductsData = [
   },
   {
     id: "ret-002",
+    saleId: "SALE-2024-001",
+    productName: "Samsung Galaxy Buds Pro",
+    pluUpc: "123456789013",
+    sellingPrice: 199.99,
+    vendorPrice: 150.0,
+    quantity: 1,
+    returnDate: "2024-01-15T10:30:00Z",
+    reason: "Complete order return",
+    status: "saleable" as const,
+    customerInfo: {
+      name: "John Smith",
+      phone: "+1-555-0123",
+    },
+  },
+  {
+    id: "ret-003",
     saleId: "SALE-2024-002",
     productName: "Apple iPhone 15 Pro",
     pluUpc: "234567890123",
@@ -26,14 +42,14 @@ export const returnedProductsData = [
     quantity: 1,
     returnDate: "2024-01-14T14:45:00Z",
     reason: "Customer changed mind",
-    status: "restock" as const,
+    status: "saleable" as const,
     customerInfo: {
       name: "Jane Doe",
       phone: "+1-555-0124",
     },
   },
   {
-    id: "ret-003",
+    id: "ret-004",
     saleId: "SALE-2024-003",
     productName: "Sony WH-1000XM5 Headphones",
     pluUpc: "345678901234",
@@ -42,14 +58,14 @@ export const returnedProductsData = [
     quantity: 2,
     returnDate: "2024-01-13T16:20:00Z",
     reason: "Wrong color ordered",
-    status: "restock" as const,
+    status: "saleable" as const,
     customerInfo: {
       name: "Mike Johnson",
       phone: "+1-555-0125",
     },
   },
   {
-    id: "ret-004",
+    id: "ret-005",
     saleId: "SALE-2024-004",
     productName: "Dell XPS 13 Laptop",
     pluUpc: "456789012345",
@@ -65,7 +81,7 @@ export const returnedProductsData = [
     },
   },
   {
-    id: "ret-005",
+    id: "ret-006",
     saleId: "SALE-2024-005",
     productName: "Nintendo Switch OLED",
     pluUpc: "567890123456",
@@ -74,14 +90,30 @@ export const returnedProductsData = [
     quantity: 1,
     returnDate: "2024-01-11T09:30:00Z",
     reason: "Gift return - duplicate",
-    status: "restock" as const,
+    status: "saleable" as const,
     customerInfo: {
       name: "Tom Brown",
       phone: "+1-555-0127",
     },
   },
   {
-    id: "ret-006",
+    id: "ret-007",
+    saleId: "SALE-2024-005",
+    productName: "Pro Controller",
+    pluUpc: "567890123457",
+    sellingPrice: 69.99,
+    vendorPrice: 50.0,
+    quantity: 1,
+    returnDate: "2024-01-11T09:30:00Z",
+    reason: "Gift return - duplicate",
+    status: "no_saleable" as const,
+    customerInfo: {
+      name: "Tom Brown",
+      phone: "+1-555-0127",
+    },
+  },
+  {
+    id: "ret-008",
     saleId: "SALE-2024-006",
     productName: "AirPods Pro (2nd Gen)",
     pluUpc: "678901234567",
@@ -97,7 +129,71 @@ export const returnedProductsData = [
     },
   },
   {
-    id: "ret-007",
+    id: "ret-009",
+    saleId: "SALE-2024-003",
+    productName: "Sony WH-1000XM5 Case",
+    pluUpc: "345678901235",
+    sellingPrice: 49.99,
+    vendorPrice: 35.0,
+    quantity: 1,
+    returnDate: "2024-01-13T16:20:00Z",
+    reason: "Wrong color ordered",
+    status: "saleable" as const,
+    customerInfo: {
+      name: "Mike Johnson",
+      phone: "+1-555-0125",
+    },
+  },
+  {
+    id: "ret-010",
+    saleId: "SALE-2024-004",
+    productName: "Dell Wireless Mouse",
+    pluUpc: "456789012346",
+    sellingPrice: 59.99,
+    vendorPrice: 40.0,
+    quantity: 1,
+    returnDate: "2024-01-12T11:15:00Z",
+    reason: "Hardware malfunction",
+    status: "no_saleable" as const,
+    customerInfo: {
+      name: "Sarah Wilson",
+      phone: "+1-555-0126",
+    },
+  },
+  {
+    id: "ret-011",
+    saleId: "SALE-2024-004",
+    productName: "Dell Laptop Charger",
+    pluUpc: "456789012347",
+    sellingPrice: 89.99,
+    vendorPrice: 65.0,
+    quantity: 1,
+    returnDate: "2024-01-12T11:15:00Z",
+    reason: "Hardware malfunction",
+    status: "scrap" as const,
+    customerInfo: {
+      name: "Sarah Wilson",
+      phone: "+1-555-0126",
+    },
+  },
+  {
+    id: "ret-008",
+    saleId: "SALE-2024-007",
+    productName: "iPad Air (5th Gen)",
+    pluUpc: "789012345678",
+    sellingPrice: 599.99,
+    vendorPrice: 450.0,
+    quantity: 1,
+    returnDate: "2024-01-09T15:20:00Z",
+    reason: "Minor scratch on screen",
+    status: "no_saleable" as const,
+    customerInfo: {
+      name: "David Lee",
+      phone: "+1-555-0129",
+    },
+  },
+  {
+    id: "ret-009",
     saleId: "SALE-2024-007",
     productName: "iPad Air (5th Gen)",
     pluUpc: "789012345678",
@@ -106,14 +202,14 @@ export const returnedProductsData = [
     quantity: 1,
     returnDate: "2024-01-09T15:20:00Z",
     reason: "Size not suitable",
-    status: "restock" as const,
+    status: "saleable" as const,
     customerInfo: {
       name: "David Lee",
       phone: "+1-555-0129",
     },
   },
   {
-    id: "ret-008",
+    id: "ret-010",
     saleId: "SALE-2024-008",
     productName: 'Samsung 65" QLED TV',
     pluUpc: "890123456789",
@@ -129,7 +225,7 @@ export const returnedProductsData = [
     },
   },
   {
-    id: "ret-009",
+    id: "ret-011",
     saleId: "SALE-2024-009",
     productName: 'MacBook Pro 14"',
     pluUpc: "901234567890",
@@ -138,14 +234,14 @@ export const returnedProductsData = [
     quantity: 1,
     returnDate: "2024-01-07T12:30:00Z",
     reason: "Performance not as expected",
-    status: "restock" as const,
+    status: "saleable" as const,
     customerInfo: {
       name: "Robert Taylor",
       phone: "+1-555-0131",
     },
   },
   {
-    id: "ret-010",
+    id: "ret-012",
     saleId: "SALE-2024-010",
     productName: "Bose QuietComfort Earbuds",
     pluUpc: "012345678901",
@@ -161,7 +257,7 @@ export const returnedProductsData = [
     },
   },
   {
-    id: "ret-011",
+    id: "ret-013",
     saleId: "SALE-2024-011",
     productName: "Google Pixel 8",
     pluUpc: "112233445566",
@@ -177,7 +273,7 @@ export const returnedProductsData = [
     },
   },
   {
-    id: "ret-012",
+    id: "ret-014",
     saleId: "SALE-2024-012",
     productName: "Xbox Series X",
     pluUpc: "223344556677",
@@ -186,7 +282,7 @@ export const returnedProductsData = [
     quantity: 1,
     returnDate: "2024-01-04T11:00:00Z",
     reason: "Changed console preference",
-    status: "restock" as const,
+    status: "saleable" as const,
     customerInfo: {
       name: "Michelle Kim",
       phone: "+1-555-0134",
@@ -218,7 +314,7 @@ export const returnedProductsData = [
     quantity: 1,
     returnDate: "2024-01-02T09:45:00Z",
     reason: "Room size mismatch",
-    status: "restock" as const,
+    status: "saleable" as const,
     customerInfo: {
       name: "Rachel Green",
       phone: "+1-555-0136",
@@ -234,7 +330,7 @@ export const returnedProductsData = [
     quantity: 1,
     returnDate: "2024-01-01T15:30:00Z",
     reason: "Too complex for user",
-    status: "restock" as const,
+    status: "saleable" as const,
     customerInfo: {
       name: "Daniel Cooper",
       phone: "+1-555-0137",
@@ -252,7 +348,7 @@ export type ReturnedProduct = {
   quantity: number;
   returnDate: string;
   reason: string;
-  status: "scrap" | "restock";
+  status: "saleable" | "no_saleable" | "scrap";
   customerInfo?: {
     name: string;
     phone: string;

@@ -3,35 +3,66 @@ import { useState, useEffect } from 'react';
 import { ChevronDown, X, Search, Info, Check, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useParams } from 'react-router-dom';
-import { useGetTaxTypesQuery, useGetTaxCodesQuery, useGetTaxRegionsQuery, useCreateTaxTypeMutation, useCreateTaxCodeMutation, useCreateTaxRegionMutation, createTaxRateThunk, fetchCountriesThunk, useBulkAssignTaxMutation } from '../../store/slices/taxSlice';
+import { useGetTaxTypesQuery, useGetTaxCodesQuery, useGetTaxRegionsQuery, useCreateTaxTypeMutation, useCreateTaxCodeMutation, useCreateTaxRegionMutation, createTaxRateThunk, fetchCountriesThunk, useBulkAssignTaxMutation, type TaxAssignment } from '../../store/slices/taxSlice';
 import { useSearchCategoriesQuery } from '../../store/slices/categorySlice';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { useSearchProductsQuery } from '../../store/slices/productsSlice';
+// import { useSearchProductsQuery, fetchProductsPaginated } from '../../store/slices/productsSlice';
 import { useSearchCustomersQuery } from '../../store/slices/customerSlice';
-import { searchStores } from '../../store/slices/storeSlice';
+// import { searchStores } from '../../store/slices/storeSlice';
 import { useDebounce } from '../../components/TaxComponents/useDebounce';
 import ModalActions from '../../components/TaxComponents/ModalActions';
 import Modal from '../../components/TaxComponents/Modal';
 import Input from '../../components/TaxComponents/TaxInput';
+import Loading from "../../components/Loading";
+import { fetchProductsPaginated } from "../../store/slices/productsSlice";
+
+type FormDataType = {
+    name: string;
+    taxRate: string;
+    taxCode: string;
+    type: string;
+    status: string;
+    effective_From: string;
+    description: string;
+    selectedProducts: Array<{ id: string, name: string }>;
+    selectedCategories: string[];
+    selectedCustomers: Array<{ id: string, name: string }>;
+
+    region: string;
+};
+
+interface CategoryType {
+    id: string;
+    name: string;
+    description?: string;
+}
+
+interface ProductType {
+    id?: string;
+    name: string;
+    sku?: string;
+    // add other fields as needed
+}
+
+// interface StoreType {
+//     id: string;
+//     name: string;
+//     address?: string;
+//     // add other fields as needed
+// }
+
+interface CustomerType {
+    id: string;
+    customerName?: string;
+    name?: string;
+    customerMail?: string;
+}
 
 
 const Page = () => {
     const { id } = useParams();
-    type FormDataType = {
-        name: string;
-        taxRate: string;
-        taxCode: string;
-        type: string;
-        status: string;
-        effective_From: string;
-        description: string;
-        selectedProducts: string[];
-        selectedCategories: string[];
-        selectedCustomers: Array<{ id: string, name: string }>;
-        selectedSuppliers: string[];
-        selectedStores: string[];
-        region: string;
-    };
+
+
 
     const [formData, setFormData] = useState<FormDataType>({
         name: 'VAT',
@@ -44,8 +75,7 @@ const Page = () => {
         selectedProducts: [],
         selectedCategories: [],
         selectedCustomers: [],
-        selectedSuppliers: [],
-        selectedStores: [],
+
         region: ''
     });
 
@@ -58,16 +88,15 @@ const Page = () => {
     const [productSearchTerm, setProductSearchTerm] = useState('');
     const [categorySearchTerm, setCategorySearchTerm] = useState('');
     const [customerSearchTerm, setCustomerSearchTerm] = useState('');
-    const [storeSearchTerm, setStoreSearchTerm] = useState('');
     const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
-    const [showStoreDropdown, setShowStoreDropdown] = useState(false);
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+    const [creatingTaxRate, setCreatingTaxRate] = useState<boolean>(false);
 
     // Debounced search terms using custom hook
-    const debouncedProductSearchTerm = useDebounce(productSearchTerm, 300);
+    // const debouncedProductSearchTerm = useDebounce(productSearchTerm, 300);
     const debouncedCategorySearchTerm = useDebounce(categorySearchTerm, 300);
     const debouncedCustomerSearchTerm = useDebounce(customerSearchTerm, 300);
-    const debouncedStoreSearchTerm = useDebounce(storeSearchTerm, 300);
+
     const [showProductDropdown, setShowProductDropdown] = useState(false);
 
 
@@ -82,10 +111,19 @@ const Page = () => {
 
 
 
+    // Load all products for dropdown
+    const { products: allProducts, loading: productsLoading } = useAppSelector(state => state.products);
+
     // Search products with debouncing
-    const { data: searchResults, isLoading: isSearching } = useSearchProductsQuery(
-        { q: debouncedProductSearchTerm, storeId: id || '' },
-        { skip: !debouncedProductSearchTerm || debouncedProductSearchTerm.length < 2 }
+    // const { data: searchResults, isLoading: isSearching } = useSearchProductsQuery(
+    //     { q: debouncedProductSearchTerm, storeId: id || '' },
+    //     { skip: !debouncedProductSearchTerm || debouncedProductSearchTerm.length < 2 }
+    // );
+
+    // Filter products based on search term
+    const filteredProducts = allProducts.filter(product =>
+        product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+        (product.sku && product.sku.toLowerCase().includes(productSearchTerm.toLowerCase()))
     );
 
     // Search categories with debouncing
@@ -100,14 +138,11 @@ const Page = () => {
         { skip: !debouncedCustomerSearchTerm || debouncedCustomerSearchTerm.length < 2 }
     );
 
-    // Get store search results from Redux state
-    const { searchResults: storeSearchResults, searchLoading: isStoreSearching } = useAppSelector(state => state.stores);
-
 
 
     const handleProductSearch = (value: string) => {
         setProductSearchTerm(value);
-        setShowProductDropdown(value.length > 0);
+        setShowProductDropdown(true);
     };
 
     const handleCustomerSearch = (value: string) => {
@@ -121,34 +156,38 @@ const Page = () => {
     };
 
     useEffect(() => {
-        if (productSearchTerm.length === 0) {
-            setShowProductDropdown(false);
-        }
         if (customerSearchTerm.length === 0) {
             setShowCustomerDropdown(false);
         }
         if (categorySearchTerm.length === 0) {
             setShowCategoryDropdown(false);
         }
-        if (storeSearchTerm.length === 0) {
-            setShowStoreDropdown(false);
-        }
-    }, [productSearchTerm, customerSearchTerm, categorySearchTerm, storeSearchTerm]);
 
-    interface ProductType {
-        id: string;
-        name: string;
-        sku?: string;
-        // add other fields as needed
-    }
+    }, [customerSearchTerm, categorySearchTerm]);
 
-    const selectProduct = (product: unknown) => {
-        if (typeof product === 'object' && product !== null && 'name' in product && typeof (product as ProductType).name === 'string') {
-            const productName = (product as ProductType).name;
-            if (!formData.selectedProducts.includes(productName)) {
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Element;
+            if (!target.closest('.relative')) {
+                setShowProductDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+
+    const selectProduct = (product: ProductType) => {
+        if (typeof product === 'object' && product !== null && 'name' in product && 'id' in product) {
+            const productData = {
+                id: product.id!,
+                name: product.name
+            };
+            if (!formData.selectedProducts.find(p => p.id === productData.id)) {
                 setFormData(prev => ({
                     ...prev,
-                    selectedProducts: [...prev.selectedProducts, productName]
+                    selectedProducts: [...prev.selectedProducts, productData]
                 }));
             }
         }
@@ -156,10 +195,10 @@ const Page = () => {
         setShowProductDropdown(false);
     };
 
-    const selectCustomer = (customer: any) => {
+    const selectCustomer = (customer: CustomerType) => {
         const customerData = {
             id: customer.id,
-            name: customer.customerName || customer.name
+            name: customer.customerName || customer.name || ''
         };
         if (!formData.selectedCustomers.find(c => c.id === customerData.id)) {
             setFormData(prev => ({
@@ -171,8 +210,8 @@ const Page = () => {
         setShowCustomerDropdown(false);
     };
 
-    const selectCategory = (category: any) => {
-        const categoryName = category.name || category;
+    const selectCategory = (category: CategoryType | string) => {
+        const categoryName = typeof category === 'string' ? category : category.name;
         if (!formData.selectedCategories.includes(categoryName)) {
             setFormData(prev => ({
                 ...prev,
@@ -183,22 +222,8 @@ const Page = () => {
         setShowCategoryDropdown(false);
     };
 
-    const selectStore = (store: any) => {
-        const storeName = store.name || store;
-        if (!formData.selectedStores.includes(storeName)) {
-            setFormData(prev => ({
-                ...prev,
-                selectedStores: [...prev.selectedStores, storeName]
-            }));
-        }
-        setStoreSearchTerm('');
-        setShowStoreDropdown(false);
-    };
 
-    const handleStoreSearch = (value: string) => {
-        setStoreSearchTerm(value);
-        setShowStoreDropdown(value.length > 0);
-    };
+
 
     const handleCountrySearch = (value: string) => {
         setModalData(prev => ({ ...prev, name: value }));
@@ -237,9 +262,12 @@ const Page = () => {
 
     const handleSaveTax = async () => {
         try {
-            const selectedTaxType = taxTypes.data.find((t: typeof taxTypes[0]) => t.description === formData.name);
-            const selectedTaxCode = taxCodes.data.find((c: typeof taxCodes[0]) => c.description === formData.taxCode);
-            const selectedRegion = taxRegions.data.find((r: typeof taxRegions[0]) => r.code === formData.region);
+            setCreatingTaxRate(true);
+            const selectedTaxType = taxTypes.find((t) => t.description === formData.name);
+            const selectedTaxCode = taxCodes.find(
+                (c) => c.description === formData.taxCode
+            );
+            const selectedRegion = taxRegions.find((r: typeof taxRegions[0]) => r.code === formData.region);
 
             // Prevent API call if any ID is a temp value or not found
             if (!selectedTaxType?.id || !selectedTaxCode?.id || !selectedRegion?.id ||
@@ -266,68 +294,39 @@ const Page = () => {
             console.error('Failed to create tax rate:', error);
             toast.error('Failed to create tax rate');
         }
+        finally {
+            setCreatingTaxRate(false);
+        }
     };
-    const { data: taxTypes = [], isLoading: typesLoading } = useGetTaxTypesQuery();
-    const { data: taxCodes = [], isLoading: codesLoading } = useGetTaxCodesQuery();
-    const { data: taxRegions = [], isLoading: regionsLoading } = useGetTaxRegionsQuery();
+
+    const { data: taxTypesResponse, isLoading: typesLoading } = useGetTaxTypesQuery();
+    const taxTypes = taxTypesResponse?.data ?? [];
+    const { data: taxCodesResponse, isLoading: codesLoading } = useGetTaxCodesQuery();
+    const taxCodes = taxCodesResponse?.data ?? [];
+    const { data: taxRegionsResponse, isLoading: regionsLoading } = useGetTaxRegionsQuery();
+    const taxRegions = taxRegionsResponse?.data ?? [];
+
+
     const { countries, countriesLoading } = useAppSelector(state => state.tax);
-
-
 
     useEffect(() => {
         dispatch(fetchCountriesThunk());
-    }, [dispatch]);
-
-    // Dispatch store search when debounced term changes
-    useEffect(() => {
-        if (debouncedStoreSearchTerm && debouncedStoreSearchTerm.length >= 2) {
-            dispatch(searchStores(debouncedStoreSearchTerm));
-        }
-    }, [debouncedStoreSearchTerm, dispatch]);
+        // Load all products on component mount
+        dispatch(fetchProductsPaginated({ page: 1, limit: 1000, storeId: id || '' }));
+    }, [dispatch, id]);
 
 
-    // Set default values for region, type, and code when data loads
-    useEffect(() => {
-        if (taxTypes.length && !formData.name) {
-            setFormData(prev => ({ ...prev, name: taxTypes[0].description || "" }));
-        }
-        if (taxCodes.length && !formData.taxCode) {
-            setFormData(prev => ({ ...prev, taxCode: taxCodes[0].description || "" }));
-        }
-        if (taxRegions.length && !formData.region) {
-            setFormData(prev => ({ ...prev, region: taxRegions[0].code || "" }));
-        }
-    }, [taxTypes, taxCodes, taxRegions]);
 
-
-    // Remove duplicate useMemo and use renderModal() directly in JSX
 
     if (typesLoading || codesLoading || regionsLoading || countriesLoading) {
         return (
             <>
                 <Navbar />
-                <div className="flex items-center justify-center min-h-screen">
-                    <div className="text-lg">Loading...</div>
-                </div>
+                <Loading />
             </>
         );
     }
 
-
-    // Modal component must be defined before it is used in renderModal
-    // function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
-    //     return (
-    //         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-sm">
-    //             <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative">
-    //                 <button onClick={onClose} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600">
-    //                     <X className="w-5 h-5" />
-    //                 </button>
-    //                 <h2 className="text-lg font-semibold mb-4">{title}</h2>
-    //                 {children}
-    //             </div>
-    //         </div>
-    //     );
-    // }
 
     const renderModal = () => {
         switch (showModal) {
@@ -355,8 +354,10 @@ const Page = () => {
                                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                                     <option value="">Select Tax Type</option>
-                                    {taxTypes?.data.map((taxType: { id: string; name: string }) => (
-                                        <option key={taxType.id} value={taxType.id}>{taxType.name}</option>
+                                    {taxTypesResponse?.data?.map((taxType) => (
+                                        <option key={taxType.id} value={taxType.id}>
+                                            {taxType.name ?? 'Unnamed Tax Type'}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -496,11 +497,14 @@ const Page = () => {
         }));
     };
 
-    const removeSelectedItem = (item: any, field: keyof FormDataType) => {
+    const removeSelectedItem = (
+        item: string | { id: string; name: string },
+        field: keyof FormDataType
+    ) => {
         setFormData(prev => ({
             ...prev,
-            [field]: field === 'selectedCustomers'
-                ? (prev[field] as Array<{ id: string, name: string }>).filter(i => i.id !== item.id)
+            [field]: field === 'selectedCustomers' || field === 'selectedProducts'
+                ? (prev[field] as Array<{ id: string, name: string }>).filter(i => i.id !== (item as { id: string }).id)
                 : Array.isArray(prev[field]) ? (prev[field] as string[]).filter(i => i !== item) : prev[field]
         }));
     };
@@ -515,12 +519,11 @@ const Page = () => {
             return;
         }
 
-        const assignments = [];
+        const assignments: TaxAssignment[] = [];
 
         // Add product assignments
-        formData.selectedProducts.forEach(productName => {
-            const product = searchResults?.data?.find(p => p.name === productName);
-            if (product?.id) {
+        formData.selectedProducts.forEach(product => {
+            if (product.id) {
                 assignments.push({
                     entityType: 'PRODUCT' as const,
                     entityId: product.id,
@@ -552,17 +555,14 @@ const Page = () => {
             }
         });
 
-        // Add store assignments
-        formData.selectedStores.forEach(storeName => {
-            const store = storeSearchResults?.find(s => s.name === storeName);
-            if (store?.id) {
-                assignments.push({
-                    entityType: 'STORE' as const,
-                    entityId: store.id,
-                    taxRateId: createdTaxRateId
-                });
-            }
-        });
+        // Add store assignment (current store from route)
+        if (id) {
+            assignments.push({
+                entityType: 'STORE' as const,
+                entityId: id,
+                taxRateId: createdTaxRateId
+            });
+        }
 
         if (assignments.length === 0) {
             toast.error('No valid entities selected for tax assignment.');
@@ -580,9 +580,9 @@ const Page = () => {
 
     const basePrice = 1200.00;
     const vatRate = parseFloat(formData.taxRate) || 7.5;
-    const luxuryDuty = 50.00;
+    // const luxuryDuty = 50.00;
     const vatAmount = calculateTaxAmount(basePrice, vatRate);
-    const total = basePrice + parseFloat(vatAmount) + luxuryDuty;
+    // const total = basePrice + parseFloat(vatAmount) + luxuryDuty;
 
 
     return (
@@ -594,11 +594,11 @@ const Page = () => {
                     <div className={`p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white mb-8 rounded-2xl sticky top-0 z-40 transition-shadow duration-200 ${isScrolled ? 'shadow-lg' : ''}`}>
                         <h2 className="text-xl font-semibold mb-4 sm:mb-0">Add New Tax</h2>
                         <div className="flex gap-x-4 w-full sm:w-auto">
-                            <button className="flex-1 sm:flex-none bg-white py-2 px-3 text-black rounded-xl border border-gray-300 cursor-pointer">
-                                Cancel
+                            <button className="flex-1 sm:flex-none bg-white py-2 px-3 text-black rounded-xl border border-gray-300 cursor-pointer" onClick={() => window.history.back()}>
+                                Back
                             </button>
                             <button className="flex-1 sm:flex-none bg-[#043E49] py-2 px-3 text-white rounded-xl flex items-center justify-center gap-x-3 cursor-pointer" onClick={handleSaveTax}>
-                                Create Tax Rate
+                                {creatingTaxRate && 'creating...'} Create Tax Rate
                             </button>
                         </div>
                     </div>
@@ -621,9 +621,18 @@ const Page = () => {
                                                     onChange={(e) => handleInputChange('name', e.target.value)}
                                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 >
-                                                    {(taxTypes.data ?? []).map((taxType) => (
-                                                        <option key={taxType.id} value={taxType.description ?? ''}>{taxType.description ?? 'Unnamed Tax Type'}</option>
-                                                    ))}
+                                                    {taxTypesResponse?.data?.length === 0 ? (
+                                                        <option value="">No Tax names Available</option>
+                                                    ) : (
+                                                        <>
+                                                            <option value="">Select Tax Name</option>
+                                                            {taxTypesResponse?.data?.map((taxType) => (
+                                                                <option key={taxType.id} value={taxType.description ?? ''}>
+                                                                    {taxType.description ?? 'Unnamed Tax Type'}
+                                                                </option>
+                                                            ))}
+                                                        </>
+                                                    )}
                                                 </select>
                                                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                                             </div>
@@ -643,9 +652,19 @@ const Page = () => {
                                                     onChange={(e) => handleInputChange('taxCode', e.target.value)}
                                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 >
-                                                    {(taxCodes.data ?? []).map((taxCode) => (
-                                                        <option key={taxCode.id} value={taxCode.description ?? ''}>{taxCode.description ?? 'Unnamed Tax Code'}</option>
-                                                    ))}
+                                                    {taxCodesResponse?.data?.length === 0 ? (
+                                                        <option value="">No Tax Codes Available</option>
+                                                    ) : (
+                                                        <>
+                                                            <option value="">Select Tax Code</option>
+                                                            {taxCodesResponse?.data?.map((taxCode) => (
+                                                                <option key={taxCode.id} value={taxCode.description ?? ''}>
+                                                                    {taxCode.description ?? 'Unnamed Tax Code'}
+                                                                </option>
+                                                            ))}
+                                                        </>
+                                                    )}
+
                                                 </select>
                                                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                                             </div>
@@ -700,10 +719,18 @@ const Page = () => {
                                                     onChange={(e) => handleInputChange('region', e.target.value)}
                                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 >
-                                                    <option value="">Select Region</option>
-                                                    {(taxRegions.data ?? []).map((region) => (
-                                                        <option key={region.id} value={region.code}>{region.name}</option>
-                                                    ))}
+                                                    {taxRegionsResponse?.data?.length === 0 ? (
+                                                        <option value="">No Regions Available</option>
+                                                    ) : (
+                                                        <>
+                                                            <option value="">Select Region</option>
+                                                            {taxRegionsResponse?.data?.map((region) => (
+                                                                <option key={region.id} value={region.code}>
+                                                                    {region.name}
+                                                                </option>
+                                                            ))}
+                                                        </>
+                                                    )}
                                                 </select>
                                                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                                             </div>
@@ -784,30 +811,34 @@ const Page = () => {
                                             <Info className="inline w-4 h-4 ml-1 text-gray-400" />
                                         </label>
                                         <div className="relative mb-3">
-                                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                                             <input
                                                 type="text"
-                                                placeholder="Search and select products..."
+                                                placeholder={productsLoading ? 'Loading products...' : 'Type to search products...'}
                                                 value={productSearchTerm}
                                                 onChange={(e) => handleProductSearch(e.target.value)}
-                                                className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                onFocus={() => setShowProductDropdown(true)}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                             />
+                                            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                                             {showProductDropdown && (
-                                                <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto">
-                                                    {isSearching && (
-                                                        <div className="px-3 py-2 text-gray-500">Searching...</div>
+                                                <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto shadow-lg">
+                                                    {productsLoading && (
+                                                        <div className="px-3 py-2 text-gray-500">Loading products...</div>
                                                     )}
-                                                    {searchResults?.data?.map((product) => (
+                                                    {!productsLoading && filteredProducts.length === 0 && (
+                                                        <div className="px-3 py-2 text-gray-500">No products found</div>
+                                                    )}
+                                                    {!productsLoading && filteredProducts.slice(0, 50).map((product) => (
                                                         <div
                                                             key={product.id}
-                                                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                                                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
                                                             onClick={() => selectProduct(product)}
                                                         >
                                                             <div className="font-medium">{product.name}</div>
-                                                            <div className="text-sm text-gray-500">SKU: {product.sku}</div>
+                                                            {product.sku && (
+                                                                <div className="text-sm text-gray-500">SKU: {product.sku}</div>
+                                                            )}
                                                         </div>
-                                                    )) || (!isSearching && debouncedProductSearchTerm && (
-                                                        <div className="px-3 py-2 text-gray-500">No products found</div>
                                                     ))}
                                                 </div>
                                             )}
@@ -815,7 +846,7 @@ const Page = () => {
                                         <div className="flex flex-wrap gap-2">
                                             {formData.selectedProducts.map((product, index) => (
                                                 <span key={index} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm flex items-center">
-                                                    {product}
+                                                    {product.name}
                                                     <button
                                                         onClick={() => removeSelectedItem(product, 'selectedProducts')}
                                                         className="ml-2 text-gray-500 hover:text-gray-700"
@@ -935,57 +966,7 @@ const Page = () => {
 
 
 
-                                    {/* Stores */}
-                                    <div className="mb-6">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Stores
-                                            <Info className="inline w-4 h-4 ml-1 text-gray-400" />
-                                        </label>
-                                        <div className="relative mb-3">
-                                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                            <input
-                                                type="text"
-                                                placeholder="Search and select stores..."
-                                                value={storeSearchTerm}
-                                                onChange={(e) => handleStoreSearch(e.target.value)}
-                                                className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            />
-                                            {showStoreDropdown && (
-                                                <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto">
-                                                    {isStoreSearching && (
-                                                        <div className="px-3 py-2 text-gray-500">Searching...</div>
-                                                    )}
-                                                    {storeSearchResults?.map((store) => (
-                                                        <div
-                                                            key={store.id}
-                                                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                                                            onClick={() => selectStore(store)}
-                                                        >
-                                                            <div className="font-medium">{store.name}</div>
-                                                            {store.address && (
-                                                                <div className="text-sm text-gray-500">{store.address}</div>
-                                                            )}
-                                                        </div>
-                                                    )) || (!isStoreSearching && debouncedStoreSearchTerm && debouncedStoreSearchTerm.length >= 2 && (
-                                                        <div className="px-3 py-2 text-gray-500">No stores found</div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex flex-wrap gap-2">
-                                            {formData.selectedStores.map((store, index) => (
-                                                <span key={index} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm flex items-center">
-                                                    {store}
-                                                    <button
-                                                        onClick={() => removeSelectedItem(store, 'selectedStores')}
-                                                        className="ml-2 text-gray-500 hover:text-gray-700"
-                                                    >
-                                                        <X className="w-3 h-3" />
-                                                    </button>
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
+
                                 </div>
                             </div>
 
@@ -1022,11 +1003,11 @@ const Page = () => {
                                                 {formData.selectedProducts.length === 0 ? (
                                                     <option value="" disabled>
                                                         No product selected
-                                                    </option>   
+                                                    </option>
                                                 ) : (
                                                     formData.selectedProducts.map((product, index) => (
-                                                        <option key={index} value={product}>
-                                                            {product}
+                                                        <option key={index} value={product.name}>
+                                                            {product.name}
                                                         </option>
                                                     ))
                                                 )}
@@ -1036,50 +1017,98 @@ const Page = () => {
                                     </div>
 
                                     <div className="space-y-3 mb-6">
-                                        <div className="flex justify-between">
+                                        {/* <div className="flex justify-between">
                                             <span className="text-gray-600">Product:</span>
-                                            <span className="font-medium">{previewProduct}</span>
-                                        </div>
+                                            <span className="font-medium">{previewProduct || 'No product selected'}</span>
+                                        </div> 
                                         <div className="flex justify-between">
                                             <span className="text-gray-600">Base Price:</span>
                                             <span className="font-medium">${basePrice.toFixed(2)}</span>
                                         </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className=" flex items-center gap-x-2">
-                                                <Check color='#22C55E' size={18} />
-                                                {formData.name} ({formData.taxRate}%)
-                                            </span>
-                                            <span className="font-medium">${vatAmount}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className=" flex items-center  gap-x-2">
-                                                <Check color='#22C55E' size={18} />
-                                                Luxury Duty (Fixed)
-                                            </span>
-                                            <span className="font-medium">${luxuryDuty.toFixed(2)}</span>
-                                        </div>
+                                        
+                                        {formData.name && formData.taxRate && (
+                                            <div className="flex justify-between items-center">
+                                                <span className="flex items-center gap-x-2">
+                                                    <Check color='#22C55E' size={18} />
+                                                    {formData.name} ({formData.taxRate}%)
+                                                </span>
+                                                <span className="font-medium">${vatAmount}</span>
+                                            </div>
+                                        )}
                                         <hr className="my-3" />
                                         <div className="flex justify-between font-semibold text-lg">
                                             <span>Total:</span>
                                             <span>${total.toFixed(2)}</span>
                                         </div>
+                                        */}
                                     </div>
 
                                     <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                                        <h4 className="font-medium mb-3">Tax Summary</h4>
+                                        <h4 className="font-medium mb-3">Tax Configuration</h4>
                                         <div className="space-y-2 text-sm">
-                                            <div className="flex items-start">
-                                                <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
-                                                <span className="text-gray-600">This tax will apply to selected products in the Electronics category</span>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Tax Name:</span>
+                                                <span className="font-medium">{formData.name || 'Not selected'}</span>
                                             </div>
-                                            <div className="flex items-start">
-                                                <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
-                                                <span className="text-gray-600">Conditions: Region is 'PK' AND Total Amount is = $1,000</span>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Tax Code:</span>
+                                                <span className="font-medium">{formData.taxCode || 'Not selected'}</span>
                                             </div>
-                                            <div className="flex items-start">
-                                                <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
-                                                <span className="text-gray-600">Exemptions: Customers with Tax Exempt Certificate</span>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Rate:</span>
+                                                <span className="font-medium">{formData.taxRate ? `${formData.taxRate}%` : 'Not set'}</span>
                                             </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Type:</span>
+                                                <span className="font-medium">{formData.type || 'Not selected'}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Region:</span>
+                                                <span className="font-medium">{formData.region ? taxRegions.find(r => r.code === formData.region)?.name || formData.region : 'Not selected'}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Status:</span>
+                                                <span className={`font-medium ${formData.status === 'Active' ? 'text-green-600' : 'text-gray-600'}`}>{formData.status}</span>
+                                            </div>
+                                            {formData.effective_From && (
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-600">Effective From:</span>
+                                                    <span className="font-medium">{new Date(formData.effective_From).toLocaleDateString()}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-blue-50 rounded-lg p-4 mb-6">
+                                        <h4 className="font-medium mb-3 text-blue-800">Assignment Summary</h4>
+                                        <div className="space-y-2 text-sm">
+                                            <div className="flex justify-between">
+                                                <span className="text-blue-700">Products:</span>
+                                                <span className="font-medium text-blue-800">{formData.selectedProducts.length} selected</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-blue-700">Categories:</span>
+                                                <span className="font-medium text-blue-800">{formData.selectedCategories.length} selected</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-blue-700">Customers:</span>
+                                                <span className="font-medium text-blue-800">{formData.selectedCustomers.length} selected</span>
+                                            </div>
+                                            {formData.selectedProducts.length > 0 && (
+                                                <div className="mt-3 pt-2 border-t border-blue-200">
+                                                    <span className="text-blue-700 text-xs">Selected Products:</span>
+                                                    <div className="mt-1 flex flex-wrap gap-1">
+                                                        {formData.selectedProducts.slice(0, 3).map((product, index) => (
+                                                            <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                                                                {product.name}
+                                                            </span>
+                                                        ))}
+                                                        {formData.selectedProducts.length > 3 && (
+                                                            <span className="text-blue-600 text-xs">+{formData.selectedProducts.length - 3} more</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="flex gap-x-4 w-full sm:w-auto justify-end">

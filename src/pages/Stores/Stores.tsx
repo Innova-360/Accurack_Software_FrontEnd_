@@ -10,9 +10,11 @@ import {
   FaEnvelope,
   FaEdit,
   FaTrash,
+  FaEye,
 } from "react-icons/fa";
 import { SpecialButton, IconButton } from "../../components/buttons";
 import { CreateStoreModal } from "../../components/StoreComponents";
+import ProfileDropdown from "../../components/ProfileDropdown";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   fetchStores,
@@ -21,6 +23,7 @@ import {
   createStore,
 } from "../../store/slices/storeSlice";
 import type { Store, StoreFormData } from "../../types/store";
+import Loading from "../../components/Loading";
 
 const StoresPage: React.FC = () => {
   const navigate = useNavigate();
@@ -50,6 +53,10 @@ const StoresPage: React.FC = () => {
     navigate(`/store/edit/${store.id}`);
   };
 
+  const handleViewStoreDetails = (store: Store) => {
+    navigate(`/store/details/${store.id}`);
+  };
+
   const handleDeleteStore = async (storeId: string) => {
     if (
       window.confirm(
@@ -71,6 +78,7 @@ const StoresPage: React.FC = () => {
       setIsCreateModalOpen(false);
       // Show success message
       toast.success("Store created successfully!");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Failed to create store:", error);
       // Show error message
@@ -112,25 +120,25 @@ const StoresPage: React.FC = () => {
                   Manage your store locations and settings
                 </p>
               </div>
-            </div>{" "}
-            <SpecialButton
-              variant="inventory-primary"
-              onClick={handleCreateStore}
-              icon={<FaPlus />}
-            >
-              Create New Store
-            </SpecialButton>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <SpecialButton
+                variant="inventory-primary"
+                onClick={handleCreateStore}
+                icon={<FaPlus />}
+              >
+                Create New Store
+              </SpecialButton>
+              <ProfileDropdown />
+            </div>
           </div>
         </div>
       </div>{" "}
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (
-          /* Loading State */
-          <div className="text-center py-16">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-teal-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading your stores...</p>
-          </div>
+          <Loading label="Store lOading...." />
         ) : error ? (
           /* Error State */
           <div className="text-center py-16">
@@ -178,7 +186,7 @@ const StoresPage: React.FC = () => {
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center">
                       <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mr-3 overflow-hidden">
-                        {store.logoUrl? (
+                        {store.logoUrl ? (
                           <img
                             src={store.logoUrl}
                             alt={`${store.name} logo`}
@@ -198,6 +206,13 @@ const StoresPage: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex space-x-1">
+                      <IconButton
+                        icon={<FaEye />}
+                        onClick={() => handleViewStoreDetails(store)}
+                        variant="secondary"
+                        size="sm"
+                        title="View Store details"
+                      />
                       <IconButton
                         icon={<FaEdit />}
                         onClick={() => handleEditStore(store)}

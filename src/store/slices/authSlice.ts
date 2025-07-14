@@ -17,14 +17,18 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   loading: boolean;
+  verifyLoading: boolean;
+  resendLoading: boolean;
   error: string | null;
 }
 
 const initialState: AuthState = {
   user: null,
-  token: localStorage.getItem("authToken"),
-  isAuthenticated: !!localStorage.getItem("authToken"),
+  token: null,
+  isAuthenticated: false,
   loading: false,
+  verifyLoading: false,
+  resendLoading: false,
   error: null,
 };
 
@@ -143,10 +147,8 @@ export const logoutUser = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       await apiClient.post("/auth/logout");
-      localStorage.removeItem("authToken");
       return null;
     } catch (error: any) {
-      localStorage.removeItem("authToken");
       return rejectWithValue(error.response?.data?.message || "Logout failed");
     }
   }
@@ -182,7 +184,7 @@ export const googleAuthCallback = createAsyncThunk(
     try {
       // Create a one-time axios instance without credentials for the callback
       const baseUrl =
-        import.meta.env.VITE_API_URL;
+        import.meta.env.VITE_API_URL || "http://localhost:4000/api/v1";
       const response = await axios.post(
         `${baseUrl}/auth/google/callback`,
         callbackData,
@@ -232,6 +234,62 @@ export const verifyOtp = createAsyncThunk(
   }
 );
 
+export const resendOtp = createAsyncThunk(
+  "/auth/resend-otp",
+  async (email: string, { rejectWithValue }) => {
+    try {
+      console.log("📤 Resending OTP to email:", email);
+      const response = await apiClient.post("/auth/resend-otp", { email });
+      console.log("✅ OTP resent successfully:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Resend OTP failed:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to resend OTP";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+// Forgot password async thunk
+export const forgotPassword = createAsyncThunk(
+  "auth/forgotPassword",
+  async (email: string, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.post("/auth/forgot-password", { email });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to send reset email"
+      );
+    }
+  }
+);
+
+// Reset password async thunk
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
+  async (
+    { token, password }: { token: string; password: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await apiClient.post("/auth/reset-password", {
+        token,
+        password,
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to reset password"
+      );
+    }
+  }
+);
+
 export const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -242,7 +300,6 @@ export const authSlice = createSlice({
     },
     setToken: (state, action: PayloadAction<string>) => {
       state.token = action.payload;
-      localStorage.setItem("authToken", action.payload);
     },
     clearError: (state) => {
       state.error = null;
@@ -252,23 +309,9 @@ export const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       state.error = null;
-      localStorage.removeItem("authToken");
     },
-    // Add new reducer to initialize from localStorage
-    initializeFromLocalStorage: (state) => {
-      const token = localStorage.getItem("authToken");
-      const userEmail = localStorage.getItem("userEmail");
-
-      if (token && token !== "undefined" && userEmail) {
-        state.token = token;
-        state.isAuthenticated = true;
-        // Create a basic user object if we have the email
-        state.user = {
-          id: "", // We don't have ID in localStorage
-          email: userEmail,
-          name: userEmail.split("@")[0], // Use email prefix as name
-        };
-      }
+    setAuthenticated: (state, action: PayloadAction<boolean>) => {
+      state.isAuthenticated = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -283,7 +326,6 @@ export const authSlice = createSlice({
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
-        localStorage.setItem("authToken", action.payload.token);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -299,7 +341,6 @@ export const authSlice = createSlice({
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
-        localStorage.setItem("authToken", action.payload.token);
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
@@ -316,7 +357,6 @@ export const authSlice = createSlice({
         // User needs to verify OTP first
         // Just store user email for OTP verification
         if (action.payload.user && action.payload.user.email) {
-          localStorage.setItem("userEmail", action.payload.user.email);
         }
       })
       .addCase(createClientWithAdmin.rejected, (state, action) => {
@@ -327,11 +367,16 @@ export const authSlice = createSlice({
       .addCase(logoutUser.pending, (state) => {
         state.loading = true;
       })
-      .addCase(logoutUser.fulfilled, (state) => {
+      .addCase(logoutUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
+        // Reset user slice as well
+        try {
+          const { store } = require("../store");
+          store.dispatch({ type: "user/clearUser" });
+        } catch (e) {}
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.loading = false;
@@ -340,6 +385,11 @@ export const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
+        // Reset user slice as well
+        try {
+          const { store } = require("../store");
+          store.dispatch({ type: "user/clearUser" });
+        } catch (e) {}
       })
       // Google Auth
       .addCase(googleAuth.pending, (state) => {
@@ -365,7 +415,6 @@ export const authSlice = createSlice({
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
-        localStorage.setItem("authToken", action.payload.token);
       })
       .addCase(googleAuthCallback.rejected, (state, action) => {
         state.loading = false;
@@ -373,20 +422,55 @@ export const authSlice = createSlice({
       })
       // Verify OTP
       .addCase(verifyOtp.pending, (state) => {
-        state.loading = true;
+        state.verifyLoading = true;
         state.error = null;
       })
       .addCase(verifyOtp.fulfilled, (state, action) => {
-        state.loading = false;
+        state.verifyLoading = false;
         // Handle OTP verification success - this might complete registration
         if (action.payload.user && action.payload.token) {
           state.user = action.payload.user;
           state.token = action.payload.token;
           state.isAuthenticated = true;
-          localStorage.setItem("authToken", action.payload.token);
         }
       })
       .addCase(verifyOtp.rejected, (state, action) => {
+        state.verifyLoading = false;
+        state.error = action.payload as string;
+      })
+      // Resend OTP
+      .addCase(resendOtp.pending, (state) => {
+        state.resendLoading = true;
+        state.error = null;
+      })
+      .addCase(resendOtp.fulfilled, (state) => {
+        state.resendLoading = false;
+      })
+      .addCase(resendOtp.rejected, (state, action) => {
+        state.resendLoading = false;
+        state.error = action.payload as string;
+      })
+      // Forgot Password
+      .addCase(forgotPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(forgotPassword.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Reset Password
+      .addCase(resetPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
@@ -398,6 +482,6 @@ export const {
   setToken,
   clearError,
   logout,
-  initializeFromLocalStorage,
+  setAuthenticated,
 } = authSlice.actions;
 export default authSlice.reducer;

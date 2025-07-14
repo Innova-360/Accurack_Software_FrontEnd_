@@ -22,7 +22,18 @@ export const fetchInventorySuppliers = createAsyncThunk(
         suppliers: response.data.data.data.suppliers,
         suppliersCount: response.data.data.data.suppliers?.length,
       });
-      return response.data.data.data.suppliers;
+      // Get all suppliers from the response
+      const allSuppliers = response.data.data.data.suppliers || [];
+
+      // Filter suppliers by active status
+      const activeSuppliers = allSuppliers.filter(
+        (supplier: any) => supplier.status !== "inactive"
+      );
+      console.log(
+        `inventorySupplierSlice: ${activeSuppliers.length} active suppliers out of ${allSuppliers.length} total`
+      );
+
+      return activeSuppliers;
     } catch (error: any) {
       console.error("Error fetching inventory suppliers:", error);
       return rejectWithValue(

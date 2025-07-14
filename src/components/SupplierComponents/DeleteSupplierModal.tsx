@@ -30,7 +30,18 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
   const { loading } = useAppSelector((state) => state.suppliers);
 
   if (!isOpen) return null;
-  if (!isDeleteAll && !supplier) return null; // Helper function to get the valid ID for API operations
+  if (!isDeleteAll && !supplier) return null; 
+
+  // Helper function to detect if supplier is sample data
+  const isSampleData = (supplier: Supplier): boolean => {
+    const id = supplier.id || supplier.supplier_id;
+    if (!id) return false;
+    
+    // Check if ID matches sample data pattern (e.g., SUP001, SUP002, etc.)
+    return id.startsWith("SUP") && id.length <= 10 && /^SUP\d{3}$/.test(id);
+  };
+
+  // Helper function to get the valid ID for API operations
   const getValidSupplierId = (supplier: Supplier): string | null => {
     console.log("Validating supplier ID:", {
       id: supplier.id,
@@ -80,28 +91,53 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
 
         if (!validId) {
           toast.error(
-            "Cannot delete this supplier: No valid ID found. This might be sample data."
+            "Cannot delete this supplier: No valid ID found."
           );
           return;
         }
 
-        console.log(
-          "Deleting supplier with valid ID:",
-          validId,
-          "for store:",
-          currentStore.id
-        );
+       
 
-        const result = await dispatch(
-          deleteSupplier({
-            id: validId,
-            storeId: currentStore.id,
-          })
-        ).unwrap();
+        // Check if this is sample data
+        const isSample = isSampleData(supplier);
+        if (isSample) {
+          console.log("Detected sample data, will handle appropriately");
+        }
 
-        console.log("Supplier deleted successfully:", result);
-        toast.success("Supplier deleted successfully!");
-        onClose();
+        try {
+          const result = await dispatch(
+            deleteSupplier({
+              id: validId,
+              storeId: currentStore.id,
+            })
+          ).unwrap();
+
+          
+          // Show appropriate success message
+          if (isSample) {
+            toast.success("Sample vendor removed from view!");
+          } else {
+            toast.success("Vendor deleted successfully!");
+          }
+          
+          onClose();
+        } catch (deleteError) {
+          console.error("Error in delete operation:", deleteError);
+          
+          // If it's sample data and we got a 404, that's expected
+          if (isSample && deleteError && typeof deleteError === 'object' && 'message' in deleteError) {
+            const errorMessage = deleteError.message as string;
+            if (errorMessage.includes('not found') || errorMessage.includes('404')) {
+              console.log("Sample data delete completed (404 expected)");
+              toast.success("Sample vendor removed from view!");
+              onClose();
+              return;
+            }
+          }
+          
+          // Re-throw for other errors
+          throw deleteError;
+        }
       }
     } catch (error) {
       console.error("Error deleting supplier:", error);
@@ -159,16 +195,16 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
                 <p className="text-gray-700 mb-4">
                   Are you sure you want to delete all{" "}
                   <span className="font-semibold">{supplierCount}</span>{" "}
-                  suppliers? This will permanently remove all supplier data
+                  suppliers? This will permanently remove all vendor data
                   including their contact information, business details, and
                   product relationships.
                 </p>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <p className="text-red-800 text-sm font-medium">
-                    ⚠️ Warning: This action is irreversible
+                  <p className="text-red-600 text-sm font-medium">
+                     Warning: This action is irreversible
                   </p>
-                  <p className="text-red-700 text-sm mt-1">
-                    All supplier data will be permanently deleted and cannot be
+                  <p className="text-red-500 text-sm mt-1">
+                    All vendor data will be permanently deleted and cannot be
                     recovered.
                   </p>
                 </div>
@@ -185,7 +221,7 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
                 {supplier && (
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
                     <h4 className="font-medium text-gray-900 mb-2">
-                      Supplier Details:
+                      Vendor Details:
                     </h4>
                     <div className="text-sm text-gray-600 space-y-1">
                       <p>
@@ -218,11 +254,11 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
                   </div>
                 )}
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <p className="text-red-800 text-sm font-medium">
-                    ⚠️ Warning: This action is irreversible
+                  <p className="text-red-600 text-sm font-medium">
+                     Warning: This action is irreversible
                   </p>
-                  <p className="text-red-700 text-sm mt-1">
-                    The supplier data will be permanently deleted and cannot be
+                  <p className="text-red-500 text-sm mt-1">
+                    The vendor data will be permanently deleted and cannot be
                     recovered.
                   </p>
                 </div>

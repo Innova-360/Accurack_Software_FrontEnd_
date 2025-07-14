@@ -17,7 +17,13 @@ import { taxApi } from "./slices/taxSlice";
 import { categoryApi } from "./slices/categorySlice";
 import { taxReducer } from "./slices/taxSlice";
 import customerReducer from "./slices/customerSlice";
+import driverReducer from "./slices/driverSlice";
+import returnReducer from "./slices/returnSlice";
 import productCategoriesReducer from "./slices/productCategoriesSlice";
+import orderProcessingReducer from "./slices/orderProcessingSlice";
+import orderTrackingReducer from "./slices/orderTrackingSlice";
+import businessReducer from "./slices/businessSlice";
+import invoiceReducer from "./slices/invoiceSlice";
 
 export const store = configureStore({
   reducer: {
@@ -25,6 +31,7 @@ export const store = configureStore({
     auth: authReducer,
     ui: uiReducer,
     search: searchReducer,
+    invoices: invoiceReducer,
     stores: storeReducer,
     suppliers: supplierReducer,
     employees: employeeReducer,
@@ -35,11 +42,17 @@ export const store = configureStore({
     tax: taxReducer,
     sales: salesReducer,
     customers: customerReducer,
+    returns: returnReducer,
     productCategories: productCategoriesReducer,
+    orders: orderProcessingReducer,
+    orderTracking: orderTrackingReducer,
+    business: businessReducer,
     [taxApi.reducerPath]: taxApi.reducer,
+    invoice: invoiceReducer,
     [categoryApi.reducerPath]: categoryApi.reducer,
     [productsApi.reducerPath]: productsApi.reducer,
     [customerApi.reducerPath]: customerApi.reducer,
+    drivers: driverReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

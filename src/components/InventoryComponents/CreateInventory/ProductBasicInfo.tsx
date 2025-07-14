@@ -21,6 +21,21 @@ interface ProductBasicInfoProps {
   // Add categories as props
   categories?: ProductCategory[];
   categoriesLoading?: boolean;
+  onHandleNumericInput: (key: keyof ProductFormData, value: string) => void;
+  missingFields?: string[];
+  // Refs for Required Fields
+  fieldRefs?: {
+    productName?: React.RefObject<HTMLInputElement | null>;
+    category?: React.RefObject<HTMLSelectElement | null>;
+    price?: React.RefObject<HTMLInputElement | null>;
+    pluUpc?: React.RefObject<HTMLInputElement | null>;
+    quantity?: React.RefObject<HTMLInputElement | null>;
+    individualItemQuantity?: React.RefObject<HTMLInputElement | null>;
+    minOrderValue?: React.RefObject<HTMLInputElement | null>;
+    itemCost?: React.RefObject<HTMLInputElement | null>;
+    itemSellingCost?: React.RefObject<HTMLInputElement | null>;
+    minSellingQuantity?: React.RefObject<HTMLInputElement | null>;
+  };
 }
 
 const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
@@ -33,6 +48,9 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
   suppliersError: propSuppliersError,
   categories: propCategories,
   categoriesLoading: propCategoriesLoading,
+  onHandleNumericInput,
+  missingFields = [],
+  fieldRefs,
 }) => {
   const dispatch = useDispatch();
   // Use suppliers from props if available, otherwise fall back to Redux
@@ -310,8 +328,11 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
           <input
             type="text"
             value={formData.productName}
+            ref={fieldRefs?.productName}
             onChange={(e) => onFormDataChange("productName", e.target.value)}
-            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+            className={`w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border rounded-lg
+    ${missingFields.includes("productName") ? "border-red-500" : "border-gray-300"}
+    focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400`}
             placeholder="Enter product name"
             required
           />
@@ -332,9 +353,12 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                 onFormDataChange("category", value);
               }
             }}
-            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+            className={`w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border rounded-lg
+    ${missingFields.includes("category") ? "border-red-500" : "border-gray-300"}
+    focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400`}
             required
             disabled={isCreatingCategory}
+            ref={fieldRefs?.category}
           >
             <option value="">
               {effectiveCategoriesLoading
@@ -548,12 +572,25 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
             <span className="absolute left-3 top-3 text-gray-500">$</span>
             <input
               type="number"
-              step="0.01"
+              min="0"
               value={formData.price}
-              onChange={(e) => onFormDataChange("price", e.target.value)}
-              className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+              onChange={(e) => onHandleNumericInput("price", e.target.value)}
+              onKeyDown={(e) => {
+                if (
+                  e.key === "-" ||
+                  e.key === "e" ||
+                  e.key === "+" ||
+                  e.key === "."
+                ) {
+                  e.preventDefault();
+                }
+              }}
+              className={`w-full pl-8 pr-4 py-3 border rounded-lg
+    ${missingFields.includes("price") ? "border-red-500" : "border-gray-300"}
+    focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400`}
               placeholder="0.00"
               required
+              ref={fieldRefs?.price}
             />
           </div>
         </div>{" "}
@@ -563,7 +600,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">
-                Vendor *
+                Vendor
               </label>
               <select
                 value={formData.supplierId}
@@ -578,7 +615,6 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                     ? "bg-gray-100 cursor-not-allowed text-gray-500"
                     : ""
                 }`}
-                required={suppliers && suppliers.length > 0}
                 disabled={
                   !suppliersLoading &&
                   !suppliersError &&
@@ -612,30 +648,11 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                   {suppliersError}
                 </div>
               )}
-              {/* Show helpful message when no suppliers exist */}
-              {!suppliersLoading &&
-                !suppliersError &&
-                (!suppliers || suppliers.length === 0) && (
-                  <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <div className="flex items-center space-x-2 text-yellow-800 text-sm">
-                      <svg
-                        className="w-4 h-4"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      <span>
-                        No suppliers found. Please add suppliers first to
-                        continue.
-                      </span>
-                    </div>
-                  </div>
-                )}
+              {/* Note: Supplier selection is optional */}
+              <div className="mt-1 text-xs text-gray-500 italic">
+                Selecting a supplier is optional. You can add or assign a
+                supplier later.
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -646,9 +663,22 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                 </span>
               </label>
               <input
-                type="text"
+                type="number"
+                min="0"
                 value={formData.customSku}
-                onChange={(e) => onFormDataChange("customSku", e.target.value)}
+                onChange={(e) =>
+                  onHandleNumericInput("customSku", e.target.value)
+                }
+                onKeyDown={(e) => {
+                  if (
+                    e.key === "-" ||
+                    e.key === "e" ||
+                    e.key === "+" ||
+                    e.key === "."
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
                 placeholder="Optional custom SKU"
               />
@@ -661,9 +691,20 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                 </span>
               </label>
               <input
-                type="text"
+                type="number"
+                min="0"
                 value={formData.ean}
-                onChange={(e) => onFormDataChange("ean", e.target.value)}
+                onChange={(e) => onHandleNumericInput("ean", e.target.value)}
+                onKeyDown={(e) => {
+                  if (
+                    e.key === "-" ||
+                    e.key === "e" ||
+                    e.key === "+" ||
+                    e.key === "."
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
                 placeholder="EAN barcode"
               />
@@ -673,10 +714,24 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                 PLU/UPC *
               </label>
               <input
-                type="text"
+                type="number"
+                min="0"
                 value={formData.pluUpc}
-                onChange={(e) => onFormDataChange("pluUpc", e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                ref={fieldRefs?.pluUpc}
+                onChange={(e) => onHandleNumericInput("pluUpc", e.target.value)}
+                onKeyDown={(e) => {
+                  if (
+                    e.key === "-" ||
+                    e.key === "e" ||
+                    e.key === "+" ||
+                    e.key === "."
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                className={`w-full px-4 py-3 border rounded-lg
+    ${missingFields.includes("pluUpc") ? "border-red-500" : "border-gray-300"}
+    focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400`}
                 placeholder="PLU or UPC code"
                 required
               />
@@ -687,14 +742,27 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
               </label>
               <input
                 type="number"
-                min="1"
+                min="0"
                 value={formData.individualItemQuantity}
                 onChange={(e) =>
-                  onFormDataChange("individualItemQuantity", e.target.value)
+                  onHandleNumericInput("individualItemQuantity", e.target.value)
                 }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                onKeyDown={(e) => {
+                  if (
+                    e.key === "-" ||
+                    e.key === "e" ||
+                    e.key === "+" ||
+                    e.key === "."
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                className={`w-full px-4 py-3 border rounded-lg
+    ${missingFields.includes("individualItemQuantity") ? "border-red-500" : "border-gray-300"}
+    focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400`}
                 placeholder="1"
                 required
+                ref={fieldRefs?.individualItemQuantity}
               />
             </div>
           </div>
@@ -728,9 +796,22 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                 <span className="absolute left-3 top-3 text-gray-500">$</span>
                 <input
                   type="number"
-                  step="0.01"
+                  min="0"
                   value={formData.itemCost}
-                  onChange={(e) => onFormDataChange("itemCost", e.target.value)}
+                  ref={fieldRefs?.itemCost} // Added ref
+                  onChange={(e) =>
+                    onHandleNumericInput("itemCost", e.target.value)
+                  }
+                  onKeyDown={(e) => {
+                    if (
+                      e.key === "-" ||
+                      e.key === "e" ||
+                      e.key === "+" ||
+                      e.key === "."
+                    ) {
+                      e.preventDefault();
+                    }
+                  }}
                   className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
                   placeholder="0.00"
                   required
@@ -746,11 +827,22 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                 <span className="absolute left-3 top-3 text-gray-500">$</span>
                 <input
                   type="number"
-                  step="0.01"
+                  min="0"
                   value={formData.itemSellingCost}
+                  ref={fieldRefs?.itemSellingCost} // Added ref
                   onChange={(e) =>
-                    onFormDataChange("itemSellingCost", e.target.value)
+                    onHandleNumericInput("itemSellingCost", e.target.value)
                   }
+                  onKeyDown={(e) => {
+                    if (
+                      e.key === "-" ||
+                      e.key === "e" ||
+                      e.key === "+" ||
+                      e.key === "."
+                    ) {
+                      e.preventDefault();
+                    }
+                  }}
                   className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400 ${
                     !isSellingCostValid() &&
                     formData.itemCost &&
@@ -788,11 +880,22 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
               </label>
               <input
                 type="number"
-                min="1"
+                min="0"
                 value={formData.minSellingQuantity}
+                ref={fieldRefs?.minSellingQuantity} // Added ref
                 onChange={(e) =>
-                  onFormDataChange("minSellingQuantity", e.target.value)
+                  onHandleNumericInput("minSellingQuantity", e.target.value)
                 }
+                onKeyDown={(e) => {
+                  if (
+                    e.key === "-" ||
+                    e.key === "e" ||
+                    e.key === "+" ||
+                    e.key === "."
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
                 placeholder="1"
                 required
@@ -809,11 +912,21 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                 <span className="absolute left-3 top-3 text-gray-500">$</span>
                 <input
                   type="number"
-                  step="0.01"
+                  min="0"
                   value={formData.msrpPrice}
                   onChange={(e) =>
-                    onFormDataChange("msrpPrice", e.target.value)
+                    onHandleNumericInput("msrpPrice", e.target.value)
                   }
+                  onKeyDown={(e) => {
+                    if (
+                      e.key === "-" ||
+                      e.key === "e" ||
+                      e.key === "+" ||
+                      e.key === "."
+                    ) {
+                      e.preventDefault();
+                    }
+                  }}
                   className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
                   placeholder="0.00"
                 />
@@ -831,11 +944,22 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                 <span className="absolute left-3 top-3 text-gray-500">$</span>
                 <input
                   type="number"
-                  step="0.01"
+                  min="0"
                   value={formData.minOrderValue}
+                  ref={fieldRefs?.minOrderValue}
                   onChange={(e) =>
-                    onFormDataChange("minOrderValue", e.target.value)
+                    onHandleNumericInput("minOrderValue", e.target.value)
                   }
+                  onKeyDown={(e) => {
+                    if (
+                      e.key === "-" ||
+                      e.key === "e" ||
+                      e.key === "+" ||
+                      e.key === "."
+                    ) {
+                      e.preventDefault();
+                    }
+                  }}
                   className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400 ${
                     !isMinOrderValueValid() && formData.minOrderValue
                       ? "border-red-300 bg-red-50"
@@ -929,14 +1053,24 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                   )}
                   <input
                     type="number"
-                    step="0.01"
+                    min="0"
                     value={formData.orderValueDiscountValue}
                     onChange={(e) =>
-                      onFormDataChange(
+                      onHandleNumericInput(
                         "orderValueDiscountValue",
                         e.target.value
                       )
                     }
+                    onKeyDown={(e) => {
+                      if (
+                        e.key === "-" ||
+                        e.key === "e" ||
+                        e.key === "+" ||
+                        e.key === "."
+                      ) {
+                        e.preventDefault();
+                      }
+                    }}
                     disabled={!formData.orderValueDiscountType}
                     placeholder={
                       formData.orderValueDiscountType === "percentage"
@@ -1012,11 +1146,25 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
               </label>
               <input
                 type="number"
+                min="0"
                 value={formData.quantity}
-                onChange={(e) => onFormDataChange("quantity", e.target.value)}
+                onChange={(e) =>
+                  onHandleNumericInput("quantity", e.target.value)
+                }
+                onKeyDown={(e) => {
+                  if (
+                    e.key === "-" ||
+                    e.key === "e" ||
+                    e.key === "+" ||
+                    e.key === "."
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
                 placeholder="Stock quantity"
                 required
+                ref={fieldRefs?.quantity}
               />
             </div>
 

@@ -1,9 +1,12 @@
 import { useMemo } from "react";
 import type { Product } from "../data/inventoryData";
 
-export const useInventoryStats = (products: Product[]) => {
+export const useInventoryStats = (
+  products: Product[],
+  pagination: { total: number }
+) => {
   return useMemo(() => {
-    const totalProducts = products.length;
+    const totalProducts = pagination.total;
     const totalItems = products.reduce(
       (sum, product) => sum + product.quantity,
       0

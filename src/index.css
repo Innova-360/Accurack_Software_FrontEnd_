@@ -277,6 +277,43 @@
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
+/* Modal entrance animation */
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-modal-enter {
+  animation: modalEnter 0.3s ease-out;
+}
+
+/* Enhanced input focus styles */
+.input-focus-ring {
+  transition: all 0.2s ease;
+}
+
+.input-focus-ring:focus {
+  box-shadow:
+    0 0 0 3px rgba(15, 77, 87, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Button hover effects */
+.btn-gradient-hover {
+  transition: all 0.2s ease;
+}
+
+.btn-gradient-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(15, 77, 87, 0.2);
+}
+
 /* Milestone progress animations */
 .milestone-complete {
   animation: successPulse 1s ease-out;
@@ -345,4 +382,30 @@
 
 .animate-form-slide-in {
   animation: formSlideIn 0.5s ease-out;
+}
+
+
+@media print {
+  
+  body * {
+    visibility: hidden !important;
+  }
+
+  .printable-receipt, .printable-receipt * {
+    visibility: visible !important;
+  }
+
+  .printable-receipt {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Optional: Hide URL at bottom */
+  @page {
+    margin: 0;
+  }
 }

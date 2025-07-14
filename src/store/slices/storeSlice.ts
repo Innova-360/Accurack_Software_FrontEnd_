@@ -100,6 +100,9 @@ export const searchStores = createAsyncThunk(
   }
 );
 
+
+
+
 export const storeSlice = createSlice({
   name: "stores",
   initialState,
@@ -218,11 +221,6 @@ export const storeSlice = createSlice({
       });
   },
 });
-
-
-
-
-
 
 export const {
   setCurrentStore,

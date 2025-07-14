@@ -1,16 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import type { RootState, AppDispatch } from '../../store';
-import { fetchEmployees } from '../../store/slices/employeeSlice';
-import EmployeeTable from './EmployeeTable';
-import EmployeeForm from './EmployeeForm';
-import EmployeeInviteModal from './EmployeeInviteModal';
-import EmployeeActionsModal from './EmployeeActionsModal';
-import EmployeePermissionsModal from './EmployeePermissionsModal';
-import RoleTemplateManagement from './RoleTemplateManagement';
-import type { EmployeeAPIData } from '../../types/employee';
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState, AppDispatch } from "../../store";
+import { fetchEmployees } from "../../store/slices/employeeSlice";
+import EmployeeTable from "./EmployeeTable";
+import EmployeeForm from "./EmployeeForm";
+import EmployeeInviteModal from "./EmployeeInviteModal";
+import EmployeeActionsModal from "./EmployeeActionsModal";
+import EmployeePermissionsModal from "./EmployeePermissionsModal";
+import RoleTemplateManagement from "./RoleTemplateManagement";
+import type { EmployeeAPIData } from "../../types/employee";
+import {
+  FaUsers,
+  FaUserCheck,
+  FaUserTimes,
+  FaPlus,
+  FaStore,
+} from "react-icons/fa";
 
-type ViewMode = 'dashboard' | 'create' | 'edit' | 'roles';
+type ViewMode = "dashboard" | "create" | "edit" | "roles";
 
 const EmployeeDashboard: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -18,29 +25,32 @@ const EmployeeDashboard: React.FC = () => {
     (state: RootState) => state.employees
   );
 
-  const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
-  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeAPIData | null>(null);
+  const [currentView, setCurrentView] = useState<ViewMode>("dashboard");
+  const [selectedEmployee, setSelectedEmployee] =
+    useState<EmployeeAPIData | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showActionsModal, setShowActionsModal] = useState(false);
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    dispatch(fetchEmployees({ 
-      storeId: undefined, 
-      page: currentPage, 
-      limit: 10 
-    }));
+    dispatch(
+      fetchEmployees({
+        storeId: undefined,
+        page: currentPage,
+        limit: 10,
+      })
+    );
   }, [dispatch, currentPage]);
 
   const handleCreateEmployee = () => {
     setSelectedEmployee(null);
-    setCurrentView('create');
+    setCurrentView("create");
   };
 
   const handleEditEmployee = (employee: EmployeeAPIData) => {
     setSelectedEmployee(employee);
-    setCurrentView('edit');
+    setCurrentView("edit");
   };
 
   const handleViewPermissions = (employee: EmployeeAPIData) => {
@@ -54,71 +64,77 @@ const EmployeeDashboard: React.FC = () => {
   };
 
   const handleFormSubmit = () => {
-    setCurrentView('dashboard');
+    setCurrentView("dashboard");
     setSelectedEmployee(null);
     // Refresh the employee list
-    dispatch(fetchEmployees({ 
-      storeId: undefined, 
-      page: currentPage, 
-      limit: 10 
-    }));
+    dispatch(
+      fetchEmployees({
+        storeId: undefined,
+        page: currentPage,
+        limit: 10,
+      })
+    );
   };
 
   const handleFormCancel = () => {
-    setCurrentView('dashboard');
+    setCurrentView("dashboard");
     setSelectedEmployee(null);
   };
 
   const renderStats = () => {
-    const activeEmployees = employees.filter(emp => emp.status === 'active').length;
-    const inactiveEmployees = employees.filter(emp => emp.status === 'inactive').length;
-    const totalStores = new Set(employees.flatMap(emp => emp.storeIds)).size;
+    const activeEmployees = employees.filter(
+      (emp) => emp.status === "active"
+    ).length;
+    const inactiveEmployees = employees.filter(
+      (emp) => emp.status === "inactive"
+    ).length;
+    const totalStores = new Set(employees.flatMap((emp) => emp.storeIds)).size;
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border-[#043E49]">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <svg className="w-6 h-6 text-[#043E49]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
+            <div className="p-3 bg-[#043E49] bg-opacity-10 rounded-lg">
+              <FaUsers className="w-6 h-6 text-[white]" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Employees</p>
-              <p className="text-2xl font-bold text-gray-900">{employees.length}</p>
+              <p className="text-sm font-medium text-gray-600">
+                Total Employees
+              </p>
+              <p className="text-2xl font-bold text-[#043E49]">
+                {employees.length}
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border-[#043E49]">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+            <div className="p-3 bg-[#043E49] bg-opacity-10 rounded-lg">
+              <FaUserCheck className="w-6 h-6 text-[white]" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Active</p>
-              <p className="text-2xl font-bold text-gray-900">{activeEmployees}</p>
+              <p className="text-2xl font-bold text-[#043E49]">
+                {activeEmployees}
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border-[#043E49]">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+            <div className="p-3 bg-[#043E49] bg-opacity-10 rounded-lg">
+              <FaUserTimes className="w-6 h-6 text-[white]" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Inactive</p>
-              <p className="text-2xl font-bold text-gray-900">{inactiveEmployees}</p>
+              <p className="text-2xl font-bold text-[#043E49]">
+                {inactiveEmployees}
+              </p>
             </div>
           </div>
         </div>
-
-       
       </div>
     );
   };
@@ -126,21 +142,21 @@ const EmployeeDashboard: React.FC = () => {
   const renderNavigation = () => (
     <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
       <button
-        onClick={() => setCurrentView('dashboard')}
+        onClick={() => setCurrentView("dashboard")}
         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-          currentView === 'dashboard'
-            ? 'bg-white text-[#043E49] shadow-sm'
-            : 'text-[#043E49] hover:text-gray-900'
+          currentView === "dashboard"
+            ? "bg-white text-[#043E49] shadow-sm"
+            : "text-gray-600 hover:text-[#043E49]"
         }`}
       >
         Employee Management
       </button>
       <button
-        onClick={() => setCurrentView('roles')}
+        onClick={() => setCurrentView("roles")}
         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-          currentView === 'roles'
-            ? 'bg-white text-[#043E49] shadow-sm'
-            : 'text-gray-600 hover:text-gray-900'
+          currentView === "roles"
+            ? "bg-white text-[#043E49] shadow-sm"
+            : "text-gray-600 hover:text-[#043E49]"
         }`}
       >
         Role Templates
@@ -152,23 +168,11 @@ const EmployeeDashboard: React.FC = () => {
     <div className="flex flex-wrap gap-3 mb-6">
       <button
         onClick={handleCreateEmployee}
-        className="bg-[#043E49] text-white px-4 py-2 rounded-lg hover:bg-[#043E49] transition-colors flex items-center"
+        className="bg-[#043E49] text-white px-4 py-2 rounded-lg hover:bg-[#032e36] transition-colors flex items-center"
       >
-        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
+        <FaPlus className="w-4 h-4 mr-2" />
         Add Employee
       </button>
-      
-      {/* <button
-        onClick={() => setShowInviteModal(true)}
-        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center"
-      >
-        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-        Invite Employee
-      </button> */}
     </div>
   );
 
@@ -178,36 +182,45 @@ const EmployeeDashboard: React.FC = () => {
     return (
       <div className="flex items-center justify-between mt-6">
         <div className="text-sm text-gray-700">
-          Showing {((currentPage - 1) * pagination.limit) + 1} to {Math.min(currentPage * pagination.limit, pagination.total)} of {pagination.total} results
+          Showing {(currentPage - 1) * pagination.limit + 1} to{" "}
+          {Math.min(currentPage * pagination.limit, pagination.total)} of{" "}
+          {pagination.total} results
         </div>
         <div className="flex space-x-2">
           <button
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
             className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
           >
             Previous
           </button>
-          
-          {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-            const page = i + 1;
-            return (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`px-3 py-1 border rounded-md text-sm ${
-                  currentPage === page
-                    ? 'bg-[#043E49] text-white border-[#043E49]'
-                    : 'border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                {page}
-              </button>
-            );
-          })}
-          
+
+          {Array.from(
+            { length: Math.min(5, pagination.totalPages) },
+            (_, i) => {
+              const page = i + 1;
+              return (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-1 border rounded-md text-sm ${
+                    currentPage === page
+                      ? "bg-[#043E49] text-white border-[#043E49]"
+                      : "border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  {page}
+                </button>
+              );
+            }
+          )}
+
           <button
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, pagination.totalPages))}
+            onClick={() =>
+              setCurrentPage((prev) =>
+                Math.min(prev + 1, pagination.totalPages)
+              )
+            }
             disabled={currentPage === pagination.totalPages}
             className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
           >
@@ -222,8 +235,12 @@ const EmployeeDashboard: React.FC = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-[#043E49]">Employee & Role Management</h1>
-          <p className="text-gray-600 mt-2">Manage your employees, roles, and permissions</p>
+          <h1 className="text-3xl font-bold text-[#043E49]">
+            Employee & Role Management
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Manage your employees, roles, and permissions
+          </p>
         </div>
 
         {renderNavigation()}
@@ -234,7 +251,7 @@ const EmployeeDashboard: React.FC = () => {
           </div>
         )}
 
-        {currentView === 'dashboard' && (
+        {currentView === "dashboard" && (
           <>
             {renderStats()}
             {renderActionButtons()}
@@ -249,7 +266,7 @@ const EmployeeDashboard: React.FC = () => {
           </>
         )}
 
-        {currentView === 'create' && (
+        {currentView === "create" && (
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-bold mb-4">Create New Employee</h2>
             <EmployeeForm
@@ -260,7 +277,7 @@ const EmployeeDashboard: React.FC = () => {
           </div>
         )}
 
-        {currentView === 'edit' && selectedEmployee && (
+        {currentView === "edit" && selectedEmployee && (
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-bold mb-4">Edit Employee</h2>
             <EmployeeForm
@@ -272,7 +289,7 @@ const EmployeeDashboard: React.FC = () => {
           </div>
         )}
 
-        {currentView === 'roles' && <RoleTemplateManagement />}
+        {currentView === "roles" && <RoleTemplateManagement />}
 
         {/* Modals */}
         <EmployeeInviteModal

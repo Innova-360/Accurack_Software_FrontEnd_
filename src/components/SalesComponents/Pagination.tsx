@@ -25,7 +25,7 @@ const Pagination: React.FC<PaginationProps> = ({
   return (
     <div className="flex justify-between items-center mt-6">
       <div className="text-sm text-gray-500">
-        Showing {startIndex + 1}-{endIndex} of {totalItems}
+        Showing {startIndex}-{endIndex} of {totalItems}
       </div>
       
       {/* Centered Page Numbers */}

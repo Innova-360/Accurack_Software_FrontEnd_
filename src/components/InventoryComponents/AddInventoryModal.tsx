@@ -100,7 +100,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({
                 </svg>
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-lg">Upload Inventory</h3>
+                <h3 className="font-semibold text-lg">Upload Inventory File</h3>
                 <p className="text-gray-600 group-hover:text-gray-200 text-sm">
                   Upload an Excel file with multiple products
                 </p>

@@ -1,12 +1,12 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { uploadImageToCloudinary } from "../../services/cloudinary"; // Adjust path as needed
+import { uploadImageToCloudinary } from "../../services/cloudinary";
 import { FaCloudUploadAlt } from "react-icons/fa";
 import { FiLoader } from "react-icons/fi";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { setBusinessDetails, fetchBusinessDetails, clearError } from "../../store/slices/businessSlice";
 
 const initialState = {
-  clientId: "",
   businessName: "",
   contactNo: "",
   website: "",
@@ -14,7 +14,7 @@ const initialState = {
   logoUrl: "",
 };
 
- 
+
 
 const validateUrl = (url) => {
   if (!url) return true;
@@ -27,10 +27,28 @@ const validateUrl = (url) => {
 };
 
 const BusinessForm = () => {
+  const dispatch = useAppDispatch();
+  const { businessDetails, loading, error } = useAppSelector((state) => state.business);
   const [form, setForm] = useState(initialState);
-  const [submitting, setSubmitting] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    dispatch(fetchBusinessDetails());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (businessDetails) {
+      setForm(businessDetails);
+    }
+  }, [businessDetails]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(clearError());
+    }
+  }, [error, dispatch]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -52,6 +70,8 @@ const BusinessForm = () => {
       setForm((prev) => ({ ...prev, logoUrl: url }));
       toast.success("Logo uploaded!");
     } catch (err) {
+      console.log("error uploading logo:", err);
+
       toast.error("Logo upload failed");
     } finally {
       setLogoUploading(false);
@@ -60,39 +80,25 @@ const BusinessForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Validation
-    if (!form.clientId || !form.businessName || !form.contactNo) {
+    if (!form.businessName || !form.contactNo) {
       toast.error("Please fill all required fields.");
-      return;
-    }
-    if (!validatePhone(form.contactNo)) {
-      toast.error("Invalid phone number format.");
       return;
     }
     if (form.website && !validateUrl(form.website)) {
       toast.error("Invalid website URL.");
       return;
     }
-    setSubmitting(true);
-    const payload = { ...form };
-    toast.loading("Registering business...", { id: "submit-toast" });
+    
     try {
-      await axios.post("/api/v1/business", payload);
-      toast.success("Business registered!", { id: "submit-toast" });
-      setForm(initialState);
-    } catch (err) {
-      toast.error(
-        err?.response?.data?.message || "Registration failed.",
-        { id: "submit-toast" }
-      );
-    } finally {
-      setSubmitting(false);
+      await dispatch(setBusinessDetails(form)).unwrap();
+      toast.success("Business details saved successfully!");
+    } catch (error) {
+      // Error is handled by useEffect
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Toaster position="top-right" />
       <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-lg">
         <h2 className="text-2xl font-bold text-[#043E49] mb-2 text-center">Business Registration</h2>
         <p className="text-gray-500 mb-6 text-center">Register your business to get started</p>
@@ -163,53 +169,53 @@ const BusinessForm = () => {
           {/* Logo Upload */}
           <div>
             <label className="block text-sm font-medium text-[#043E49] mb-1">Logo</label>
-          <div className="flex items-center space-x-4">
-      {/* Upload Button */}
-      <button
-  type="button"
-  onClick={handleLogoUpload}
-  disabled={logoUploading}
-  className="flex items-center justify-center gap-2 px-6 py-3 bg-[#043E49] text-white rounded hover:bg-[#032B2E] disabled:opacity-50 disabled:cursor-not-allowed"
->
-  <FaCloudUploadAlt className="w-5 h-5" />
-  <span>{logoUploading ? "Uploading..." : "Upload your Logo"}</span>
-</button>
+            <div className="flex items-center space-x-4">
+              {/* Upload Button */}
+              <button
+                type="button"
+                onClick={handleLogoUpload}
+                disabled={logoUploading}
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-[#043E49] text-white rounded hover:bg-[#032B2E] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <FaCloudUploadAlt className="w-5 h-5" />
+                <span>{logoUploading ? "Uploading..." : "Upload your Logo"}</span>
+              </button>
 
 
-      {/* Hidden File Input */}
-      <input
-        type="file"
-        accept="image/*"
-        ref={fileInputRef}
-        onChange={handleLogoUpload}
-        className="hidden"
-        disabled={logoUploading}
-      />
+              {/* Hidden File Input */}
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleLogoUpload}
+                className="hidden"
+                disabled={logoUploading}
+              />
 
-      {/* Spinner */}
-      {logoUploading && (
-        <FiLoader className="animate-spin text-[#043E49] w-5 h-5" />
-      )}
+              {/* Spinner */}
+              {logoUploading && (
+                <FiLoader className="animate-spin text-[#043E49] w-5 h-5" />
+              )}
 
-      {/* Uploaded Logo Preview */}
-      {form.logoUrl && (
-        <img
-          src={form.logoUrl}
-          alt="Logo"
-          className="w-10 h-10 rounded object-cover border lg:ml-[100px]"
-        />
-      )}
-    </div>
+              {/* Uploaded Logo Preview */}
+              {form.logoUrl && (
+                <img
+                  src={form.logoUrl}
+                  alt="Logo"
+                  className="w-10 h-10 rounded object-cover border lg:ml-[100px]"
+                />
+              )}
+            </div>
 
           </div>
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={submitting}
+            disabled={loading}
             className="w-full py-2 px-4 bg-[#043E49] text-white rounded hover:bg-[#032B2E] transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? <FiLoader className="animate-spin w-5 h-5" /> : ''}
-            {submitting ? "Registering..." : "Register Business"}
+            {loading ? <FiLoader className="animate-spin w-5 h-5" /> : ''}
+            {loading ? "Saving..." : "Save Business Details"}
           </button>
         </form>
       </div>

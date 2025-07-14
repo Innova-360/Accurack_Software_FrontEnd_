@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { TaxType, TaxCode, TaxRegion, TaxRate } from '../../types/tax';
+import type {  TaxCode, TaxRegion, TaxRate, TaxTypeResponse, TaxRegionResponse } from '../../types/tax';
 
 // Request types for creating new records
 export interface CreateTaxTypeRequest {
@@ -40,21 +40,31 @@ export interface BulkTaxAssignmentRequest {
   assignments: TaxAssignment[];
 }
 
+export interface BulkAssignTaxResponse {
+  success: boolean;
+  message: string;
+  data: {
+    count: number;
+  };
+  status: number;
+  timestamp: string; // ISO date string
+}
+
 // Async thunk for fetching countries
 export const fetchCountriesThunk = createAsyncThunk(
   'tax/fetchCountries',
   async () => {
     const response = await fetch('https://countriesnow.space/api/v0.1/countries/');
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch countries');
     }
-    
+
     const data = await response.json();
     if (data.error) {
       throw new Error('Failed to fetch countries');
     }
-    
+
     return data.data;
   }
 );
@@ -70,14 +80,29 @@ export const createTaxRateThunk = createAsyncThunk(
       },
       body: JSON.stringify(taxRateData),
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to create tax rate');
     }
-    
+
     return response.json();
   }
 );
+
+
+export interface CountryWithCities {
+  iso2: string;
+  iso3: string;
+  country: string;
+  cities: string[];
+}
+
+export interface CountriesResponse {
+  error: boolean;
+  msg: string;
+  data: CountryWithCities[];
+}
+
 
 // Tax slice for handling tax rate creation state and countries
 const taxSlice = createSlice({
@@ -85,7 +110,7 @@ const taxSlice = createSlice({
   initialState: {
     isCreating: false,
     createError: null as string | null,
-    countries: [] as any[],
+    countries: [] as CountryWithCities[],
     countriesLoading: false,
     countriesError: null as string | null,
   },
@@ -127,23 +152,23 @@ export const taxApi = createApi({
   }),
   tagTypes: ['TaxType', 'TaxCode', 'TaxRegion', 'TaxRate'],
   endpoints: (builder) => ({
-    getTaxTypes: builder.query<TaxType[], void>({
+    getTaxTypes: builder.query<TaxTypeResponse, void>({
       query: () => '/type',
       providesTags: ['TaxType'],
     }),
-    getTaxCodes: builder.query<TaxCode[], void>({
+    getTaxCodes: builder.query<TaxCode, void>({
       query: () => '/code',
       providesTags: ['TaxCode'],
     }),
-    getTaxRegions: builder.query<TaxRegion[], void>({
+    getTaxRegions: builder.query<TaxRegionResponse, void>({
       query: () => '/region',
       providesTags: ['TaxRegion'],
     }),
-    getTaxRates: builder.query<TaxRate[], void>({
+    getTaxRates: builder.query<TaxRate, void>({
       query: () => '/rate',
       providesTags: ['TaxRate'],
     }),
-    createTaxType: builder.mutation<TaxType, CreateTaxTypeRequest>({
+    createTaxType: builder.mutation<TaxTypeResponse, CreateTaxTypeRequest>({
       query: (data) => ({
         url: '/type',
         method: 'POST',
@@ -175,14 +200,14 @@ export const taxApi = createApi({
       }),
       invalidatesTags: ['TaxRate'],
     }),
-    bulkAssignTax: builder.mutation<any, BulkTaxAssignmentRequest>({
+    bulkAssignTax: builder.mutation<BulkAssignTaxResponse, BulkTaxAssignmentRequest>({
       query: (data) => ({
         url: '/assign/bulk',
         method: 'POST',
         body: data,
       }),
       invalidatesTags: ['TaxRate'],
-    }),
+    })
   }),
 });
 

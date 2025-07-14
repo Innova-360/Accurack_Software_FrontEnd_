@@ -5,15 +5,18 @@ import { useNavigate, useParams } from "react-router-dom";
 import Header from "../../components/Header";
 import SalesHeader from "../../components/SalesComponents/SalesHeader";
 import StatsGrid from "../../components/SalesComponents/StatsGrid";
+import StatusTabs from "../../components/SalesComponents/StatusTabs";
 import FilterBar from "../../components/SalesComponents/FilterBar";
 import TransactionTable from "../../components/SalesComponents/TransactionTable";
 import Pagination from "../../components/SalesComponents/Pagination";
 import EditTransactionModal from "../../components/SalesComponents/EditTransactionModal";
 import ViewTransactionModal from "../../components/SalesComponents/ViewTransactionModal";
 import DeleteConfirmModal from "../../components/SalesComponents/DeleteConfirmModal";
-import { fetchSales } from "../../store/slices/salesSlice";
+import SaleCreationModal from "../../components/modals/SaleCreationModal";
+import { fetchSales, updateSale } from "../../store/slices/salesSlice";
 import type { RootState, AppDispatch } from "../../store";
 import useRequireStore from "../../hooks/useRequireStore";
+import UploadSalesModal from "../../components/SalesComponents/UploadSalesModal";
 
 const SalesPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -21,8 +24,11 @@ const SalesPage: React.FC = () => {
   const { id: storeId } = useParams<{ id?: string }>();
   const currentStore = useRequireStore();
 
+  const [isUploadSalesModalOpen, setIsUploadSalesModalOpen] =
+      useState(false);
+
   // Redux state
-  const { sales, loading, error } = useSelector(
+  const { sales, loading, error, pagination } = useSelector(
     (state: RootState) => state.sales
   );
 
@@ -103,9 +109,10 @@ const SalesPage: React.FC = () => {
 
   // Local state for UI
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeStatusTab, setActiveStatusTab] = useState("All"); // New state for status tabs
   const [statusFilter, setStatusFilter] = useState("All");
   const [paymentFilter, setPaymentFilter] = useState("All");
-  const [cashierFilter, setCashierFilter] = useState("All");
+  // const [cashierFilter, setCashierFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("Today");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -121,9 +128,10 @@ const SalesPage: React.FC = () => {
       };
       console.log("type of page:", typeof params.page);
       console.log("type of limit:", typeof params.limit);
-      // Add filters if they're not "All"
-      if (statusFilter !== "All") {
-        params.status = statusFilter;
+      
+      // Use activeStatusTab for filtering instead of statusFilter
+      if (activeStatusTab !== "All") {
+        params.status = activeStatusTab;
       }
       if (paymentFilter !== "All") {
         params.paymentMethod = paymentFilter;
@@ -142,7 +150,7 @@ const SalesPage: React.FC = () => {
     currentStore?.id,
     currentPage,
     rowsPerPage,
-    statusFilter,
+    activeStatusTab, // Updated dependency
     paymentFilter,
     dateFilter,
     dispatch,
@@ -157,6 +165,7 @@ const SalesPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSaleCreationModalOpen, setIsSaleCreationModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any | null>(
     null
   );
@@ -177,29 +186,135 @@ const SalesPage: React.FC = () => {
         transaction.transactionId
           .toLowerCase()
           .includes(searchTerm.toLowerCase());
-      const matchesStatus =
-        statusFilter === "All" || transaction.status === statusFilter;
       const matchesPayment =
         paymentFilter === "All" || transaction.payment === paymentFilter;
 
-      return matchesSearch && matchesStatus && matchesPayment;
+      return matchesSearch && matchesPayment;
     });
   };
+
+  // Calculate sales counts for status tabs
+  const getSalesCounts = () => {
+    // We need to fetch all sales to get accurate counts
+    // For now, we'll calculate from current filtered data
+    const allSales = transactions; // This should ideally be all sales, not filtered
+    
+    return {
+      all: allSales.length,
+      pending: allSales.filter((s: any) => s.status?.toLowerCase() === 'pending').length,
+      confirmed: allSales.filter((s: any) => s.status?.toLowerCase() === 'confirmed').length,
+      cancelled: allSales.filter((s: any) => s.status?.toLowerCase() === 'cancelled').length,
+      shipped: allSales.filter((s: any) => s.status?.toLowerCase() === 'shipped').length,
+      completed: allSales.filter((s: any) => s.status?.toLowerCase() === 'completed').length,
+    };
+  };
+
+  const salesCounts = getSalesCounts();
 
   const displayTransactions = getDisplayTransactions();
   const paginatedTransactions = displayTransactions;
 
-  // For pagination display
-  const totalPages = Math.ceil(
-    displayTransactions.length > 0
-      ? displayTransactions.length / rowsPerPage
-      : 1
-  );
-  const startIndex = (currentPage - 1) * rowsPerPage + 1;
-  const endIndex = Math.min(
-    currentPage * rowsPerPage,
-    displayTransactions.length
-  );
+  // Debug pagination data
+  console.log("🔍 Pagination Debug:", {
+    paginationFromRedux: pagination,
+    searchTerm,
+    currentPage,
+    rowsPerPage,
+    displayTransactionsLength: displayTransactions.length,
+    salesLength: sales.length
+  });
+
+  // For pagination display - simplified robust approach
+  const isServerSidePagination = !searchTerm; // Server-side when no search filter
+  
+  let totalPages, totalItems, startIndex, endIndex;
+  
+  if (isServerSidePagination) {
+    // Server-side pagination
+    if (pagination && pagination.total !== undefined && pagination.total > 0) {
+      // We have proper pagination metadata from backend
+      totalItems = pagination.total;
+      totalPages = pagination.totalPages || Math.ceil(pagination.total / (pagination.limit || rowsPerPage));
+      startIndex = ((pagination.page - 1) * (pagination.limit || rowsPerPage)) + 1;
+      endIndex = Math.min(pagination.page * (pagination.limit || rowsPerPage), pagination.total);
+    } else {
+      // No pagination metadata from backend - use smart estimation
+      const currentResultsCount = sales.length;
+      
+      if (currentResultsCount < rowsPerPage) {
+        // We got fewer results than requested, likely this is all of them or the last page
+        if (currentPage === 1) {
+          // First page with fewer than rowsPerPage results = total results
+          totalItems = currentResultsCount;
+          totalPages = 1;
+          startIndex = 1;
+          endIndex = currentResultsCount;
+        } else {
+          // Later page with fewer results = last page
+          totalItems = ((currentPage - 1) * rowsPerPage) + currentResultsCount;
+          totalPages = currentPage;
+          startIndex = ((currentPage - 1) * rowsPerPage) + 1;
+          endIndex = totalItems;
+        }
+      } else if (currentResultsCount === rowsPerPage) {
+        // Full page - there might be more pages
+        // Conservative estimate: assume at least one more item exists
+        const estimatedTotal = currentPage * rowsPerPage + 1;
+        totalItems = estimatedTotal;
+        totalPages = Math.ceil(estimatedTotal / rowsPerPage);
+        startIndex = ((currentPage - 1) * rowsPerPage) + 1;
+        endIndex = currentPage * rowsPerPage;
+      } else {
+        // More results than rowsPerPage (shouldn't happen with proper pagination)
+        totalItems = currentResultsCount;
+        totalPages = Math.ceil(currentResultsCount / rowsPerPage);
+        startIndex = 1;
+        endIndex = currentResultsCount;
+      }
+    }
+  } else {
+    // Client-side pagination for search results
+    totalItems = displayTransactions.length;
+    totalPages = Math.ceil(totalItems / rowsPerPage);
+    startIndex = (currentPage - 1) * rowsPerPage + 1;
+    endIndex = Math.min(currentPage * rowsPerPage, totalItems);
+  }
+
+  console.log("📊 Final Pagination Values:", {
+    isServerSidePagination,
+    totalPages,
+    totalItems,
+    startIndex,
+    endIndex,
+    currentPage
+  });
+
+  // Effect to fetch total count when needed - simplified approach
+  useEffect(() => {
+    // For debugging: just log what we have
+    console.log("🔢 Current pagination state:", {
+      hasBackendPagination: !!(pagination && pagination.total !== undefined),
+      backendTotal: pagination?.total,
+      backendTotalPages: pagination?.totalPages,
+      currentSalesLength: sales.length,
+      isServerSidePagination,
+    });
+  }, [pagination, sales.length, isServerSidePagination]);
+
+  // Debug: Add debugging information to see what's happening
+  useEffect(() => {
+    console.log("🔍 Sales Page Debug Info:", {
+      salesCount: sales.length,
+      paginationFromRedux: pagination,
+      rowsPerPage,
+      currentPage,
+      searchTerm,
+      totalItemsCalculated: isServerSidePagination && pagination?.total !== undefined ? pagination.total : displayTransactions.length,
+      totalPagesCalculated: isServerSidePagination && pagination?.total !== undefined 
+        ? (pagination.totalPages || Math.ceil(pagination.total / pagination.limit))
+        : Math.ceil(displayTransactions.length / rowsPerPage)
+    });
+  }, [sales, pagination, rowsPerPage, currentPage, searchTerm, displayTransactions.length, isServerSidePagination]);
 
   // Action handlers
   const handleSalesReport = () => {
@@ -212,21 +327,37 @@ const SalesPage: React.FC = () => {
   // Clear filters handler
   const handleClearFilters = () => {
     setSearchTerm("");
+    setActiveStatusTab("All"); // Reset status tab
     setStatusFilter("All");
     setPaymentFilter("All");
-    setCashierFilter("All");
+    // setCashierFilter("All");
     setDateFilter("Today");
     setCurrentPage(1);
   };
 
-  const handleView = (transaction: any) => {
-    setSelectedTransaction(transaction);
-    setIsViewModalOpen(true);
+  // Handle status tab change
+  const handleStatusTabChange = (status: string) => {
+    setActiveStatusTab(status);
+    setStatusFilter(status); // Keep them in sync
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  // Handle status filter change (from dropdown)
+  const handleStatusFilterChange = (status: string) => {
+    setStatusFilter(status);
+    setActiveStatusTab(status); // Keep tabs in sync
+    setCurrentPage(1); // Reset to first page when filtering
   };
 
   const handleNavigateToSale = (transaction: any) => {
     if (storeId && transaction.id) {
       navigate(`/store/${storeId}/sales/${transaction.id}`);
+    }
+  };
+
+  const handleNavigateToEdit = (transaction: any) => {
+    if (storeId && transaction.id) {
+      navigate(`/store/${storeId}/sales/${transaction.id}/edit`);
     }
   };
 
@@ -264,7 +395,6 @@ const SalesPage: React.FC = () => {
             <p style="font-size: 16px;"><strong>Total:</strong> $${transaction.total.toFixed(2)}</p>
             <p><strong>Payment Method:</strong> ${transaction.payment}</p>
             <p><strong>Status:</strong> ${transaction.status}</p>
-            <p><strong>Cashier:</strong> ${transaction.cashier}</p>
           </div>
           <hr style="border: 1px solid #03414C;" />
           <p style="text-align: center; color: #666; margin-top: 20px;">Thank you for your business!</p>
@@ -303,6 +433,71 @@ const SalesPage: React.FC = () => {
     }
   };
 
+  const handleOpenSaleCreationModal = () => {
+    setIsSaleCreationModalOpen(true);
+  };
+
+
+  const handleManualSaleCreate = () => {
+    // Navigate to the existing manual sale creation page
+    if (storeId) {
+      navigate(`/store/${storeId}/sales/new`);
+    } else {
+      navigate("/sales/new");
+    }
+    // Close the modal
+    setIsSaleCreationModalOpen(false);
+  };
+
+  const handleStatusChange = async (transactionId: string, newStatus: string) => {
+    try {
+      // Find the transaction to get its current data
+      const transaction = transactions.find((t: any) => t.id === transactionId);
+      if (!transaction) {
+        toast.error("Transaction not found");
+        return;
+      }
+
+      // Create update data with existing values
+      const updateData = {
+        paymentMethod: transaction.payment || "CASH",
+        status: newStatus,
+        totalAmount: transaction.total || 0,
+        tax: transaction.tax || 0,
+        cashierName: transaction.cashier || "Unknown",
+      };
+
+      console.log("Updating transaction status:", {
+        transactionId,
+        updateData,
+      });
+
+      // Dispatch the update action
+      await dispatch(updateSale({
+        saleId: transactionId,
+        updateData,
+      })).unwrap();
+
+      toast.success("Transaction status updated successfully");
+    } catch (error) {
+      console.error("Failed to update transaction status:", error);
+      toast.error("Failed to update transaction status");
+    }
+  };
+
+  // Custom handler for rows per page change
+  const handleRowsPerPageChange = (newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
+    setCurrentPage(1); // Reset to first page when changing rows per page
+  };
+
+  // Handle navigation to invalid pages
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   return (
     <>
       <Header />
@@ -315,25 +510,33 @@ const SalesPage: React.FC = () => {
               <p>{error}</p>
             </div>
           )}
-          {/* Header Section */}{" "}
-          <SalesHeader
-            onSalesReport={handleSalesReport}
-            onAnalytics={handleAnalytics}
-          />
+          {/* Header Section */}
+         <div className="flex items-center justify-between mb-6 bg-white p-5 rounded-lg shadow">
+            <div className="text-2xl font-bold text-[#03414C]">View Sales</div>
+
+         </div>
           {/* Stats Grid */}
-          <StatsGrid stats={stats} loading={loading} />
+          {/* <StatsGrid stats={stats} loading={loading} /> */}
+          
+          {/* Status Tabs */}
+          <StatusTabs
+            activeTab={activeStatusTab}
+            onTabChange={handleStatusTabChange}
+            salesCounts={salesCounts}
+          />
+          
           {/* Filters Section */}
           <div className="bg-white rounded-lg p-6 mb-6">
             <FilterBar
               searchTerm={searchTerm}
               statusFilter={statusFilter}
               paymentFilter={paymentFilter}
-              cashierFilter={cashierFilter}
+              // cashierFilter={cashierFilter}
               dateFilter={dateFilter}
               onSearchChange={setSearchTerm}
-              onStatusChange={setStatusFilter}
+              onStatusChange={handleStatusFilterChange}
               onPaymentChange={setPaymentFilter}
-              onCashierChange={setCashierFilter}
+              // onCashierChange={setCashierFilter}
               onDateChange={setDateFilter}
               onClearFilters={handleClearFilters}
             />
@@ -372,20 +575,24 @@ const SalesPage: React.FC = () => {
                 onEdit={handleEdit}
                 onPrint={handlePrint}
                 onDelete={handleDelete}
+                onStatusChange={handleStatusChange}
+                onEditNavigation={handleNavigateToEdit}
+                isUpdating={loading}
+                canEdit={false}
               />
             )}
 
             {/* Pagination */}
-            {displayTransactions.length > 0 && (
+            {totalItems > 0 && (
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
                 startIndex={startIndex}
                 endIndex={endIndex}
-                totalItems={displayTransactions.length}
+                totalItems={totalItems}
                 rowsPerPage={rowsPerPage}
                 onPageChange={setCurrentPage}
-                onRowsPerPageChange={setRowsPerPage}
+                onRowsPerPageChange={handleRowsPerPageChange}
               />
             )}
           </div>
@@ -413,6 +620,24 @@ const SalesPage: React.FC = () => {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteConfirm}
       />
+
+      <SaleCreationModal
+        isOpen={isSaleCreationModalOpen}
+        // onUploadSales={handleUploadSales}
+        onClose={() => setIsSaleCreationModalOpen(false)}
+        onManualCreate={handleManualSaleCreate}
+        storeId={storeId}
+      />
+      {/* Upload Sales Modal */}
+      <UploadSalesModal
+        isOpen={isUploadSalesModalOpen}
+        onClose={() => setIsUploadSalesModalOpen(false)}
+        onUploadSuccess={() => {
+          setIsUploadSalesModalOpen(false);
+          fetchSalesData(); // Refresh sales data after upload
+        }}
+      />
+
     </>
   );
 };

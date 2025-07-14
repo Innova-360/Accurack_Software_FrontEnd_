@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
-import { FaTimes, FaFileUpload, FaEdit, FaSpinner } from 'react-icons/fa';
-import { SpecialButton } from '../buttons';
-import apiClient from '../../services/api';
-import toast from 'react-hot-toast';
+import React, { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaPlus, FaSpinner, FaUpload } from "react-icons/fa";
+import apiClient from "../../services/api";
+import toast from "react-hot-toast";
 
 interface SaleCreationModalProps {
   isOpen: boolean;
@@ -10,6 +10,7 @@ interface SaleCreationModalProps {
   onManualCreate: () => void;
   storeId?: string;
   clientId?: string;
+  handleUploadSalesModal?: () => void;
 }
 
 const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
@@ -18,30 +19,37 @@ const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
   onManualCreate,
   storeId,
   clientId,
+  handleUploadSalesModal
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     // Validate file type
     const allowedTypes = [
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'text/csv',
-      'application/csv'
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "text/csv",
+      "application/csv",
     ];
-    
-    if (!allowedTypes.includes(file.type) && !file.name.toLowerCase().endsWith('.csv')) {
-      toast.error('Please upload a valid Excel (.xlsx, .xls) or CSV file');
+
+    if (
+      !allowedTypes.includes(file.type) &&
+      !file.name.toLowerCase().endsWith(".csv")
+    ) {
+      toast.error("Please upload a valid Excel (.xlsx, .xls) or CSV file");
       return;
     }
 
     // Check file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('File size should be less than 10MB');
+      toast.error("File size should be less than 10MB");
       return;
     }
 
@@ -49,64 +57,69 @@ const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
-      
+      formData.append("file", file);
+
       // Only add clientId to formData
       if (clientId) {
-        formData.append('clientId', clientId);
+        formData.append("clientId", clientId);
       }
 
-      console.log('Uploading sales file:', {
+      console.log("Uploading sales file:", {
         fileName: file.name,
         fileType: file.type,
         fileSize: file.size,
         storeId,
-        clientId
+        clientId,
       });
 
       // Build URL with storeId as query string
-      let uploadUrl = '/sales/uploadsheet';
+      let uploadUrl = "/sales/uploadsheet";
       if (storeId) {
         uploadUrl = `${uploadUrl}?storeId=${encodeURIComponent(storeId)}`;
       }
 
       const response = await apiClient.post(uploadUrl, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
       });
 
-      console.log('Upload response:', response.data);
+      console.log("Upload response:", response.data);
 
       if (response.data) {
-        toast.success(`Sales uploaded successfully! ${response.data.message || ''}`);
+        toast.success(
+          `Sales uploaded successfully! ${response.data.message || ""}`
+        );
         onClose();
-        
+
         // Optionally, you can navigate to sales list or refresh the page
-        // navigate('/sales');
+        navigate(`/store/${storeId}/sales`);
       } else {
-        toast.success('Sales file uploaded successfully!');
+        toast.success("Sales file uploaded successfully!");
         onClose();
       }
-    } catch (error: any) {
-      console.error('Error uploading sales file:', error);
-      
-      let errorMessage = 'Failed to upload sales file';
-      
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.data?.error) {
-        errorMessage = error.response.data.error;
-      } else if (error.message) {
+    } catch (error: unknown) {
+      console.error("Error uploading sales file:", error);
+
+      let errorMessage = "Failed to upload sales file";
+
+      if (error && typeof error === 'object' && 'response' in error) {
+        const errorResponse = error as { response?: { data?: { message?: string; error?: string } } };
+        if (errorResponse.response?.data?.message) {
+          errorMessage = errorResponse.response.data.message;
+        } else if (errorResponse.response?.data?.error) {
+          errorMessage = errorResponse.response.data.error;
+        }
+      } else if (error instanceof Error && error.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setIsUploading(false);
       // Reset file input
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     }
   };
@@ -115,121 +128,104 @@ const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
     fileInputRef.current?.click();
   };
 
+  const handleUploadClick = () => {
+    // handleFileInputClick();
+
+    if (handleUploadSalesModal) {
+      handleUploadSalesModal();
+    } 
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Create New Sale
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            disabled={isUploading}
-          >
-            <FaTimes className="text-gray-500" size={20} />
-          </button>
-        </div>
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        {/* Backdrop with blur */}
+        <div className="absolute inset-0 modal-overlay" onClick={onClose} />
 
-        {/* Content */}
-        <div className="p-6">
-          <p className="text-gray-600 mb-6">
-            Choose how you would like to create a new sale:
-          </p>
+        {/* Modal Content */}
+        <div className="relative bg-white rounded-xl shadow-2xl p-6 m-4 w-full max-w-md animate-modal-enter">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-[#0f4d57]">Create New Sale</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
 
+          {/* Options */}
           <div className="space-y-4">
-            {/* Manual Creation Option */}
-            <div className="border border-gray-200 rounded-lg p-4 hover:border-[#03414C] transition-colors">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-[#03414C] bg-opacity-10 rounded-lg">
-                  <FaEdit className="text-[#03414C]" size={20} />
+            {/* Add Product Option */}
+            <button
+              onClick={onManualCreate}
+              className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#0f4d57]  hover:text-white transition-all duration-300 group"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-[#0f4d57] group-hover:text-white transition-colors">
+                  <FaPlus className="w-6 h-6 text-green-600 group-hover:text-white" />
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-900 mb-2">
-                    Create Manually
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Fill out the sale details manually using our form interface.
+                <div className="text-left">
+                  <h3 className="font-semibold text-gray-900 group-hover:text-[#0f4d57]"> Make Sales Manually</h3>
+                  <p className="text-sm text-gray-500 group-hover:text-gray-600">
+                    Manually add a new sale transaction.
                   </p>
-                  <SpecialButton
-                    variant="primary"
-                    onClick={onManualCreate}
-                    className="w-full bg-[#03414C] hover:bg-[#025561] text-white py-2"
-                    disabled={isUploading}
-                  >
-                    Create Manually
-                  </SpecialButton>
                 </div>
               </div>
-            </div>
-
-            {/* File Upload Option */}
-            <div className="border border-gray-200 rounded-lg p-4 hover:border-[#03414C] transition-colors">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <FaFileUpload className="text-green-600" size={20} />
+            </button>
+            {/* Upload Sales Option */}
+            <button
+              onClick={handleUploadClick}
+              disabled={isUploading}
+              className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#0f4d57]  hover:text-white transition-all duration-300 group"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-[#0f4d57] group-hover:text-white transition-colors">
+                  {isUploading ? (
+                    <FaSpinner className="w-6 h-6 text-white group-hover:text-green-600 animate-spin" />
+                  ) : (
+                    <FaUpload className="w-6 h-6 text-blue-600 group-hover:text-white" />
+                  )}
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-900 mb-2">
-                    Upload from File
+                <div className="text-left">
+                  <h3 className="font-semibold text-gray-900 group-hover:text-[#0f4d57]">
+                    {isUploading ? "Uploading..." : "Upload From File"}
                   </h3>
-                  <p className="text-sm text-gray-600 mb-3">
+                  <p className="text-sm text-gray-500 group-hover:text-gray-600">
                     Upload sales data from an Excel (.xlsx, .xls) or CSV file.
                   </p>
-                  
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".xlsx,.xls,.csv"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                  
-                  <SpecialButton
-                    variant="secondary"
-                    onClick={handleFileInputClick}
-                    className="w-full border border-green-600 text-green-600 hover:bg-green-50 py-2"
-                    disabled={isUploading}
-                  >
-                    {isUploading ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <FaSpinner className="animate-spin" size={16} />
-                        Uploading...
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center gap-2">
-                        <FaFileUpload size={16} />
-                        Choose File
-                      </div>
-                    )}
-                  </SpecialButton>
-                  
-                  <div className="mt-2 text-xs text-gray-500">
-                    <p>Supported formats: Excel (.xlsx, .xls), CSV</p>
-                    <p>Maximum file size: 10MB</p>
-                  </div>
                 </div>
               </div>
-            </div>
+            </button>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
-          <SpecialButton
-            variant="modal-cancel"
-            onClick={onClose}
-            className="px-4 py-2 text-gray-600 hover:bg-gray-50"
-            disabled={isUploading}
-          >
-            Cancel
-          </SpecialButton>
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
         </div>
       </div>
-    </div>
+
+    </>
   );
 };
 

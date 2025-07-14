@@ -18,6 +18,7 @@ import useSuppliers from "../../hooks/useSuppliers";
 import { fetchUser } from "../../store/slices/userSlice";
 // import { fetchProductCategories } from "../../store/slices/productCategoriesSlice";
 import { useProductCategories } from "../../hooks/useProductCategories";
+import { useRef } from "react";
 
 const CreateInventory: React.FC = () => {
   const dispatch = useDispatch();
@@ -35,6 +36,18 @@ const CreateInventory: React.FC = () => {
     loading: suppliersLoading,
     error: suppliersError,
   } = useSuppliers(storeId);
+
+  // Refs for Required fields
+  const productNameRef = useRef<HTMLInputElement>(null);
+  const categoryRef = useRef<HTMLSelectElement>(null);
+  const priceRef = useRef<HTMLInputElement>(null);
+  const pluRef = useRef<HTMLInputElement>(null);
+  const quantityRef = useRef<HTMLInputElement>(null);
+  const itemQuantityRef = useRef<HTMLInputElement>(null);
+  const minOrderValueRef = useRef<HTMLInputElement>(null);
+  const itemCost = useRef<HTMLInputElement>(null);
+  const itemSellingCost = useRef<HTMLInputElement>(null);
+  const minSellingQuantityRef = useRef<HTMLInputElement>(null);
 
   // const user = useAppSelector((state) => state.user.user);
 
@@ -75,82 +88,95 @@ const CreateInventory: React.FC = () => {
     const basePayload: any = {
       name: formData.productName,
       categoryId: formData.category, // Now using categoryId instead of category
-      ean: formData.ean,
-      pluUpc: formData.pluUpc,
-      supplierId: (!hasVariants && formData.supplierId) || "",
-      sku: formData.customSku,
-      singleItemCostPrice: parseFloat(formData.itemCost) || 0,
-      itemQuantity: parseInt(formData.quantity) || 0,
-      msrpPrice: parseFloat(formData.msrpPrice) || 0,
-      singleItemSellingPrice: parseFloat(formData.itemSellingCost) || 0,
+      ean: hasVariants ? "" : formData.ean, // Clear EAN for variants as each variant will have its own
+      pluUpc: hasVariants ? "" : formData.pluUpc, // Clear PLU for variants as each variant will have its own
+      supplierId: formData.supplierId, // Supplier is now always optional
+      sku: hasVariants ? "" : formData.customSku, // Clear SKU for variants as each variant will have its own
+      singleItemCostPrice: hasVariants ? 0 : parseFloat(formData.itemCost) || 0, // Clear cost for variants
+      itemQuantity: hasVariants ? 0 : parseInt(formData.quantity) || 0, // Clear quantity for variants
+      msrpPrice: hasVariants ? 0 : parseFloat(formData.msrpPrice) || 0, // Clear MSRP for variants
+      singleItemSellingPrice: hasVariants
+        ? 0
+        : parseFloat(formData.itemSellingCost) || 0, // Clear selling price for variants
       clientId: clientId, // Use clientId from Redux store
       storeId: storeId,
       hasVariants: hasVariants,
-      packs: (formData.packDiscounts || []).map((pack: any) => {
-        const { discountAmount, percentAmount } = calculateDiscounts(
-          pack.discountType,
-          pack.discountValue,
-          formData.itemSellingCost
-        );
-        return {
-          minimumSellingQuantity: pack.quantity,
-          totalPacksQuantity: pack.totalPacksQuantity || 0,
-          orderedPacksPrice: pack.orderedPacksPrice || 0,
-          discountAmount,
-          percentDiscount:
-            pack.discountType === "percentage" ? pack.discountValue : 0,
-        };
-      }),
+      packs: hasVariants
+        ? []
+        : (formData.packDiscounts || []).map((pack: any) => {
+            const { discountAmount, percentAmount } = calculateDiscounts(
+              pack.discountType,
+              pack.discountValue,
+              formData.itemSellingCost
+            );
+            return {
+              minimumSellingQuantity: pack.quantity,
+              totalPacksQuantity: pack.totalPacksQuantity || 0,
+              orderedPacksPrice: pack.orderedPacksPrice || 0,
+              discountAmount,
+              percentDiscount:
+                pack.discountType === "percentage" ? pack.discountValue : 0,
+            };
+          }),
       // Add discountAmount and percentDiscount at root if needed (for non-variant products)
       discountAmount: (() => {
-        if (formData.orderValueDiscountType === "fixed") {
+        if (!hasVariants && formData.orderValueDiscountType === "fixed") {
           return parseFloat(formData.orderValueDiscountValue) || 0;
         }
         return 0;
       })(),
       percentDiscount: (() => {
-        if (formData.orderValueDiscountType === "percentage") {
+        if (!hasVariants && formData.orderValueDiscountType === "percentage") {
           return parseFloat(formData.orderValueDiscountValue) || 0;
         }
         return 0;
       })(),
       variants: [],
     };
-    if (hasVariants) {
-      basePayload.variants = (formData.variations || []).map(
+
+    if (hasVariants && formData.variations && formData.variations.length > 0) {
+      basePayload.variants = formData.variations.map(
         (variant: any, index: number) => {
           // Use the correct field names from the Variation interface
-          const price = variant.itemSellingCost || 0; // itemSellingCost is the selling price in Variation
-          const msrpPrice = variant.msrpPrice || 0;
+          const price = parseFloat(variant.itemSellingCost) || 0; // itemSellingCost is the selling price in Variation
+          const costPrice = parseFloat(variant.itemCost) || 0; // Cost price for the variant
+          const msrpPrice = parseFloat(variant.msrpPrice) || 0;
+          const quantity = parseInt(variant.quantity) || 0;
 
           // Handle variant-level discounts
-          const variantDiscountAmount = variant.discount || 0;
-          const variantPercentDiscount = variant.orderValueDiscount || 0;
+          const variantDiscountAmount = parseFloat(variant.discount) || 0;
+          const variantPercentDiscount =
+            parseFloat(variant.orderValueDiscount) || 0;
+
           const mappedVariant = {
-            name: variant.name || "",
+            name: variant.name || `Variant ${index + 1}`,
             price,
+            costPrice: costPrice, // Include cost price for variants
             sku: variant.customSku || "",
-            pluUpc: variant.plu || "",
-            quantity: variant.quantity || 0,
+            ean: variant.ean || "", // Include EAN for variants
+            pluUpc: variant.plu || variant.pluUpc || "",
+            quantity,
             supplierId: variant.supplierId || "",
             msrpPrice,
             discountAmount: variantDiscountAmount,
             percentDiscount: variantPercentDiscount,
+            // Include variant attributes for identification
+            attributes: variant.attributes || {},
             packs: (variant.packDiscounts || []).map((pack: any) => {
-              const packPrice = pack.orderedPacksPrice || 0;
+              const packPrice = parseFloat(pack.orderedPacksPrice) || 0;
               const { discountAmount: packDiscountAmount } = calculateDiscounts(
                 pack.discountType,
                 pack.discountValue,
                 packPrice
               );
               return {
-                minimumSellingQuantity: pack.quantity || 0,
-                totalPacksQuantity: pack.totalPacksQuantity || 0,
+                minimumSellingQuantity: parseInt(pack.quantity) || 0,
+                totalPacksQuantity: parseInt(pack.totalPacksQuantity) || 0,
                 orderedPacksPrice: packPrice,
                 discountAmount: packDiscountAmount,
                 percentDiscount:
                   pack.discountType === "percentage"
-                    ? pack.discountValue || 0
+                    ? parseFloat(pack.discountValue) || 0
                     : 0,
               };
             }),
@@ -159,13 +185,22 @@ const CreateInventory: React.FC = () => {
           return mappedVariant;
         }
       );
+
+      // Log the payload for debugging when variants are enabled
+      console.log("Product with Variants Payload:", {
+        hasVariants: basePayload.hasVariants,
+        variantCount: basePayload.variants.length,
+        variants: basePayload.variants,
+      });
     }
+
     return basePayload;
   };
 
   // Form state management
   const [showVariations, setShowVariations] = useState(false);
   const [hasVariants, setHasVariants] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   // Main form data
   const [formData, setFormData] = useState<ProductFormData>({
     productName: "",
@@ -175,10 +210,10 @@ const CreateInventory: React.FC = () => {
     customSku: "",
     ean: "",
     pluUpc: "",
-    individualItemQuantity: "1",
+    individualItemQuantity: "",
     itemCost: "",
     itemSellingCost: "",
-    minSellingQuantity: "1",
+    minSellingQuantity: "",
     minOrderValue: "",
     msrpPrice: "",
     supplierId: "",
@@ -186,6 +221,8 @@ const CreateInventory: React.FC = () => {
     orderValueDiscountValue: "",
     quantity: "",
     description: "",
+    imageFile: null,
+    imagePreview: "",
     hasPackSettings: false,
     packDiscounts: [],
     hasDiscountSettings: false,
@@ -198,10 +235,92 @@ const CreateInventory: React.FC = () => {
   // Helper functions
   const handleFormDataChange = useCallback(
     (field: keyof ProductFormData, value: any) => {
-      setFormData((prev) => ({ ...prev, [field]: value }));
+      setFormData((prev) => {
+        const updatedFormData = { ...prev, [field]: value };
+
+        // Remove red border if the field is filled
+        const fieldRefMap: Partial<
+          Record<
+            keyof ProductFormData,
+            React.RefObject<HTMLInputElement | HTMLSelectElement | null>
+          >
+        > = {
+          productName: productNameRef,
+          category: categoryRef,
+          price: priceRef,
+          pluUpc: pluRef,
+          individualItemQuantity: itemQuantityRef,
+          minOrderValue: minOrderValueRef,
+          quantity: quantityRef,
+          itemCost: itemCost,
+          itemSellingCost: itemSellingCost,
+          minSellingQuantity: minSellingQuantityRef,
+        };
+
+        const ref = fieldRefMap[field];
+        if (ref?.current && value) {
+          // Special validation for minSellingQuantity - should be > 0
+          const isValid =
+            field === "minSellingQuantity"
+              ? parseInt(value.toString()) > 0
+              : value.toString().trim() !== "" && value !== "0";
+
+          if (isValid) {
+            ref.current.classList.remove("border-red-500", "border-2");
+          }
+        }
+
+        return updatedFormData;
+      });
     },
     []
   );
+
+  const handleNumericInput = (key: keyof ProductFormData, rawValue: string) => {
+    const cleaned = rawValue.replace(/[^0-9]/g, ""); // removes everything except digits
+
+    // Special handling for PLU field - if it was set from a scanned barcode, preserve it
+    if (key === "pluUpc" && !cleaned && formData.pluUpc) {
+      return; // Don't update if we're trying to clear a valid PLU
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [key]: cleaned,
+    }));
+
+    // Remove red border if the field is filled
+    const fieldRefMap: Partial<
+      Record<
+        keyof ProductFormData,
+        React.RefObject<HTMLInputElement | HTMLSelectElement | null>
+      >
+    > = {
+      productName: productNameRef,
+      category: categoryRef,
+      price: priceRef,
+      pluUpc: pluRef,
+      individualItemQuantity: itemQuantityRef,
+      minOrderValue: minOrderValueRef,
+      quantity: quantityRef,
+      itemCost: itemCost,
+      itemSellingCost: itemSellingCost,
+      minSellingQuantity: minSellingQuantityRef,
+    };
+
+    const ref = fieldRefMap[key];
+    if (ref?.current && cleaned) {
+      // Special validation for minSellingQuantity - should be > 0
+      const isValid =
+        key === "minSellingQuantity"
+          ? parseInt(cleaned) > 0
+          : cleaned.trim() !== "" && cleaned !== "0";
+
+      if (isValid) {
+        ref.current.classList.remove("border-red-500", "border-2");
+      }
+    }
+  };
 
   const showOptionalFields = !shouldHideFields(
     formData.hasAttributes,
@@ -216,26 +335,21 @@ const CreateInventory: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     const payload = buildApiPayload();
 
-    dispatch(createProduct(payload) as any).then((result: any) => {
-      if (!result.error) {
-        navigate("/store/:id/inventory");
-      }
-    });
-    const inventoryData = {
-      ...formData,
-      price: parseFloat(formData.price) || 0,
-      quantity: parseInt(formData.quantity) || 0,
-      itemCost: parseFloat(formData.itemCost) || 0,
-      itemSellingCost: parseFloat(formData.itemSellingCost) || 0,
-      minSellingQuantity: parseInt(formData.minSellingQuantity) || 1,
-      minOrderValue: parseFloat(formData.minOrderValue) || 0,
-      orderValueDiscountValue:
-        parseFloat(formData.orderValueDiscountValue) || 0,
-    };
-
-    navigate(-1);
+    dispatch(createProduct(payload) as any)
+      .then((result: any) => {
+        setIsSubmitting(false);
+        if (!result.error) {
+          // Navigate to the correct inventory page using the actual storeId
+          navigate(`/store/${storeId}/inventory/dashboard`);
+        }
+      })
+      .catch((error: any) => {
+        setIsSubmitting(false);
+        console.error("Error creating product:", error);
+      });
   };
 
   const handleNext = () => {
@@ -283,6 +397,8 @@ const CreateInventory: React.FC = () => {
         formData.minSellingQuantity,
         formData.minOrderValue,
         formData.quantity,
+        formData.itemCost,
+        formData.itemSellingCost,
       ];
 
       const filledFields = requiredFields.filter(
@@ -304,18 +420,112 @@ const CreateInventory: React.FC = () => {
     });
   }, []);
 
+  // Handle barcode data from navigation state
+  useEffect(() => {
+    if (location.state?.scannedPLU) {
+      setFormData((prev) => ({
+        ...prev,
+        pluUpc: location.state.scannedPLU,
+      }));
+    }
+  }, [location.state]);
+
+  // Additional effect to handle state that might be lost on navigation
+  useEffect(() => {
+    // Check if we have scanned PLU in state and form is empty
+    if (location.state?.scannedPLU && !formData.pluUpc) {
+      setFormData((prev) => ({
+        ...prev,
+        pluUpc: location.state.scannedPLU,
+      }));
+    }
+
+    // Fallback: Check localStorage if navigation state is not available
+    if (!location.state?.scannedPLU && !formData.pluUpc) {
+      const storedPLU = localStorage.getItem("scannedPLU");
+      if (storedPLU) {
+        setFormData((prev) => ({
+          ...prev,
+          pluUpc: storedPLU,
+        }));
+        // Clear localStorage after using it
+        localStorage.removeItem("scannedPLU");
+      }
+    }
+  }, [location.state, formData.pluUpc]);
+
+  const scrollToFirstEmptyField = () => {
+    type FieldRef = React.RefObject<
+      HTMLInputElement | HTMLSelectElement | null
+    >;
+    type FieldOrderItem = { ref: FieldRef; value: any };
+
+    const fieldOrder: FieldOrderItem[] = hasVariants
+      ? [
+          // For variant mode - only basic fields required
+          { ref: productNameRef, value: formData.productName },
+          { ref: categoryRef, value: formData.category },
+          { ref: priceRef, value: formData.price },
+        ]
+      : [
+          // For regular mode - all fields required
+          { ref: productNameRef, value: formData.productName },
+          { ref: categoryRef, value: formData.category },
+          { ref: priceRef, value: formData.price },
+          { ref: pluRef, value: formData.pluUpc },
+          { ref: itemQuantityRef, value: formData.individualItemQuantity },
+          { ref: minOrderValueRef, value: formData.minOrderValue },
+          { ref: quantityRef, value: formData.quantity },
+          { ref: itemCost, value: formData.itemCost },
+          { ref: itemSellingCost, value: formData.itemSellingCost },
+          { ref: minSellingQuantityRef, value: formData.minSellingQuantity },
+        ];
+
+    // First, highlight all empty fields
+    let firstEmptyField: FieldRef | null = null;
+
+    fieldOrder.forEach(({ ref, value }) => {
+      // Special validation for minSellingQuantity - should be > 0
+      const isEmpty =
+        ref === minSellingQuantityRef
+          ? !value ||
+            value.toString().trim() === "" ||
+            parseInt(value.toString()) <= 0
+          : !value || value.toString().trim() === "" || value === "0";
+
+      if (isEmpty) {
+        ref.current?.classList.add("border-red-500", "border-2");
+        if (!firstEmptyField) {
+          firstEmptyField = ref;
+        }
+      } else {
+        ref.current?.classList.remove("border-red-500", "border-2");
+      }
+    });
+
+    // Scroll to the first empty field
+    const firstField = firstEmptyField as FieldRef | null;
+    if (firstField && firstField.current) {
+      firstField.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      firstField.current.focus();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl"></div>
         <div
-          className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-teal-400/20 to-green-400/20 rounded-full blur-3xl animate-pulse"
-          style={{ animationDelay: "2s" }}
+          className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-teal-400/20 to-green-400/20 rounded-full blur-3xl"
+          style={{}}
         ></div>
         <div
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-purple-400/10 to-pink-400/10 rounded-full blur-3xl animate-pulse"
-          style={{ animationDelay: "4s" }}
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-purple-400/10 to-pink-400/10 rounded-full blur-3xl"
+          style={{}}
         ></div>
       </div>
       {/* Enhanced Header with Milestone Progress */}
@@ -324,9 +534,7 @@ const CreateInventory: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between h-auto sm:h-24 py-4 sm:py-0 gap-4 sm:gap-0">
             <div className="flex items-center space-x-3 sm:space-x-6">
               <button
-                onClick={() =>
-                  showVariations ? handleBack() : navigate(-1)
-                }
+                onClick={() => (showVariations ? handleBack() : navigate(-1))}
                 className="group p-2 sm:p-3 text-gray-600 hover:text-[#0f4d57] hover:bg-gray-100/80 rounded-full transition-all duration-300 transform hover:scale-110 hover:shadow-lg"
               >
                 <svg
@@ -358,70 +566,6 @@ const CreateInventory: React.FC = () => {
             </div>{" "}
             {/* Enhanced Milestone Progress Indicator */}
             <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 lg:space-x-8 w-full sm:w-auto">
-              {!showVariations && (
-                <div className="flex items-center space-x-3 sm:space-x-4 order-2 sm:order-1">
-                  <div className="text-center sm:text-right">
-                    <div className="text-xs sm:text-sm font-semibold text-gray-700">
-                      Completion
-                    </div>
-                    <div className="text-xs text-gray-500 font-medium">
-                      {progress}% Complete
-                    </div>
-                  </div>
-                  <div className="relative w-16 h-16 sm:w-20 sm:h-20">
-                    {/* Background Circle */}
-                    <svg
-                      className="w-16 h-16 sm:w-20 sm:h-20 transform -rotate-90"
-                      viewBox="0 0 36 36"
-                    >
-                      <path
-                        className="text-gray-200"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        fill="transparent"
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      />
-                    </svg>
-                    {/* Progress Circle */}
-                    <svg
-                      className="absolute inset-0 w-16 h-16 sm:w-20 sm:h-20 transform -rotate-90"
-                      viewBox="0 0 36 36"
-                    >
-                      <path
-                        className="text-[#0f4d57] transition-all duration-1000 ease-out"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        fill="transparent"
-                        strokeDasharray={`${progress}, 100`}
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                        style={{
-                          filter:
-                            progress > 75
-                              ? "drop-shadow(0 0 8px rgba(15, 77, 87, 0.4))"
-                              : "none",
-                        }}
-                      />
-                    </svg>
-                    {/* Center Text */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div
-                        className={`text-xs sm:text-sm font-bold transition-all duration-300 ${
-                          progress > 75
-                            ? "text-[#0f4d57] scale-110"
-                            : "text-gray-600"
-                        }`}
-                      >
-                        {progress}%
-                      </div>
-                    </div>
-                    {/* Glow Effect */}
-                    {progress > 75 && (
-                      <div className="absolute inset-0 rounded-full bg-[#0f4d57]/10 animate-pulse"></div>
-                    )}
-                  </div>
-                </div>
-              )}{" "}
               {/* Enhanced Step Indicator with Animation */}
               <div className="flex items-center space-x-3 sm:space-x-6 order-1 sm:order-2">
                 <div
@@ -432,35 +576,18 @@ const CreateInventory: React.FC = () => {
                   }`}
                 >
                   <div
-                    className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
-                      !showVariations
-                        ? "bg-white animate-pulse"
-                        : "bg-green-500 animate-ping animation-duration-1000"
+                    className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${
+                      !showVariations ? "bg-white" : "bg-green-500"
                     }`}
                   ></div>
                   <span className="text-xs sm:text-sm font-semibold">
                     Product Details
                   </span>
-                  {!showVariations && (
-                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white/50 rounded-full animate-bounce"></div>
-                  )}
-                  {showVariations && (
-                    <svg
-                      className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 animate-pulse"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  )}
+                  {/* No animation */}
                 </div>
                 {/* Enhanced Connection Line with Animation */}
                 <div
-                  className={`w-4 sm:w-8 h-0.5 transition-all duration-500 transform ${
+                  className={`w-4 sm:w-8 h-0.5 ${
                     showVariations
                       ? "bg-gradient-to-r from-[#0f4d57] to-green-500 shadow-md"
                       : "bg-gray-300"
@@ -474,16 +601,14 @@ const CreateInventory: React.FC = () => {
                   }`}
                 >
                   <div
-                    className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
-                      showVariations ? "bg-white animate-pulse" : "bg-gray-400"
+                    className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${
+                      showVariations ? "bg-white" : "bg-gray-400"
                     }`}
                   ></div>
                   <span className="text-xs sm:text-sm font-semibold">
                     Variations
                   </span>
-                  {showVariations && (
-                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white/50 rounded-full animate-bounce"></div>
-                  )}
+                  {/* No animation */}
                 </div>
               </div>
             </div>
@@ -495,7 +620,7 @@ const CreateInventory: React.FC = () => {
         {/* Product Variants Toggle Section */}
         {!showVariations && (
           <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6">
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200/50 mb-4 sm:mb-6 animate-slideUp">
+            <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200/50 mb-4 sm:mb-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
                 <div className="flex items-center space-x-3 sm:space-x-4">
                   <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
@@ -556,7 +681,7 @@ const CreateInventory: React.FC = () => {
               </div>
 
               {hasVariants && (
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200 animate-fadeIn">
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex items-start space-x-3">
                     <svg
                       className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0"
@@ -585,21 +710,15 @@ const CreateInventory: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} className="max-w-6xl mx-auto p-4 sm:p-6">
-          <div
-            className={`transition-all duration-500 ease-in-out transform ${
-              showVariations
-                ? "translate-x-0 opacity-100"
-                : "translate-x-0 opacity-100"
-            }`}
-          >
+          <div>
             {!showVariations ? (
               <div className="space-y-6 sm:space-y-8">
-                {" "}
                 {/* Product Basic Information */}
-                <div className="transform transition-all duration-300 hover:scale-[1.01] animate-slideUp">
+                <div className="">
                   <ProductBasicInfo
                     formData={formData}
                     onFormDataChange={handleFormDataChange}
+                    onHandleNumericInput={handleNumericInput}
                     showOptionalFields={
                       hasVariants ? false : showOptionalFields
                     }
@@ -609,16 +728,25 @@ const CreateInventory: React.FC = () => {
                     suppliersError={suppliersError}
                     categories={productCategories}
                     categoriesLoading={categoriesLoading}
+                    fieldRefs={{
+                      productName: productNameRef,
+                      category: categoryRef,
+                      price: priceRef,
+                      pluUpc: pluRef,
+                      quantity: quantityRef,
+                      individualItemQuantity: itemQuantityRef,
+                      minOrderValue: minOrderValueRef,
+                      minSellingQuantity: minSellingQuantityRef,
+                      itemCost: itemCost,
+                      itemSellingCost: itemSellingCost,
+                    }}
                   />
                 </div>{" "}
                 {/* Configuration Sections - Only show if optional fields are visible and not in variant mode */}
                 {!hasVariants && showOptionalFields && (
                   <div className="grid grid-cols-1 gap-6 sm:gap-8">
                     {/* Pack Configuration */}
-                    <div
-                      className="transform transition-all duration-300 hover:scale-[1.01] animate-slideUp"
-                      style={{ animationDelay: "100ms" }}
-                    >
+                    <div className="">
                       <PackConfiguration
                         hasPackSettings={formData.hasPackSettings}
                         onToggle={(value) =>
@@ -633,31 +761,24 @@ const CreateInventory: React.FC = () => {
                   </div>
                 )}
                 {/* Attributes Configuration - Always show but with different behavior in variant mode */}
-                <div
-                  className="transform transition-all duration-300 hover:scale-[1.01] animate-slideUp"
-                  style={{ animationDelay: hasVariants ? "100ms" : "300ms" }}
-                >
+                <div className="">
                   <AttributesConfiguration
                     hasAttributes={hasVariants ? true : formData.hasAttributes}
-                    onToggle={(value) =>
+                    onToggle={
                       hasVariants
-                        ? null
-                        : handleFormDataChange("hasAttributes", value)
+                        ? () => {} // no-op when variants are on
+                        : (value) =>
+                            handleFormDataChange("hasAttributes", value)
                     }
                     attributes={formData.attributes}
                     onAttributesChange={(attributes) =>
                       handleFormDataChange("attributes", attributes)
                     }
-                    /* Pass these props only if the component supports them */
-                    /* If you need this functionality, you should update the AttributesConfiguration component interface */
-                    /* to include these props or use a different approach to achieve the same behavior */
+                    isVariantMode={hasVariants} // <-- Pass the prop
                   />
                 </div>
                 {/* Enhanced Action Buttons */}
-                <div
-                  className="flex flex-col sm:flex-row items-center justify-between pt-6 sm:pt-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200/50 animate-slideUp space-y-4 sm:space-y-0"
-                  style={{ animationDelay: "400ms" }}
-                >
+                <div className="flex flex-col sm:flex-row items-center justify-between pt-6 sm:pt-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200/50 space-y-4 sm:space-y-0">
                   <button
                     type="button"
                     onClick={() => navigate(-1)}
@@ -680,7 +801,10 @@ const CreateInventory: React.FC = () => {
                   </button>{" "}
                   <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
                     {progress < 100 && (
-                      <div className="flex items-center space-x-2 text-amber-600 bg-amber-50 px-3 sm:px-4 py-2 rounded-lg border border-amber-200 animate-pulse">
+                      <div
+                        onClick={scrollToFirstEmptyField}
+                        className="cursor-pointer flex items-center space-x-2 text-amber-600 bg-amber-50 px-3 sm:px-4 py-2 rounded-lg border border-amber-200 hover:bg-amber-100 transition-colors"
+                      >
                         <svg
                           className="w-4 h-4 flex-shrink-0"
                           fill="currentColor"
@@ -694,8 +818,8 @@ const CreateInventory: React.FC = () => {
                         </svg>
                         <span className="text-xs sm:text-sm font-medium text-center sm:text-left">
                           {hasVariants
-                            ? "Please complete basic info and configure attributes with at least 2 options each"
-                            : "Please complete all required fields"}
+                            ? "Click to see missing fields"
+                            : "Click to see missing fields"}
                         </span>
                       </div>
                     )}
@@ -704,13 +828,15 @@ const CreateInventory: React.FC = () => {
                       // For variant mode, always show Next button
                       <button
                         type="button"
-                        onClick={handleNext}
-                        disabled={progress < 100}
-                        className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg flex items-center justify-center space-x-2 ${
-                          progress >= 100
-                            ? "bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md"
-                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        }`}
+                        onClick={(e) => {
+                          if (progress < 100) {
+                            e.preventDefault();
+                            scrollToFirstEmptyField();
+                            return;
+                          }
+                          handleNext();
+                        }}
+                        className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md transition-all duration-200 transform hover:scale-105"
                       >
                         <span className="text-sm sm:text-base">
                           Next: Configure Variations
@@ -733,13 +859,15 @@ const CreateInventory: React.FC = () => {
                       // For non-variant mode with attributes
                       <button
                         type="button"
-                        onClick={handleNext}
-                        disabled={progress < 100}
-                        className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg flex items-center justify-center space-x-2 ${
-                          progress >= 100
-                            ? "bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md"
-                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        }`}
+                        onClick={(e) => {
+                          if (progress < 100) {
+                            e.preventDefault();
+                            scrollToFirstEmptyField();
+                            return;
+                          }
+                          handleNext();
+                        }}
+                        className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md transition-all duration-200 transform hover:scale-105"
                       >
                         <span className="text-sm sm:text-base">
                           Next: Configure Variations
@@ -759,32 +887,72 @@ const CreateInventory: React.FC = () => {
                         </svg>
                       </button>
                     ) : (
-                      // For simple product mode
+                      // For simple product mode - Always visible Create Product button
                       <button
-                        type="submit"
-                        disabled={progress < 100}
-                        className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg flex items-center justify-center space-x-2 ${
-                          progress >= 100
-                            ? "bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md"
-                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        type="button"
+                        onClick={(e) => {
+                          if (progress < 100) {
+                            e.preventDefault();
+                            scrollToFirstEmptyField();
+                            return;
+                          }
+                          if (!isSubmitting) {
+                            handleSubmit(e);
+                          }
+                        }}
+                        disabled={isSubmitting}
+                        className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-200 transform hover:scale-105 hover:shadow-lg ${
+                          isSubmitting
+                            ? "bg-gray-400 text-white cursor-not-allowed"
+                            : "bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md"
                         }`}
                       >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                          />
-                        </svg>
-                        <span className="text-sm sm:text-base">
-                          Create Product
-                        </span>
+                        {isSubmitting ? (
+                          <>
+                            <svg
+                              className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                            <span className="text-sm sm:text-base">
+                              Creating Product...
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                              />
+                            </svg>
+                            <span className="text-sm sm:text-base">
+                              Create Product
+                            </span>
+                          </>
+                        )}
                       </button>
                     )}
                   </div>
@@ -792,10 +960,8 @@ const CreateInventory: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-6 sm:space-y-8">
-                {" "}
                 {/* Variations Configuration with enhanced styling */}
-                <div className="transform transition-all duration-500 ease-in-out animate-slideUp">
-                  {" "}
+                <div className="">
                   <VariationsConfiguration
                     variations={formData.variations}
                     attributes={formData.attributes}
@@ -811,10 +977,7 @@ const CreateInventory: React.FC = () => {
                   />
                 </div>
                 {/* Enhanced Action Buttons for Variations */}
-                <div
-                  className="flex flex-col sm:flex-row items-center justify-between pt-6 sm:pt-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200/50 animate-slideUp space-y-4 sm:space-y-0"
-                  style={{ animationDelay: "200ms" }}
-                >
+                <div className="flex flex-col sm:flex-row items-center justify-between pt-6 sm:pt-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200/50 space-y-4 sm:space-y-0">
                   <button
                     type="button"
                     onClick={handleBack}
@@ -848,24 +1011,59 @@ const CreateInventory: React.FC = () => {
                     </button>
                     <button
                       type="submit"
-                      className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-[#0f4d57] text-white rounded-lg font-medium hover:bg-[#0f4d57]/90 transition-all duration-200 transform hover:scale-105 hover:shadow-lg flex items-center justify-center space-x-2"
+                      disabled={isSubmitting}
+                      className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg flex items-center justify-center space-x-2 ${
+                        isSubmitting
+                          ? "bg-gray-400 text-white cursor-not-allowed"
+                          : "bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90"
+                      }`}
                     >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      <span className="text-sm sm:text-base">
-                        Create Product with Variations
-                      </span>
+                      {isSubmitting ? (
+                        <>
+                          <svg
+                            className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          <span className="text-sm sm:text-base">
+                            Creating Product...
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                          <span className="text-sm sm:text-base">
+                            Create Product with Variations
+                          </span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
