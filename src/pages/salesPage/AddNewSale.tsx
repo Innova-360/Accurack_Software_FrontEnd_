@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { FaPlus, FaTrash, FaArrowLeft, FaSearch } from "react-icons/fa";
+import { FaTrash, FaArrowLeft, FaSearch } from "react-icons/fa";
 import toast from "react-hot-toast";
 import Header from "../../components/Header";
 import { SpecialButton } from "../../components/buttons";
@@ -11,7 +11,6 @@ import { fetchUser } from "../../store/slices/userSlice";
 import { fetchCustomers } from "../../store/slices/customerSlice";
 import useRequireStore from "../../hooks/useRequireStore";
 import type { RootState, AppDispatch } from "../../store";
-import type { Product } from "../../data/inventoryData";
 import type { SaleRequestData, SaleItem } from "../../store/slices/salesSlice";
 import { useDebounce } from "../../components/TaxComponents/useDebounce";
 import { useSearchProductsQuery } from '../../store/slices/productsSlice';
@@ -24,7 +23,7 @@ interface ProductItem {
   total: number;
   productId?: string; // Add this to reference the actual product
   variantId?: string; // Add this to reference the variant if it's a variant
-  selectedProduct?: Product | null; // Store the full product/variant details
+  selectedProduct?: unknown | null; // Store the full product/variant details
 }
 
 const AddNewSale: React.FC = () => {
@@ -55,29 +54,7 @@ const AddNewSale: React.FC = () => {
   // Customers state
   const { customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
 
-  // Local state for pagination and search
-  const [currentPageLocal, setCurrentPageLocal] = useState(1);
-
-  const productsPerPage = 50;
   const [allowance, setAllowance] = useState(0);
-
-
-
-
-  // Fetch products with pagination and search
-  const fetchProductsData = useCallback(() => {
-    dispatch(fetchProductsPaginated({
-      page: currentPageLocal,
-      limit: productsPerPage,
-      storeId: id,
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, currentPageLocal]);
-
-  // Fetch products, user, and customers on component mount
-  useEffect(() => {
-    fetchProductsData();
-  }, [fetchProductsData]);
 
   // Separate useEffect for user and customers (run only once)
   useEffect(() => {
@@ -188,7 +165,6 @@ const AddNewSale: React.FC = () => {
     setSearchQuery('');
     setShowDropdown(false);
   };
-
 
 
   // Calculated values
@@ -381,18 +357,6 @@ const AddNewSale: React.FC = () => {
     setProducts(updatedProducts);
   };
 
-  const addProduct = () => {
-    setProducts([
-      ...products,
-      {
-        id: Date.now().toString(),
-        name: "",
-        quantity: 1,
-        price: 0,
-        total: 0,
-      },
-    ]);
-  };
 
   const removeProduct = (index: number) => {
     if (products.length > 1) {
@@ -536,7 +500,7 @@ const AddNewSale: React.FC = () => {
       // Navigate back to sales page
       navigate(-1);
     }
-    catch (error: axios.AxiosError) {
+    catch (error: unknown) {
       console.error("Error creating sale:", error);
       toast.error(`Failed to create sale: ${error}`);
     }
@@ -838,16 +802,16 @@ const AddNewSale: React.FC = () => {
               {/* Product Search Bar */}
               <div className="mb-4">
                 <div className="relative">
-                  <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={handleSearchChange}
                     placeholder="Search products..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
                     onFocus={() => setShowDropdown(searchQuery.length > 0)} // Show if there's already text
                     onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                   />
+                  <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
 
                   {/* Loading indicator */}
                   {isLoading && (
@@ -909,7 +873,7 @@ const AddNewSale: React.FC = () => {
                     className="border border-gray-200 rounded-lg p-4"
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
+                      <div className="md:col-span-1">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Quantity <span className="text-red-500">*</span>
                         </label>
@@ -927,34 +891,36 @@ const AddNewSale: React.FC = () => {
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                         />
                       </div>
-                      <div>
+                      <div className="md:col-span-1">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Selling Price <span className="text-red-500">*</span>
                         </label>
-                        <div className="flex items-center gap-2 w-full ">
+                        <div className="flex items-center gap-2">
                           <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={product.price}
-                            onChange={(e) =>
-                              handleProductChange(
-                                index,
-                                "price",
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                            className="overflow-hidden w-20  flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-                          />
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={product.price}
+                          onChange={(e) =>
+                            handleProductChange(
+                              index,
+                              "price",
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                        />
                           {products.length > 1 && (
-                            <button
-                              onClick={() => removeProduct(index)}
-                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                            >
-                              <FaTrash size={16} />
-                            </button>
-                          )}
+                          <button
+                            onClick={() => removeProduct(index)}
+                            className="w-full md:w-auto px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+                          >
+                            <FaTrash size={16} />
+                            <span className="md:hidden">Remove</span>
+                          </button>
+                        )}
                         </div>
+                        
                       </div>
                     </div>
 
@@ -964,7 +930,7 @@ const AddNewSale: React.FC = () => {
                         <h4 className="text-sm font-semibold text-blue-900 mb-3">
                           Product Details
                         </h4>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 text-sm">
                           <div>
                             <span className="font-medium text-gray-600">
                               Product Name:
@@ -1018,7 +984,7 @@ const AddNewSale: React.FC = () => {
                         </div>
 
                         {/* Additional product information row */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mt-3 pt-3 border-t border-blue-200">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm mt-3 pt-3 border-t border-blue-200">
                           <div>
                             <span className="font-medium text-gray-600">
                               Category:
@@ -1027,7 +993,7 @@ const AddNewSale: React.FC = () => {
                               {typeof product.selectedProduct.category ===
                                 "string"
                                 ? product.selectedProduct.category
-                                : (product.selectedProduct.category as any)?.name ||
+                                : (product.selectedProduct.category as { name?: string })?.name ||
                                 "Uncategorized"}
                             </div>
                           </div>
@@ -1039,7 +1005,7 @@ const AddNewSale: React.FC = () => {
                               {typeof product.selectedProduct.supplier ===
                                 "string"
                                 ? product.selectedProduct.supplier
-                                : (product.selectedProduct.supplier as any)?.name ||
+                                : (product.selectedProduct.supplier as { name?: string })?.name ||
                                 "N/A"}
                             </div>
                           </div>
@@ -1200,7 +1166,7 @@ const AddNewSale: React.FC = () => {
 
           {/* Order Summary - Right Column */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 lg:sticky lg:top-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Order Summary
               </h2>{" "}
@@ -1214,7 +1180,7 @@ const AddNewSale: React.FC = () => {
                   <div className="flex justify-between items-start text-gray-600 mb-3">
                     <span className="font-medium">Discount</span>
                     <div className="flex flex-col items-end space-y-2">
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
                         <select
                           value={discountType}
                           onChange={(e) =>
@@ -1222,7 +1188,7 @@ const AddNewSale: React.FC = () => {
                               e.target.value as "percentage" | "amount"
                             )
                           }
-                          className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                          className="w-full sm:w-auto px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                         >
                           <option value="percentage">Percentage</option>
                           <option value="amount">Amount</option>
@@ -1238,7 +1204,7 @@ const AddNewSale: React.FC = () => {
                               parseFloat(e.target.value) || 0
                             )
                           }
-                          className="w-24 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                          className="w-full sm:w-24 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                           placeholder={
                             discountType === "percentage" ? "0" : "0.00"
                           }
@@ -1264,7 +1230,7 @@ const AddNewSale: React.FC = () => {
                         step="0.01"
                         value={allowance}
                         onChange={(e) => setAllowance(parseFloat(e.target.value) || 0)}
-                        className="w-[100%] px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                        className="w-20 sm:w-24 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                         placeholder="0"
                       />
                       <span className="text-sm">$</span>
@@ -1289,7 +1255,7 @@ const AddNewSale: React.FC = () => {
                         onChange={(e) =>
                           setTaxRate(parseFloat(e.target.value) || 0)
                         }
-                        className="w-[100%] px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+                        className="w-20 sm:w-24 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                         placeholder="0"
                       />
                       <span className="text-sm">%</span>
