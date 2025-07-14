@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import React Icons
 import toast from "react-hot-toast";
-import { useAppDispatch } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { loginUser, googleAuth } from "../../store/slices/authSlice";
 import {
   loadSavedCredentials,
@@ -11,6 +11,8 @@ import {
 } from "../../utils/rememberMeUtils";
 import { updateLastUpdated } from "../../utils/lastUpdatedUtils";
 import ForgotPasswordModal from "../../components/ForgotPasswordModal";
+import { fetchUser } from "../../store/slices/userSlice";
+import Loading from "../../components/Loading";
 
 const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
@@ -66,10 +68,11 @@ const Login = () => {
         // Update last updated time
         updateLastUpdated();
 
+        await dispatch(fetchUser()).unwrap();
+
         setIsLoading(false); // Reset loading state
         toast.success("Login successful!");
         // Navigate to the intended destination or stores page
-
         navigate(from, { replace: true });
       } else {
         setIsLoading(false); // Reset loading state

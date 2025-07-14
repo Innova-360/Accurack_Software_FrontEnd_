@@ -16,36 +16,15 @@ const apiClient = axios.create({
   },
 });
 
-// Simple request interceptor to add token
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
 // Simple response interceptor for basic error handling
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     // Handle 401 Unauthorized responses
     if (error.response?.status === 401) {
-      // Clear authentication data
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("userEmail");
-      localStorage.removeItem("clientId");
-
-      // // Only redirect if we're not already on the login page
-      // if (!window.location.pathname.includes("/login")) {
-      //   // Redirect to login page
-      //   window.location.href = "/login";
-      // }
+      // Do not clear authentication data from localStorage (removed)
+      // Only handle Redux state elsewhere
     }
-
     return Promise.reject(error);
   }
 );

@@ -12,26 +12,34 @@ interface AuthProviderProps {
 const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { isAuthenticated, token } = useAppSelector((state) => state.auth);
-  const { user, loading } = useAppSelector((state) => state.user);
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { user, loading, authChecked } = useAppSelector((state) => state.user);
 
   useEffect(() => {
-    // Fetch user data if:
-    // - User is authenticated (has token)
-    // - User data is not already loaded
-    // - Not currently loading user data
-    // - There's a token in localStorage (for page refresh scenarios)
-    const authToken = localStorage.getItem("authToken");
-
-    if ((isAuthenticated || authToken) && !user && !loading) {
-      dispatch(fetchUser()).catch((error) => {
-        // If token is invalid, logout and redirect to login
-        dispatch(logout());
-        updateLastUpdated(); // Update last updated time on logout
-        navigate("/login", { replace: true });
-      });
+    // Only fetch user if authChecked is false (first load)
+    if (!authChecked && !loading) {
+      dispatch(fetchUser())
+        .unwrap()
+        .then(() => {
+          dispatch({ type: 'auth/setAuthenticated', payload: true });
+        })
+        .catch(() => {
+          dispatch({ type: 'auth/setAuthenticated', payload: false });
+          dispatch(logout());
+          updateLastUpdated();
+          navigate("/login", { replace: true });
+        });
     }
-  }, [dispatch, isAuthenticated, token, user]);
+  }, [dispatch, authChecked, loading, navigate]);
+
+  if (loading || !authChecked) {
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div>
+        <span style={{ display: 'block', textAlign: 'center', marginBottom: 8 }}>Authenticating...</span>
+        {/* You can use your Loading component here if you want a spinner */}
+      </div>
+    </div>;
+  }
 
   return <>{children}</>;
 };

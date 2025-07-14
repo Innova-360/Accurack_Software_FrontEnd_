@@ -4,10 +4,10 @@ import Cards from "../components/Cards.tsx";
 import Header from "../components/Header.tsx";
 
 function Home() {
-  const { loading } = useStoreFromUrl();
+  const { loading, isStoreReady } = useStoreFromUrl();
 
-  // Show loading while fetching stores
-  if (loading) {
+  // Show loading while fetching stores or if store is not ready
+  if (loading || !isStoreReady) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

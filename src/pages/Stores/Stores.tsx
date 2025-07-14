@@ -23,6 +23,7 @@ import {
   createStore,
 } from "../../store/slices/storeSlice";
 import type { Store, StoreFormData } from "../../types/store";
+import Loading from "../../components/Loading";
 
 const StoresPage: React.FC = () => {
   const navigate = useNavigate();
@@ -77,7 +78,7 @@ const StoresPage: React.FC = () => {
       setIsCreateModalOpen(false);
       // Show success message
       toast.success("Store created successfully!");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Failed to create store:", error);
       // Show error message
@@ -120,7 +121,7 @@ const StoresPage: React.FC = () => {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <SpecialButton
                 variant="inventory-primary"
@@ -137,11 +138,7 @@ const StoresPage: React.FC = () => {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (
-          /* Loading State */
-          <div className="text-center py-16">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-teal-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading your stores...</p>
-          </div>
+          <Loading label="Store lOading...." />
         ) : error ? (
           /* Error State */
           <div className="text-center py-16">

@@ -1,4 +1,5 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+import React from "react";
 import Signup from "../pages/Signup/Signup"; // Signup Route
 import Login from "../pages/Login/Login"; // Login Route
 import OtpPage from "../pages/OtpPage/OtpPage"; // otp Route
@@ -57,15 +58,44 @@ import InventoryDashboard from "../pages/Inventory/InventoryDashboard";
 import ScanInventory from "../pages/Inventory/ScanInventory";
 import DeleteInventory from "../pages/Inventory/DeleteInventory";
 import SalesDashboard from "../pages/salesPage/SalesDashboard";
+import { useAppSelector } from "../store/hooks";
+
+function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { user, loading, authChecked } = useAppSelector((state) => state.user);
+
+  // Block rendering until auth state is known
+  if (loading || !authChecked) {
+    return null; // Or use <Loading label="Checking authentication..." />
+  }
+  if (isAuthenticated && user) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
 
 const AppRoutes = () => {
   return (
     <Routes>
       {/* Public Routes - No authentication required */}
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/otp" element={<OtpPage />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/signup" element={
+        <PublicOnlyRoute>
+          <Signup />
+        </PublicOnlyRoute>
+      } />
+      <Route path="/login" element={
+        <PublicOnlyRoute>
+          <Login />
+        </PublicOnlyRoute>
+      } />
+      <Route path="/otp" element={
+        <PublicOnlyRoute>
+          <OtpPage />
+        </PublicOnlyRoute>
+      } />
+      <Route path="/reset-password" element={
+        <PublicOnlyRoute>
+          <ResetPassword />
+        </PublicOnlyRoute>
+      } />
       <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
       <Route path="/term" element={<Terms />} />
 
