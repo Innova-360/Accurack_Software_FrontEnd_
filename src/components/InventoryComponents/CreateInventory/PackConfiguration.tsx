@@ -204,7 +204,7 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
                   <option value="fixed">Fixed Amount</option>
                 </select>
               </div>
-              <div className="space-y-1 w-full md:w-1/4">
+              <div className="space-y-1 w-full md:w-1/5">
                 <label className="block text-xs font-medium text-gray-700">
                   {discount.discountType === "percentage"
                     ? "Percentage %"
@@ -227,7 +227,7 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
-              <div className="space-y-1 w-full md:w-1/4">
+              <div className="space-y-1 w-full md:w-1/5">
                 <label className="block text-xs font-medium text-gray-700">
                   Total Box Quantity
                 </label>
