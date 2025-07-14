@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -18,6 +18,7 @@ import type { RootState, AppDispatch } from "../../store";
 import type { SaleRequestData, SaleItem } from "../../store/slices/salesSlice";
 import { useDebounce } from "../../components/TaxComponents/useDebounce";
 import { useSearchProductsQuery } from '../../store/slices/productsSlice';
+import { fetchCustomers } from "../../store/slices/customerSlice";
 
 interface ProductItem {
   id: string;
@@ -59,34 +60,6 @@ const AddNewSale: React.FC = () => {
   );
 
   const [allowance, setAllowance] = useState(0);
-
-  // Debounce search term
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-      setCurrentPageLocal(1); // Reset to first page when searching
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  // Fetch products with pagination and search
-  const fetchProductsData = useCallback(() => {
-    dispatch(
-      fetchProductsPaginated({
-        page: currentPageLocal,
-        limit: productsPerPage,
-        storeId: id,
-        search: debouncedSearchTerm || undefined,
-      })
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, currentPageLocal, debouncedSearchTerm]);
-
-  // Update search query in redux store
-  useEffect(() => {
-    dispatch(setSearchQuery(debouncedSearchTerm));
-  }, [dispatch, debouncedSearchTerm]);
 
   // Form state
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
@@ -283,7 +256,7 @@ const AddNewSale: React.FC = () => {
       name: string;
       displayName: string;
       price: number;
-      originalProduct: Product;
+      originalProduct: any;
       isVariant: boolean;
       variantData?: any;
     }> = [];
@@ -649,6 +622,12 @@ const AddNewSale: React.FC = () => {
     navigate(-1);
   };
 
+  useEffect(() => {
+    if (currentStore?.id) {
+      dispatch(fetchCustomers({ storeId: currentStore.id, page: 1, limit: 100 }));
+    }
+  }, [dispatch, currentStore?.id]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -918,18 +897,15 @@ const AddNewSale: React.FC = () => {
                     </div>
                   )}
                 </div>
-                {debouncedSearchTerm && (
+                {debouncedSearchQuery && (
                   <div className="mt-2 flex items-center justify-between text-sm text-gray-600">
                     <span>
                       {totalProducts} product{totalProducts !== 1 ? "s" : ""}{" "}
                       found
-                      {debouncedSearchTerm && ` for "${debouncedSearchTerm}"`}
+                      {debouncedSearchQuery && ` for "${debouncedSearchQuery}"`}
                     </span>
                     <button
-                      onClick={() => {
-                        setSearchTerm("");
-                        setDebouncedSearchTerm("");
-                      }}
+                      onClick={() => setSearchQuery('')}
                       className="text-[#03414C] hover:text-[#025561] underline"
                     >
                       Clear search
@@ -971,8 +947,8 @@ const AddNewSale: React.FC = () => {
               {productsLoading && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                   <p className="text-blue-700 text-sm">
-                    {debouncedSearchTerm
-                      ? `Searching for "${debouncedSearchTerm}"...`
+                    {debouncedSearchQuery
+                      ? `Searching for "${debouncedSearchQuery}"...`
                       : "Loading products..."}
                   </p>
                 </div>
@@ -989,10 +965,10 @@ const AddNewSale: React.FC = () => {
               {!productsLoading &&
                 !productsError &&
                 availableProducts.length === 0 &&
-                debouncedSearchTerm && (
+                debouncedSearchQuery && (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                     <p className="text-yellow-700 text-sm">
-                      No products found for "{debouncedSearchTerm}". Try a
+                      No products found for "{debouncedSearchQuery}". Try a
                       different search term.
                     </p>
                   </div>
@@ -1019,10 +995,10 @@ const AddNewSale: React.FC = () => {
                         >
                           <option value="">
                             {productsLoading
-                              ? debouncedSearchTerm
-                                ? `Searching "${debouncedSearchTerm}"...`
+                              ? debouncedSearchQuery
+                                ? `Searching "${debouncedSearchQuery}"...`
                                 : "Loading products..."
-                              : `Select from ${flattenedProducts.length} products${debouncedSearchTerm ? ` (filtered)` : ""}...`}
+                              : `Select from ${flattenedProducts.length} products${debouncedSearchQuery ? ` (filtered)` : ""}...`}
                           </option>
                           {flattenedProducts.map((flatProduct) => (
                             <option
