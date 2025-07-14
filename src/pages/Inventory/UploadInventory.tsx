@@ -5,6 +5,8 @@ import axios from "axios";
 import Header from "../../components/Header";
 import { BASE_URL } from "../../services/api";
 import { extractErrorMessage } from "../../utils/lastUpdatedUtils";
+import * as XLSX from "xlsx";
+import Papa from "papaparse";
 
 const UploadInventory: React.FC = () => {
   const navigate = useNavigate();
@@ -38,13 +40,45 @@ const UploadInventory: React.FC = () => {
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (isValidFileType(file)) {
-        setSelectedFile(file);
+        // Parse and validate file before setting
+        try {
+          let rows: any[] = [];
+          let headerFields: string[] = [];
+          if (file.name.endsWith(".csv")) {
+            // Parse CSV
+            const text = await file.text();
+            const parsed = Papa.parse(text, { header: true });
+            rows = parsed.data as any[];
+            headerFields = parsed.meta.fields || [];
+          } else if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
+            // Parse Excel
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data, { type: "array" });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            rows = XLSX.utils.sheet_to_json(worksheet);
+            // Get header fields from the first row of the sheet
+            const headerRow = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0] as string[];
+            headerFields = headerRow || [];
+          }
+          // Validate columns only
+          const errors = validateInventoryColumns(headerFields);
+          if (errors.length > 0) {
+            toast.error(errors[0], { duration: 10000 });
+            setSelectedFile(null);
+            return;
+          }
+          setSelectedFile(file);
+        } catch (err) {
+          toast.error("Failed to parse file. Please check the format.");
+          setSelectedFile(null);
+        }
       } else {
-        toast.error("Please upload only Excel files (.xlsx, .xls)");
+        toast.error("Please upload only Excel files (.xlsx, .xls) or CSV files.");
       }
     }
   };
@@ -60,6 +94,26 @@ const UploadInventory: React.FC = () => {
       file.name.endsWith(".xls") ||
       file.name.endsWith(".csv")
     );
+  };
+
+  // Validation function for inventory columns only
+  const validateInventoryColumns = (headerFields: string[]): string[] => {
+    const requiredFields = [
+      "PLU",
+      "name",
+      "category",
+      "price",
+      "SellingPrice",
+      "stock",
+      "SKU",
+    ];
+    const missingColumns = requiredFields.filter((field) => !headerFields.includes(field));
+    if (missingColumns.length > 0) {
+      return [
+        `File validation failed. The following required columns are missing: ${missingColumns.join(", ")}`,
+      ];
+    }
+    return [];
   };
 
   const handleUpload = async () => {
