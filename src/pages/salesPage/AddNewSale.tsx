@@ -55,10 +55,8 @@ const AddNewSale: React.FC = () => {
   );
 
   // Customers state
-  const { customers, loading: customersLoading } = useSelector(
-    (state: RootState) => state.customers
-  );
-
+  const { customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
+// sadf
   const [allowance, setAllowance] = useState(0);
 
   // Form state
