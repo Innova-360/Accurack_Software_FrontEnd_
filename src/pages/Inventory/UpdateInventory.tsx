@@ -608,14 +608,6 @@ const UpdateInventory: React.FC = () => {
 
   const progress = calculateProgress();
 
-  useEffect(() => {
-    // Fetch user info on mount to ensure user is loaded
-    dispatch(fetchUser() as any).then((result: any) => {
-      if (result && result.payload) {
-        localStorage.setItem("clientId", result.payload.clientId || "");
-      }
-    });
-  }, []);
 
   // Handle barcode data from navigation state
   useEffect(() => {
