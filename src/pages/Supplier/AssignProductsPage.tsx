@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { FaArrowLeft, FaCheck, FaSearch, FaFilter, FaTimes } from "react-icons/fa";
+import {
+  FaArrowLeft,
+  FaCheck,
+  FaSearch,
+  FaFilter,
+  FaTimes,
+} from "react-icons/fa";
 import { useAppSelector } from "../../store/hooks";
 import apiClient from "../../services/api";
 import Pagination from "../../components/InventoryComponents/Pagination";
@@ -68,7 +74,7 @@ const AssignProductsPage: React.FC = () => {
             });
           } catch (error) {
             // If direct call fails, try to find in supplier list
-            console.log("Direct supplier fetch failed, trying list approach");
+
             const listResponse = await apiClient.get("/supplier/list", {
               params: { storeId: currentStore?.id || storeId },
             });
@@ -108,22 +114,6 @@ const AssignProductsPage: React.FC = () => {
   // Use either navigation state supplier or fetched supplier
   const currentSupplier = supplierInfo || fetchedSupplier;
 
-  // Debug logging
-  useEffect(() => {
-    console.log("=== Supplier Debug Info ===");
-    console.log("supplierId from URL:", supplierId);
-    console.log(
-      "is supplierId valid UUID:",
-      supplierId ? isValidUUID(supplierId) : false
-    );
-    console.log("supplierInfo from state:", supplierInfo);
-    console.log("fetchedSupplier:", fetchedSupplier);
-    console.log("currentSupplier:", currentSupplier);
-    console.log("currentSupplier.id:", currentSupplier?.id);
-    console.log("currentSupplier.supplier_id:", currentSupplier?.supplier_id);
-    console.log("currentSupplier.name:", currentSupplier?.name);
-  }, [supplierId, supplierInfo, fetchedSupplier, currentSupplier]);
-
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -135,13 +125,17 @@ const AssignProductsPage: React.FC = () => {
     Record<string, "primary" | "secondary">
   >({});
   const [assigning, setAssigning] = useState(false);
-  
+
   // Track products that already have primary suppliers
-  const [productsWithPrimarySupplier, setProductsWithPrimarySupplier] = useState<Set<string>>(new Set());
+  const [productsWithPrimarySupplier, setProductsWithPrimarySupplier] =
+    useState<Set<string>>(new Set());
 
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [priceRange, setPriceRange] = useState<{min: number; max: number}>({min: 0, max: 1000});
+  const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({
+    min: 0,
+    max: 1000,
+  });
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -155,49 +149,54 @@ const AssignProductsPage: React.FC = () => {
   const fetchProductAssignments = async () => {
     try {
       const finalStoreId = currentStore?.id || storeId;
-      
+
       // Get all suppliers for this store
       const suppliersResponse = await apiClient.get("/supplier/list", {
         params: { storeId: finalStoreId },
       });
-      
-      const suppliers = suppliersResponse.data?.data?.suppliers || suppliersResponse.data?.data || [];
+
+      const suppliers =
+        suppliersResponse.data?.data?.suppliers ||
+        suppliersResponse.data?.data ||
+        [];
       const primaryProductIds = new Set<string>();
-      const currentSupplierId = currentSupplier?.id || currentSupplier?.supplier_id || supplierId;
-      
-      console.log("Current supplier ID:", currentSupplierId);
-      console.log("All suppliers:", suppliers.map((s: any) => ({ id: s.id, supplier_id: s.supplier_id, name: s.name })));
-      
+      const currentSupplierId =
+        currentSupplier?.id || currentSupplier?.supplier_id || supplierId;
+
       // For each supplier, get their assigned products
       for (const supplier of suppliers) {
         try {
           const supplierIdToCheck = supplier.id || supplier.supplier_id;
-          
-          const supplierProductsResponse = await apiClient.get(`/supplier/${supplierIdToCheck}/products`);
-          
-          if (supplierProductsResponse.data?.success && supplierProductsResponse.data?.data?.data) {
+
+          const supplierProductsResponse = await apiClient.get(
+            `/supplier/${supplierIdToCheck}/products`
+          );
+
+          if (
+            supplierProductsResponse.data?.success &&
+            supplierProductsResponse.data?.data?.data
+          ) {
             const assignments = supplierProductsResponse.data.data.data;
-            
-            console.log(`Supplier ${supplier.name} (${supplierIdToCheck}) assignments:`, assignments);
-            
+
             // Check for primary assignments
             assignments.forEach((assignment: any) => {
               if (assignment.state === "primary" && assignment.productId) {
                 // If this is NOT the current supplier, mark the product as having a primary
                 if (supplierIdToCheck !== currentSupplierId) {
                   primaryProductIds.add(assignment.productId);
-                  console.log(`Product ${assignment.productId} has primary from supplier ${supplier.name}`);
                 }
               }
             });
           }
         } catch (error) {
-          console.error(`Error fetching products for supplier ${supplier.id}:`, error);
+          console.error(
+            `Error fetching products for supplier ${supplier.id}:`,
+            error
+          );
         }
       }
-      
+
       setProductsWithPrimarySupplier(primaryProductIds);
-      console.log("Products with primary suppliers from OTHER suppliers:", Array.from(primaryProductIds));
     } catch (error) {
       console.error("Error fetching product assignments:", error);
     }
@@ -216,24 +215,30 @@ const AssignProductsPage: React.FC = () => {
         },
       });
 
-      console.log(
-        "Products fetched:",
-        response.data?.data?.products?.length || 0
-      );
-
       const productList = response.data?.data?.products || [];
       setAllProducts(productList);
       setProducts(productList);
-      
+
       // Extract unique categories for filter
-      const uniqueCategories = [...new Set(productList.map((product: Product) => {
-        if (typeof product.category === "object" && product.category !== null) {
-          return product.category.name || product.category.code || "Uncategorized";
-        }
-        return product.category || "Uncategorized";
-      }))].filter((category): category is string => typeof category === "string");
+      const uniqueCategories = [
+        ...new Set(
+          productList.map((product: Product) => {
+            if (
+              typeof product.category === "object" &&
+              product.category !== null
+            ) {
+              return (
+                product.category.name ||
+                product.category.code ||
+                "Uncategorized"
+              );
+            }
+            return product.category || "Uncategorized";
+          })
+        ),
+      ].filter((category): category is string => typeof category === "string");
       setAvailableCategories(uniqueCategories);
-      
+
       // Set price range based on actual product prices
       const prices = productList.map((p: Product) => p.singleItemSellingPrice);
       if (prices.length > 0) {
@@ -241,7 +246,7 @@ const AssignProductsPage: React.FC = () => {
         const maxPrice = Math.max(...prices);
         setPriceRange({ min: Math.floor(minPrice), max: Math.ceil(maxPrice) });
       }
-      
+
       // Fetch product assignments to check which products have primary suppliers
       await fetchProductAssignments();
     } catch (error) {
@@ -262,7 +267,7 @@ const AssignProductsPage: React.FC = () => {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       let filtered = [...allProducts];
-      
+
       // Apply search filter
       if (searchTerm.trim() !== "") {
         filtered = filtered.filter(
@@ -277,23 +282,26 @@ const AssignProductsPage: React.FC = () => {
             product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
-      
+
       // Apply category filter
       if (selectedCategory !== "all") {
         filtered = filtered.filter((product) => {
-          const categoryName = typeof product.category === "object" && product.category !== null
-            ? product.category.name || product.category.code || "Uncategorized"
-            : product.category || "Uncategorized";
+          const categoryName =
+            typeof product.category === "object" && product.category !== null
+              ? product.category.name ||
+                product.category.code ||
+                "Uncategorized"
+              : product.category || "Uncategorized";
           return categoryName === selectedCategory;
         });
       }
-      
+
       // Apply price filter
       filtered = filtered.filter((product) => {
         const price = product.singleItemSellingPrice;
         return price >= priceRange.min && price <= priceRange.max;
       });
-      
+
       setProducts(filtered);
       setCurrentPage(1); // Reset to first page when searching/filtering
     }, 300); // 300ms debounce
@@ -341,13 +349,7 @@ const AssignProductsPage: React.FC = () => {
       // If product already has a primary supplier, this supplier can only be secondary
       const hasPrimary = productsWithPrimarySupplier.has(productId);
       const defaultCategory = hasPrimary ? "secondary" : "primary";
-      
-      console.log(`Product ${productId}:`, {
-        hasPrimaryFromOtherSupplier: hasPrimary,
-        defaultCategory: defaultCategory,
-        productsWithPrimary: Array.from(productsWithPrimarySupplier)
-      });
-      
+
       setCategories((prev) => ({ ...prev, [productId]: defaultCategory }));
     }
     setSelectedProducts(newSelected);
@@ -420,8 +422,6 @@ const AssignProductsPage: React.FC = () => {
   useEffect(() => {
     const checkAndRedirectIfNeeded = async () => {
       if (supplierId && !isValidUUID(supplierId) && !supplierInfo) {
-        
-
         try {
           // Fetch all suppliers to find the one with matching name
           const listResponse = await apiClient.get("/supplier/list", {
@@ -430,7 +430,6 @@ const AssignProductsPage: React.FC = () => {
 
           const suppliers =
             listResponse.data?.data?.suppliers || listResponse.data?.data || [];
-          console.log("All suppliers for name matching:", suppliers);
 
           // Find supplier by name (case insensitive)
           const foundSupplier = suppliers.find(
@@ -442,14 +441,11 @@ const AssignProductsPage: React.FC = () => {
               s.supplier_id === supplierId
           );
 
-          console.log("Found supplier by name:", foundSupplier);
-
           if (
             foundSupplier &&
             (foundSupplier.id || foundSupplier.supplier_id)
           ) {
             const correctId = foundSupplier.id || foundSupplier.supplier_id;
-            console.log("Redirecting to correct UUID:", correctId);
 
             // Redirect to correct URL with UUID
             navigate(
@@ -670,7 +666,7 @@ const AssignProductsPage: React.FC = () => {
                   </button>
                 </div>
               </div>
-              
+
               {/* Filter Options */}
               {showFilters && (
                 <div className="mt-6 pt-6 border-t border-gray-200">
@@ -693,7 +689,7 @@ const AssignProductsPage: React.FC = () => {
                         ))}
                       </select>
                     </div>
-                    
+
                     {/* Price Range Filter */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -707,7 +703,12 @@ const AssignProductsPage: React.FC = () => {
                             step="0.01"
                             placeholder="Min Price"
                             value={priceRange.min}
-                            onChange={(e) => setPriceRange(prev => ({ ...prev, min: parseFloat(e.target.value) || 0 }))}
+                            onChange={(e) =>
+                              setPriceRange((prev) => ({
+                                ...prev,
+                                min: parseFloat(e.target.value) || 0,
+                              }))
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent text-sm"
                           />
                         </div>
@@ -719,25 +720,35 @@ const AssignProductsPage: React.FC = () => {
                             step="0.01"
                             placeholder="Max Price"
                             value={priceRange.max}
-                            onChange={(e) => setPriceRange(prev => ({ ...prev, max: parseFloat(e.target.value) || 1000 }))}
+                            onChange={(e) =>
+                              setPriceRange((prev) => ({
+                                ...prev,
+                                max: parseFloat(e.target.value) || 1000,
+                              }))
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent text-sm"
                           />
                         </div>
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Clear Filters Button */}
                   <div className="mt-4 flex justify-end">
                     <button
                       onClick={() => {
                         setSelectedCategory("all");
                         // Reset price range to original values
-                        const prices = allProducts.map((p: Product) => p.singleItemSellingPrice);
+                        const prices = allProducts.map(
+                          (p: Product) => p.singleItemSellingPrice
+                        );
                         if (prices.length > 0) {
                           const minPrice = Math.min(...prices);
                           const maxPrice = Math.max(...prices);
-                          setPriceRange({ min: Math.floor(minPrice), max: Math.ceil(maxPrice) });
+                          setPriceRange({
+                            min: Math.floor(minPrice),
+                            max: Math.ceil(maxPrice),
+                          });
                         } else {
                           setPriceRange({ min: 0, max: 1000 });
                         }
@@ -867,11 +878,16 @@ const AssignProductsPage: React.FC = () => {
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                             >
                               <option value="secondary">Secondary</option>
-                              <option 
-                                value="primary" 
-                                disabled={productsWithPrimarySupplier.has(product.id)}
+                              <option
+                                value="primary"
+                                disabled={productsWithPrimarySupplier.has(
+                                  product.id
+                                )}
                               >
-                                Primary {productsWithPrimarySupplier.has(product.id) ? "(Already Assigned)" : ""}
+                                Primary{" "}
+                                {productsWithPrimarySupplier.has(product.id)
+                                  ? "(Already Assigned)"
+                                  : ""}
                               </option>
                             </select>
                           </div>
@@ -1001,11 +1017,16 @@ const AssignProductsPage: React.FC = () => {
                               className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
                             >
                               <option value="secondary">Secondary</option>
-                              <option 
-                                value="primary" 
-                                disabled={productsWithPrimarySupplier.has(product.id)}
+                              <option
+                                value="primary"
+                                disabled={productsWithPrimarySupplier.has(
+                                  product.id
+                                )}
                               >
-                                Primary {productsWithPrimarySupplier.has(product.id) ? "(Already Assigned)" : ""}
+                                Primary{" "}
+                                {productsWithPrimarySupplier.has(product.id)
+                                  ? "(Already Assigned)"
+                                  : ""}
                               </option>
                             </select>
                           ) : (

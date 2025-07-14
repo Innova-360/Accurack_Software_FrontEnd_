@@ -33,7 +33,6 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = () => {
   };
 
   const handleFormSubmit = (data: any) => {
-    console.log("Employee data submitted:", data);
     // After successful submission, go back to list view
     setCurrentView("list");
     setSelectedEmployee(null);

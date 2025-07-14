@@ -62,13 +62,6 @@ const UploadSalesPage: React.FC = () => {
 
     const url = `${BASE_URL}/sales/uploadsheet?storeId=${currentStore.id}`;
 
-    console.log("Uploading sales file:", {
-      fileName: selectedFile.name,
-      fileType: selectedFile.type,
-      fileSize: selectedFile.size,
-      storeId: currentStore.id,
-    });
-
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);

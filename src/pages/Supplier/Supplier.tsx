@@ -63,10 +63,8 @@ const SupplierPage: React.FC = () => {
     const fetchData = async () => {
       if (currentStore?.id) {
         try {
-          console.log("Fetching suppliers for store:", currentStore.id);
           // Using unwrap() for cleaner promise handling
           await dispatch(fetchSuppliers({ storeId: currentStore.id })).unwrap();
-          console.log("Suppliers fetched successfully");
         } catch (error) {
           console.error("Failed to fetch suppliers:", error);
         }
@@ -77,15 +75,6 @@ const SupplierPage: React.FC = () => {
 
     fetchData();
   }, [dispatch, currentStore?.id]);
-
-  // Debug: Log suppliers whenever they change
-  useEffect(() => {
-    console.log("=== Supplier State Debug ===");
-    console.log("Current suppliers count:", suppliers.length);
-    console.log("Loading state:", loading);
-    console.log("Error state:", error);
-    console.log("Suppliers data:", suppliers);
-  }, [suppliers, loading, error]);
 
   // Handle supplier selection from sidebar
   const handleSupplierSelect = (supplier: Supplier) => {
@@ -128,19 +117,14 @@ const SupplierPage: React.FC = () => {
 
     // Check if this is a temporary supplier (newly created)
     if (supplier.isTemporary) {
-      console.log(
-        "Temporary supplier detected, finding real supplier from list"
-      );
       // Find the real supplier from the suppliers list by name and email
       const realSupplier = suppliers.find(
         (s) => s.name === supplier.name && s.email === supplier.email
       );
 
       if (realSupplier) {
-        console.log("Found real supplier:", realSupplier);
         supplier = realSupplier; // Use the real supplier
       } else {
-        console.log("Real supplier not found, refreshing list...");
         toast.success("Please wait, refreshing supplier data...");
         handleRefreshSuppliers();
         return;
@@ -156,14 +140,6 @@ const SupplierPage: React.FC = () => {
       supplierId = supplier._id.toString().trim();
     }
 
-    console.log("handleViewProducts Debug:", {
-      supplier: supplier,
-      supplierId: supplierId,
-      supplier_id_field: supplier.id,
-      supplier_supplier_id_field: supplier.supplier_id,
-      supplier_underscore_id: supplier._id,
-    });
-
     if (
       supplierId &&
       supplierId !== "undefined" &&
@@ -172,7 +148,6 @@ const SupplierPage: React.FC = () => {
     ) {
       const finalUrl = `/store/${currentStore?.id}/supplier/${supplierId}/assign-products`;
 
-      console.log("Navigating to:", finalUrl);
       navigate(finalUrl, {
         state: { supplier: supplier },
       });
@@ -258,9 +233,7 @@ const SupplierPage: React.FC = () => {
   const handleRefreshSuppliers = async () => {
     if (currentStore?.id) {
       try {
-        console.log("Force refreshing suppliers list");
         await dispatch(fetchSuppliers({ storeId: currentStore.id })).unwrap();
-        console.log("Suppliers refreshed successfully");
       } catch (error) {
         console.error("Failed to refresh suppliers:", error);
       }

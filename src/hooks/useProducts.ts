@@ -32,7 +32,6 @@ interface UseProductsResult {
 export const useProducts = (
   initialParams: PaginationParams = {}
 ): UseProductsResult => {
-      console.log("parms",initialParams)
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<any>(null);
@@ -85,7 +84,7 @@ export const useProducts = (
     initialParams.sortOrder,
     initialParams.category,
     initialParams.storeId,
-    fetchWithParams
+    fetchWithParams,
   ]);
 
   return {

@@ -40,10 +40,8 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ className = "" }) => 
     const fetchProfile = async () => {
       try {
         const response = await apiClient.get("/users/me");
-        console.log("Profile API Response:", response.data);
         if (response.data.success) {
-          setProfile(response.data.data);
-          console.log("Profile data set:", response.data.data);
+          setProfile(response.data.data);;
         }
       } catch (error) {
         console.error("Failed to fetch profile:", error);
@@ -107,12 +105,6 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ className = "" }) => 
   const displayName = profile?.firstName || profile?.lastName || "User";
   const userRole = profile?.role || "User";
   const userEmail = profile?.email || "";
-
-  // Debug logging
-  console.log("Profile:", profile);
-  console.log("User:", user);
-  console.log("Display Name:", displayName);
-  console.log("User Role:", userRole);
 
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>

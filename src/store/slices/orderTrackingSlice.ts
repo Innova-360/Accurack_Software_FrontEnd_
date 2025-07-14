@@ -1,13 +1,13 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { PayloadAction } from '@reduxjs/toolkit';
-import type { 
-  OrderTrackingState, 
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import type { PayloadAction } from "@reduxjs/toolkit";
+import type {
+  OrderTrackingState,
   OrderTrackingItem,
   VerifyOrderRequest,
   RejectOrderRequest,
   FetchTrackingOrdersParams,
-} from '../../types/orderTracking';
-import axios from 'axios';
+} from "../../types/orderTracking";
+import axios from "axios";
 
 const initialState: OrderTrackingState = {
   trackingOrders: [],
@@ -22,18 +22,19 @@ const initialState: OrderTrackingState = {
 };
 
 export const fetchTrackingOrders = createAsyncThunk(
-  'orderTracking/fetchTrackingOrders',
+  "orderTracking/fetchTrackingOrders",
   async (params: FetchTrackingOrdersParams, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/validator/orders`, {
-        params: {
-          page: params.page || 1,
-          limit: params.limit || 10,
-          storeId: params.storeId,
-        },
-      });
-
-      console.log(response);
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/validator/orders`,
+        {
+          params: {
+            page: params.page || 1,
+            limit: params.limit || 10,
+            storeId: params.storeId,
+          },
+        }
+      );
 
       return {
         orders: response.data.data.orders,
@@ -45,75 +46,90 @@ export const fetchTrackingOrders = createAsyncThunk(
         },
       };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch tracking orders');
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch tracking orders"
+      );
     }
   }
 );
 
 export const verifyOrder = createAsyncThunk(
-  'orderTracking/verifyOrder',
+  "orderTracking/verifyOrder",
   async (request: VerifyOrderRequest, { rejectWithValue, dispatch }) => {
     try {
-      const response = await axios.patch(`${import.meta.env.VITE_API_URL}/validator/orders/validate/${request.id}`);
+      const response = await axios.patch(
+        `${import.meta.env.VITE_API_URL}/validator/orders/validate/${request.id}`
+      );
 
       // Refresh tracking orders list
       await dispatch(fetchTrackingOrders({ storeId: request.storeId }));
 
       return {
         success: true,
-        message: 'Order verified successfully',
+        message: "Order verified successfully",
       };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to verify order');
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to verify order"
+      );
     }
   }
 );
 
 export const rejectOrder = createAsyncThunk(
-  'orderTracking/rejectOrder',
+  "orderTracking/rejectOrder",
   async (request: RejectOrderRequest, { rejectWithValue, dispatch }) => {
     try {
-      const response = await axios.patch(`${import.meta.env.VITE_API_URL}/validator/orders/reject/${request.id}`);
+      const response = await axios.patch(
+        `${import.meta.env.VITE_API_URL}/validator/orders/reject/${request.id}`
+      );
 
       // Refresh tracking orders list
       await dispatch(fetchTrackingOrders({ storeId: request.storeId }));
 
       return {
         success: true,
-        message: 'Order rejected successfully',
+        message: "Order rejected successfully",
       };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to reject order');
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to reject order"
+      );
     }
   }
 );
 
 export const updatePayment = createAsyncThunk(
-  'orderTracking/updatePayment',
+  "orderTracking/updatePayment",
   async (request: any, { rejectWithValue, dispatch }) => {
     try {
-      const response = await axios.patch(`${import.meta.env.VITE_API_URL}/validator/orders/payment`, {
-        orderId: request.orderId,
-        paymentAmount: request.paymentAmount,
-        paymentType: request.paymentType
-      });
+      const response = await axios.patch(
+        `${import.meta.env.VITE_API_URL}/validator/orders/payment`,
+        {
+          orderId: request.orderId,
+          paymentAmount: request.paymentAmount,
+          paymentType: request.paymentType,
+        }
+      );
 
       // Refresh tracking orders list
       await dispatch(fetchTrackingOrders({ storeId: request.storeId }));
 
       return {
         success: true,
-        message: 'Payment updated successfully',
+        message: "Payment updated successfully",
         order: response.data,
       };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update payment');
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to update payment"
+      );
     }
   }
 );
 
 const orderTrackingSlice = createSlice({
-  name: 'orderTracking',
+  name: "orderTracking",
   initialState,
   reducers: {
     clearError: (state) => {
@@ -187,9 +203,11 @@ const orderTrackingSlice = createSlice({
   },
 });
 
-export const { clearError, clearTrackingOrders, setPage } = orderTrackingSlice.actions;
+export const { clearError, clearTrackingOrders, setPage } =
+  orderTrackingSlice.actions;
 
 // Selectors
-export const selectFilteredOrdersForTracking = (state: any) => state.orderTracking.trackingOrders;
+export const selectFilteredOrdersForTracking = (state: any) =>
+  state.orderTracking.trackingOrders;
 
 export default orderTrackingSlice.reducer;

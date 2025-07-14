@@ -38,8 +38,6 @@ const StoresPage: React.FC = () => {
   const [isCreating, setIsCreating] = useState(false);
 
   // Debug logging
-  console.log("Store state:", storeState);
-  console.log("Stores array:", stores);
 
   useEffect(() => {
     dispatch(fetchStores());

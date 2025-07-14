@@ -187,11 +187,6 @@ const CreateInventory: React.FC = () => {
       );
 
       // Log the payload for debugging when variants are enabled
-      console.log("Product with Variants Payload:", {
-        hasVariants: basePayload.hasVariants,
-        variantCount: basePayload.variants.length,
-        variants: basePayload.variants,
-      });
     }
 
     return basePayload;

@@ -122,16 +122,6 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
     });
   };
 
-  console.log("EmployeeForm props:", {
-    isEditMode,
-    initialData,
-    onSubmit,
-    onCancel,
-  });
-  console.log("URL params:", { id });
-  console.log("Form will be in edit mode:", isEditMode);
-  console.log("Initial data received:", initialData);
-
   const [formData, setFormData] = useState<EmployeeFormData>({
     id: initialData?.id || "",
     roleTemplateId: initialData?.roleTemplateId || "", // <-- Added this line
@@ -278,10 +268,6 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
       storeIds: id ? [id] : formData.storeIds,
     };
 
-    console.log("Submitting employee data:", submitData);
-    console.log("Current store ID from URL:", id);
-    console.log("Permissions with store IDs:", permissions);
-
     // Remove password field if editing or if password is empty
     if (isEditMode || !submitData.password) {
       delete submitData.password;
@@ -289,31 +275,16 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
 
     try {
       if (isEditMode && formData.id) {
-        console.log("Editing employee with ID:", formData.id);
-        console.log("Update data:", submitData);
         await dispatch(
           updateEmployee({ id: formData.id, employeeData: submitData })
         ).unwrap();
-        console.log("Employee updated successfully");
         // For edit mode, call onSubmit if provided
         if (onSubmit) {
           onSubmit(submitData);
         }
       } else {
-        console.log("Creating new employee");
-        console.log("Create data being sent:", submitData);
-        console.log(
-          "Password being sent:",
-          formData.password || "TempPassword123!"
-        );
-
         // Creating new employee
         const result = await dispatch(createEmployee(submitData)).unwrap();
-        console.log("Employee creation result:", result);
-        console.log(
-          "Employee ID from result:",
-          result.id || result.data?.id || result.employee?.id
-        );
 
         // Send email invite after employee creation with login credentials
         try {
@@ -337,29 +308,18 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
             companyName: "Accurack",
           };
 
-          console.log("Sending invitation email with payload:", invitePayload);
-          console.log("Email credentials that will be sent:");
-          console.log("- Email:", formData.email);
-          console.log("- Password:", formData.password || "TempPassword123!");
-          console.log("- Employee ID:", employeeId);
-          console.log("- Store ID:", id);
-
           await apiClient.post("/employees/invite", invitePayload);
-          console.log("Email invite sent successfully with login credentials");
 
           // Verify that employee was created properly for login
           try {
-            console.log("Verifying employee creation for login...");
             const verifyResponse = await apiClient.get(
               `/employees/${employeeId}`
             );
-            console.log("Employee verification response:", verifyResponse.data);
 
             if (
               verifyResponse.data &&
               verifyResponse.data.status === "active"
             ) {
-              console.log("Employee is active and ready for login");
             } else {
               console.warn(
                 "Employee created but may not be active:",
@@ -377,7 +337,6 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
           console.error("Failed to send email invite:", inviteError);
           // toast.error('Employee created but failed to send invitation email');
         }
-        console.log("Employee created successfully");
 
         // Redirect to employee list/permissions page
         if (id) {

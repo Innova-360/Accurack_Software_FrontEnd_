@@ -65,11 +65,9 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
       setLoading(true);
       const supplierId = supplier.id || supplier.supplier_id;
 
-      console.log("Fetching assigned products for supplier:", supplierId);
-
       // New API response structure
       const response = await apiClient.get(`/supplier/${supplierId}/products`);
-      console.log("Assigned products response:", response.data);
+
       let assignedProducts = [];
       if (
         response.data?.success &&

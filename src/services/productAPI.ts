@@ -377,9 +377,9 @@ export const productAPI = {
       }
 
       const url = `/product/list?${searchParams.toString()}`;
-      console.log("Making API request to:", url); // Debug log
+      // Debug log
       const response = await apiClient.get(url);
-      console.log("API Response:", response.data); // Debug log
+      // Debug log
 
       // Handle different possible response structures
       let apiProducts: ApiProduct[];
@@ -436,14 +436,13 @@ export const productAPI = {
       ) {
         // If data is an object, look for arrays inside it
         const dataKeys = Object.keys(response.data.data);
-        console.log("Data object keys:", dataKeys);
 
         // Try to find an array in the data object
         let foundArray = null;
         for (const key of dataKeys) {
           if (Array.isArray(response.data.data[key])) {
             foundArray = response.data.data[key];
-            console.log(`Found array at key: ${key}`, foundArray);
+
             break;
           }
         }

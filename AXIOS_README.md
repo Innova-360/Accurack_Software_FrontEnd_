@@ -206,7 +206,7 @@ To test the API integration:
 
 For production deployment:
 
-1. Remove console.log statements from interceptors
+1. Remove logs statements from interceptors
 2. Set proper production API URL
 3. Configure CORS on your backend
 4. Set up proper error monitoring

@@ -33,9 +33,9 @@ const UpdateInventory: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const handleRetry = () => {
-    setRetryCount(prev => prev + 1);
+    setRetryCount((prev) => prev + 1);
     setError(null);
     loadProductData();
   };
@@ -186,12 +186,6 @@ const UpdateInventory: React.FC = () => {
           return mappedVariant;
         }
       );
-
-      console.log("Product with Variants Update Payload:", {
-        hasVariants: basePayload.hasVariants,
-        variantCount: basePayload.variants.length,
-        variants: basePayload.variants,
-      });
     }
 
     return basePayload;
@@ -238,7 +232,8 @@ const UpdateInventory: React.FC = () => {
       return;
     }
     // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(productId)) {
       setError("Invalid product ID format");
       setLoading(false);
@@ -357,17 +352,17 @@ const UpdateInventory: React.FC = () => {
     setIsSubmitting(true);
     const payload = buildApiPayload();
 
-    dispatch(updateProduct({ productId, productData: payload }) as any).then(
-      (result: any) => {
+    dispatch(updateProduct({ productId, productData: payload }) as any)
+      .then((result: any) => {
         if (!result.error) {
           navigate(`/store/${storeId}/inventory`);
         } else {
           setIsSubmitting(false);
         }
-      }
-    ).catch(() => {
-      setIsSubmitting(false);
-    });
+      })
+      .catch(() => {
+        setIsSubmitting(false);
+      });
   };
 
   const handleNext = () => {

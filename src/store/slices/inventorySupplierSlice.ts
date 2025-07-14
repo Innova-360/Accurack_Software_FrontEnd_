@@ -15,13 +15,6 @@ export const fetchInventorySuppliers = createAsyncThunk(
       const response = await apiClient.get(
         `/supplier/list?storeId=${storeId}&page=${page}&limit=${limit}`
       );
-      console.log("📦 Fetched inventory suppliers response structure:", {
-        fullResponse: response.data,
-        dataLevel1: response.data.data,
-        dataLevel2: response.data.data.data,
-        suppliers: response.data.data.data.suppliers,
-        suppliersCount: response.data.data.data.suppliers?.length,
-      });
       // Get all suppliers from the response
       const allSuppliers = response.data.data.data.suppliers || [];
 
@@ -29,10 +22,6 @@ export const fetchInventorySuppliers = createAsyncThunk(
       const activeSuppliers = allSuppliers.filter(
         (supplier: any) => supplier.status !== "inactive"
       );
-      console.log(
-        `inventorySupplierSlice: ${activeSuppliers.length} active suppliers out of ${allSuppliers.length} total`
-      );
-
       return activeSuppliers;
     } catch (error: any) {
       console.error("Error fetching inventory suppliers:", error);

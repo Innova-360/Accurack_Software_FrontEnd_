@@ -54,7 +54,10 @@ const UploadInventory: React.FC = () => {
             const parsed = Papa.parse(text, { header: true });
             rows = parsed.data as any[];
             headerFields = parsed.meta.fields || [];
-          } else if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
+          } else if (
+            file.name.endsWith(".xlsx") ||
+            file.name.endsWith(".xls")
+          ) {
             // Parse Excel
             const data = await file.arrayBuffer();
             const workbook = XLSX.read(data, { type: "array" });
@@ -62,7 +65,9 @@ const UploadInventory: React.FC = () => {
             const worksheet = workbook.Sheets[sheetName];
             rows = XLSX.utils.sheet_to_json(worksheet);
             // Get header fields from the first row of the sheet
-            const headerRow = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0] as string[];
+            const headerRow = XLSX.utils.sheet_to_json(worksheet, {
+              header: 1,
+            })[0] as string[];
             headerFields = headerRow || [];
           }
           // Validate columns only
@@ -78,7 +83,9 @@ const UploadInventory: React.FC = () => {
           setSelectedFile(null);
         }
       } else {
-        toast.error("Please upload only Excel files (.xlsx, .xls) or CSV files.");
+        toast.error(
+          "Please upload only Excel files (.xlsx, .xls) or CSV files."
+        );
       }
     }
   };
@@ -107,7 +114,9 @@ const UploadInventory: React.FC = () => {
       "stock",
       "SKU",
     ];
-    const missingColumns = requiredFields.filter((field) => !headerFields.includes(field));
+    const missingColumns = requiredFields.filter(
+      (field) => !headerFields.includes(field)
+    );
     if (missingColumns.length > 0) {
       return [
         `File validation failed. The following required columns are missing: ${missingColumns.join(", ")}`,
@@ -128,13 +137,6 @@ const UploadInventory: React.FC = () => {
     );
 
     const url = `${BASE_URL}/product/uploadsheet?storeId=${id}`;
-    console.log("Uploading inventory file:", {
-      fileName: selectedFile.name,
-      fileType: selectedFile.type,
-      fileSize: selectedFile.size,
-      storeId: id,
-    });
-
     try {
       // Send as multipart/form-data for multer
       const formData = new FormData();
@@ -366,9 +368,24 @@ const UploadInventory: React.FC = () => {
               >
                 {uploading ? (
                   <>
-                    <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    <svg
+                      className="animate-spin h-5 w-5 mr-2 text-white"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8z"
+                      />
                     </svg>
                     Uploading...
                   </>

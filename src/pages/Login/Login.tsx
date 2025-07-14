@@ -51,7 +51,6 @@ const Login = () => {
         loginUser({ email: formData.email, password: formData.password })
       );
       if (loginUser.fulfilled.match(resultAction)) {
-        console.log("Login successful", resultAction.payload);
         // Handle Remember Me functionality
         if (rememberMe) {
           // Save credentials to localStorage

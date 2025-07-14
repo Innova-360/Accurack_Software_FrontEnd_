@@ -23,7 +23,7 @@ export const fetchStores = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await apiClient.get("/store/list");
-      console.log("Fetched stores:", response); // Debug log
+      // Debug log
       return response.data.data; // Extract stores from response
     } catch (error: any) {
       return rejectWithValue(
@@ -89,7 +89,7 @@ export const searchStores = createAsyncThunk(
   async (query: string, { rejectWithValue }) => {
     try {
       const response = await apiClient.get("/store/search", {
-        params: { q: query }
+        params: { q: query },
       });
       return response.data.data; // Extract stores from response
     } catch (error: any) {
@@ -99,9 +99,6 @@ export const searchStores = createAsyncThunk(
     }
   }
 );
-
-
-
 
 export const storeSlice = createSlice({
   name: "stores",

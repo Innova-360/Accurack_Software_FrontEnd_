@@ -171,18 +171,11 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
       toast.error(
         "Cannot edit this supplier: This appears to be sample/dummy data that cannot be modified. Please add real suppliers to manage them."
       );
-      console.log("Invalid supplier ID:", supplier.supplier_id);
+
       return;
     }
 
     try {
-      console.log(
-        "Updating supplier with valid ID:",
-        validId,
-        "with data:",
-        formData
-      );
-
       // Compose address from detailed fields
       const composedAddress =
         `${formData.streetAddress}, ${formData.city}, ${formData.state} ${formData.zipCode}`.trim();
@@ -198,7 +191,6 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
         })
       ).unwrap();
 
-      console.log("Supplier updated successfully");
       toast.success("Supplier updated successfully!");
       setErrors({});
       onClose();
@@ -247,9 +239,7 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
               <h2 className="text-xl font-semibold text-[#03414C]">
                 Edit Supplier
               </h2>
-              <p className="text-sm text-gray-600">
-                Update vendor information
-              </p>
+              <p className="text-sm text-gray-600">Update vendor information</p>
             </div>
           </div>
           <button
@@ -407,7 +397,6 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
           </div>
 
           {/* Store Information */}
-          
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">

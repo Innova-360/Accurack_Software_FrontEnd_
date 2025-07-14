@@ -19,7 +19,7 @@ const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
   onManualCreate,
   storeId,
   clientId,
-  handleUploadSalesModal
+  handleUploadSalesModal,
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -64,14 +64,6 @@ const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
         formData.append("clientId", clientId);
       }
 
-      console.log("Uploading sales file:", {
-        fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size,
-        storeId,
-        clientId,
-      });
-
       // Build URL with storeId as query string
       let uploadUrl = "/sales/uploadsheet";
       if (storeId) {
@@ -83,8 +75,6 @@ const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
           "Content-Type": "multipart/form-data",
         },
       });
-
-      console.log("Upload response:", response.data);
 
       if (response.data) {
         toast.success(
@@ -103,8 +93,10 @@ const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
 
       let errorMessage = "Failed to upload sales file";
 
-      if (error && typeof error === 'object' && 'response' in error) {
-        const errorResponse = error as { response?: { data?: { message?: string; error?: string } } };
+      if (error && typeof error === "object" && "response" in error) {
+        const errorResponse = error as {
+          response?: { data?: { message?: string; error?: string } };
+        };
         if (errorResponse.response?.data?.message) {
           errorMessage = errorResponse.response.data.message;
         } else if (errorResponse.response?.data?.error) {
@@ -133,7 +125,7 @@ const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
 
     if (handleUploadSalesModal) {
       handleUploadSalesModal();
-    } 
+    }
   };
 
   if (!isOpen) return null;
@@ -148,7 +140,9 @@ const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
         <div className="relative bg-white rounded-xl shadow-2xl p-6 m-4 w-full max-w-md animate-modal-enter">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-[#0f4d57]">Create New Sale</h2>
+            <h2 className="text-xl font-bold text-[#0f4d57]">
+              Create New Sale
+            </h2>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors p-1"
@@ -181,7 +175,10 @@ const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
                   <FaPlus className="w-6 h-6 text-green-600 group-hover:text-white" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-[#0f4d57]"> Make Sales Manually</h3>
+                  <h3 className="font-semibold text-gray-900 group-hover:text-[#0f4d57]">
+                    {" "}
+                    Make Sales Manually
+                  </h3>
                   <p className="text-sm text-gray-500 group-hover:text-gray-600">
                     Manually add a new sale transaction.
                   </p>
@@ -224,7 +221,6 @@ const SaleCreationModal: React.FC<SaleCreationModalProps> = ({
           />
         </div>
       </div>
-
     </>
   );
 };

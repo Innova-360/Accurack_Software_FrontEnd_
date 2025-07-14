@@ -46,39 +46,6 @@ const Permissions: React.FC<PermissionsProps> = ({
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeAPIData | null>(null);
   const itemsPerPage = 6;
 
-  // Fetch employees on component mount with store context
-  useEffect(() => {
-    console.log('Fetching employees...', { storeId, page: currentPage, limit: itemsPerPage });
-    dispatch(fetchEmployees({ 
-      storeId: storeId, 
-      page: currentPage, 
-      limit: itemsPerPage 
-    }));
-  }, [dispatch, currentPage, storeId]);
-
-  // Debug employees data when it changes
-  useEffect(() => {
-    console.log('Employees data updated:', employees);
-    if (employees && employees.length > 0) {
-      console.log('First employee sample:', employees[0]);
-      console.log('Employee keys:', Object.keys(employees[0]));
-      console.log('All employee data:', employees.map(emp => ({
-        id: emp.id,
-        employeeCode: emp.employeeCode,
-        createdAt: emp.createdAt,
-        // joiningDate: (emp as any).joiningDate,
-        status: emp.status,
-        statusType: typeof emp.status,
-        name: `${emp.firstName} ${emp.lastName}`
-      })));
-    }
-  }, [employees]);
-  // Debug: Log employees data
-
-  useEffect(() => {
-    console.log('Employees state:', { employees, loading, error });
-  }, [employees, loading, error]);
-
   // Filter employees based on search and status
   const filteredEmployees = employees.filter(employee => {
     const fullName = `${employee.firstName} ${employee.lastName}`;
@@ -95,9 +62,7 @@ const Permissions: React.FC<PermissionsProps> = ({
   const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedEmployees = filteredEmployees.slice(startIndex, startIndex + itemsPerPage);
-  console.log('Paginated employees:', paginatedEmployees);
   const getRoleIcon = (roleName: string) => {
-    console.log(roleName, 'Role name received in getRoleIcon');
     switch (roleName.toLowerCase()) {
       case 'administrator':
         return <FaUserShield className="w-5 h-5 text-red-600" />;
@@ -282,17 +247,7 @@ const Permissions: React.FC<PermissionsProps> = ({
                   </tr>
                 ) : (
                   paginatedEmployees?.map((employee) => {
-                    // Debug logging for employee status
-                    console.log('Employee data:', employee);
-                    console.log('Employee status:', employee?.status);
-                    console.log('Employee status type:', typeof employee?.status);
-                    console.log('Status field debug:', {
-                      status: employee?.status,
-                      statusType: typeof employee?.status,
-                      isString: typeof employee?.status === 'string',
-                      hasLowerCase: employee?.status && typeof employee?.status?.toLowerCase === 'function'
-                    });
-                    
+                   
                     return (
                     <tr key={employee?.id} className="hover:bg-gray-50">
                       {/* Role Name */}
