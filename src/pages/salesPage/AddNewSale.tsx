@@ -81,14 +81,14 @@ const AddNewSale: React.FC = () => {
   }, [dispatch, currentPageLocal, debouncedSearchTerm]);
 
   // Fetch products, user, and customers on component mount
-  useEffect(() => {
-    fetchProductsData();
-    dispatch(fetchUser());
-    // Fetch customers for the dropdown
-    if (currentStore?.id) {
-      dispatch(fetchCustomers({ storeId: currentStore.id, page: 1, limit: 100 }));
-    }
-  }, [fetchProductsData, dispatch, currentStore?.id]);
+  // useEffect(() => {
+  //   fetchProductsData();
+  //   dispatch(fetchUser());
+  //   // Fetch customers for the dropdown
+  //   if (currentStore?.id) {
+  //     dispatch(fetchCustomers({ storeId: currentStore.id, page: 1, limit: 100 }));
+  //   }
+  // }, [fetchProductsData, dispatch, currentStore?.id]);
 
   // Update search query in redux store
   useEffect(() => {
