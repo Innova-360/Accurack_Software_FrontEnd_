@@ -382,9 +382,8 @@ const DeleteInventory: React.FC = () => {
                     onProductDeleted={handleProductDeleted}
                     onProductEdited={handleEditProduct}
                     onProductViewed={handleViewProduct}
-                    showActions={true}
                     showDeleteButton={true}
-                    showUpdateButton={false}
+                    showEditButton={false}
                   />
                 </div>
               )}
@@ -403,9 +402,8 @@ const DeleteInventory: React.FC = () => {
                 onProductDeleted={handleProductDeleted}
                 onProductEdited={handleEditProduct}
                 onProductViewed={handleViewProduct}
-                showActions={true}
                 showDeleteButton={true}
-                showUpdateButton={false}
+                showEditButton={false}
               />
             </div>
           </div>

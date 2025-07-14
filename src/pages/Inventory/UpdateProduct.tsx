@@ -415,6 +415,7 @@ const UpdateProduct: React.FC = () => {
                     onProductEdited={handleEditProduct}
                     onProductViewed={handleViewProduct}
                     showDeleteButton={false}
+                    showEditButton={true}
                     showUpdateQuantity={true}
                   />
                 </div>
@@ -434,8 +435,8 @@ const UpdateProduct: React.FC = () => {
                 onProductDeleted={handleProductDeleted}
                 onProductEdited={handleEditProduct}
                 onProductViewed={handleViewProduct}
-                showActions={true}
                 showDeleteButton={false}
+                showEditButton={true}
                 showUpdateQuantity={true}
               />
             </div>

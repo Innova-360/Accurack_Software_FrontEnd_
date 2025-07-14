@@ -480,7 +480,8 @@ const Inventory: React.FC = () => {
                     onSort={handleSort}
                     onProductEdited={handleEditProduct}
                     onProductViewed={handleViewProduct}
-                    showActions={false}
+                    showDeleteButton={false}
+                    showEditButton={false}
                   />
                 )}
               </div>
@@ -505,6 +506,8 @@ const Inventory: React.FC = () => {
                 onSort={handleSort}
                 onProductViewed={handleViewProduct}
                 showActions={false}
+                showDeleteButton={false}
+                showEditButton={false}
               />
             )}
           </div>
