@@ -229,12 +229,12 @@ const CreateInventory: React.FC = () => {
 
   const handleNumericInput = (key: keyof ProductFormData, rawValue: string) => {
     const cleaned = rawValue.replace(/[^0-9]/g, ""); // removes everything except digits
-    
+
     // Special handling for PLU field - if it was set from a scanned barcode, preserve it
     if (key === "pluUpc" && !cleaned && formData.pluUpc) {
       return; // Don't update if we're trying to clear a valid PLU
     }
-    
+
     setFormData((prev) => ({
       ...prev,
       [key]: cleaned,
@@ -257,16 +257,18 @@ const CreateInventory: React.FC = () => {
     setIsSubmitting(true);
     const payload = buildApiPayload();
 
-    dispatch(createProduct(payload) as any).then((result: any) => {
-      setIsSubmitting(false);
-      if (!result.error) {
-        // Navigate to the correct inventory page using the actual storeId
-        navigate(`/store/${storeId}/inventory/dashboard`);
-      }
-    }).catch((error: any) => {
-      setIsSubmitting(false);
-      console.error("Error creating product:", error);
-    });
+    dispatch(createProduct(payload) as any)
+      .then((result: any) => {
+        setIsSubmitting(false);
+        if (!result.error) {
+          // Navigate to the correct inventory page using the actual storeId
+          navigate(`/store/${storeId}/inventory/dashboard`);
+        }
+      })
+      .catch((error: any) => {
+        setIsSubmitting(false);
+        console.error("Error creating product:", error);
+      });
   };
 
   const handleNext = () => {
@@ -354,7 +356,7 @@ const CreateInventory: React.FC = () => {
         pluUpc: location.state.scannedPLU,
       }));
     }
-    
+
     // Fallback: Check localStorage if navigation state is not available
     if (!location.state?.scannedPLU && !formData.pluUpc) {
       const storedPLU = localStorage.getItem("scannedPLU");
@@ -603,23 +605,26 @@ const CreateInventory: React.FC = () => {
                     </div>
                   </div>
                 )}
-                {/* Attributes Configuration - Always show but with different behavior in variant mode */}
-                <div className="">
-                  <AttributesConfiguration
-                    hasAttributes={hasVariants ? true : formData.hasAttributes}
-                    onToggle={
-                      hasVariants
-                        ? () => {} // no-op when variants are on
-                        : (value) =>
-                            handleFormDataChange("hasAttributes", value)
-                    }
-                    attributes={formData.attributes}
-                    onAttributesChange={(attributes) =>
-                      handleFormDataChange("attributes", attributes)
-                    }
-                    isVariantMode={hasVariants} // <-- Pass the prop
-                  />
-                </div>
+                {hasVariants && (
+                  <div>
+                    <AttributesConfiguration
+                      hasAttributes={
+                        hasVariants ? true : formData.hasAttributes
+                      }
+                      onToggle={
+                        hasVariants
+                          ? () => {} // no-op when variants are on
+                          : (value) =>
+                              handleFormDataChange("hasAttributes", value)
+                      }
+                      attributes={formData.attributes}
+                      onAttributesChange={(attributes) =>
+                        handleFormDataChange("attributes", attributes)
+                      }
+                      isVariantMode={hasVariants} // <-- Pass the prop
+                    />
+                  </div>
+                )}
                 {/* Enhanced Action Buttons */}
                 <div className="flex flex-col sm:flex-row items-center justify-between pt-6 sm:pt-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200/50 space-y-4 sm:space-y-0">
                   <button
