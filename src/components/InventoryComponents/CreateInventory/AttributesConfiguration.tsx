@@ -121,8 +121,7 @@ const AttributesConfiguration: React.FC<AttributesConfigurationProps> = ({
 
       {hasAttributes && (
         <div className="space-y-4 sm:space-y-6 border-t border-[#03414C]/10 pt-4 sm:pt-6 animate-fadeIn">
-          {/* Decorative border */}
-          <div className="w-full h-px bg-gradient-to-r from-transparent via-[#03414C]/20 to-transparent"></div>
+          
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 space-y-2 sm:space-y-0">
             <h4 className="text-sm sm:text-base font-semibold text-[#03414C] flex items-center">
               <svg

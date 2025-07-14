@@ -760,23 +760,26 @@ const CreateInventory: React.FC = () => {
                     </div>
                   </div>
                 )}
-                {/* Attributes Configuration - Always show but with different behavior in variant mode */}
-                <div className="">
-                  <AttributesConfiguration
-                    hasAttributes={hasVariants ? true : formData.hasAttributes}
-                    onToggle={
-                      hasVariants
-                        ? () => {} // no-op when variants are on
-                        : (value) =>
-                            handleFormDataChange("hasAttributes", value)
-                    }
-                    attributes={formData.attributes}
-                    onAttributesChange={(attributes) =>
-                      handleFormDataChange("attributes", attributes)
-                    }
-                    isVariantMode={hasVariants} // <-- Pass the prop
-                  />
-                </div>
+                {hasVariants && (
+                  <div>
+                    <AttributesConfiguration
+                      hasAttributes={
+                        hasVariants ? true : formData.hasAttributes
+                      }
+                      onToggle={
+                        hasVariants
+                          ? () => {} // no-op when variants are on
+                          : (value) =>
+                              handleFormDataChange("hasAttributes", value)
+                      }
+                      attributes={formData.attributes}
+                      onAttributesChange={(attributes) =>
+                        handleFormDataChange("attributes", attributes)
+                      }
+                      isVariantMode={hasVariants} // <-- Pass the prop
+                    />
+                  </div>
+                )}
                 {/* Enhanced Action Buttons */}
                 <div className="flex flex-col sm:flex-row items-center justify-between pt-6 sm:pt-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200/50 space-y-4 sm:space-y-0">
                   <button
