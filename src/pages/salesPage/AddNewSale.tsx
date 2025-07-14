@@ -53,7 +53,7 @@ const AddNewSale: React.FC = () => {
 
   // Customers state
   const { customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
-
+// sadf
   const [allowance, setAllowance] = useState(0);
 
   // Separate useEffect for user and customers (run only once)
