@@ -96,18 +96,6 @@ const AddNewSale: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, currentPageLocal, debouncedSearchTerm]);
 
-  // Fetch products, user, and customers on component mount
-  useEffect(() => {
-    fetchProductsData();
-    dispatch(fetchUser());
-    // Fetch customers for the dropdown
-    if (currentStore?.id) {
-      dispatch(
-        fetchCustomers({ storeId: currentStore.id, page: 1, limit: 100 })
-      );
-    }
-  }, [fetchProductsData, dispatch, currentStore?.id]);
-
   // Update search query in redux store
   useEffect(() => {
     dispatch(setSearchQuery(debouncedSearchTerm));
@@ -497,7 +485,7 @@ const AddNewSale: React.FC = () => {
 
       // Navigate back to sales page
       navigate(-1);
-    } catch (error: axios.AxiosError) {
+    } catch (error: any) {
       console.error("Error creating sale:", error);
       toast.error(`Failed to create sale: ${error}`);
     }

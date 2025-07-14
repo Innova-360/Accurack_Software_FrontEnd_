@@ -405,15 +405,6 @@ const CreateInventory: React.FC = () => {
 
   const progress = calculateProgress();
 
-  useEffect(() => {
-    // Fetch user info on mount to ensure user is loaded
-    dispatch(fetchUser() as any).then((result: any) => {
-      // result.payload will be the user data if fulfilled
-      if (result && result.payload) {
-        localStorage.setItem("clientId", result.payload.clientId || "");
-      }
-    });
-  }, []);
 
   // Handle barcode data from navigation state
   useEffect(() => {
