@@ -7,6 +7,7 @@ interface PackConfigurationProps {
   onToggle: (value: boolean) => void;
   packDiscounts: PackDiscount[];
   onPackDiscountsChange: (discounts: PackDiscount[]) => void;
+  itemSellingPrice?: number; // Add item selling price for auto-calculation
 }
 
 const PackConfiguration: React.FC<PackConfigurationProps> = ({
@@ -14,7 +15,36 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
   onToggle,
   packDiscounts,
   onPackDiscountsChange,
+  itemSellingPrice = 0,
 }) => {
+  // Update all pack discounts when itemSellingPrice changes
+  const updateAllPrices = React.useCallback(() => {
+    if (packDiscounts.length > 0) {
+      const updatedDiscounts = packDiscounts.map(discount => ({
+        ...discount,
+        orderedPacksPrice: discount.quantity * itemSellingPrice
+      }));
+      onPackDiscountsChange(updatedDiscounts);
+    }
+  }, [packDiscounts, itemSellingPrice, onPackDiscountsChange]);
+
+  React.useEffect(() => {
+    updateAllPrices();
+  }, [itemSellingPrice]);
+  // Auto-calculate ordered box price
+  const calculateOrderedBoxPrice = (quantity: number, sellingPrice: number) => {
+    return quantity * sellingPrice;
+  };
+  
+  // Debug log to check values
+  React.useEffect(() => {
+    console.log("Current itemSellingPrice:", itemSellingPrice);
+    console.log("Current packDiscounts:", packDiscounts);
+    // For testing: if itemSellingPrice is 0, use a default value of 10
+    if (itemSellingPrice === 0) {
+      console.log("Using test value of 10 for demonstration");
+    }
+  }, [itemSellingPrice, packDiscounts]);
   const addPackDiscount = () => {
     const newDiscount: PackDiscount = {
       id: generateId(),
@@ -22,7 +52,7 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
       discountType: "percentage",
       discountValue: 0,
       totalPacksQuantity: 0,
-      orderedPacksPrice: 0,
+      orderedPacksPrice: calculateOrderedBoxPrice(1, itemSellingPrice), // Auto-calculate initial price
     };
     onPackDiscountsChange([...packDiscounts, newDiscount]);
   };
@@ -32,11 +62,22 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
     field: keyof PackDiscount,
     value: any
   ) => {
-    onPackDiscountsChange(
-      packDiscounts.map((discount) =>
-        discount.id === id ? { ...discount, [field]: value } : discount
-      )
-    );
+    const updatedDiscounts = packDiscounts.map((discount) => {
+      if (discount.id === id) {
+        const updatedDiscount = { ...discount, [field]: value };
+        
+        // Always update the ordered box price whenever any field changes
+        updatedDiscount.orderedPacksPrice = calculateOrderedBoxPrice(
+          field === 'quantity' ? value : discount.quantity, 
+          itemSellingPrice
+        );
+        
+        return updatedDiscount;
+      }
+      return discount;
+    });
+    
+    onPackDiscountsChange(updatedDiscounts);
   };
 
   const removePackDiscount = (id: string) => {
@@ -163,11 +204,11 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
                   <option value="fixed">Fixed Amount</option>
                 </select>
               </div>
-              <div className="space-y-1 w-full md:w-1/4">
+              <div className="space-y-1 w-full md:w-1/5">
                 <label className="block text-xs font-medium text-gray-700">
                   {discount.discountType === "percentage"
                     ? "Percentage %"
-                    : "Amount $"}
+                    : "Discount Amount $"}
                 </label>
                 <input
                   type="number"
@@ -186,7 +227,7 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
-              <div className="space-y-1 w-full md:w-1/4">
+              <div className="space-y-1 w-full md:w-1/5">
                 <label className="block text-xs font-medium text-gray-700">
                   Total Box Quantity
                 </label>
@@ -204,24 +245,96 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
               </div>{" "}
-              <div className="space-y-1 w-full md:w-1/6">
-                <label className="block text-xs font-medium text-gray-700">
+              {/* <div className="space-y-1 w-full md:w-1/6">
+                <label className="block text-xs font-medium text-gray-700 flex items-center gap-1">
                   Ordered Box Price
+                  <span className="text-xs text-blue-600" title="Auto-calculated: Items in Box × Item Price">
+                    (auto)
+                  </span>
                 </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={discount.orderedPacksPrice || ""}
-                  onChange={(e) =>
-                    updatePackDiscount(
-                      discount.id,
-                      "orderedPacksPrice",
-                      parseFloat(e.target.value) || 0
-                    )
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={itemSellingPrice > 0 ? (discount.quantity * itemSellingPrice).toFixed(2) : "0.00"}
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-blue-50 text-blue-800 font-medium cursor-not-allowed"
+                  />
+                  <div className="mt-1 flex items-center text-xs text-blue-600">
+                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    {itemSellingPrice > 0 
+                      ? `Auto-calculated: ${discount.quantity} × ${itemSellingPrice} = ${(discount.quantity * itemSellingPrice).toFixed(2)}`
+                      : "Please set Individual Item Selling Price above to enable auto-calculation"
+                    }
+                  </div>
+                </div>
+              </div> */}
+              {/* <div className="space-y-1 w-full md:w-1/6">
+                <label className="block text-xs font-medium text-gray-700 flex items-center gap-1">
+                  Final Price
+                  <span className="text-xs text-green-600" title="After discount">
+                    (after discount)
+                  </span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={(() => {
+                      const basePrice = discount.quantity * itemSellingPrice;
+                      if (discount.discountType === "percentage") {
+                        const discountAmount = (basePrice * discount.discountValue) / 100;
+                        return (basePrice - discountAmount).toFixed(2);
+                      } else {
+                        return (basePrice - discount.discountValue).toFixed(2);
+                      }
+                    })()}
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-green-50 text-green-800 font-medium cursor-not-allowed"
+                  />
+                  <div className="mt-1 flex items-center text-xs text-green-600">
+                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    {discount.discountType === "percentage" 
+                      ? `${discount.discountValue}% discount applied`
+                      : `$${discount.discountValue} discount applied`
+                    }
+                  </div>
+                </div>
+              </div> */}
+              <div className="space-y-1 w-full md:w-1/6">
+                <label className="block text-xs font-medium text-gray-700 flex items-center gap-1">
+                  Final Price
+                  <span className="text-xs text-green-600" title="After discount">
+                    (after discount)
+                  </span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={(() => {
+                      const basePrice = discount.quantity * itemSellingPrice;
+                      if (discount.discountType === "percentage") {
+                        const discountAmount = (basePrice * discount.discountValue) / 100;
+                        return (basePrice - discountAmount).toFixed(2);
+                      } else {
+                        return (basePrice - discount.discountValue).toFixed(2);
+                      }
+                    })()}
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-green-50 text-green-800 font-medium cursor-not-allowed"
+                  />
+                  <div className="mt-1 flex items-center text-xs text-green-600">
+                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    {discount.discountType === "percentage" 
+                      ? `${discount.discountValue}% discount applied`
+                      : `$${discount.discountValue} discount applied`
+                    }
+                  </div>
+                </div>
               </div>
               <div className="flex items-end w-full md:w-1/6">
                 <button

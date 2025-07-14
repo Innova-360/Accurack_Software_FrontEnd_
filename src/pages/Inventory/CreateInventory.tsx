@@ -144,6 +144,7 @@ const CreateInventory: React.FC = () => {
 
           const mappedVariant = {
             name: variant.name || `Variant ${index + 1}`,
+            categoryId: variant.category || "", // Include category for variants
             price,
             costPrice: costPrice, // Include cost price for variants
             sku: variant.customSku || "",
@@ -735,6 +736,7 @@ const CreateInventory: React.FC = () => {
                         onPackDiscountsChange={(discounts) =>
                           handleFormDataChange("packDiscounts", discounts)
                         }
+                        itemSellingPrice={parseFloat(formData.itemSellingCost) || parseFloat(formData.price) || 0}
                       />{" "}
                     </div>
                   </div>

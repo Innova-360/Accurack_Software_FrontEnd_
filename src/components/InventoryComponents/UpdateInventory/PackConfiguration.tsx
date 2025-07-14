@@ -7,6 +7,7 @@ interface PackConfigurationProps {
   onToggle: (value: boolean) => void;
   packDiscounts: PackDiscount[];
   onPackDiscountsChange: (discounts: PackDiscount[]) => void;
+  itemSellingPrice?: number;
 }
 
 const PackConfiguration: React.FC<PackConfigurationProps> = ({
@@ -14,7 +15,12 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
   onToggle,
   packDiscounts,
   onPackDiscountsChange,
+  itemSellingPrice = 0,
 }) => {
+  
+  const calculateOrderedBoxPrice = (quantity: number, sellingPrice: number) => {
+    return quantity * sellingPrice;
+  };
   const addPackDiscount = () => {
     const newDiscount: PackDiscount = {
       id: generateId(),
@@ -22,7 +28,7 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
       discountType: "percentage",
       discountValue: 0,
       totalPacksQuantity: 0,
-      orderedPacksPrice: 0,
+      orderedPacksPrice: calculateOrderedBoxPrice(1, itemSellingPrice),
     };
     onPackDiscountsChange([...packDiscounts, newDiscount]);
   };
@@ -33,9 +39,18 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
     value: any
   ) => {
     onPackDiscountsChange(
-      packDiscounts.map((discount) =>
-        discount.id === id ? { ...discount, [field]: value } : discount
-      )
+      packDiscounts.map((discount) => {
+        if (discount.id === id) {
+          const updatedDiscount = { ...discount, [field]: value };
+          
+          if (field === 'quantity' && itemSellingPrice > 0) {
+            updatedDiscount.orderedPacksPrice = calculateOrderedBoxPrice(value, itemSellingPrice);
+          }
+          
+          return updatedDiscount;
+        }
+        return discount;
+      })
     );
   };
 
@@ -205,22 +220,20 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
                 />
               </div>{" "}
               <div className="space-y-1 w-full md:w-1/6">
-                <label className="block text-xs font-medium text-gray-700">
+                <label className="block text-xs font-medium text-gray-700 flex items-center gap-1">
                   Ordered Box Price
+                  <span className="text-xs text-blue-600" title="Auto-calculated: Items in Box × Item Price">
+                    (auto)
+                  </span>
                 </label>
                 <input
                   type="number"
                   step="0.01"
                   placeholder="0.00"
-                  value={discount.orderedPacksPrice || ""}
-                  onChange={(e) =>
-                    updatePackDiscount(
-                      discount.id,
-                      "orderedPacksPrice",
-                      parseFloat(e.target.value) || 0
-                    )
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  value={discount.orderedPacksPrice?.toFixed(2) || "0.00"}
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-blue-50 text-blue-800 font-medium cursor-not-allowed"
+                  title="Auto-calculated based on items in box and item selling price"
                 />
               </div>
               <div className="flex items-end w-full md:w-1/6">

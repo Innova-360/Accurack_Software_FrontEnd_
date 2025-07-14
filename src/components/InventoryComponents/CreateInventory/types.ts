@@ -29,7 +29,7 @@ export interface Variation {
   id: string;
   attributeCombination: { [attributeName: string]: string };
   name: string;
-  category?: string;
+  category: string;
   customCategory?: string;
   brandName?: string;
   ean: string;

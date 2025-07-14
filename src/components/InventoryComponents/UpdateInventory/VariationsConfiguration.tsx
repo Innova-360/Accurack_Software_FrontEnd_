@@ -201,16 +201,24 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
     onVariationsChange(variations.filter((variation) => variation.id !== id));
   };
 
+  // Calculate ordered box price based on quantity and item selling price
+  const calculateOrderedBoxPrice = (quantity: number, itemSellingPrice: number) => {
+    return quantity * itemSellingPrice;
+  };
+
   const addVariationPackDiscount = (variationId: string) => {
     const variation = variations.find((v) => v.id === variationId);
     if (variation) {
+      // Auto-calculate the ordered box price based on quantity and item selling price
+      const orderedPacksPrice = calculateOrderedBoxPrice(1, variation.itemSellingCost || 0);
+      
       const newDiscount: PackDiscount = {
         id: generateId(),
         quantity: 1,
         discountType: "percentage",
         discountValue: 0,
         totalPacksQuantity: 0,
-        orderedPacksPrice: 0,
+        orderedPacksPrice,
       };
       updateVariation(variationId, "packDiscounts", [
         ...(variation.packDiscounts || []),
@@ -227,9 +235,23 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
   ) => {
     const variation = variations.find((v) => v.id === variationId);
     if (variation) {
-      const updatedDiscounts = (variation.packDiscounts || []).map((d) =>
-        d.id === discountId ? { ...d, [field]: value } : d
-      );
+      const updatedDiscounts = (variation.packDiscounts || []).map((d) => {
+        if (d.id === discountId) {
+          const updatedDiscount = { ...d, [field]: value };
+          
+          // Auto-calculate ordered box price when quantity changes
+          if (field === 'quantity' && variation.itemSellingCost) {
+            updatedDiscount.orderedPacksPrice = calculateOrderedBoxPrice(
+              value, 
+              variation.itemSellingCost
+            );
+          }
+          
+          return updatedDiscount;
+        }
+        return d;
+      });
+      
       updateVariation(variationId, "packDiscounts", updatedDiscounts);
     }
   };
@@ -469,119 +491,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
             placeholder="e.g. Dark Roast"
           />
         </div>
-        <div>
-          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-            Category
-          </label>
-          {isCreatingCategory ? (
-            <div className="space-y-2">
-              <input
-                type="text"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
-                placeholder="Enter new category name"
-                autoFocus
-              />
-              <div className="flex space-x-2">
-                <button
-                  type="button"
-                  onClick={handleCreateCategory}
-                  disabled={!newCategoryName.trim() || creatingCategory}
-                  className="px-3 py-1 bg-[#0f4d57] text-white text-sm rounded hover:bg-[#0a3b43] disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {creatingCategory ? "Creating..." : "Create"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsCreatingCategory(false);
-                    setNewCategoryName("");
-                  }}
-                  className="px-3 py-1 bg-gray-500 text-white text-sm rounded hover:bg-gray-600"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <select
-              value={variation.category || ""}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === "create_new") {
-                  setIsCreatingCategory(true);
-                  onUpdate(variation.id, "category", "");
-                } else {
-                  onUpdate(variation.id, "category", value);
-                }
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
-            >
-              <option value="">
-                {categoriesLoading
-                  ? "Loading categories..."
-                  : !categories || categories.length === 0
-                    ? "Select an option below"
-                    : "Select Category"}
-              </option>
-              <option value="create_new">+ Create New Category</option>
-              {categories && categories.length > 0 && (
-                <>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </>
-              )}
-            </select>
-          )}
-
-          {/* Show helpful message when no categories exist */}
-          {!categoriesLoading &&
-            (!categories || categories.length === 0) &&
-            !isCreatingCategory && (
-              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 text-blue-800 text-sm">
-                    <svg
-                      className="w-4 h-4"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-4 4a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span>
-                      No categories found. Create your first category.
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsCreatingCategory(true)}
-                    className="px-3 py-1 bg-[#0f4d57] text-white text-sm rounded hover:bg-[#0a3b43] transition-colors"
-                  >
-                    Create Category
-                  </button>
-                </div>
-              </div>
-            )}
-
-          {/* Helper text when categories exist */}
-          {!categoriesLoading &&
-            categories &&
-            categories.length > 0 &&
-            !isCreatingCategory && (
-              <div className="mt-1 text-xs text-gray-500">
-                Don't see your category? Select "+ Create New Category" from the
-                dropdown above.
-              </div>
-            )}
-        </div>
+        {/*  */}
 
         <div>
           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
@@ -1018,24 +928,21 @@ const VariationCard: React.FC<VariationCardProps> = ({
                     />
                   </div>
                   <div className="col-span-2 flex flex-col">
-                    <label className="text-xs text-gray-600 mb-1">
+                    <label className="text-xs text-gray-600 mb-1 flex items-center gap-1">
                       Ordered Price
+                      <span className="text-xs text-blue-600" title="Auto-calculated: Items in Box × Item Price">
+                        (auto)
+                      </span>
                     </label>
                     <input
                       type="number"
                       min={0}
                       step="0.01"
                       placeholder="Price"
-                      value={discount.orderedPacksPrice || ""}
-                      onChange={(e) =>
-                        onUpdatePackDiscount(
-                          variation.id,
-                          discount.id,
-                          "orderedPacksPrice",
-                          parseFloat(e.target.value) || 0
-                        )
-                      }
-                      className="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+                      value={discount.orderedPacksPrice?.toFixed(2) || "0.00"}
+                      readOnly
+                      className="px-2 py-1 text-sm border border-gray-300 rounded bg-blue-50 text-blue-800 font-medium cursor-not-allowed"
+                      title="Auto-calculated based on items in box and item selling price"
                     />
                   </div>
                   <div className="col-span-2 flex items-center justify-end">
