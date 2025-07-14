@@ -2,7 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "../../store";
-import { fetchReturns, type DisplayReturnItem, type ReturnItem } from "../../store/slices/returnSlice";
+import {
+  fetchReturns,
+  type DisplayReturnItem,
+  type ReturnItem,
+} from "../../store/slices/returnSlice";
 import Header from "../../components/Header";
 
 interface GroupedReturn {
@@ -38,9 +42,12 @@ const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
   const customerPhone = products[0]?.customerInfo?.phone || "N/A";
   const returnDate = products[0]?.returnDate || "";
 
-  // Get additional sale information from the raw API data
   const saleInfo = saleData?.sale;
-  const cashierName = saleInfo?.cashierName || saleInfo?.user?.firstName || saleInfo?.user?.name || "N/A";
+  const cashierName =
+    saleInfo?.cashierName ||
+    saleInfo?.user?.firstName ||
+    saleInfo?.user?.name ||
+    "N/A";
   const paymentMethod = saleInfo?.paymentMethod || "N/A";
   const originalSaleAmount = saleInfo?.totalAmount || 0;
   const storeName = saleInfo?.store?.name || "N/A";
@@ -91,15 +98,23 @@ const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
       <div className="px-6 py-8">
         {/* Sale Summary */}
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Sale Summary</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Sale Summary
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <div>
               <p className="text-sm font-medium text-gray-600">Customer Name</p>
-              <p className="text-lg font-semibold text-gray-900 mt-1">{customerName}</p>
+              <p className="text-lg font-semibold text-gray-900 mt-1">
+                {customerName}
+              </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-600">Customer Phone</p>
-              <p className="text-lg font-semibold text-gray-900 mt-1">{customerPhone}</p>
+              <p className="text-sm font-medium text-gray-600">
+                Customer Phone
+              </p>
+              <p className="text-lg font-semibold text-gray-900 mt-1">
+                {customerPhone}
+              </p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">Return Date</p>
@@ -108,28 +123,40 @@ const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Amount Returned</p>
+              <p className="text-sm font-medium text-gray-600">
+                Total Amount Returned
+              </p>
               <p className="text-lg font-semibold text-gray-900 mt-1">
                 ${totalAmount.toFixed(2)}
               </p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">Cashier</p>
-              <p className="text-lg font-semibold text-gray-900 mt-1">{cashierName}</p>
+              <p className="text-lg font-semibold text-gray-900 mt-1">
+                {cashierName}
+              </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-600">Payment Method</p>
-              <p className="text-lg font-semibold text-gray-900 mt-1">{paymentMethod}</p>
+              <p className="text-sm font-medium text-gray-600">
+                Payment Method
+              </p>
+              <p className="text-lg font-semibold text-gray-900 mt-1">
+                {paymentMethod}
+              </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-600">Original Sale Amount</p>
+              <p className="text-sm font-medium text-gray-600">
+                Original Sale Amount
+              </p>
               <p className="text-lg font-semibold text-gray-900 mt-1">
                 ${originalSaleAmount.toFixed(2)}
               </p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">Store</p>
-              <p className="text-lg font-semibold text-gray-900 mt-1">{storeName}</p>
+              <p className="text-lg font-semibold text-gray-900 mt-1">
+                {storeName}
+              </p>
             </div>
           </div>
         </div>
@@ -141,7 +168,7 @@ const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
               Returned Products ({products.length})
             </h3>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -211,15 +238,15 @@ const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                           product.status === "saleable"
                             ? "bg-green-100 text-green-800"
                             : product.status === "no_saleable"
-                            ? "bg-orange-100 text-orange-800"
-                            : "bg-red-100 text-red-800"
+                              ? "bg-orange-100 text-orange-800"
+                              : "bg-red-100 text-red-800"
                         }`}
                       >
                         {product.status === "saleable"
                           ? "Saleable"
                           : product.status === "no_saleable"
-                          ? "No Saleable"
-                          : "Scrap"}
+                            ? "No Saleable"
+                            : "Scrap"}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -238,7 +265,8 @@ const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
         <div className="mt-8 bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex justify-between items-center">
             <div className="text-sm text-gray-600">
-              Total Products: {products.length} | Total Quantity: {products.reduce((sum, p) => sum + p.quantity, 0)}
+              Total Products: {products.length} | Total Quantity:{" "}
+              {products.reduce((sum, p) => sum + p.quantity, 0)}
             </div>
             <div className="text-lg font-semibold text-gray-900">
               Total Amount: ${totalAmount.toFixed(2)}
@@ -254,18 +282,21 @@ const Return: React.FC = () => {
   const navigate = useNavigate();
   const { id: storeId } = useParams<{ id: string }>();
   const dispatch = useDispatch<AppDispatch>();
-  
+
   // Redux selectors
-  const { displayReturns: returnedProducts, returns: rawReturns, loading, error } = useSelector(
-    (state: RootState) => state.returns
-  );
-  
+  const {
+    displayReturns: returnedProducts,
+    returns: rawReturns,
+    loading,
+    error,
+  } = useSelector((state: RootState) => state.returns);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "saleable" | "no_saleable" | "scrap">(
-    "all"
-  );
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "saleable" | "no_saleable" | "scrap"
+  >("all");
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
@@ -277,20 +308,24 @@ const Return: React.FC = () => {
   }, [dispatch, storeId]);
 
   // Group products by sale ID
-  const groupedReturns = returnedProducts.reduce((acc, product) => {
-    if (!acc[product.saleId]) {
-      acc[product.saleId] = {
-        saleId: product.saleId,
-        returnDate: product.returnDate,
-        customerName: product.customerInfo?.name || "N/A",
-        products: [],
-        totalAmountReturned: 0,
-      };
-    }
-    acc[product.saleId].products.push(product);
-    acc[product.saleId].totalAmountReturned += product.sellingPrice * product.quantity;
-    return acc;
-  }, {} as Record<string, GroupedReturn>);
+  const groupedReturns = returnedProducts.reduce(
+    (acc, product) => {
+      if (!acc[product.saleId]) {
+        acc[product.saleId] = {
+          saleId: product.saleId,
+          returnDate: product.returnDate,
+          customerName: product.customerInfo?.name || "N/A",
+          products: [],
+          totalAmountReturned: 0,
+        };
+      }
+      acc[product.saleId].products.push(product);
+      acc[product.saleId].totalAmountReturned +=
+        product.sellingPrice * product.quantity;
+      return acc;
+    },
+    {} as Record<string, GroupedReturn>
+  );
 
   const groupedReturnsArray = Object.values(groupedReturns);
 
@@ -312,17 +347,21 @@ const Return: React.FC = () => {
   // Filter grouped returns
   const filteredGroupedReturns = groupedReturnsArray.filter((groupedReturn) => {
     // Filter by search term
-    const matchesSearch = groupedReturn.products.some(product =>
-      product.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.saleId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.pluUpc.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      groupedReturn.customerName.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = groupedReturn.products.some(
+      (product) =>
+        product.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.saleId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.pluUpc.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        groupedReturn.customerName
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
     );
-    
+
     // Filter by status
-    const matchesStatus = statusFilter === "all" || 
-      groupedReturn.products.some(product => product.status === statusFilter);
-    
+    const matchesStatus =
+      statusFilter === "all" ||
+      groupedReturn.products.some((product) => product.status === statusFilter);
+
     return matchesSearch && matchesStatus;
   });
 
@@ -330,7 +369,10 @@ const Return: React.FC = () => {
   const totalPages = Math.ceil(filteredGroupedReturns.length / rowsPerPage);
   const startIndex = (currentPage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
-  const currentGroupedReturns = filteredGroupedReturns.slice(startIndex, endIndex);
+  const currentGroupedReturns = filteredGroupedReturns.slice(
+    startIndex,
+    endIndex
+  );
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -359,12 +401,22 @@ const Return: React.FC = () => {
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                <svg
+                  className="h-5 w-5 text-red-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error Loading Returns</h3>
+                <h3 className="text-sm font-medium text-red-800">
+                  Error Loading Returns
+                </h3>
                 <p className="text-sm text-red-700 mt-1">{error}</p>
                 <button
                   onClick={() => storeId && dispatch(fetchReturns({ storeId }))}
@@ -601,7 +653,10 @@ const Return: React.FC = () => {
                     : "bg-orange-100 text-orange-800"
                 }`}
               >
-                {returnedProducts.filter((p) => p.status === "no_saleable").length}
+                {
+                  returnedProducts.filter((p) => p.status === "no_saleable")
+                    .length
+                }
               </span>
             </button>
             <button
@@ -703,8 +758,8 @@ const Return: React.FC = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {currentGroupedReturns.map((groupedReturn) => {
                   return (
-                    <tr 
-                      key={groupedReturn.saleId} 
+                    <tr
+                      key={groupedReturn.saleId}
                       className="hover:bg-gray-50 cursor-pointer transition-colors"
                       onClick={() => {
                         setSelectedSaleId(groupedReturn.saleId);
@@ -719,9 +774,21 @@ const Return: React.FC = () => {
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                         <div className="flex items-center">
-                          <span className="font-medium">{groupedReturn.products.length} products</span>
-                          <svg className="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          <span className="font-medium">
+                            {groupedReturn.products.length} products
+                          </span>
+                          <svg
+                            className="w-4 h-4 ml-2 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
                           </svg>
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
@@ -729,22 +796,34 @@ const Return: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
-                        ${groupedReturn.products.reduce((sum, product) => sum + product.sellingPrice, 0).toFixed(2)}
+                        $
+                        {groupedReturn.products
+                          .reduce(
+                            (sum, product) => sum + product.sellingPrice,
+                            0
+                          )
+                          .toFixed(2)}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
                         ${groupedReturn.totalAmountReturned.toFixed(2)}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {groupedReturn.products.some(product => product.status === "saleable")
+                          {groupedReturn.products.some(
+                            (product) => product.status === "saleable"
+                          )
                             ? "Saleable"
-                            : groupedReturn.products.some(product => product.status === "no_saleable")
-                            ? "No Saleable"
-                            : "Scrap"}
+                            : groupedReturn.products.some(
+                                  (product) => product.status === "no_saleable"
+                                )
+                              ? "No Saleable"
+                              : "Scrap"}
                         </span>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {new Date(groupedReturn.returnDate).toLocaleDateString()}
+                        {new Date(
+                          groupedReturn.returnDate
+                        ).toLocaleDateString()}
                       </td>
                     </tr>
                   );
@@ -840,7 +919,7 @@ const Return: React.FC = () => {
           }}
           saleId={selectedSaleId}
           products={groupedReturns[selectedSaleId]?.products || []}
-          saleData={rawReturns.find(r => r.saleId === selectedSaleId)}
+          saleData={rawReturns.find((r) => r.saleId === selectedSaleId)}
         />
       )}
     </div>

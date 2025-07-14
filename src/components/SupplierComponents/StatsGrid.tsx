@@ -143,7 +143,6 @@ const StatsGrid: React.FC<StatsGridProps> = ({
   totalSuppliers,
 }) => {
   if (viewMode === "suppliers") {
-    // Use totalSuppliers from pagination if available, otherwise fall back to current page count
     const totalSuppliersCount = totalSuppliers ?? suppliers?.length ?? 0;
     // Since we don't have status field anymore, all suppliers are considered active
     const activeSuppliers = totalSuppliersCount;
@@ -154,7 +153,6 @@ const StatsGrid: React.FC<StatsGridProps> = ({
     return (
       <div className="space-y-4">
         {/* Simple Chart */}
-       
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -215,8 +213,6 @@ const StatsGrid: React.FC<StatsGridProps> = ({
     );
   }
 
-  // if (viewMode === 'products' && selectedSupplier) {
-  //   return (
   //     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
   //       <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
   //         <div className="text-2xl font-bold text-gray-900">{currentSupplierProducts.length}</div>

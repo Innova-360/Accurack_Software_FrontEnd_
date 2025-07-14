@@ -138,7 +138,7 @@ const Permissions: React.FC<PermissionsProps> = ({
   onEditEmployee,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  //   const [storeFilter, setStoreFilter] = useState('All Stores');
+
   const [statusFilter] = useState("All Status");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;

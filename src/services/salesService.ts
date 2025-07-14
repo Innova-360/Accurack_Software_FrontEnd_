@@ -194,14 +194,12 @@ const mockStatsData: StatsData = {
 
 // API Service functions - Replace these with actual API calls when backend is ready
 export const salesAPI = {
-  // GET /api/transactions
   getTransactions: async (): Promise<Transaction[]> => {
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 500));
     return Promise.resolve(mockTransactions);
   },
 
-  // GET /api/stats
   getStats: async (): Promise<StatsData> => {
     await new Promise((resolve) => setTimeout(resolve, 300));
     return Promise.resolve(mockStatsData);

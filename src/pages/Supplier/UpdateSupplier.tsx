@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaBars } from "react-icons/fa";
 import toast from "react-hot-toast";
-// import { SpecialButton } from "../../components/buttons";
+
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   fetchSuppliers,
@@ -26,7 +26,7 @@ const SupplierPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const currentStore = useRequireStore();
-  // Get suppliers from Redux store
+
   const { suppliers, loading, error, pagination } = useAppSelector(
     (state) => state.suppliers
   );
@@ -34,7 +34,7 @@ const SupplierPage: React.FC = () => {
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
     null
   );
-  // Use responsive sidebar hook
+
   const { isSidebarOpen, toggleSidebar } = useResponsiveSidebar();
 
   // Modal states

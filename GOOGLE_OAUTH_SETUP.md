@@ -94,7 +94,7 @@ FRONTEND_URL=http://localhost:5173
 ### 3. Backend Route Implementation
 
 ```javascript
-// GET /api/v1/auth/google - Initiate OAuth
+
 app.get('/api/v1/auth/google', (req, res) => {
   const state = crypto.randomBytes(16).toString('hex');
   const authUrl = \`https://accounts.google.com/oauth/authorize?\${new URLSearchParams({
@@ -123,7 +123,7 @@ app.post('/api/v1/auth/google/callback', async (req, res) => {
       redirect_uri: process.env.GOOGLE_CALLBACK_URL,
     });
 
-    // Get user info
+
     const userResponse = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
       headers: { Authorization: \`Bearer \${tokenResponse.data.access_token}\` }
     });

@@ -116,14 +116,13 @@ export interface ApiProduct {
 }
 
 // Helper function to transform API product to frontend Product interface
-// const transformApiProduct = (apiProduct: ApiProduct): Product => {
+
 //   try {
 //     // Handle supplier field - it can be string or object
-//     let supplierInfo:
+
 //       | string
 //       | { id: string; name: string; email?: string; phone?: string };
 
-//     if (typeof apiProduct.supplier === "string") {
 //       supplierInfo = apiProduct.supplier;
 //     } else if (apiProduct.supplier && typeof apiProduct.supplier === "object") {
 //       supplierInfo = apiProduct.supplier;
@@ -131,7 +130,6 @@ export interface ApiProduct {
 //       supplierInfo = "N/A";
 //     }
 
-//     return {
 //       id: apiProduct.id || "",
 //       name: apiProduct.name || "-",
 //       quantity: apiProduct.itemQuantity || 0,
@@ -185,7 +183,7 @@ export interface ApiProduct {
 //   } catch (transformError) {
 //     console.error("Error transforming product:", apiProduct, transformError);
 //     // Return a basic product structure for failed transformations
-//     return {
+
 //       id: apiProduct.id || Math.random().toString(),
 //       name: apiProduct.name || "Unknown Product",
 //       quantity: 0,
@@ -299,7 +297,6 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
   }
 };
 
-// Export the Product type for use in other components
 export type Product = BaseProduct;
 export type { Variant, PaginatedProductsResponse, PaginationParams };
 
@@ -314,7 +311,6 @@ interface PaginatedProductsResponse {
   };
 }
 
-// export interface PaginatedProductsResponse {
 //   products: Product[];
 //   totalProducts: number;
 //   totalPages: number;
@@ -349,7 +345,6 @@ export const productAPI = {
     params: PaginationParams = {}
   ): Promise<PaginatedProductsResponse> {
     try {
-      // Set default pagination parameters
       const page = params.page || 1;
       const limit = params.limit || 10;
 
@@ -434,7 +429,6 @@ export const productAPI = {
         response.data?.data &&
         typeof response.data.data === "object"
       ) {
-        // If data is an object, look for arrays inside it
         const dataKeys = Object.keys(response.data.data);
         console.log("Data object keys:", dataKeys);
 
@@ -468,7 +462,7 @@ export const productAPI = {
         }
       } else {
         console.error("Unexpected API response structure:", response.data);
-        // Return empty response with correct pagination structure
+
         return {
           products: [],
           pagination: {
@@ -520,7 +514,6 @@ export const productAPI = {
     }
   },
 
-  // Get a single product by ID
   async getProductById(id: string): Promise<Product> {
     try {
       const response = await apiClient.get(`/product/${id}`);

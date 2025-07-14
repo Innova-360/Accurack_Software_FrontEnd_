@@ -19,10 +19,8 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
   const { id: storeId } = useParams<{ id: string }>();
   const { currentStore } = useAppSelector((state) => state.stores);
 
-  // Use store ID from URL params or current store
   const activeStoreId = storeId || currentStore?.id;
 
-  // Function to render the appropriate icon
   const renderIcon = (card: CardItem) => {
     if (card.iconComponent && (FeatherIcons as any)[card.iconComponent]) {
       const IconComponent = (FeatherIcons as any)[card.iconComponent];
@@ -149,7 +147,9 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
                 );
               } else if (card.title === "Sales\nDashboard") {
                 navigate(
-                  activeStoreId ? `/store/${activeStoreId}/sales/dashboard` : "/sales"
+                  activeStoreId
+                    ? `/store/${activeStoreId}/sales/dashboard`
+                    : "/sales"
                 );
               } else if (card.title === "Total Inventory\nCount") {
                 navigate(
@@ -205,19 +205,13 @@ const CardSection: React.FC<CardSectionProps> = ({ sectionTitle, cards }) => {
                     ? `/store/${activeStoreId}/order-tracking-verification`
                     : "/order-tracking-verification"
                 );
-              }
-              // Return & Refund routes
-              else if (card.title === "View Returns") {
+              } else if (card.title === "View Returns") {
                 navigate(`/store/${activeStoreId}/return`);
               } else if (card.title === "Create Return") {
                 navigate(`/store/${activeStoreId}/return/create`);
               } else if (card.title === "Return Dashboard") {
                 navigate(`/store/${activeStoreId}/return`);
               }
-
-             
-
-
             }}
             className="group bg-white rounded-xl shadow-lg border-2 border-[#f5f4f4] shadow-[#D1D1D1] hover:shadow-xl hover:border-[#03414C]/20 transition-all duration-300 cursor-pointer
                        flex flex-row lg:flex-col items-center lg:items-center

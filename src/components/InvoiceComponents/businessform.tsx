@@ -4,7 +4,11 @@ import { uploadImageToCloudinary } from "../../services/cloudinary";
 import { FaCloudUploadAlt } from "react-icons/fa";
 import { FiLoader } from "react-icons/fi";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { setBusinessDetails, fetchBusinessDetails, clearError } from "../../store/slices/businessSlice";
+import {
+  setBusinessDetails,
+  fetchBusinessDetails,
+  clearError,
+} from "../../store/slices/businessSlice";
 
 const initialState = {
   businessName: "",
@@ -13,8 +17,6 @@ const initialState = {
   address: "",
   logoUrl: "",
 };
-
-
 
 const validateUrl = (url) => {
   if (!url) return true;
@@ -28,7 +30,9 @@ const validateUrl = (url) => {
 
 const BusinessForm = () => {
   const dispatch = useAppDispatch();
-  const { businessDetails, loading, error } = useAppSelector((state) => state.business);
+  const { businessDetails, loading, error } = useAppSelector(
+    (state) => state.business
+  );
   const [form, setForm] = useState(initialState);
   const [logoUploading, setLogoUploading] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -56,12 +60,11 @@ const BusinessForm = () => {
   };
 
   const handleLogoUpload = async (e) => {
-    // If called from button, trigger file input click
     if (!e || !e.target || e.type === "click") {
       fileInputRef.current?.click();
       return;
     }
-    // If called from file input change
+
     const file = e.target.files[0];
     if (!file) return;
     setLogoUploading(true);
@@ -88,7 +91,7 @@ const BusinessForm = () => {
       toast.error("Invalid website URL.");
       return;
     }
-    
+
     try {
       await dispatch(setBusinessDetails(form)).unwrap();
       toast.success("Business details saved successfully!");
@@ -100,8 +103,12 @@ const BusinessForm = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-lg">
-        <h2 className="text-2xl font-bold text-[#043E49] mb-2 text-center">Business Registration</h2>
-        <p className="text-gray-500 mb-6 text-center">Register your business to get started</p>
+        <h2 className="text-2xl font-bold text-[#043E49] mb-2 text-center">
+          Business Registration
+        </h2>
+        <p className="text-gray-500 mb-6 text-center">
+          Register your business to get started
+        </p>
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Client ID */}
           {/* <div>
@@ -118,7 +125,9 @@ const BusinessForm = () => {
           </div> */}
           {/* Business Name */}
           <div>
-            <label className="block text-sm font-medium text-[#043E49] mb-1">Business Name <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-[#043E49] mb-1">
+              Business Name <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="businessName"
@@ -131,7 +140,9 @@ const BusinessForm = () => {
           </div>
           {/* Contact Number */}
           <div>
-            <label className="block text-sm font-medium text-[#043E49] mb-1">Contact Number <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-[#043E49] mb-1">
+              Contact Number <span className="text-red-500">*</span>
+            </label>
             <input
               type="tel"
               name="contactNo"
@@ -144,7 +155,9 @@ const BusinessForm = () => {
           </div>
           {/* Website */}
           <div>
-            <label className="block text-sm font-medium text-[#043E49] mb-1">Website</label>
+            <label className="block text-sm font-medium text-[#043E49] mb-1">
+              Website
+            </label>
             <input
               type="url"
               name="website"
@@ -156,7 +169,9 @@ const BusinessForm = () => {
           </div>
           {/* Address */}
           <div>
-            <label className="block text-sm font-medium text-[#043E49] mb-1">Address</label>
+            <label className="block text-sm font-medium text-[#043E49] mb-1">
+              Address
+            </label>
             <textarea
               name="address"
               value={form.address}
@@ -168,7 +183,9 @@ const BusinessForm = () => {
           </div>
           {/* Logo Upload */}
           <div>
-            <label className="block text-sm font-medium text-[#043E49] mb-1">Logo</label>
+            <label className="block text-sm font-medium text-[#043E49] mb-1">
+              Logo
+            </label>
             <div className="flex items-center space-x-4">
               {/* Upload Button */}
               <button
@@ -178,9 +195,10 @@ const BusinessForm = () => {
                 className="flex items-center justify-center gap-2 px-6 py-3 bg-[#043E49] text-white rounded hover:bg-[#032B2E] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FaCloudUploadAlt className="w-5 h-5" />
-                <span>{logoUploading ? "Uploading..." : "Upload your Logo"}</span>
+                <span>
+                  {logoUploading ? "Uploading..." : "Upload your Logo"}
+                </span>
               </button>
-
 
               {/* Hidden File Input */}
               <input
@@ -206,7 +224,6 @@ const BusinessForm = () => {
                 />
               )}
             </div>
-
           </div>
           {/* Submit Button */}
           <button
@@ -214,7 +231,7 @@ const BusinessForm = () => {
             disabled={loading}
             className="w-full py-2 px-4 bg-[#043E49] text-white rounded hover:bg-[#032B2E] transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? <FiLoader className="animate-spin w-5 h-5" /> : ''}
+            {loading ? <FiLoader className="animate-spin w-5 h-5" /> : ""}
             {loading ? "Saving..." : "Save Business Details"}
           </button>
         </form>

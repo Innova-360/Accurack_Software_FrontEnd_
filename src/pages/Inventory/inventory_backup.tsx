@@ -42,17 +42,14 @@ const extractErrorMessage = (error: any): string => {
 
     // Handle different message formats
     if (data.message) {
-      // If message is a string, return it directly
       if (typeof data.message === "string") {
         return data.message;
       }
 
-      // If message is an array, join the messages
       if (Array.isArray(data.message)) {
         return data.message.join(", ");
       }
 
-      // If message is an object, try to extract meaningful text
       if (typeof data.message === "object") {
         // Handle nested validation errors (e.g., { field: ['error1', 'error2'] })
         const errorMessages: string[] = [];
@@ -84,7 +81,6 @@ const extractErrorMessage = (error: any): string => {
       return data.detail;
     }
 
-    // If we have any string value in the data object, use it
     const firstStringValue = Object.values(data).find(
       (value) => typeof value === "string"
     );
@@ -148,7 +144,6 @@ const Inventory: React.FC = () => {
   const [isDeletingAllProducts, setIsDeletingAllProducts] = useState(false);
   const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
 
-  // Use custom hooks for data processing
   const inventoryStats = useInventoryStats(products, pagination);
   // Server-side pagination - use products directly from API
   const groupedProducts = useGroupedProducts(products, groupBy);
@@ -216,7 +211,6 @@ const Inventory: React.FC = () => {
   // Show error state only for initial load
   const isInitialError = (error && !searchTerm) || searchError;
 
-  // Use search results if present, else fallback to paginated products
   const isSearching = searchResults !== null;
   const allProducts = isSearching ? searchResults : products;
 
@@ -348,7 +342,6 @@ const Inventory: React.FC = () => {
   // Checkbox handlers
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      // Use product IDs instead of array indices for server-side pagination
       const allIds = paginatedProducts.map((_, index: number) => index);
       setSelectedItems(allIds);
     } else {
@@ -404,9 +397,7 @@ const Inventory: React.FC = () => {
   };
 
   // Edit product handlers
-  // const handleEditProduct = (product: Product) => {
-  //   setSelectedProductToEdit(product);
-  //   setIsEditProductModalOpen(true);
+
   // };
 
   const handleEditProduct = (product: Product) => {
@@ -682,7 +673,6 @@ const Inventory: React.FC = () => {
                         onProductViewed={handleViewProduct}
                       />
                     )}
-
                   </div>
                 )}
               </div>{" "}

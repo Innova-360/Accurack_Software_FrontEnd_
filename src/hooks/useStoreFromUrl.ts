@@ -17,7 +17,6 @@ export const useStoreFromUrl = () => {
 
   useEffect(() => {
     if (storeId) {
-      // If we don't have stores loaded yet, fetch them
       if (!stores || stores.length === 0) {
         dispatch(fetchStores());
         return;

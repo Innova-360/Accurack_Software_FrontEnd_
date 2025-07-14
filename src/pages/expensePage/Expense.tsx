@@ -401,10 +401,8 @@ const ExpensePage: React.FC = () => {
     setNewCategoryName("");
   };
 
-  // Export CSV
   const handleExportCSV = () => {
     if (selectedCategory === "All Expenses") {
-      // Export all expenses
       if (allExpenses.length === 0) {
         toast.error("No data to export");
         return;
@@ -433,7 +431,6 @@ const ExpensePage: React.FC = () => {
       a.click();
       window.URL.revokeObjectURL(url);
     } else {
-      // Export single category
       if (!currentCategory || currentCategory.items.length === 0) {
         toast.error("No data to export");
         return;

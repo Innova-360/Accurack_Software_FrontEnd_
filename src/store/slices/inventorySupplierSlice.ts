@@ -22,7 +22,7 @@ export const fetchInventorySuppliers = createAsyncThunk(
         suppliers: response.data.data.data.suppliers,
         suppliersCount: response.data.data.data.suppliers?.length,
       });
-      // Get all suppliers from the response
+
       const allSuppliers = response.data.data.data.suppliers || [];
 
       // Filter suppliers by active status

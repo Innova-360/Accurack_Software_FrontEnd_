@@ -11,7 +11,6 @@ Your frontend is running on `http://localhost:5175` but your backend CORS is con
 In your backend server file (usually `server.js`, `app.js`, or similar), update the CORS configuration:
 
 ```javascript
-// If using Express.js with cors middleware
 const cors = require("cors");
 
 app.use(

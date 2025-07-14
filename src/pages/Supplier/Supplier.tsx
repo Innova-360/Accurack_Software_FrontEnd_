@@ -32,7 +32,7 @@ const SupplierPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const currentStore = useRequireStore();
-  // Get suppliers from Redux store
+
   const { suppliers, loading, error, pagination } = useAppSelector(
     (state) => state.suppliers
   );
@@ -40,7 +40,7 @@ const SupplierPage: React.FC = () => {
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
     null
   );
-  // Use responsive sidebar hook
+
   const { isSidebarOpen, toggleSidebar } = useResponsiveSidebar();
   const [viewMode, setViewMode] = useState<"suppliers" | "products">(
     "suppliers"
@@ -184,7 +184,6 @@ const SupplierPage: React.FC = () => {
     }
   };
 
-  // Export functionality
   const handleExport = () => {
     try {
       const dataToExport = suppliers.map((supplier) => ({

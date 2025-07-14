@@ -22,7 +22,6 @@ const useRequireStore = (): Store | null => {
   }, [dispatch, currentStore]);
 
   useEffect(() => {
-    // If no current store and no stores available, redirect to stores page
     if (!currentStore && stores.length === 0) {
       // navigate("/stores");
       return;

@@ -10,15 +10,18 @@ import AddEditOrderModal from "../../components/OrderProcessingComponents/AddEdi
 import DeleteOrderModal from "../../components/OrderProcessingComponents/DeleteOrderModal";
 import { useCustomers } from "../../hooks/useCustomers";
 import useRequireStore from "../../hooks/useRequireStore";
-import { 
-  fetchOrders, 
-  updateOrder, 
-  deleteOrder, 
+import {
+  fetchOrders,
+  updateOrder,
+  deleteOrder,
   clearError,
-  validateOrder 
+  validateOrder,
 } from "../../store/slices/orderProcessingSlice";
 import type { AppDispatch, RootState } from "../../store";
-import type { OrderItem, UpdateOrderRequest } from "../../types/orderProcessing";
+import type {
+  OrderItem,
+  UpdateOrderRequest,
+} from "../../types/orderProcessing";
 
 const ViewOrdersPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -29,7 +32,7 @@ const ViewOrdersPage: React.FC = () => {
   // Check for URL search params for driver filter
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const driverParam = urlParams.get('driver');
+    const driverParam = urlParams.get("driver");
     if (driverParam) {
       setDriverFilter(decodeURIComponent(driverParam));
     }
@@ -40,10 +43,12 @@ const ViewOrdersPage: React.FC = () => {
     (state: RootState) => state.orders
   );
 
-  // Get customers for the dropdown
-  const { customers, loading: customersLoading } = useCustomers(currentStore?.id, {
-    limit: 1000, // Get all customers for dropdown
-  });
+  const { customers, loading: customersLoading } = useCustomers(
+    currentStore?.id,
+    {
+      limit: 1000, // Get all customers for dropdown
+    }
+  );
 
   // Local state for UI
   const [searchTerm, setSearchTerm] = useState("");
@@ -113,13 +118,17 @@ const ViewOrdersPage: React.FC = () => {
   };
 
   const displayOrders = getDisplayOrders();
-  
+
   // For pagination display
   const totalPages = Math.ceil(pagination.total / rowsPerPage);
 
   // Action handlers
   const handleCreateOrder = () => {
-    navigate(storeId ? `/store/${storeId}/order-processing/create` : "/order-processing/create");
+    navigate(
+      storeId
+        ? `/store/${storeId}/order-processing/create`
+        : "/order-processing/create"
+    );
   };
 
   const handleEditOrder = (order: OrderItem) => {
@@ -135,7 +144,9 @@ const ViewOrdersPage: React.FC = () => {
   const handleValidateOrder = async (order: OrderItem) => {
     if (currentStore?.id) {
       try {
-        await dispatch(validateOrder({ id: order.id, storeId: currentStore.id })).unwrap();
+        await dispatch(
+          validateOrder({ id: order.id, storeId: currentStore.id })
+        ).unwrap();
         toast.success("Order validated successfully");
       } catch (error: any) {
         toast.error(error || "Failed to validate order");
@@ -154,11 +165,13 @@ const ViewOrdersPage: React.FC = () => {
         isValidated: false, // Reset validation when order is edited
         validatedAt: undefined, // Clear validation timestamp
       };
-      await dispatch(updateOrder({ 
-        id: selectedOrder.id, 
-        orderData: updateData, 
-        storeId: currentStore.id 
-      })).unwrap();
+      await dispatch(
+        updateOrder({
+          id: selectedOrder.id,
+          orderData: updateData,
+          storeId: currentStore.id,
+        })
+      ).unwrap();
       toast.success("Order updated successfully");
       setIsEditModalOpen(false);
       setSelectedOrder(null);
@@ -170,10 +183,12 @@ const ViewOrdersPage: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (selectedOrder && currentStore?.id) {
       try {
-        await dispatch(deleteOrder({ 
-          id: selectedOrder.id, 
-          storeId: currentStore.id 
-        })).unwrap();
+        await dispatch(
+          deleteOrder({
+            id: selectedOrder.id,
+            storeId: currentStore.id,
+          })
+        ).unwrap();
         toast.success("Order deleted successfully");
         setIsDeleteModalOpen(false);
         setSelectedOrder(null);
@@ -192,11 +207,12 @@ const ViewOrdersPage: React.FC = () => {
   };
 
   const handleBackToOrderProcessing = () => {
-    navigate(storeId ? `/store/${storeId}/order-processing` : "/order-processing");
+    navigate(
+      storeId ? `/store/${storeId}/order-processing` : "/order-processing"
+    );
   };
 
   useEffect(() => {
-    // If the store is not available, redirect to stores page
     if (!currentStore?.id) {
       navigate("/stores");
     }
@@ -314,7 +330,10 @@ const ViewOrdersPage: React.FC = () => {
                 currentPage={pagination.page}
                 totalPages={pagination.totalPages}
                 startIndex={(pagination.page - 1) * rowsPerPage + 1}
-                endIndex={Math.min(pagination.page * rowsPerPage, pagination.total)}
+                endIndex={Math.min(
+                  pagination.page * rowsPerPage,
+                  pagination.total
+                )}
                 totalItems={pagination.total}
                 rowsPerPage={rowsPerPage}
                 onPageChange={setCurrentPage}

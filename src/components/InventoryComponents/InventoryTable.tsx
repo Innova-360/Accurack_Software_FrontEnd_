@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import type { Product } from "../../data/inventoryData";
 import { productAPI } from "../../services/productAPI";
-// import { debugVariantQuantityUpdate } from "../../utils/variantQuantityUpdateTest";
 
 interface InventoryTableProps {
   products: Product[];
@@ -86,18 +85,20 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
   const getSortIcon = (key: string) => (
     <div className="flex flex-col">
       <span
-        className={`text-xs ${sortConfig?.key === key && sortConfig.direction === "asc"
+        className={`text-xs ${
+          sortConfig?.key === key && sortConfig.direction === "asc"
             ? "text-blue-600"
             : "text-gray-400"
-          }`}
+        }`}
       >
         ▲
       </span>
       <span
-        className={`text-xs ${sortConfig?.key === key && sortConfig.direction === "desc"
+        className={`text-xs ${
+          sortConfig?.key === key && sortConfig.direction === "desc"
             ? "text-blue-600"
             : "text-gray-400"
-          }`}
+        }`}
       >
         ▼
       </span>
@@ -124,7 +125,12 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
       });
       // Only red border for invalid
       const newQuantity = parseInt(value, 10);
-      if (value === "" || value === "0" || isNaN(newQuantity) || newQuantity < 0) {
+      if (
+        value === "" ||
+        value === "0" ||
+        isNaN(newQuantity) ||
+        newQuantity < 0
+      ) {
         setQuantityError(true);
       } else {
         setQuantityError(false);
@@ -161,7 +167,6 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
         ) {
           const variant = product.variants[editingQuantity.variantIndex];
           const pluUpc = variant.pluUpc;
-
 
           if (pluUpc) {
             // Update variant quantity using PLU/UPC
@@ -368,8 +373,9 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                               className="text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0"
                             >
                               <svg
-                                className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform ${isExpanded ? "rotate-90" : ""
-                                  }`}
+                                className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform ${
+                                  isExpanded ? "rotate-90" : ""
+                                }`}
                                 fill="currentColor"
                                 viewBox="0 0 20 20"
                               >
@@ -412,7 +418,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                         {!hasVariantsToShow && (
                           <div className="flex items-center gap-2">
                             {editingQuantity?.productId === productKey &&
-                              editingQuantity.variantIndex === undefined ? (
+                            editingQuantity.variantIndex === undefined ? (
                               <div className="flex items-center gap-1">
                                 <input
                                   type="number"
@@ -423,7 +429,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                   }
                                   onKeyDown={handleQuantityKeyPress}
                                   onBlur={handleQuantitySave}
-                                  className={`w-16 px-1 py-1 text-xs border ${quantityError ? 'border-red-500' : 'border-blue-300 focus:ring-1 focus:ring-blue-500'} rounded focus:outline-none `}
+                                  className={`w-16 px-1 py-1 text-xs border ${quantityError ? "border-red-500" : "border-blue-300 focus:ring-1 focus:ring-blue-500"} rounded focus:outline-none `}
                                   autoFocus
                                 />
                                 {/* {quantityError && (
@@ -486,32 +492,33 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                     product.quantity
                                   )}
                                 </span>
-                                {!updatingQuantity.has(productKey) && showUpdateQuantity && (
-                                  <button
-                                    onClick={() =>
-                                      handleEditQuantity(
-                                        productKey,
-                                        product.quantity
-                                      )
-                                    }
-                                    className="text-gray-400 hover:text-blue-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    title="Edit quantity"
-                                  >
-                                    <svg
-                                      className="w-3 h-3"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
+                                {!updatingQuantity.has(productKey) &&
+                                  showUpdateQuantity && (
+                                    <button
+                                      onClick={() =>
+                                        handleEditQuantity(
+                                          productKey,
+                                          product.quantity
+                                        )
+                                      }
+                                      className="text-gray-400 hover:text-blue-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      title="Edit quantity"
                                     >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                      />
-                                    </svg>
-                                  </button>
-                                )}
+                                      <svg
+                                        className="w-3 h-3"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                        />
+                                      </svg>
+                                    </button>
+                                  )}
                               </div>
                             )}
                           </div>
@@ -563,11 +570,11 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                           {typeof product.supplier === "string"
                             ? product.supplier
                             : (product.supplier as any)?.name ||
-                            (product.productSuppliers &&
-                              product.productSuppliers.length > 0 &&
-                              product.productSuppliers[0].supplier &&
-                              product.productSuppliers[0].supplier.name) ||
-                            "supplier not found"}
+                              (product.productSuppliers &&
+                                product.productSuppliers.length > 0 &&
+                                product.productSuppliers[0].supplier &&
+                                product.productSuppliers[0].supplier.name) ||
+                              "supplier not found"}
                         </div>
                       </td>
 
@@ -576,7 +583,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                           {typeof product.category === "string"
                             ? product.category
                             : (product.category as any)?.name ||
-                            "Uncategorized"}
+                              "Uncategorized"}
                         </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
@@ -646,7 +653,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                             disabled={
                               (!product.id && !product.sku && !product.plu) ||
                               deletingProductId ===
-                              (product.id || product.sku || product.plu)
+                                (product.id || product.sku || product.plu)
                             }
                             className="text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed p-1 rounded transition-colors"
                             title="Delete product"
@@ -696,7 +703,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300 text-gray-600">
                             <div className="flex items-center gap-2">
                               {editingQuantity?.productId === productKey &&
-                                editingQuantity.variantIndex === variantIndex ? (
+                              editingQuantity.variantIndex === variantIndex ? (
                                 <div className="flex items-center gap-1">
                                   <input
                                     type="number"
@@ -707,7 +714,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                     }
                                     onKeyDown={handleQuantityKeyPress}
                                     onBlur={handleQuantitySave}
-                                    className={`w-16 px-1 py-1 text-xs border ${quantityError ? 'border-red-500' : 'border-blue-300'} rounded focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                                    className={`w-16 px-1 py-1 text-xs border ${quantityError ? "border-red-500" : "border-blue-300"} rounded focus:outline-none focus:ring-1 focus:ring-blue-500`}
                                     autoFocus
                                   />
                                   {/* {quantityError && (
@@ -774,7 +781,8 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                   </span>
                                   {!updatingQuantity.has(
                                     `${productKey}-variant-${variantIndex}`
-                                  ) && showUpdateQuantity && (
+                                  ) &&
+                                    showUpdateQuantity && (
                                       <button
                                         onClick={() =>
                                           handleEditQuantity(
@@ -842,12 +850,12 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                               {typeof product.supplier === "string"
                                 ? product.supplier
                                 : (product.supplier as any)?.name ||
-                                (product.productSuppliers &&
-                                  product.productSuppliers.length > 0 &&
-                                  product.productSuppliers[0].supplier &&
-                                  product.productSuppliers[0].supplier
-                                    .name) ||
-                                "supplier not found"}
+                                  (product.productSuppliers &&
+                                    product.productSuppliers.length > 0 &&
+                                    product.productSuppliers[0].supplier &&
+                                    product.productSuppliers[0].supplier
+                                      .name) ||
+                                  "supplier not found"}
                             </div>
                           </td>
 
@@ -856,7 +864,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                               {typeof product.category === "string"
                                 ? product.category
                                 : (product.category as any)?.name ||
-                                "Uncategorized"}
+                                  "Uncategorized"}
                             </div>
                           </td>
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">

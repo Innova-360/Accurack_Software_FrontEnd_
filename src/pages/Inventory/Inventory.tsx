@@ -32,12 +32,10 @@ const Inventory: React.FC = () => {
     direction: "asc" | "desc";
   } | null>(null);
 
-
   // --- Custom search state ---
   const [searchResults, setSearchResults] = useState<Product[] | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-
 
   // Fetch products from API with pagination and filters
   const { products, loading, error, pagination, fetchWithParams, refetch } =
@@ -47,7 +45,7 @@ const Inventory: React.FC = () => {
       search: "", // Remove searchTerm to prevent page reload on search
       sortBy: sortConfig?.key,
       sortOrder: sortConfig?.direction,
-      storeId: storeId
+      storeId: storeId,
     });
   const [groupBy, setGroupBy] = useState("");
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
@@ -102,12 +100,11 @@ const Inventory: React.FC = () => {
 
   // Show loading state only for initial load (when we have no products and no search term)
   const isInitialLoading =
-    (loading && products.length === 0 && !searchTerm && !debouncedSearchTerm);
+    loading && products.length === 0 && !searchTerm && !debouncedSearchTerm;
 
   // Show error state only for initial load
   const isInitialError = (error && !searchTerm) || searchError;
 
-  // Use search results if present, else fallback to paginated products
   const isSearching = searchResults !== null;
   const allProducts = isSearching ? searchResults : products;
 
@@ -303,7 +300,6 @@ const Inventory: React.FC = () => {
   // Checkbox handlers
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      // Use product IDs instead of array indices for server-side pagination
       const allIds = paginatedProducts.map((_, index: number) => index);
       setSelectedItems(allIds);
     } else {
@@ -338,8 +334,6 @@ const Inventory: React.FC = () => {
     }
   };
 
-
-
   // View product handler
   const handleViewProduct = (product: Product) => {
     const currentPath = window.location.pathname;
@@ -359,7 +353,6 @@ const Inventory: React.FC = () => {
     }
   };
 
-
   return (
     <>
       <Header />
@@ -373,7 +366,6 @@ const Inventory: React.FC = () => {
         {/* Horizontal line */}
         <hr className="border-gray-300 mb-6" />
         {/* Stats Cards Section */}
-        
         {/* Inventory Controls */}
         <div>
           <InventoryControls

@@ -202,7 +202,6 @@ const Permissions: React.FC<PermissionsProps> = ({
 
   // Helper function to generate/display employee code
   const getDisplayEmployeeCode = (employee: any) => {
-    // If backend provides employeeCode, use it
     if (employee?.employeeCode) {
       return employee.employeeCode;
     }
@@ -218,7 +217,6 @@ const Permissions: React.FC<PermissionsProps> = ({
   };
 
   // Helper function to get joining date
-  
 
   const getPermissionCount = (permissions: any) => {
     if (!permissions || !Array.isArray(permissions)) return 0;
@@ -367,7 +365,6 @@ const Permissions: React.FC<PermissionsProps> = ({
                         </td>
 
                         {/* Created Date */}
-                  
 
                         {/* Permissions */}
                         <td className="py-4 px-4">

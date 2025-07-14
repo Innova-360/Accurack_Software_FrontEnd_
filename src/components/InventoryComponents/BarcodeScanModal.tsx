@@ -41,7 +41,6 @@ const BarcodeScanModal: React.FC<BarcodeScanModalProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // Get available cameras
   const getCameraDevices = async () => {
     try {
       const tempStream = await navigator.mediaDevices.getUserMedia({
@@ -133,33 +132,6 @@ const BarcodeScanModal: React.FC<BarcodeScanModalProps> = ({
     }
   };
 
-  // const controls = await codeReader.decodeFromVideoDevice(
-  //   null,
-  //   videoRef.current!,
-  //   (result: import("@zxing/library").Result | undefined, err: unknown) => {
-  //     if (result) onDetected(result.getText());
-  //   }
-  // );
-  // scanControlsRef.current = controls;
-
-  // const stopCamera = () => {
-  //   if (scanControlsRef.current) {
-  //     scanControlsRef.current.stop(); // Cleanly stops decoding and releases camera
-  //     scanControlsRef.current = null;
-  //   }
-
-  //   if (stream) {
-  //     stream.getTracks().forEach((track) => track.stop());
-  //     setStream(null);
-  //   }
-
-  //   setIsScanning(false);
-  //   setScanSuccess(false);
-  //   setError("");
-
-  //   if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
-  // };
-
   // Stop camera stream
   const stopCamera = () => {
     // Stop the code reader first
@@ -171,7 +143,7 @@ const BarcodeScanModal: React.FC<BarcodeScanModalProps> = ({
         console.log("Error stopping code reader:", error);
       }
     }
-    
+
     // Stop all media tracks
     if (stream) {
       stream.getTracks().forEach((track) => {
@@ -183,18 +155,18 @@ const BarcodeScanModal: React.FC<BarcodeScanModalProps> = ({
       });
       setStream(null);
     }
-    
+
     // Clear video source
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-    
+
     // Reset state
     setIsScanning(false);
     setScanSuccess(false);
     setError("");
     setHasPermission(null);
-    
+
     // Clear timeout
     if (scanTimeoutRef.current) {
       clearTimeout(scanTimeoutRef.current);
@@ -236,10 +208,10 @@ const BarcodeScanModal: React.FC<BarcodeScanModalProps> = ({
             if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
             setScanSuccess(true);
             playBeepSound();
-            
+
             // Stop scanning immediately
             setIsScanning(false);
-            
+
             // Stop the camera and close modal after a short delay
             setTimeout(() => {
               setScanSuccess(false);

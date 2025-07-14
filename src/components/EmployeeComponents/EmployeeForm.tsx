@@ -381,7 +381,6 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
 
         // Redirect to employee list/permissions page
         if (id) {
-          // If we have a store ID, redirect to store-specific employee page
           navigate(`/store/${id}/employee`);
         } else {
           // Otherwise redirect to general employee/permissions page

@@ -52,7 +52,6 @@ export interface CreateProductPayload {
   }>;
 }
 
-
 // Define the payload type for product update
 export interface UpdateProductPayload {
   name: string;
@@ -175,15 +174,21 @@ export const createProduct = createAsyncThunk(
 // Async thunk for Updating a product
 export const updateProduct = createAsyncThunk(
   "products/updateProduct",
-  
+
   async (
-    { productId, productData }: { productId: string; productData: UpdateProductPayload },
+    {
+      productId,
+      productData,
+    }: { productId: string; productData: UpdateProductPayload },
     { rejectWithValue }
   ) => {
     try {
       // updateProduct(productId, productData as any) use this
-      // const response = await apiClient.put(`/product/${productId}`, productData);
-      const response = await productAPI.updateProduct(productId, productData as any);
+
+      const response = await productAPI.updateProduct(
+        productId,
+        productData as any
+      );
 
       console.log(response.data);
       return response.data;

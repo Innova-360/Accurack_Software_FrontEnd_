@@ -30,13 +30,13 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
   const { loading } = useAppSelector((state) => state.suppliers);
 
   if (!isOpen) return null;
-  if (!isDeleteAll && !supplier) return null; 
+  if (!isDeleteAll && !supplier) return null;
 
   // Helper function to detect if supplier is sample data
   const isSampleData = (supplier: Supplier): boolean => {
     const id = supplier.id || supplier.supplier_id;
     if (!id) return false;
-    
+
     // Check if ID matches sample data pattern (e.g., SUP001, SUP002, etc.)
     return id.startsWith("SUP") && id.length <= 10 && /^SUP\d{3}$/.test(id);
   };
@@ -90,13 +90,9 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
         const validId = getValidSupplierId(supplier);
 
         if (!validId) {
-          toast.error(
-            "Cannot delete this supplier: No valid ID found."
-          );
+          toast.error("Cannot delete this supplier: No valid ID found.");
           return;
         }
-
-       
 
         // Check if this is sample data
         const isSample = isSampleData(supplier);
@@ -112,29 +108,35 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
             })
           ).unwrap();
 
-          
           // Show appropriate success message
           if (isSample) {
             toast.success("Sample vendor removed from view!");
           } else {
             toast.success("Vendor deleted successfully!");
           }
-          
+
           onClose();
         } catch (deleteError) {
           console.error("Error in delete operation:", deleteError);
-          
-          // If it's sample data and we got a 404, that's expected
-          if (isSample && deleteError && typeof deleteError === 'object' && 'message' in deleteError) {
+
+          if (
+            isSample &&
+            deleteError &&
+            typeof deleteError === "object" &&
+            "message" in deleteError
+          ) {
             const errorMessage = deleteError.message as string;
-            if (errorMessage.includes('not found') || errorMessage.includes('404')) {
+            if (
+              errorMessage.includes("not found") ||
+              errorMessage.includes("404")
+            ) {
               console.log("Sample data delete completed (404 expected)");
               toast.success("Sample vendor removed from view!");
               onClose();
               return;
             }
           }
-          
+
           // Re-throw for other errors
           throw deleteError;
         }
@@ -201,7 +203,7 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
                 </p>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                   <p className="text-red-600 text-sm font-medium">
-                     Warning: This action is irreversible
+                    Warning: This action is irreversible
                   </p>
                   <p className="text-red-500 text-sm mt-1">
                     All vendor data will be permanently deleted and cannot be
@@ -255,7 +257,7 @@ const DeleteSupplierModal: React.FC<DeleteSupplierModalProps> = ({
                 )}
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                   <p className="text-red-600 text-sm font-medium">
-                     Warning: This action is irreversible
+                    Warning: This action is irreversible
                   </p>
                   <p className="text-red-500 text-sm mt-1">
                     The vendor data will be permanently deleted and cannot be

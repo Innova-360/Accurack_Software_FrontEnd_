@@ -16,7 +16,6 @@ const EmployeeInviteModal: React.FC<EmployeeInviteModalProps> = ({
   onClose,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
-  // const { loading, roleTemplates } = useSelector((state: RootState) => state.employees);
 
   const [formData, setFormData] = useState({
     email: "",

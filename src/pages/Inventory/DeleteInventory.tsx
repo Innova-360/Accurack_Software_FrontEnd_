@@ -17,7 +17,7 @@ import useRequireStore from "../../hooks/useRequireStore";
 
 const DeleteInventory: React.FC = () => {
   const currentStore = useRequireStore();
-  
+
   // State for main inventory pagination and filters
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -39,7 +39,7 @@ const DeleteInventory: React.FC = () => {
       search: searchTerm,
       sortBy: sortConfig?.key,
       sortOrder: sortConfig?.direction,
-      storeId: currentStore?.id
+      storeId: currentStore?.id,
     });
 
   // State for low stock pagination
@@ -56,7 +56,6 @@ const DeleteInventory: React.FC = () => {
   const [selectedProductToEdit, setSelectedProductToEdit] =
     useState<Product | null>(null);
 
-  // Use custom hooks for data processing
   const lowStockProducts = useLowStockProducts(products);
 
   // Debounced search state
@@ -81,7 +80,7 @@ const DeleteInventory: React.FC = () => {
       search: debouncedSearchTerm,
       sortBy: sortConfig?.key,
       sortOrder: sortConfig?.direction,
-      storeId: currentStore?.id
+      storeId: currentStore?.id,
     });
     setCurrentPage(1);
   }, [
@@ -90,7 +89,7 @@ const DeleteInventory: React.FC = () => {
     sortConfig?.key,
     sortConfig?.direction,
     fetchWithParams,
-    currentStore?.id
+    currentStore?.id,
   ]);
 
   // Show loading state only for initial load (when we have no products and no search term)
@@ -170,7 +169,7 @@ const DeleteInventory: React.FC = () => {
         search: debouncedSearchTerm,
         sortBy: sortConfig?.key,
         sortOrder: sortConfig?.direction,
-        storeId: currentStore?.id
+        storeId: currentStore?.id,
       });
     } catch (error) {
       toast.error("Failed to load page");
@@ -448,4 +447,4 @@ const DeleteInventory: React.FC = () => {
   );
 };
 
-export default DeleteInventory; 
+export default DeleteInventory;

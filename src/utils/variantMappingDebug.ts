@@ -41,7 +41,6 @@ const sampleVariation: Variation = {
   discountTiers: [],
 };
 
-// Function to map variation to API payload
 export const mapVariationToPayload = (variant: Variation) => {
   console.log("🔍 Input variation:", variant);
 

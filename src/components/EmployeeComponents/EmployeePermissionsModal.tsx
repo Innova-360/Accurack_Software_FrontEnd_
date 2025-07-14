@@ -16,7 +16,6 @@ const EmployeePermissionsModal: React.FC<EmployeePermissionsModalProps> = ({
   if (!isOpen || !employee) return null;
 
   const getPermissionBadgeColor = () => {
-    // Use only approved colors - dark green and white
     return "bg-[#043E49] bg-opacity-10 text-[#043E49]";
   };
 

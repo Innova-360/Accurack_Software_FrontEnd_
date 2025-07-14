@@ -12,17 +12,18 @@ class LastUpdatedManager {
   subscribe(callback: () => void) {
     this.listeners.push(callback);
     return () => {
-      this.listeners = this.listeners.filter(listener => listener !== callback);
+      this.listeners = this.listeners.filter(
+        (listener) => listener !== callback
+      );
     };
   }
 
   // Update the last updated time (call after login/logout)
   updateLastUpdated() {
     this.lastUpdatedTime = new Date();
-    this.listeners.forEach(callback => callback());
+    this.listeners.forEach((callback) => callback());
   }
 
-  // Get the current last updated time
   getLastUpdated() {
     return this.lastUpdatedTime;
   }
@@ -40,13 +41,13 @@ class LastUpdatedManager {
   }
 }
 
-// Export singleton instance
 export const lastUpdatedManager = new LastUpdatedManager();
 
 // Convenience functions
 export const updateLastUpdated = () => lastUpdatedManager.updateLastUpdated();
 export const getLastUpdated = () => lastUpdatedManager.getLastUpdated();
-export const formatLastUpdated = (date?: Date) => lastUpdatedManager.formatLastUpdated(date);
+export const formatLastUpdated = (date?: Date) =>
+  lastUpdatedManager.formatLastUpdated(date);
 
 // Utility function to extract error messages from API response
 export const extractErrorMessage = (error: any): string => {
@@ -63,17 +64,14 @@ export const extractErrorMessage = (error: any): string => {
 
     // Handle different message formats
     if (data.message) {
-      // If message is a string, return it directly
       if (typeof data.message === "string") {
         return data.message;
       }
 
-      // If message is an array, join the messages
       if (Array.isArray(data.message)) {
         return data.message.join(", ");
       }
 
-      // If message is an object, try to extract meaningful text
       if (typeof data.message === "object") {
         // Handle nested validation errors (e.g., { field: ['error1', 'error2'] })
         const errorMessages: string[] = [];
@@ -105,7 +103,6 @@ export const extractErrorMessage = (error: any): string => {
       return data.detail;
     }
 
-    // If we have any string value in the data object, use it
     const firstStringValue = Object.values(data).find(
       (value) => typeof value === "string"
     );

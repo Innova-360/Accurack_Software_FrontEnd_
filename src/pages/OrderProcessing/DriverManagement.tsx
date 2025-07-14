@@ -4,7 +4,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import Header from "../../components/Header";
 import useRequireStore from "../../hooks/useRequireStore";
-import { fetchOrders, clearError } from "../../store/slices/orderProcessingSlice";
+import {
+  fetchOrders,
+  clearError,
+} from "../../store/slices/orderProcessingSlice";
 import type { AppDispatch, RootState } from "../../store";
 import type { OrderItem } from "../../types/orderProcessing";
 
@@ -67,7 +70,7 @@ const DriverManagementPage: React.FC = () => {
 
     orders.forEach((order: OrderItem) => {
       const driverName = order.driverName;
-      
+
       if (!driverMap.has(driverName)) {
         driverMap.set(driverName, {
           name: driverName,
@@ -84,9 +87,9 @@ const DriverManagementPage: React.FC = () => {
       driver.totalOrders += 1;
       driver.totalRevenue += order.paymentAmount;
 
-      if (order.status === 'completed') {
+      if (order.status === "completed") {
         driver.completedOrders += 1;
-      } else if (order.status === 'pending' || order.status === 'shipped') {
+      } else if (order.status === "pending" || order.status === "shipped") {
         driver.activeOrders += 1;
       }
 
@@ -97,10 +100,9 @@ const DriverManagementPage: React.FC = () => {
     });
 
     // Calculate average order value for each driver
-    Array.from(driverMap.values()).forEach(driver => {
-      driver.averageOrderValue = driver.totalOrders > 0 
-        ? driver.totalRevenue / driver.totalOrders 
-        : 0;
+    Array.from(driverMap.values()).forEach((driver) => {
+      driver.averageOrderValue =
+        driver.totalOrders > 0 ? driver.totalRevenue / driver.totalOrders : 0;
     });
 
     return Array.from(driverMap.values());
@@ -112,7 +114,7 @@ const DriverManagementPage: React.FC = () => {
 
     // Filter by search term
     if (searchTerm.trim()) {
-      drivers = drivers.filter(driver =>
+      drivers = drivers.filter((driver) =>
         driver.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
@@ -122,12 +124,12 @@ const DriverManagementPage: React.FC = () => {
       let aValue = a[sortBy as keyof Driver];
       let bValue = b[sortBy as keyof Driver];
 
-      if (typeof aValue === 'string') {
+      if (typeof aValue === "string") {
         aValue = aValue.toLowerCase();
         bValue = (bValue as string).toLowerCase();
       }
 
-      if (sortOrder === 'asc') {
+      if (sortOrder === "asc") {
         return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
       } else {
         return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
@@ -141,24 +143,29 @@ const DriverManagementPage: React.FC = () => {
 
   const handleSort = (field: string) => {
     if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
       setSortBy(field);
-      setSortOrder('desc');
+      setSortOrder("desc");
     }
   };
 
   const handleBackToOrderProcessing = () => {
-    navigate(storeId ? `/store/${storeId}/order-processing` : "/order-processing");
+    navigate(
+      storeId ? `/store/${storeId}/order-processing` : "/order-processing"
+    );
   };
 
   const handleViewDriverOrders = (driverName: string) => {
     // Navigate to view orders with driver filter
-    navigate(storeId ? `/store/${storeId}/order-processing/view-orders?driver=${encodeURIComponent(driverName)}` : `/order-processing/view-orders?driver=${encodeURIComponent(driverName)}`);
+    navigate(
+      storeId
+        ? `/store/${storeId}/order-processing/view-orders?driver=${encodeURIComponent(driverName)}`
+        : `/order-processing/view-orders?driver=${encodeURIComponent(driverName)}`
+    );
   };
 
   useEffect(() => {
-    // If the store is not available, redirect to stores page
     if (!currentStore?.id) {
       navigate("/stores");
     }
@@ -183,7 +190,9 @@ const DriverManagementPage: React.FC = () => {
           {/* Header Section */}
           <div className="bg-white rounded-lg p-6 mb-6">
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-bold text-gray-900">Driver Management</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Driver Management
+              </h1>
               <button
                 onClick={handleBackToOrderProcessing}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
@@ -209,12 +218,14 @@ const DriverManagementPage: React.FC = () => {
           {/* Driver Stats Summary */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
             <div className="bg-white rounded-lg p-6">
-              <div className="text-2xl font-bold text-teal-600">{drivers.length}</div>
+              <div className="text-2xl font-bold text-teal-600">
+                {drivers.length}
+              </div>
               <div className="text-sm text-gray-600">Total Drivers</div>
             </div>
             <div className="bg-white rounded-lg p-6">
               <div className="text-2xl font-bold text-green-600">
-                {drivers.filter(d => d.activeOrders > 0).length}
+                {drivers.filter((d) => d.activeOrders > 0).length}
               </div>
               <div className="text-sm text-gray-600">Active Drivers</div>
             </div>
@@ -222,13 +233,18 @@ const DriverManagementPage: React.FC = () => {
               <div className="text-2xl font-bold text-blue-600">
                 {drivers.reduce((sum, d) => sum + d.totalOrders, 0)}
               </div>
-              <div className="text-sm text-gray-600">Total Orders Delivered</div>
+              <div className="text-sm text-gray-600">
+                Total Orders Delivered
+              </div>
             </div>
             <div className="bg-white rounded-lg p-6">
               <div className="text-2xl font-bold text-purple-600">
-                ${drivers.reduce((sum, d) => sum + d.totalRevenue, 0).toFixed(2)}
+                $
+                {drivers.reduce((sum, d) => sum + d.totalRevenue, 0).toFixed(2)}
               </div>
-              <div className="text-sm text-gray-600">Total Revenue Generated</div>
+              <div className="text-sm text-gray-600">
+                Total Revenue Generated
+              </div>
             </div>
           </div>
 
@@ -237,7 +253,7 @@ const DriverManagementPage: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Driver Performance
             </h3>
-            
+
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
@@ -262,7 +278,9 @@ const DriverManagementPage: React.FC = () => {
                     No drivers found
                   </h3>
                   <p className="mt-1 text-sm text-gray-500">
-                    {searchTerm ? "No drivers match your search criteria." : "No orders with drivers have been created yet."}
+                    {searchTerm
+                      ? "No drivers match your search criteria."
+                      : "No orders with drivers have been created yet."}
                   </p>
                 </div>
               </div>
@@ -273,78 +291,78 @@ const DriverManagementPage: React.FC = () => {
                     <tr>
                       <th
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleSort('name')}
+                        onClick={() => handleSort("name")}
                       >
                         Driver Name
-                        {sortBy === 'name' && (
+                        {sortBy === "name" && (
                           <span className="ml-1">
-                            {sortOrder === 'asc' ? '↑' : '↓'}
+                            {sortOrder === "asc" ? "↑" : "↓"}
                           </span>
                         )}
                       </th>
                       <th
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleSort('totalOrders')}
+                        onClick={() => handleSort("totalOrders")}
                       >
                         Total Orders
-                        {sortBy === 'totalOrders' && (
+                        {sortBy === "totalOrders" && (
                           <span className="ml-1">
-                            {sortOrder === 'asc' ? '↑' : '↓'}
+                            {sortOrder === "asc" ? "↑" : "↓"}
                           </span>
                         )}
                       </th>
                       <th
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleSort('activeOrders')}
+                        onClick={() => handleSort("activeOrders")}
                       >
                         Active Orders
-                        {sortBy === 'activeOrders' && (
+                        {sortBy === "activeOrders" && (
                           <span className="ml-1">
-                            {sortOrder === 'asc' ? '↑' : '↓'}
+                            {sortOrder === "asc" ? "↑" : "↓"}
                           </span>
                         )}
                       </th>
                       <th
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleSort('completedOrders')}
+                        onClick={() => handleSort("completedOrders")}
                       >
                         Completed Orders
-                        {sortBy === 'completedOrders' && (
+                        {sortBy === "completedOrders" && (
                           <span className="ml-1">
-                            {sortOrder === 'asc' ? '↑' : '↓'}
+                            {sortOrder === "asc" ? "↑" : "↓"}
                           </span>
                         )}
                       </th>
                       <th
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleSort('totalRevenue')}
+                        onClick={() => handleSort("totalRevenue")}
                       >
                         Total Revenue
-                        {sortBy === 'totalRevenue' && (
+                        {sortBy === "totalRevenue" && (
                           <span className="ml-1">
-                            {sortOrder === 'asc' ? '↑' : '↓'}
+                            {sortOrder === "asc" ? "↑" : "↓"}
                           </span>
                         )}
                       </th>
                       <th
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleSort('averageOrderValue')}
+                        onClick={() => handleSort("averageOrderValue")}
                       >
                         Avg Order Value
-                        {sortBy === 'averageOrderValue' && (
+                        {sortBy === "averageOrderValue" && (
                           <span className="ml-1">
-                            {sortOrder === 'asc' ? '↑' : '↓'}
+                            {sortOrder === "asc" ? "↑" : "↓"}
                           </span>
                         )}
                       </th>
                       <th
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleSort('lastOrderDate')}
+                        onClick={() => handleSort("lastOrderDate")}
                       >
                         Last Order
-                        {sortBy === 'lastOrderDate' && (
+                        {sortBy === "lastOrderDate" && (
                           <span className="ml-1">
-                            {sortOrder === 'asc' ? '↑' : '↓'}
+                            {sortOrder === "asc" ? "↑" : "↓"}
                           </span>
                         )}
                       </th>
@@ -363,11 +381,13 @@ const DriverManagementPage: React.FC = () => {
                           {driver.totalOrders}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            driver.activeOrders > 0 
-                              ? 'bg-yellow-100 text-yellow-800' 
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              driver.activeOrders > 0
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
                             {driver.activeOrders}
                           </span>
                         </td>

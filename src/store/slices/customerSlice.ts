@@ -204,7 +204,6 @@ export const deleteCustomer = createAsyncThunk(
 
       console.log("Making DELETE request to:", `/sales/customers/${id}`);
 
-      // Use standard REST endpoint format
       const response = await apiClient.delete(`/sales/customers/${id}`);
       console.log("Delete response:", response.data);
 
@@ -231,7 +230,7 @@ export const deleteAllCustomers = createAsyncThunk(
   async (storeId: string, { rejectWithValue, dispatch }) => {
     try {
       console.log("Deleting all customers for store:", storeId);
-      // Get all customers for this store (use high limit to get all customers)
+
       const customersResponse = await dispatch(
         fetchCustomers({ storeId, page: 1, limit: 1000 })
       ).unwrap();

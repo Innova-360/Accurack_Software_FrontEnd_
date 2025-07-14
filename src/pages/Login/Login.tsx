@@ -25,7 +25,6 @@ const Login = () => {
   const location = useLocation();
   const dispatch = useAppDispatch();
 
-  // Get the intended destination from location state, default to /stores
   const from = location.state?.from?.pathname || "/stores";
   // Load saved credentials on component mount
   useEffect(() => {
@@ -93,7 +92,6 @@ const Login = () => {
     const newRememberMe = !rememberMe;
     setRememberMe(newRememberMe);
 
-    // If unchecking Remember Me, remove saved credentials
     if (!newRememberMe) {
       clearSavedCredentials();
     }

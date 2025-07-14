@@ -91,8 +91,7 @@ const SalesPage: React.FC = () => {
     productsAvailable: 0, // This would need to come from inventory
     lowStockItems: 0, // This would need to come from inventory
   };
-  // Use the custom hook for sales data management
-  // const {
+
   //   transactions,
   //   stats,
   //   loading,
@@ -107,7 +106,7 @@ const SalesPage: React.FC = () => {
   const [activeStatusTab, setActiveStatusTab] = useState("All"); // New state for status tabs
   const [statusFilter, setStatusFilter] = useState("All");
   const [paymentFilter, setPaymentFilter] = useState("All");
-  // const [cashierFilter, setCashierFilter] = useState("All");
+
   const [dateFilter, setDateFilter] = useState("Today");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -123,8 +122,7 @@ const SalesPage: React.FC = () => {
       };
       console.log("type of page:", typeof params.page);
       console.log("type of limit:", typeof params.limit);
-      
-      // Use activeStatusTab for filtering instead of statusFilter
+
       if (activeStatusTab !== "All") {
         params.status = activeStatusTab;
       }
@@ -193,14 +191,24 @@ const SalesPage: React.FC = () => {
     // We need to fetch all sales to get accurate counts
     // For now, we'll calculate from current filtered data
     const allSales = transactions; // This should ideally be all sales, not filtered
-    
+
     return {
       all: allSales.length,
-      pending: allSales.filter((s: any) => s.status?.toLowerCase() === 'pending').length,
-      confirmed: allSales.filter((s: any) => s.status?.toLowerCase() === 'confirmed').length,
-      cancelled: allSales.filter((s: any) => s.status?.toLowerCase() === 'cancelled').length,
-      shipped: allSales.filter((s: any) => s.status?.toLowerCase() === 'shipped').length,
-      completed: allSales.filter((s: any) => s.status?.toLowerCase() === 'completed').length,
+      pending: allSales.filter(
+        (s: any) => s.status?.toLowerCase() === "pending"
+      ).length,
+      confirmed: allSales.filter(
+        (s: any) => s.status?.toLowerCase() === "confirmed"
+      ).length,
+      cancelled: allSales.filter(
+        (s: any) => s.status?.toLowerCase() === "cancelled"
+      ).length,
+      shipped: allSales.filter(
+        (s: any) => s.status?.toLowerCase() === "shipped"
+      ).length,
+      completed: allSales.filter(
+        (s: any) => s.status?.toLowerCase() === "completed"
+      ).length,
     };
   };
 
@@ -216,26 +224,32 @@ const SalesPage: React.FC = () => {
     currentPage,
     rowsPerPage,
     displayTransactionsLength: displayTransactions.length,
-    salesLength: sales.length
+    salesLength: sales.length,
   });
 
   // For pagination display - simplified robust approach
   const isServerSidePagination = !searchTerm; // Server-side when no search filter
-  
+
   let totalPages, totalItems, startIndex, endIndex;
-  
+
   if (isServerSidePagination) {
     // Server-side pagination
     if (pagination && pagination.total !== undefined && pagination.total > 0) {
       // We have proper pagination metadata from backend
       totalItems = pagination.total;
-      totalPages = pagination.totalPages || Math.ceil(pagination.total / (pagination.limit || rowsPerPage));
-      startIndex = ((pagination.page - 1) * (pagination.limit || rowsPerPage)) + 1;
-      endIndex = Math.min(pagination.page * (pagination.limit || rowsPerPage), pagination.total);
+      totalPages =
+        pagination.totalPages ||
+        Math.ceil(pagination.total / (pagination.limit || rowsPerPage));
+      startIndex =
+        (pagination.page - 1) * (pagination.limit || rowsPerPage) + 1;
+      endIndex = Math.min(
+        pagination.page * (pagination.limit || rowsPerPage),
+        pagination.total
+      );
     } else {
       // No pagination metadata from backend - use smart estimation
       const currentResultsCount = sales.length;
-      
+
       if (currentResultsCount < rowsPerPage) {
         // We got fewer results than requested, likely this is all of them or the last page
         if (currentPage === 1) {
@@ -246,9 +260,9 @@ const SalesPage: React.FC = () => {
           endIndex = currentResultsCount;
         } else {
           // Later page with fewer results = last page
-          totalItems = ((currentPage - 1) * rowsPerPage) + currentResultsCount;
+          totalItems = (currentPage - 1) * rowsPerPage + currentResultsCount;
           totalPages = currentPage;
-          startIndex = ((currentPage - 1) * rowsPerPage) + 1;
+          startIndex = (currentPage - 1) * rowsPerPage + 1;
           endIndex = totalItems;
         }
       } else if (currentResultsCount === rowsPerPage) {
@@ -257,7 +271,7 @@ const SalesPage: React.FC = () => {
         const estimatedTotal = currentPage * rowsPerPage + 1;
         totalItems = estimatedTotal;
         totalPages = Math.ceil(estimatedTotal / rowsPerPage);
-        startIndex = ((currentPage - 1) * rowsPerPage) + 1;
+        startIndex = (currentPage - 1) * rowsPerPage + 1;
         endIndex = currentPage * rowsPerPage;
       } else {
         // More results than rowsPerPage (shouldn't happen with proper pagination)
@@ -281,7 +295,7 @@ const SalesPage: React.FC = () => {
     totalItems,
     startIndex,
     endIndex,
-    currentPage
+    currentPage,
   });
 
   // Effect to fetch total count when needed - simplified approach
@@ -304,12 +318,25 @@ const SalesPage: React.FC = () => {
       rowsPerPage,
       currentPage,
       searchTerm,
-      totalItemsCalculated: isServerSidePagination && pagination?.total !== undefined ? pagination.total : displayTransactions.length,
-      totalPagesCalculated: isServerSidePagination && pagination?.total !== undefined 
-        ? (pagination.totalPages || Math.ceil(pagination.total / pagination.limit))
-        : Math.ceil(displayTransactions.length / rowsPerPage)
+      totalItemsCalculated:
+        isServerSidePagination && pagination?.total !== undefined
+          ? pagination.total
+          : displayTransactions.length,
+      totalPagesCalculated:
+        isServerSidePagination && pagination?.total !== undefined
+          ? pagination.totalPages ||
+            Math.ceil(pagination.total / pagination.limit)
+          : Math.ceil(displayTransactions.length / rowsPerPage),
     });
-  }, [sales, pagination, rowsPerPage, currentPage, searchTerm, displayTransactions.length, isServerSidePagination]);
+  }, [
+    sales,
+    pagination,
+    rowsPerPage,
+    currentPage,
+    searchTerm,
+    displayTransactions.length,
+    isServerSidePagination,
+  ]);
 
   // Action handlers
   const handleSalesReport = () => {
@@ -325,7 +352,7 @@ const SalesPage: React.FC = () => {
     setActiveStatusTab("All"); // Reset status tab
     setStatusFilter("All");
     setPaymentFilter("All");
-    // setCashierFilter("All");
+
     setDateFilter("Today");
     setCurrentPage(1);
   };
@@ -428,9 +455,10 @@ const SalesPage: React.FC = () => {
     }
   };
 
-
-
-  const handleStatusChange = async (transactionId: string, newStatus: string) => {
+  const handleStatusChange = async (
+    transactionId: string,
+    newStatus: string
+  ) => {
     try {
       // Find the transaction to get its current data
       const transaction = transactions.find((t: any) => t.id === transactionId);
@@ -454,10 +482,12 @@ const SalesPage: React.FC = () => {
       });
 
       // Dispatch the update action
-      await dispatch(updateSale({
-        saleId: transactionId,
-        updateData,
-      })).unwrap();
+      await dispatch(
+        updateSale({
+          saleId: transactionId,
+          updateData,
+        })
+      ).unwrap();
 
       toast.success("Transaction status updated successfully");
     } catch (error) {
@@ -492,20 +522,21 @@ const SalesPage: React.FC = () => {
             </div>
           )}
           {/* Header Section */}
-         <div className="flex items-center justify-between mb-6 bg-white p-5 rounded-lg shadow">
-            <div className="text-2xl font-bold text-[#03414C]">Update Sales</div>
-
-         </div>
+          <div className="flex items-center justify-between mb-6 bg-white p-5 rounded-lg shadow">
+            <div className="text-2xl font-bold text-[#03414C]">
+              Update Sales
+            </div>
+          </div>
           {/* Stats Grid */}
           {/* <StatsGrid stats={stats} loading={loading} /> */}
-          
+
           {/* Status Tabs */}
           <StatusTabs
             activeTab={activeStatusTab}
             onTabChange={handleStatusTabChange}
             salesCounts={salesCounts}
           />
-          
+
           {/* Filters Section */}
           <div className="bg-white rounded-lg p-6 mb-6">
             <FilterBar
@@ -600,7 +631,6 @@ const SalesPage: React.FC = () => {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteConfirm}
       />
-
     </>
   );
 };

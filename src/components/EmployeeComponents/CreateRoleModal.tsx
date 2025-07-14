@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import type { AppDispatch } from '../../store';
-import { createRoleTemplate } from '../../store/slices/employeeSlice';
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../../store";
+import { createRoleTemplate } from "../../store/slices/employeeSlice";
 
 interface CreateRoleModalProps {
   isOpen: boolean;
@@ -9,39 +9,36 @@ interface CreateRoleModalProps {
   onRoleCreated: (role: any) => void;
 }
 
-const CreateRoleModal: React.FC<CreateRoleModalProps> = ({ isOpen, onClose, onRoleCreated }) => {
+const CreateRoleModal: React.FC<CreateRoleModalProps> = ({
+  isOpen,
+  onClose,
+  onRoleCreated,
+}) => {
   const dispatch = useDispatch<AppDispatch>();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
+    name: "",
+    description: "",
     isDefault: false,
-    priority: 0
+    priority: 0,
   });
 
-  // const [newPermission, setNewPermission] = useState({
   //   resource: '',
   //   action: '',
   //   scope: 'store'
   // });
 
-  
-
-
-
-
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const result = await dispatch(createRoleTemplate(formData)).unwrap();
       onRoleCreated(result);
       onClose();
-      setFormData({ name: '', description: '',  isDefault: false, priority: 0 });
+      setFormData({ name: "", description: "", isDefault: false, priority: 0 });
     } catch (error) {
-      console.error('Failed to create role:', error);
+      console.error("Failed to create role:", error);
     } finally {
       setLoading(false);
     }
@@ -56,44 +53,65 @@ const CreateRoleModal: React.FC<CreateRoleModalProps> = ({ isOpen, onClose, onRo
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Role Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Role Name
+            </label>
             <input
               type="text"
               value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, name: e.target.value }))
+              }
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Description
+            </label>
             <textarea
               value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  description: e.target.value,
+                }))
+              }
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
               rows={3}
             />
           </div>
-
-        
 
           <div className="flex items-center space-x-4">
             <label className="flex items-center">
               <input
                 type="checkbox"
                 checked={formData.isDefault}
-                onChange={(e) => setFormData(prev => ({ ...prev, isDefault: e.target.checked }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    isDefault: e.target.checked,
+                  }))
+                }
                 className="mr-2"
               />
               Default Role
             </label>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Priority</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Priority
+              </label>
               <input
                 type="number"
                 value={formData.priority}
-                onChange={(e) => setFormData(prev => ({ ...prev, priority: parseInt(e.target.value) }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    priority: parseInt(e.target.value),
+                  }))
+                }
                 className="w-20 border border-gray-300 rounded px-2 py-1"
                 min="0"
               />
@@ -113,7 +131,7 @@ const CreateRoleModal: React.FC<CreateRoleModalProps> = ({ isOpen, onClose, onRo
               disabled={loading}
               className="px-4 py-2 bg-[#043E49] text-white rounded-lg hover:bg-[#032B2E] disabled:opacity-50"
             >
-              {loading ? 'Creating...' : 'Create Role'}
+              {loading ? "Creating..." : "Create Role"}
             </button>
           </div>
         </form>

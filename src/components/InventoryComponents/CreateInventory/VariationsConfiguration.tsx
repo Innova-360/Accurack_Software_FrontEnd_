@@ -36,7 +36,7 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
   categoriesError: propCategoriesError,
 }) => {
   const dispatch = useDispatch();
-  // Use suppliers from props if available, otherwise fall back to Redux
+
   const {
     suppliers: reduxSuppliers,
     loading: reduxSuppliersLoading,
@@ -47,7 +47,6 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
     error: string | null;
   };
 
-  // Use categories from props if available, otherwise fall back to Redux
   const {
     categories: reduxCategories,
     loading: reduxCategoriesLoading,
@@ -60,12 +59,10 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
     creatingCategory: boolean;
   };
 
-  // Use prop suppliers if available, otherwise use Redux suppliers
   const suppliers = propSuppliers || reduxSuppliers;
   const suppliersLoading = propSuppliersLoading ?? reduxSuppliersLoading;
   const suppliersError = propSuppliersError || reduxSuppliersError;
 
-  // Use prop categories if available, otherwise use Redux categories
   const categories = propCategories || reduxCategories;
   const categoriesLoading = propCategoriesLoading ?? reduxCategoriesLoading;
   const categoriesError = propCategoriesError || reduxCategoriesError; // Only fetch suppliers if not provided as props and not already loading/loaded
@@ -794,7 +791,6 @@ const VariationCard: React.FC<VariationCardProps> = ({
                 ? "bg-gray-100 cursor-not-allowed text-gray-500"
                 : ""
             }`}
-            
             disabled={
               !suppliersLoading &&
               !suppliersError &&
