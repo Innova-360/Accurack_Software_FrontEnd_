@@ -898,6 +898,7 @@ const UpdateInventory: React.FC = () => {
                         onPackDiscountsChange={(discounts) =>
                           handleFormDataChange("packDiscounts", discounts)
                         }
+                        itemSellingPrice={parseFloat(formData.itemSellingCost) || 0}
                       />
                     </div>
                   </div>

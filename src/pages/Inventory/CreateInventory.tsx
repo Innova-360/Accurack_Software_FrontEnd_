@@ -767,6 +767,7 @@ const CreateInventory: React.FC = () => {
                         onPackDiscountsChange={(discounts) =>
                           handleFormDataChange("packDiscounts", discounts)
                         }
+                        itemSellingPrice={parseFloat(formData.itemSellingCost) || parseFloat(formData.price) || 0}
                       />{" "}
                     </div>
                   </div>
