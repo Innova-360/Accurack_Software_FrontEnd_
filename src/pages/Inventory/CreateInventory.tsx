@@ -150,6 +150,7 @@ const CreateInventory: React.FC = () => {
 
           const mappedVariant = {
             name: variant.name || `Variant ${index + 1}`,
+            categoryId: variant.category || "", // Include category for variants
             price,
             costPrice: costPrice, // Include cost price for variants
             sku: variant.customSku || "",
@@ -192,6 +193,16 @@ const CreateInventory: React.FC = () => {
         variantCount: basePayload.variants.length,
         variants: basePayload.variants,
       });
+      
+      // Debug: Check if categories are properly mapped
+      console.log("Variant Category Debug:", 
+        basePayload.variants.map((v: any, i: number) => ({
+          index: i,
+          name: v.name,
+          categoryId: v.categoryId,
+          originalCategory: formData.variations[i]?.category
+        }))
+      );
     }
 
     return basePayload;

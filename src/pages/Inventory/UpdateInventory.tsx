@@ -137,6 +137,14 @@ const UpdateInventory: React.FC = () => {
     };
 
     if (hasVariants && formData.variations && formData.variations.length > 0) {
+      console.log("Update: Processing variants with categories:", 
+        formData.variations.map((v: any, i: number) => ({
+          index: i,
+          name: v.name,
+          category: v.category
+        }))
+      );
+      
       basePayload.variants = formData.variations.map(
         (variant: any, index: number) => {
           const price = parseFloat(variant.itemSellingCost) || 0;
@@ -151,6 +159,7 @@ const UpdateInventory: React.FC = () => {
           const mappedVariant = {
             id: variant.id, // Include variant ID for update if exists
             name: variant.name || `Variant ${index + 1}`,
+            categoryId: variant.category || "", // Include category for variants
             price,
             costPrice,
             sku: variant.customSku || "",
@@ -339,6 +348,15 @@ const UpdateInventory: React.FC = () => {
         return mappedPacks;
       };
 
+      // Debug: Check variant categories from API
+      console.log("Loading variants from API:", 
+        (product.variants || []).map((v: any) => ({
+          id: v.id,
+          name: v.name,
+          categoryId: v.categoryId
+        }))
+      );
+      
       // Map product data to form data
       setFormData({
         productName: product.name || "",
@@ -382,10 +400,14 @@ const UpdateInventory: React.FC = () => {
         variations: (product.variants || []).map((variant: any) => ({
           id: variant.id,
           name: variant.name || `Variant ${variant.id}`,
+          category: variant.categoryId || "", // Map categoryId to category
+          attributeCombination: variant.attributes || {},
+          brandName: variant.brandName || "",
           customSku: variant.sku || "",
           ean: variant.ean || "",
           plu: variant.pluUpc || variant.plu || "",
           pluUpc: variant.pluUpc || variant.plu || "",
+          individualItemQuantity: 1,
           itemCost: (
             variant.costPrice ||
             variant.singleItemCostPrice ||
@@ -396,12 +418,15 @@ const UpdateInventory: React.FC = () => {
             variant.singleItemSellingPrice ||
             ""
           ).toString(),
+          minSellingQuantity: 1,
           msrpPrice: (variant.msrpPrice || "").toString(),
-          quantity: (variant.quantity || variant.itemQuantity || "").toString(),
-          supplierId: variant.supplierId || "",
-          discount: (variant.discountAmount || "").toString(),
+          minOrderValue: 0,
           orderValueDiscount: (variant.percentDiscount || "").toString(),
-          attributes: variant.attributes || {},
+          description: variant.description || "",
+          quantity: (variant.quantity || variant.itemQuantity || "").toString(),
+          price: (variant.price || variant.singleItemSellingPrice || "").toString(),
+          discount: (variant.discountAmount || "").toString(),
+          supplierId: variant.supplierId || "",
           packDiscounts: variant.packs || variant.packDiscounts || [],
           hasPackSettings:
             (variant.packs || variant.packDiscounts || []).length > 0,

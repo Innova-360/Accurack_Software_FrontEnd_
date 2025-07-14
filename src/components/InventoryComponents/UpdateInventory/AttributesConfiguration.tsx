@@ -170,7 +170,7 @@ const AttributesConfiguration: React.FC<AttributesConfigurationProps> = ({
                 <input
                   type="text"
                   placeholder="Attribute Name (e.g., Color, Size, Material)"
-                  value={attribute.name}
+                  value={attribute.name || ""}
                   onChange={(e) =>
                     updateAttribute(attribute.id, e.target.value)
                   }
@@ -271,7 +271,7 @@ const AttributesConfiguration: React.FC<AttributesConfigurationProps> = ({
                     <input
                       type="text"
                       placeholder="Option value (e.g., Red, Large, Cotton)"
-                      value={option.value}
+                      value={option.value || ""}
                       onChange={(e) =>
                         updateAttributeOption(
                           attribute.id,
