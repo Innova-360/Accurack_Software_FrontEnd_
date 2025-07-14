@@ -12,8 +12,7 @@ interface AuthProviderProps {
 const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
-  const { user, loading, authChecked } = useAppSelector((state) => state.user);
+  const {  loading, authChecked } = useAppSelector((state) => state.user);
 
   useEffect(() => {
     // Only fetch user if authChecked is false (first load)
