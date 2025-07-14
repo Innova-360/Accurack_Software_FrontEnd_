@@ -549,7 +549,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
             </div>
           )}
         </div>
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <label className="block text-sm font-semibold text-gray-700">
             Brand Name{" "}
             <span className="text-gray-400 text-xs font-normal">
@@ -563,7 +563,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
             placeholder="Enter brand name"
           />
-        </div>
+        </div> */}
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-gray-700">
             Price *
