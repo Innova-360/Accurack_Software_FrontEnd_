@@ -19,6 +19,8 @@ import {
 } from "../../hooks/useInventory";
 import { extractErrorMessage } from "../../utils/lastUpdatedUtils";
 
+
+
 const Inventory: React.FC = () => {
   const navigate = useNavigate();
   const { storeId } = useStoreFromUrl(); // Handle store selection from URL
@@ -30,9 +32,10 @@ const Inventory: React.FC = () => {
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "asc" | "desc";
-  } | null>(null);
-
-  // --- Custom search state ---
+  }>({
+    key: "createdAt",
+    direction: "desc",
+  });
   const [searchResults, setSearchResults] = useState<Product[] | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -281,20 +284,14 @@ const Inventory: React.FC = () => {
       setExpandedCategories([]);
     }
   };
-  // Server-side sorting function
-  const handleSort = (key: string) => {
-    let direction: "asc" | "desc" = "asc";
-    if (
-      sortConfig &&
-      sortConfig.key === key &&
-      sortConfig.direction === "asc"
-    ) {
-      direction = "desc";
-    }
 
-    setSortConfig({ key, direction });
-    setCurrentPage(1); // Reset to first page when sorting
-    // Sorting will be triggered by the useEffect
+  const handleSort = (key: string) => {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
+      }
+      return { key, direction: "asc" };
+    });
   };
 
   // Checkbox handlers
@@ -540,5 +537,8 @@ const Inventory: React.FC = () => {
     </>
   );
 };
+
+
+
 
 export default Inventory;

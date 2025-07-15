@@ -37,10 +37,13 @@ const UpdateProduct: React.FC = () => {
   // State for main inventory pagination and filters
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortConfig, setSortConfig] = useState<{
+    const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "asc" | "desc";
-  } | null>(null);
+  }>({
+    key: "createdAt",
+    direction: "desc",
+  });
   const [groupBy, setGroupBy] = useState("");
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
 
