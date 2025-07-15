@@ -54,6 +54,7 @@ export interface Sale {
 }
 
 export interface SaleItem {
+  packType: string;
   id: string;
   saleId: string;
   productId: string;
