@@ -247,7 +247,7 @@ const BarcodeScanModal: React.FC<BarcodeScanModalProps> = ({
         if (isProcessingRef.current) return; // Ignore if already processing
         if (result.codeResult && result.codeResult.code) {
           const barcode = result.codeResult.code;
-          if (lastScannedBarcodeRef.current === barcode) return; // Ignore same barcode
+          // if (lastScannedBarcodeRef.current === barcode) return; // Ignore same barcode
 
           isProcessingRef.current = true;
           lastScannedBarcodeRef.current = barcode;
