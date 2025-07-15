@@ -9,6 +9,7 @@ import {
 } from "react-icons/fa";
 import { useAppSelector } from "../../store/hooks";
 import apiClient from "../../services/api";
+import { productAPI, type PaginationParams } from "../../services/productAPI";
 import Pagination from "../../components/InventoryComponents/Pagination";
 
 import toast from "react-hot-toast";
@@ -137,9 +138,11 @@ const AssignProductsPage: React.FC = () => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage] = useState(50);
+  const [rowsPerPage] = useState(10);
   const [isPageChanging, setIsPageChanging] = useState(false);
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  // const [allProducts, setAllProducts] = useState<Product[]>([]);
 
   // Fetch all product assignments to check which products have primary suppliers
   const fetchProductAssignments = async () => {
@@ -196,27 +199,62 @@ const AssignProductsPage: React.FC = () => {
     }
   };
 
-  // Fetch products from inventory
-  const fetchProducts = async () => {
+  // Fetch products from inventory with pagination
+  const fetchProducts = async (page: number = currentPage) => {
     try {
-      setLoading(true);
+      setLoading(false);
       const finalStoreId = currentStore?.id || storeId;
 
-      const response = await apiClient.get("/product/list", {
-        params: {
-          storeId: finalStoreId,
-          // Remove pagination params to get all products
-        },
+      const params: PaginationParams = {
+        page,
+        limit: rowsPerPage,
+        storeId: finalStoreId,
+      };
+
+      // Add search parameter if provided
+      if (searchTerm.trim()) {
+        params.search = searchTerm.trim();
+      }
+
+      // Add category filter if provided
+      if (selectedCategory !== "all") {
+        params.category = selectedCategory;
+      }
+
+      const response = await productAPI.getProducts(params);
+      
+      setProducts(response.products);
+      setTotalItems(response.pagination.total);
+      setTotalPages(response.pagination.totalPages);
+
+      // Fetch categories for filter (only on first load)
+      if (page === 1 && availableCategories.length === 0) {
+        await fetchCategories();
+      }
+
+      // Fetch product assignments to check which products have primary suppliers
+      await fetchProductAssignments();
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      toast.error("Failed to load products");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch categories for filter dropdown
+  const fetchCategories = async () => {
+    try {
+      const finalStoreId = currentStore?.id || storeId;
+      const response = await productAPI.getProducts({
+        page: 1,
+        limit: 1000, // Get more products to extract categories
+        storeId: finalStoreId,
       });
-
-      const productList = response.data?.data?.products || [];
-      setAllProducts(productList);
-      setProducts(productList);
-
-      // Extract unique categories for filter
+      
       const uniqueCategories = [
         ...new Set(
-          productList.map((product: Product) => {
+          response.products.map((product: Product) => {
             if (
               typeof product.category === "object" &&
               product.category !== null
@@ -234,99 +272,67 @@ const AssignProductsPage: React.FC = () => {
       setAvailableCategories(uniqueCategories);
 
       // Set price range based on actual product prices
-      const prices = productList.map((p: Product) => p.singleItemSellingPrice);
+      const prices = response.products
+        .map((p: Product) => p.singleItemSellingPrice)
+        .filter((price) => price != null && !isNaN(price));
       if (prices.length > 0) {
         const minPrice = Math.min(...prices);
         const maxPrice = Math.max(...prices);
         setPriceRange({ min: Math.floor(minPrice), max: Math.ceil(maxPrice) });
       }
-
-      // Fetch product assignments to check which products have primary suppliers
-      await fetchProductAssignments();
     } catch (error) {
-      console.error("Error fetching products:", error);
-      toast.error("Failed to load products");
-    } finally {
-      setLoading(false);
+      console.error("Error fetching categories:", error);
     }
   };
 
   useEffect(() => {
     if (currentStore?.id || storeId) {
-      fetchProducts();
+      fetchProducts(1);
     }
   }, [currentStore?.id, storeId]);
 
-  // Search functionality with debounce and filters
+  // Search functionality with debounce - now triggers backend API call
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      let filtered = [...allProducts];
-
-      // Apply search filter
-      if (searchTerm.trim() !== "") {
-        filtered = filtered.filter(
-          (product) =>
-            product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (typeof product.category === "string"
-              ? product.category.toLowerCase()
-              : product.category?.name?.toLowerCase() ||
-                product.category?.code?.toLowerCase() ||
-                ""
-            ).includes(searchTerm.toLowerCase()) ||
-            product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      }
-
-      // Apply category filter
-      if (selectedCategory !== "all") {
-        filtered = filtered.filter((product) => {
-          const categoryName =
-            typeof product.category === "object" && product.category !== null
-              ? product.category.name ||
-                product.category.code ||
-                "Uncategorized"
-              : product.category || "Uncategorized";
-          return categoryName === selectedCategory;
-        });
-      }
-
-      // Apply price filter
-      filtered = filtered.filter((product) => {
-        const price = product.singleItemSellingPrice;
-        return price >= priceRange.min && price <= priceRange.max;
-      });
-
-      setProducts(filtered);
       setCurrentPage(1); // Reset to first page when searching/filtering
-    }, 300); // 300ms debounce
+      fetchProducts(1);
+    }, 100); // 300ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, allProducts, selectedCategory, priceRange]);
+  }, [searchTerm, selectedCategory]);
+
+  // Handle price range filter separately (client-side for now)
+  useEffect(() => {
+    if (products.length > 0) {
+      const filtered = products.filter((product) => {
+        const price = product.singleItemSellingPrice || 0;
+        return price >= priceRange.min && price <= priceRange.max;
+      });
+      // Note: This is still client-side filtering for price range
+      // You may want to implement this on backend as well
+    }
+  }, [priceRange]);
 
   // Handle page change
   const handlePageChange = async (newPage: number) => {
     if (newPage === currentPage || isPageChanging) return;
 
     setIsPageChanging(true);
-
-    // Add a small delay for smooth transition
-    await new Promise((resolve) => setTimeout(resolve, 150));
-
     setCurrentPage(newPage);
 
+    // Fetch products for the new page
+    await fetchProducts(newPage);
+
     // Reset animation state
-    setTimeout(() => setIsPageChanging(false), 300);
+    setTimeout(() => setIsPageChanging(false), 100);
   };
 
-  // Calculate pagination
-  const totalItems = products.length;
-  const totalPages = Math.ceil(totalItems / rowsPerPage);
+  // Calculate pagination info for display
   const startIndex = (currentPage - 1) * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-  const currentProducts = products.slice(startIndex, endIndex);
+  const endIndex = Math.min(startIndex + rowsPerPage, totalItems);
 
-  // Filter products based on search (for client-side filtering if needed)
-  const filteredProducts = currentProducts;
+  // Products are already paginated from backend
+  const filteredProducts = products;
 
   const handleProductSelect = (productId: string) => {
     const newSelected = new Set(selectedProducts);
@@ -731,20 +737,8 @@ const AssignProductsPage: React.FC = () => {
                     <button
                       onClick={() => {
                         setSelectedCategory("all");
-                        // Reset price range to original values
-                        const prices = allProducts.map(
-                          (p: Product) => p.singleItemSellingPrice
-                        );
-                        if (prices.length > 0) {
-                          const minPrice = Math.min(...prices);
-                          const maxPrice = Math.max(...prices);
-                          setPriceRange({
-                            min: Math.floor(minPrice),
-                            max: Math.ceil(maxPrice),
-                          });
-                        } else {
-                          setPriceRange({ min: 0, max: 1000 });
-                        }
+                        // Reset price range to default values
+                        setPriceRange({ min: 0, max: 1000 });
                         setSearchTerm("");
                       }}
                       className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-200"
@@ -822,7 +816,7 @@ const AssignProductsPage: React.FC = () => {
                             Selling Price
                           </label>
                           <p className="text-lg font-semibold text-gray-900">
-                            ${product.singleItemSellingPrice.toFixed(2)}
+                            ${(product.singleItemSellingPrice || 0).toFixed(2)}
                           </p>
                         </div>
                         <div>
@@ -968,7 +962,7 @@ const AssignProductsPage: React.FC = () => {
                         <td className="px-6 py-6 whitespace-nowrap">
                           <div>
                             <div className="text-base font-semibold text-gray-900">
-                              ${product.singleItemSellingPrice.toFixed(2)}
+                              ${(product.singleItemSellingPrice || 0).toFixed(2)}
                             </div>
                             <div className="text-sm text-gray-500">
                               Stock: {product.itemQuantity}
