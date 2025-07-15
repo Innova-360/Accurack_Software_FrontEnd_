@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
 import { BASE_URL } from "../../services/api";
 import { extractErrorMessage } from "../../utils/lastUpdatedUtils";
+import { FaSpinner } from "react-icons/fa";
 
 interface UploadInventoryModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [processingFile, setProcessingFile] = useState(false);
 
   const { id } = useParams();
 
@@ -50,13 +52,23 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (isValidFileType(file)) {
-        setSelectedFile(file);
+        setProcessingFile(true);
+        try {
+          // Simulate async parse/validate (replace with real logic if needed)
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          setSelectedFile(file);
+        } catch (err) {
+          toast.error("Failed to parse file. Please check the format.");
+          setSelectedFile(null);
+        } finally {
+          setProcessingFile(false);
+        }
       } else {
-        toast.error("Please upload only Excel files (.xlsx, .xls)");
+        toast.error("Please upload only Excel files (.xlsx, .xls) or CSV files.");
       }
     }
   };
@@ -122,51 +134,43 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
   };
 
   const handleDownloadTemplate = () => {
-    // Create a sample Excel template matching inventory structure
+    // Create a sample template matching validated inventory columns
     const templateData = [
       [
-        "Product Name",
         "PLU",
+        "name",
+        "category",
+        "price",
+        "SellingPrice",
+        "stock",
         "SKU",
-        "Category",
-        "Quantity",
-        "Price",
-        "Items Per Unit",
-        "Supplier",
-        "Description",
       ],
       [
-        "Premium Coffee Beans",
         "PLU001",
-        "SKU-CF-001",
+        "Premium Coffee Beans",
         "BEVERAGES",
+        "24.99",
+        "29.99",
         "150",
-        "$24.99",
-        "1",
-        "Coffee Co.",
-        "High-quality arabica coffee beans sourced from premium farms",
+        "SKU-CF-001",
       ],
       [
-        "Organic Milk",
         "PLU002",
-        "SKU-ML-002",
+        "Organic Milk",
         "DAIRY",
+        "5.49",
+        "6.49",
         "75",
-        "$5.49",
-        "1",
-        "Dairy Farm Inc.",
-        "Fresh organic whole milk, 1 gallon",
+        "SKU-ML-002",
       ],
       [
-        "Artisan Bread",
         "PLU003",
-        "SKU-BR-003",
+        "Artisan Bread",
         "BAKERY",
+        "7.99",
+        "9.99",
         "25",
-        "$7.99",
-        "1",
-        "Local Bakery",
-        "Freshly baked sourdough bread",
+        "SKU-BR-003",
       ],
     ];
 
@@ -234,77 +238,90 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
         </div>
 
         {/* File Upload Area */}
-        <div
-          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-            dragActive
-              ? "border-[#0f4d57] bg-[#0f4d57]/5"
-              : selectedFile
-                ? "border-green-500 bg-green-50"
-                : "border-gray-300 hover:border-gray-400"
-          }`}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-        >
-          {selectedFile ? (
-            <div className="space-y-2">
-              <svg
-                className="w-12 h-12 text-green-500 mx-auto"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <p className="font-medium text-green-700">{selectedFile.name}</p>
-              <p className="text-sm text-green-600">
-                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-              </p>
-              <button
-                onClick={() => setSelectedFile(null)}
-                className="text-sm text-red-600 hover:text-red-700 underline"
-              >
-                Remove file
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <svg
-                className="w-12 h-12 text-gray-400 mx-auto"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
-              </svg>
-              <div>
-                <p className="text-lg font-medium text-gray-700">
-                  Drop your Excel file here
-                </p>
-                <p className="text-sm text-gray-500 mt-1">or click to browse</p>
-              </div>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="px-6 py-2 bg-[#0f4d57] text-white rounded-lg hover:bg-[#0d3f47] transition-colors"
-              >
-                Choose File
-              </button>
-              <p className="text-xs text-gray-500">
-                Supported formats: .xlsx, .xls (Max 10MB)
-              </p>
+        <div className="relative">
+          {/* Loader overlay */}
+          {processingFile && (
+            <div className="absolute inset-0 bg-white bg-opacity-70 flex flex-col items-center justify-center z-20">
+              <FaSpinner className="animate-spin text-4xl text-blue-600 mb-2" />
+              <span className="text-blue-700 font-medium">Processing file...</span>
             </div>
           )}
+          {/* Existing upload area code here (the drag-and-drop or file input UI) */}
+          <div
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+              dragActive
+                ? "border-[#0f4d57] bg-[#0f4d57]/5"
+                : selectedFile
+                  ? "border-green-500 bg-green-50"
+                  : "border-gray-300 hover:border-gray-400"
+            }`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
+            {selectedFile ? (
+              <div className="space-y-2">
+                <svg
+                  className="w-12 h-12 text-green-500 mx-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <p className="font-medium text-green-700">{selectedFile.name}</p>
+                <p className="text-sm text-green-600">
+                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+                <button
+                  onClick={() => {
+                    setSelectedFile(null);
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
+                  className="text-sm text-red-600 hover:text-red-700 underline"
+                >
+                  Remove file
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <svg
+                  className="w-12 h-12 text-gray-400 mx-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  />
+                </svg>
+                <div>
+                  <p className="text-lg font-medium text-gray-700">
+                    Drop your Excel file here
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">or click to browse</p>
+                </div>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-6 py-2 bg-[#0f4d57] text-white rounded-lg hover:bg-[#0d3f47] transition-colors"
+                >
+                  Choose File
+                </button>
+                <p className="text-xs text-gray-500">
+                  Supported formats: .xlsx, .xls (Max 10MB)
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Hidden file input */}
