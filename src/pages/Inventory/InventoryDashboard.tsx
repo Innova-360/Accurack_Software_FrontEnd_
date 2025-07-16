@@ -107,7 +107,7 @@ const Inventory: React.FC = () => {
     setSearchLoading(true);
     setSearchError(null);
     productAPI
-      .searchProducts(debouncedSearchTerm)
+      .searchProducts(debouncedSearchTerm, storeId)
       .then((results) => {
         setSearchResults(results);
         setSearchLoading(false);

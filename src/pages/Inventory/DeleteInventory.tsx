@@ -58,6 +58,11 @@ const DeleteInventory: React.FC = () => {
 
   const lowStockProducts = useLowStockProducts(products);
 
+  // --- Custom search state for instant search ---
+  const [searchResults, setSearchResults] = useState<Product[] | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
   // Debounced search state
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
@@ -69,6 +74,28 @@ const DeleteInventory: React.FC = () => {
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
+
+  // --- Search API integration ---
+  useEffect(() => {
+    if (!debouncedSearchTerm) {
+      setSearchResults(null);
+      setSearchLoading(false);
+      setSearchError(null);
+      return;
+    }
+    setSearchLoading(true);
+    setSearchError(null);
+    productAPI
+      .searchProducts(debouncedSearchTerm, currentStore?.id)
+      .then((results) => {
+        setSearchResults(results);
+        setSearchLoading(false);
+      })
+      .catch((err) => {
+        setSearchError(extractErrorMessage(err));
+        setSearchLoading(false);
+      });
+  }, [debouncedSearchTerm, currentStore?.id]);
 
   // Fetch data when search term changes
   useEffect(() => {
@@ -137,11 +164,15 @@ const DeleteInventory: React.FC = () => {
   }
 
   // Server-side pagination - use pagination data from API
-  const totalItems = pagination.total;
-  const totalPages = pagination.totalPages;
-  const startIndex = (pagination.page - 1) * pagination.limit;
-  const endIndex = Math.min(startIndex + pagination.limit, totalItems);
-  const currentProducts = products; // All products returned from API for current page
+  const isSearching = searchResults !== null;
+  const allProducts = isSearching ? searchResults : products;
+  const totalItems = isSearching ? allProducts.length : pagination.total;
+  const totalPages = isSearching ? Math.ceil(allProducts.length / rowsPerPage) : pagination.totalPages;
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = Math.min(startIndex + rowsPerPage, totalItems);
+  const currentProducts = isSearching
+    ? allProducts.slice(startIndex, endIndex)
+    : products;
 
   // Calculate pagination for low stock products (client-side for now)
   const totalLowStockItems = lowStockProducts.length;
@@ -307,19 +338,22 @@ const DeleteInventory: React.FC = () => {
           style={{ animationDelay: "300ms" }}
         >
           {/* Loading indicator for search and table updates */}
-          {loading &&
-            (products.length > 0 || searchTerm || debouncedSearchTerm) && (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-center">
-                  <div className="inline-block rounded-full h-8 w-8 border-b-2 border-[#0f4d57] animate-spin mb-2"></div>
-                  <p className="text-gray-600 text-sm">
-                    {searchTerm || debouncedSearchTerm
-                      ? "Searching products..."
-                      : "Loading..."}
-                  </p>
-                </div>
+          {(searchLoading || (loading && (products.length > 0 || searchTerm || debouncedSearchTerm))) && (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <div className="inline-block rounded-full h-8 w-8 border-b-2 border-[#0f4d57] animate-spin mb-2"></div>
+                <p className="text-gray-600 text-sm">
+                  {searchTerm || debouncedSearchTerm
+                    ? "Searching products..."
+                    : "Loading..."}
+                </p>
               </div>
-            )}
+            </div>
+          )}
+          {/* Error state for search */}
+          {searchError && (
+            <div className="text-center text-red-500 py-2">{searchError}</div>
+          )}
 
           {/* Content - Show even when loading for search to prevent flicker */}
           <div

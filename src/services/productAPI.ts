@@ -590,11 +590,12 @@ export const productAPI = {
   },
 
   // Search products by query string
-  async searchProducts(query: string): Promise<Product[]> {
+  async searchProducts(query: string, storeId?: string): Promise<Product[]> {
     try {
-      const response = await apiClient.get(
-        `/product/search?q=${encodeURIComponent(query)}`
-      );
+      const params = new URLSearchParams();
+      params.append("q", query);
+      if (storeId) params.append("storeId", storeId);
+      const response = await apiClient.get(`/product/search?${params.toString()}`);
       // Assume response.data is an array of products or has a .data property
       let apiProducts: ApiProduct[] = [];
       if (Array.isArray(response.data)) {
