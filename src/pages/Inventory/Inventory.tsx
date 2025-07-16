@@ -246,6 +246,8 @@ const Inventory: React.FC = () => {
     setLowStockRowsPerPage(newRowsPerPage);
     setLowStockCurrentPage(1); // Reset to first page when changing rows per page
   };
+
+
   const handleRowsPerPageChange = async (newRowsPerPage: number) => {
     setRowsPerPage(newRowsPerPage);
     setCurrentPage(1); // Reset to first page when changing rows per page
@@ -269,6 +271,8 @@ const Inventory: React.FC = () => {
     setCurrentPage(1); // Reset to first page when searching
     // Search will be triggered by the useEffect with debounced search term
   };
+
+
   const handleGroupByChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
     setGroupBy(value);
@@ -281,6 +285,8 @@ const Inventory: React.FC = () => {
       setExpandedCategories([]);
     }
   };
+
+
   // Server-side sorting function
   const handleSort = (key: string) => {
     let direction: "asc" | "desc" = "asc";
@@ -522,7 +528,7 @@ const Inventory: React.FC = () => {
               onPageChange={handlePageChange}
             />
           )}
-        </div>{" "}
+        </div>
         {/* Low Stock Products Section */}
         <LowStockSection
           lowStockProducts={currentLowStockProducts}
