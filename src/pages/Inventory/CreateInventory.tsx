@@ -151,7 +151,8 @@ const CreateInventory: React.FC = () => {
             ean: variant.ean || "", // Include EAN for variants
             pluUpc: variant.plu || variant.pluUpc || "",
             quantity,
-            supplierId: variant.supplierId || "",
+            // Supplier is optional for variants, so do not require or validate it
+            supplierId: variant.supplierId || "", // remains optional
             msrpPrice,
             discountAmount: variantDiscountAmount,
             percentDiscount: variantPercentDiscount,
@@ -736,7 +737,11 @@ const CreateInventory: React.FC = () => {
                         onPackDiscountsChange={(discounts) =>
                           handleFormDataChange("packDiscounts", discounts)
                         }
-                        itemSellingPrice={parseFloat(formData.itemSellingCost) || parseFloat(formData.price) || 0}
+                        itemSellingPrice={
+                          parseFloat(formData.itemSellingCost) ||
+                          parseFloat(formData.price) ||
+                          0
+                        }
                       />{" "}
                     </div>
                   </div>

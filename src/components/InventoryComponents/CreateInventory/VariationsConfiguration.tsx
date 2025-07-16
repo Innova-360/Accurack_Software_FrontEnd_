@@ -688,7 +688,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
         <div>
           {" "}
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Vendor
+            Vendor <span className="text-gray-400 text-xs">(Optional)</span>
           </label>
           <select
             value={variation.supplierId}
@@ -716,7 +716,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
                   ? "Error loading suppliers"
                   : !suppliers || suppliers.length === 0
                     ? "No suppliers available"
-                    : "Select Vendor"}
+                    : "Select Vendor (Optional)"}
             </option>
             {suppliers &&
               suppliers.length > 0 &&
