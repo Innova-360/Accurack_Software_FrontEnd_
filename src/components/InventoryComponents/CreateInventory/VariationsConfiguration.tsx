@@ -125,7 +125,7 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
       discountTiers: [],
       imageFile: null,
       imagePreview: "",
-      category: ""
+      category: "",
     };
     onVariationsChange([...variations, newVariation]);
   };
@@ -203,7 +203,10 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
   };
 
   // Calculate ordered box price based on quantity and item selling price
-  const calculateOrderedBoxPrice = (quantity: number, itemSellingPrice: number) => {
+  const calculateOrderedBoxPrice = (
+    quantity: number,
+    itemSellingPrice: number
+  ) => {
     return quantity * itemSellingPrice;
   };
 
@@ -211,8 +214,11 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
     const variation = variations.find((v) => v.id === variationId);
     if (variation) {
       // Auto-calculate the ordered box price based on quantity and item selling price
-      const orderedPacksPrice = calculateOrderedBoxPrice(1, variation.itemSellingCost || 0);
-      
+      const orderedPacksPrice = calculateOrderedBoxPrice(
+        1,
+        variation.itemSellingCost || 0
+      );
+
       const newDiscount: PackDiscount = {
         id: generateId(),
         quantity: 1,
@@ -239,20 +245,20 @@ const VariationsConfiguration: React.FC<VariationsConfigurationProps> = ({
       const updatedDiscounts = variation.packDiscounts.map((d) => {
         if (d.id === discountId) {
           const updatedDiscount = { ...d, [field]: value };
-          
+
           // Auto-calculate ordered box price when quantity changes
-          if (field === 'quantity' && variation.itemSellingCost) {
+          if (field === "quantity" && variation.itemSellingCost) {
             updatedDiscount.orderedPacksPrice = calculateOrderedBoxPrice(
-              value, 
+              value,
               variation.itemSellingCost
             );
           }
-          
+
           return updatedDiscount;
         }
         return d;
       });
-      
+
       updateVariation(variationId, "packDiscounts", updatedDiscounts);
     }
   };
@@ -503,7 +509,6 @@ const VariationCard: React.FC<VariationCardProps> = ({
             placeholder="e.g. Dark Roast"
           />
         </div>
-        
 
         <div>
           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
@@ -849,9 +854,10 @@ const VariationCard: React.FC<VariationCardProps> = ({
               {variation.packDiscounts.map((discount) => (
                 <div
                   key={discount.id}
-                  className="grid grid-cols-12 gap-2 p-2 bg-gray-50 rounded items-center border border-gray-200 relative group"
+                  className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 p-2 bg-gray-50 rounded items-center border border-gray-200 relative group"
                 >
-                  <div className="col-span-2 flex flex-col">
+                  {/* Pack Qty */}
+                  <div className="flex flex-col">
                     <label className="text-xs text-gray-600 mb-1">
                       Pack Qty<span className="text-red-500">*</span>
                     </label>
@@ -872,7 +878,8 @@ const VariationCard: React.FC<VariationCardProps> = ({
                       required
                     />
                   </div>
-                  <div className="col-span-2 flex flex-col">
+                  {/* Discount Type */}
+                  <div className="flex flex-col">
                     <label className="text-xs text-gray-600 mb-1">
                       Discount Type
                     </label>
@@ -892,7 +899,8 @@ const VariationCard: React.FC<VariationCardProps> = ({
                       <option value="fixed">₹ (Fixed)</option>
                     </select>
                   </div>
-                  <div className="col-span-2 flex flex-col">
+                  {/* Discount Value */}
+                  <div className="flex flex-col">
                     <label className="text-xs text-gray-600 mb-1">
                       Discount Value<span className="text-red-500">*</span>
                     </label>
@@ -919,7 +927,8 @@ const VariationCard: React.FC<VariationCardProps> = ({
                       </span>
                     </div>
                   </div>
-                  <div className="col-span-2 flex flex-col">
+                  {/* Total Packs */}
+                  <div className="flex flex-col">
                     <label className="text-xs text-gray-600 mb-1">
                       Total Packs
                     </label>
@@ -939,10 +948,14 @@ const VariationCard: React.FC<VariationCardProps> = ({
                       className="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
                     />
                   </div>
-                  <div className="col-span-2 flex flex-col">
+                  {/* Ordered Price */}
+                  <div className="flex flex-col">
                     <label className="text-xs text-gray-600 mb-1 flex items-center gap-1">
                       Ordered Price
-                      <span className="text-xs text-blue-600" title="Auto-calculated: Items in Box × Item Price">
+                      <span
+                        className="text-xs text-blue-600"
+                        title="Auto-calculated: Items in Box × Item Price"
+                      >
                         (auto)
                       </span>
                     </label>
@@ -957,7 +970,8 @@ const VariationCard: React.FC<VariationCardProps> = ({
                       title="Auto-calculated based on items in box and item selling price"
                     />
                   </div>
-                  <div className="col-span-2 flex items-center justify-end">
+                  {/* Remove Button */}
+                  <div className="flex items-center justify-end">
                     <button
                       type="button"
                       onClick={() =>
