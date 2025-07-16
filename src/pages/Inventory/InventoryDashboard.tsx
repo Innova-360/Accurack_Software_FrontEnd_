@@ -36,10 +36,13 @@ const Inventory: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortConfig, setSortConfig] = useState<{
+   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "asc" | "desc";
-  } | null>(null);
+  }>({
+    key: "createdAt",
+    direction: "desc",
+  });
 
   // --- Custom search state ---
   const [searchResults, setSearchResults] = useState<Product[] | null>(null);

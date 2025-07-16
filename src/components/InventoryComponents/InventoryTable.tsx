@@ -14,9 +14,12 @@ interface InventoryTableProps {
   onProductDeleted?: () => void;
   onProductEdited?: (product: Product) => void;
   onProductViewed?: (product: Product) => void;
-  showUpdateQuantity?: boolean;
   isAnyQuantityEditing?: boolean;
   onEditingStateChange?: (isEditing: boolean) => void;
+  showUpdateQuantity?: boolean; // Control update quantity icon visibility
+  showDeleteButton?: boolean; // Control delete icon visibility
+  showEditButton?: boolean; // Control edit icon visibility
+  showActions?: boolean; // Control actions visibility
 }
 
 const InventoryTable: React.FC<InventoryTableProps> = ({
@@ -30,9 +33,12 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
   onProductDeleted,
   onProductEdited,
   onProductViewed,
-  showUpdateQuantity = false,
   isAnyQuantityEditing = false,
   onEditingStateChange,
+  showUpdateQuantity = false, // Default to false
+  showDeleteButton = true, // Default to true
+  showEditButton = true, // Default to true
+  showActions = false, // Default to false
 }) => {
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(
     new Set()
@@ -279,20 +285,20 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
               </th>
               <th
                 className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100 min-w-[80px]"
-                onClick={() => onSort("quantity")}
+                onClick={() => onSort("itemQuantity")}
               >
                 <div className="flex items-center justify-between">
                   Qty
-                  {getSortIcon("quantity")}
+                  {getSortIcon("itemQuantity")}
                 </div>
               </th>
               <th
                 className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100 min-w-[80px]"
-                onClick={() => onSort("plu")}
+                onClick={() => onSort("pluUpc")}
               >
                 <div className="flex items-center justify-between">
                   PLU
-                  {getSortIcon("plu")}
+                  {getSortIcon("pluUpc")}
                 </div>
               </th>
               <th
@@ -309,11 +315,11 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
               </th>
               <th
                 className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100 min-w-[80px]"
-                onClick={() => onSort("price")}
+                onClick={() => onSort("singleItemSellingPrice")}
               >
                 <div className="flex items-center justify-between">
                   Price
-                  {getSortIcon("price")}
+                  {getSortIcon("singleItemSellingPrice")}
                 </div>
               </th>
 
@@ -339,12 +345,12 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
               </th>
               <th
                 className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 cursor-pointer hover:bg-gray-100 min-w-[90px]"
-                onClick={() => onSort("itemsPerUnit")}
+                onClick={() => onSort("minimumSellingQuantity")}
               >
                 <div className="flex items-center justify-between">
-                  <span className="hidden sm:inline">Items/Unit</span>
+                  <span className="hidden sm:inline">Items/Pack</span>
                   <span className="sm:hidden">Items</span>
-                  {getSortIcon("itemsPerUnit")}
+                  {getSortIcon("minimumSellingQuantity")}
                 </div>
               </th>
               <th className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300 min-w-[80px]">
@@ -475,7 +481,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                   title="Cancel editing"
                                 >
                                   <svg
-                                    className="w-3 h-3"
+                                    className="w-5 h-5"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -500,7 +506,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                 >
                                   {updatingQuantity.has(productKey) ? (
                                     <div className="flex items-center gap-1">
-                                      <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                                       <span>{product.quantity}</span>
                                     </div>
                                   ) : (
@@ -605,9 +611,9 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         {!hasVariantsToShow &&
-                          (typeof product.itemsPerUnit === "number"
-                            ? product.itemsPerUnit
-                            : String(product.itemsPerUnit || "1"))}
+                          (typeof product.minimumSellingQuantity === "number"
+                            ? product.minimumSellingQuantity
+                            : String(product.minimumSellingQuantity || "1"))}
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <div className="flex items-center gap-2">
@@ -767,7 +773,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                     title="Cancel editing"
                                   >
                                     <svg
-                                      className="w-3 h-3"
+                                      className="w-5 h-5"
                                       fill="none"
                                       stroke="currentColor"
                                       viewBox="0 0 24 24"
@@ -819,7 +825,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                         disabled={isAnyQuantityEditing}
                                       >
                                         <svg
-                                          className="w-3 h-3"
+                                          className="w-5 h-5"
                                           fill="none"
                                           stroke="currentColor"
                                           viewBox="0 0 24 24"
@@ -893,9 +899,10 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                           </td>
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                             <span>
-                              {typeof product.itemsPerUnit === "number"
-                                ? product.itemsPerUnit
-                                : String(product.itemsPerUnit || "1")}
+                              {typeof product.minimumSellingQuantity ===
+                              "number"
+                                ? product.minimumSellingQuantity
+                                : String(product.minimumSellingQuantity || "1")}
                             </span>
                           </td>
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
