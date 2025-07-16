@@ -62,6 +62,17 @@ interface InvoiceData {
     sku?: string;
     packType?: "BOX" | "ITEM";
     selectedProduct?: any;
+    packs?: Array<{
+      id: string;
+      productId: string;
+      minimumSellingQuantity: number;
+      totalPacksQuantity: number;
+      orderedPacksPrice: number;
+      discountAmount: number;
+      percentDiscount: number;
+      createdAt: string;
+      updatedAt: string;
+    }>;
   }>;
   subtotal: number;
   discount: number;
@@ -408,6 +419,14 @@ const CreateInvoice: React.FC = () => {
                 Quantity
               </th>
               <th className="text-left py-3 px-4 font-medium text-gray-700">
+                Unit Type
+              </th>
+              {hasPackProducts && (
+                <th className="text-left py-3 px-4 font-medium text-gray-700">
+                  Box Size
+                </th>
+              )}
+              <th className="text-left py-3 px-4 font-medium text-gray-700">
                 Unit Price
               </th>
               <th className="text-left py-3 px-4 font-medium text-gray-700">
@@ -416,10 +435,43 @@ const CreateInvoice: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {invoiceData.products.map((product) => (
+            {invoiceData.products.map((product, idx: number) => (
               <tr key={product.id} className="border-b border-gray-100">
-                <td className="py-3 px-4">{product.name}</td>
-                <td className="py-3 px-4">{product.quantity}</td>
+                <td className="py-3 px-4">
+                  <div>
+                    <div className="font-medium">{product.name}</div>
+                    {product.pluUpc && (
+                      <div className="text-sm text-gray-500">
+                        PLU/UPC: {product.pluUpc}
+                      </div>
+                    )}
+                    {product.sku && (
+                      <div className="text-sm text-gray-500">
+                        SKU: {product.sku}
+                      </div>
+                    )}
+                  </div>
+                </td>
+                <td className="py-3 px-4">
+                  <div>
+                    <div>{product.quantity}</div>
+                    <div className="text-xs text-gray-500">
+                      {product.packType === "BOX" ? "Box(es)" : "Item(s)"}
+                    </div>
+                  </div>
+                </td>
+                <td className="py-3 px-4">
+                  {product.packType === "BOX" ? "Box" : "Item"}
+                </td>
+                {hasPackProducts && (
+                  <td className="py-3 px-4">
+                    {product.packType === "BOX"
+                      ? product.selectedProduct?.packs?.[0]?.minimumSellingQuantity ||
+                        product.selectedProduct?.packs?.[0]?.totalPacksQuantity ||
+                        "12"
+                      : "1"}
+                  </td>
+                )}
                 <td className="py-3 px-4">${product.price.toFixed(2)}</td>
                 <td className="py-3 px-4">${product.total.toFixed(2)}</td>
               </tr>
@@ -871,18 +923,6 @@ const CreateInvoice: React.FC = () => {
     </div>
   );
 
-  const hasPackProducts = invoiceData.products.some(
-    (product) => product.packType === "BOX"
-  );
-
-  console.log("🔍 Debug Pack Products:", {
-    products: invoiceData.products.map((p) => ({
-      name: p.name,
-      packType: p.packType,
-    })),
-    hasPackProducts,
-  });
-
   // Group products by name and packType
   const groupedProducts = invoiceData.products.reduce(
     (acc, product) => {
@@ -904,6 +944,18 @@ const CreateInvoice: React.FC = () => {
   );
 
   const consolidatedProducts = Object.values(groupedProducts);
+
+  const hasPackProducts = invoiceData.products.some(
+    (product) => product.packType === "BOX"
+  );
+
+  console.log("🔍 Debug Pack Products:", {
+    products: invoiceData.products.map((p) => ({
+      name: p.name,
+      packType: p.packType,
+    })),
+    hasPackProducts,
+  });
 
   const renderInvoicePreview = () => (
     <div className=" p-6">
@@ -1118,7 +1170,7 @@ const CreateInvoice: React.FC = () => {
           <div className="w-1/2">Item Details</div>
           <div className="w-1/6 text-center">Qty</div>
           <div className="w-1/6 text-center">Unit</div>
-          {hasPackProducts && <div className="w-1/6 text-center">Box Size</div>}
+          <div className="w-1/6 text-center">Box Size</div>
           <div className="w-1/6 text-center">Unit Price</div>
           <div className="w-1/6 text-right">Extended Price</div>
         </div>
@@ -1135,15 +1187,15 @@ const CreateInvoice: React.FC = () => {
             <div className="w-1/6 text-center">
               {item.packType === "BOX" ? "Box" : "Item"}
             </div>
-            {hasPackProducts && (
-              <div className="w-1/6 text-center">
-                {item.packType === "BOX"
-                  ? item.selectedProduct?.packs?.[0]?.minimumSellingQuantity ||
-                    item.selectedProduct?.packs?.[0]?.totalPacksQuantity ||
-                    "-"
-                  : "--"}
-              </div>
-            )}
+            <div className="w-1/6 text-center">
+              {item.packType === "BOX" ? (
+                item.packs && item.packs.length > 0 
+                  ? item.packs[0].minimumSellingQuantity 
+                  : item.selectedProduct?.packs?.[0]?.minimumSellingQuantity || "12"
+              ) : (
+                "1"
+              )}
+            </div>
             <div className="w-1/6 text-center">
               $ {(item.sellingPrice || item.price)?.toFixed(2)}
             </div>
@@ -1317,9 +1369,7 @@ const CreateInvoice: React.FC = () => {
           <div className="w-1/2">Item Details</div>
           <div className="w-1/6 text-center">Qty</div>
           <div className="w-1/6 text-center">Unit</div>
-          {hasPackProducts && (
-            <div className="w-1/6 text-center">Pack Size</div>
-          )}
+          <div className="w-1/6 text-center">Box Size</div>
           <div className="w-1/6 text-center">Unit Price</div>
           <div className="w-1/6 text-right">Extended Price</div>
         </div>
@@ -1336,15 +1386,15 @@ const CreateInvoice: React.FC = () => {
             <div className="w-1/6 text-center">
               {item.packType === "BOX" ? "Box" : "Item"}
             </div>
-            {hasPackProducts && (
-              <div className="w-1/6 text-center">
-                {item.packType === "BOX"
-                  ? item.selectedProduct?.packs?.[0]?.minimumSellingQuantity ||
-                    item.selectedProduct?.packs?.[0]?.totalPacksQuantity ||
-                    "-"
-                  : "--"}
-              </div>
-            )}
+            <div className="w-1/6 text-center">
+              {item.packType === "BOX" ? (
+                item.packs && item.packs.length > 0 
+                  ? item.packs[0].minimumSellingQuantity 
+                  : item.selectedProduct?.packs?.[0]?.minimumSellingQuantity || "12"
+              ) : (
+                "1"
+              )}
+            </div>
             <div className="w-1/6 text-center">
               $ {(item.sellingPrice || item.price)?.toFixed(2)}
             </div>
