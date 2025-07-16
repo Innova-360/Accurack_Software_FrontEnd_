@@ -441,7 +441,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                   title="Save quantity"
                                 >
                                   <svg
-                                    className="w-3 h-3"
+                                    className="w-5 h-5"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -460,7 +460,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                   title="Cancel editing"
                                 >
                                   <svg
-                                    className="w-3 h-3"
+                                    className="w-5 h-5"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -485,7 +485,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                 >
                                   {updatingQuantity.has(productKey) ? (
                                     <div className="flex items-center gap-1">
-                                      <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                                       <span>{product.quantity}</span>
                                     </div>
                                   ) : (
@@ -505,7 +505,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                       title="Edit quantity"
                                     >
                                       <svg
-                                        className="w-3 h-3"
+                                        className="w-5 h-5"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -730,7 +730,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                     title="Save quantity"
                                   >
                                     <svg
-                                      className="w-3 h-3"
+                                      className="w-5 h-5"
                                       fill="none"
                                       stroke="currentColor"
                                       viewBox="0 0 24 24"
@@ -749,7 +749,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                     title="Cancel editing"
                                   >
                                     <svg
-                                      className="w-3 h-3"
+                                      className="w-5 h-5"
                                       fill="none"
                                       stroke="currentColor"
                                       viewBox="0 0 24 24"
@@ -799,7 +799,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                         title="Edit quantity"
                                       >
                                         <svg
-                                          className="w-3 h-3"
+                                          className="w-5 h-5"
                                           fill="none"
                                           stroke="currentColor"
                                           viewBox="0 0 24 24"
@@ -873,7 +873,8 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                           </td>
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                             <span>
-                              {typeof product.minimumSellingQuantity === "number"
+                              {typeof product.minimumSellingQuantity ===
+                              "number"
                                 ? product.minimumSellingQuantity
                                 : String(product.minimumSellingQuantity || "1")}
                             </span>
