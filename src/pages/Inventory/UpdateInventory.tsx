@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import type { ProductFormData } from "../../components/InventoryComponents/UpdateInventory/types";
+import type { Product } from "../../data/inventoryData";
 import {
   needsVariations,
   shouldHideFields,
@@ -9,8 +11,8 @@ import ProductBasicInfo from "../../components/InventoryComponents/UpdateInvento
 import PackConfiguration from "../../components/InventoryComponents/UpdateInventory/PackConfiguration";
 import AttributesConfiguration from "../../components/InventoryComponents/UpdateInventory/AttributesConfiguration";
 import VariationsConfiguration from "../../components/InventoryComponents/UpdateInventory/VariationsConfiguration";
-import { useLocation } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { productAPI } from "../../services/productAPI";
+import { extractErrorMessage } from "../../utils/lastUpdatedUtils";
 
 import {
   updateProduct,
@@ -29,17 +31,22 @@ const UpdateInventory: React.FC = () => {
   const location = useLocation();
   const { productId } = useParams<{ productId: string }>();
 
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const handleRetry = () => {
-    setRetryCount(prev => prev + 1);
+    setRetryCount((prev) => prev + 1);
     setError(null);
     loadProductData();
   };
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<Product[] | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const getStoreIdFromUrl = () => {
     const match = location.pathname.match(/store\/([a-f0-9-]+)\//i);
@@ -48,6 +55,34 @@ const UpdateInventory: React.FC = () => {
 
   const currentStore = useAppSelector(selectCurrentStore);
   const storeId = currentStore?.id || getStoreIdFromUrl();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (!debouncedSearchTerm) {
+      setSearchResults(null);
+      setSearchLoading(false);
+      setSearchError(null);
+      return;
+    }
+    setSearchLoading(true);
+    setSearchError(null);
+    productAPI
+      .searchProducts(debouncedSearchTerm, storeId)
+      .then((results: any) => {
+        setSearchResults(results);
+        setSearchLoading(false);
+      })
+      .catch((err: any) => {
+        setSearchError(extractErrorMessage(err));
+        setSearchLoading(false);
+      });
+  }, [debouncedSearchTerm, storeId]);
   const {
     suppliers,
     loading: suppliersLoading,
@@ -108,7 +143,7 @@ const UpdateInventory: React.FC = () => {
       packs: hasVariants
         ? []
         : (formData.packDiscounts || []).map((pack: any) => {
-            const { discountAmount, percentAmount } = calculateDiscounts(
+            const { discountAmount } = calculateDiscounts(
               pack.discountType,
               pack.discountValue,
               formData.itemSellingCost
@@ -234,12 +269,13 @@ const UpdateInventory: React.FC = () => {
   // Load existing product data
   const loadProductData = useCallback(async () => {
     if (!productId) {
-      setError("Product ID is required");
+      // If no productId, just set loading to false and show search
       setLoading(false);
       return;
     }
     // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(productId)) {
       setError("Invalid product ID format");
       setLoading(false);
@@ -351,24 +387,24 @@ const UpdateInventory: React.FC = () => {
     e.preventDefault();
 
     if (!productId) {
-      setError("Product ID is required");
+      setError("Please search and select a product to update");
       return;
     }
 
     setIsSubmitting(true);
     const payload = buildApiPayload();
 
-    dispatch(updateProduct({ productId, productData: payload }) as any).then(
-      (result: any) => {
+    dispatch(updateProduct({ productId, productData: payload }) as any)
+      .then((result: any) => {
         if (!result.error) {
           navigate(`/store/${storeId}/inventory`);
         } else {
           setIsSubmitting(false);
         }
-      }
-    ).catch(() => {
-      setIsSubmitting(false);
-    });
+      })
+      .catch(() => {
+        setIsSubmitting(false);
+      });
   };
 
   const handleNext = () => {
@@ -678,8 +714,163 @@ const UpdateInventory: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} className="max-w-6xl mx-auto p-4 sm:p-6">
+          {/* Search Products Section */}
+          {!productId && (
+            <div className="mb-6 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200/50">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Search Products to Update
+              </h3>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search products by name, SKU, PLU, or EAN..."
+                  className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+                />
+                <svg
+                  className="absolute left-3 top-3.5 h-4 w-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+
+              {searchLoading && (
+                <div className="mt-4 text-center text-gray-500">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#0f4d57] mx-auto"></div>
+                  <p className="mt-2">Searching products...</p>
+                </div>
+              )}
+
+              {searchError && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 text-sm">{searchError}</p>
+                </div>
+              )}
+
+              {searchResults && searchResults.length > 0 && (
+                <div className="mt-4 bg-white rounded-lg border border-gray-200 shadow-sm max-h-96 overflow-y-auto">
+                  <div className="p-3 border-b border-gray-200 bg-gray-50">
+                    <p className="text-sm font-medium text-gray-700">
+                      Found {searchResults.length} product(s)
+                    </p>
+                  </div>
+                  <div className="divide-y divide-gray-200">
+                    {searchResults.map((product) => (
+                      <div
+                        key={product.id}
+                        onClick={() =>
+                          navigate(
+                            `/store/${storeId}/inventory/update/${product.id}`
+                          )
+                        }
+                        className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900">
+                              {product.name}
+                            </h4>
+                            <div className="mt-1 text-sm text-gray-500 space-x-4">
+                              <span>SKU: {product.sku || "N/A"}</span>
+                              <span>PLU: {product.plu || "N/A"}</span>
+                              {product.ean && <span>EAN: {product.ean}</span>}
+                            </div>
+                            <div className="mt-1 text-sm text-gray-500">
+                              <span>
+                                Category:{" "}
+                                {typeof product.category === "string"
+                                  ? product.category
+                                  : product.category?.name || "N/A"}
+                              </span>
+                              <span className="ml-4">
+                                Price: {product.price}
+                              </span>
+                              <span className="ml-4">
+                                Stock: {product.quantity}
+                              </span>
+                            </div>
+                          </div>
+                          <svg
+                            className="h-5 w-5 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {searchResults &&
+                searchResults.length === 0 &&
+                searchTerm &&
+                !searchLoading && (
+                  <div className="mt-4 p-4 text-center text-gray-500">
+                    <svg
+                      className="mx-auto h-12 w-12 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.329.994-5.709 2.293l-.017.017c-.79-.942.5-1.957.5-1.957a6 6 0 017.45-2.347 6 6 0 013.597 1.993c.83.83.83 2.17 0 3s-2.17.83-3 0a1.98 1.98 0 00-1.371-.586 1.98 1.98 0 00-1.336.53 1.98 1.98 0 00-.586 1.371c0 .517.21.986.547 1.333.348.359.82.581 1.336.586.516-.005.983-.227 1.37-.586l.01-.01A1.99 1.99 0 0013 19.02V19a2 2 0 11.02.02z"
+                      />
+                    </svg>
+                    <p className="mt-2">
+                      No products found matching "{searchTerm}"
+                    </p>
+                    <p className="text-sm">Try adjusting your search terms</p>
+                  </div>
+                )}
+            </div>
+          )}
+
           <div>
-            {!showVariations ? (
+            {!productId ? (
+              <div className="text-center py-12">
+                <svg
+                  className="mx-auto h-16 w-16 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <h3 className="mt-4 text-lg font-medium text-gray-900">
+                  Search for a Product
+                </h3>
+                <p className="mt-2 text-gray-500">
+                  Use the search box above to find the product you want to
+                  update.
+                </p>
+              </div>
+            ) : !showVariations ? (
               <div className="space-y-6 sm:space-y-8">
                 {/* Product Basic Information */}
                 <div className="">
