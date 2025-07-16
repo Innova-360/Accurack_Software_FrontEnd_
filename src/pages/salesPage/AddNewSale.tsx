@@ -877,7 +877,7 @@ const AddNewSale: React.FC = () => {
                           <div
                             key={product.id}
                             className="px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
-                            onClick={() => handleProductSelect(product)}
+                            onMouseDown={() => handleProductSelect(product)}
                           >
                             <div className="flex justify-between items-center">
                               <div>

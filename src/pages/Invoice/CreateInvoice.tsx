@@ -295,7 +295,7 @@ const CreateInvoice: React.FC = () => {
   };
 
   const handleBackToSales = () => {
-    navigate("/sales");
+    navigate(`/store/${currentStore?.id}/sales`);
   };
 
   if (!invoiceData) {
@@ -610,7 +610,7 @@ const CreateInvoice: React.FC = () => {
         <div className="flex justify-between mt-6">
           <SpecialButton
             variant="secondary"
-            onClick={() => navigate("/sales/add-new-sale")}
+            onClick={() => navigate(`/store/${currentStore?.id}/sales`)}
             className="px-6 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50"
           >
             Back to Sales
