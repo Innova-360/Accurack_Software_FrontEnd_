@@ -92,9 +92,7 @@ const AppRoutes = () => {
         </PublicOnlyRoute>
       } />
       <Route path="/reset-password" element={
-        <PublicOnlyRoute>
           <ResetPassword />
-        </PublicOnlyRoute>
       } />
       <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
       <Route path="/term" element={<Terms />} />
