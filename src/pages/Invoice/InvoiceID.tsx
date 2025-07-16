@@ -141,6 +141,10 @@ const InvoiceId: React.FC = () => {
 
   const invoice = selectedInvoice;
 
+  // Check if any sale item has BOX pack type to show pack size column
+  const hasPackProducts =
+    invoice.sale?.saleItems?.some((item) => item.packType === "BOX") || false;
+
   return (
     <div className="min-h-screen bg-gray-50 print:bg-white">
       <div className="print:hidden">
@@ -418,6 +422,14 @@ const InvoiceId: React.FC = () => {
                       <th className="text-center py-3 px-4 font-medium text-gray-700">
                         Quantity
                       </th>
+                      <th className="text-center py-3 px-4 font-medium text-gray-700">
+                        Unit
+                      </th>
+                      {hasPackProducts && (
+                        <th className="text-center py-3 px-4 font-medium text-gray-700">
+                          Pack Size
+                        </th>
+                      )}
                       <th className="text-right py-3 px-4 font-medium text-gray-700">
                         Unit Price
                       </th>
@@ -466,6 +478,30 @@ const InvoiceId: React.FC = () => {
                             {item.quantity}
                           </span>
                         </td>
+                        <td className="py-3 px-4 text-center">
+                          <span
+                            className={`px-2 py-1 rounded text-sm ${
+                              item.packType === "BOX"
+                                ? "bg-purple-100 text-purple-800"
+                                : "bg-blue-100 text-blue-800"
+                            }`}
+                          >
+                            {item.packType === "BOX" ? "Box" : "Item"}
+                          </span>
+                        </td>
+                        {hasPackProducts && (
+                          <td className="py-3 px-4 text-center">
+                            {item.packType === "BOX" ? (
+                              <span className="text-sm text-gray-600">
+                                {item.product?.packIds?.length
+                                  ? `${item.product.packIds.length} items/box`
+                                  : "Box"}
+                              </span>
+                            ) : (
+                              <span className="text-sm text-gray-400">-</span>
+                            )}
+                          </td>
+                        )}
                         <td className="py-3 px-4 text-right">
                           {formatCurrency(item.sellingPrice)}
                         </td>

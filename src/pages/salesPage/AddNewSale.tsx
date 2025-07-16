@@ -24,6 +24,8 @@ interface ProductItem {
   productId?: string; // Add this to reference the actual product
   variantId?: string; // Add this to reference the variant if it's a variant
   selectedProduct?: unknown | null; // Store the full product/variant details
+  saleType?: 'single' | 'pack'; // Track whether selling as single item or pack
+  selectedPackId?: string; // Track which pack is selected
 }
 
 const AddNewSale: React.FC = () => {
@@ -312,6 +314,9 @@ const AddNewSale: React.FC = () => {
           selectedProduct: originalProduct,
           // Auto-fill price from selected product/variant
           price: selectedFlatProduct.price,
+          // Default to single item sale
+          saleType: 'single',
+          selectedPackId: undefined,
         };
         // Recalculate total
         updatedProducts[index].total =
@@ -323,6 +328,27 @@ const AddNewSale: React.FC = () => {
           selectedProduct: null,
         };
       }
+    } else if (field === "saleType") {
+      // Handle sale type change
+      updatedProducts[index] = {
+        ...updatedProducts[index],
+        saleType: value as 'single' | 'pack',
+      };
+      
+      // Update price based on sale type
+      if (value === 'pack' && updatedProducts[index].selectedProduct?.packs?.[0]) {
+        const pack = updatedProducts[index].selectedProduct.packs[0];
+        updatedProducts[index].price = pack.orderedPacksPrice;
+        updatedProducts[index].selectedPackId = pack.id;
+      } else {
+        // Reset to single item price
+        updatedProducts[index].price = updatedProducts[index].selectedProduct?.singleItemSellingPrice || 0;
+        updatedProducts[index].selectedPackId = undefined;
+      }
+      
+      // Recalculate total
+      updatedProducts[index].total =
+        updatedProducts[index].quantity * updatedProducts[index].price;
     } else {
       // Type-safe assignment based on field type
       if (field === "quantity" || field === "price" || field === "total") {
@@ -456,6 +482,7 @@ const AddNewSale: React.FC = () => {
           sellingPrice: product.price,
           totalPrice: product.total,
           pluUpc: pluUpc,
+          packType: product.saleType === 'pack' ? 'BOX' : 'ITEM',
         };
       });
 
@@ -586,6 +613,7 @@ const AddNewSale: React.FC = () => {
             pluUpc,
             plu: product.selectedProduct?.plu || "",
             sku: product.selectedProduct?.sku || "",
+            packType: product.saleType === 'pack' ? 'BOX' : 'ITEM',
           };
         }),
       subtotal,
@@ -849,7 +877,7 @@ const AddNewSale: React.FC = () => {
                           <div
                             key={product.id}
                             className="px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
-                            onClick={() => handleProductSelect(product)}
+                            onMouseDown={() => handleProductSelect(product)}
                           >
                             <div className="flex justify-between items-center">
                               <div>
@@ -1004,6 +1032,7 @@ const AddNewSale: React.FC = () => {
                               {product.selectedProduct.sku || "N/A"}
                             </div>
                           </div>
+                          
                         </div>
 
                         {/* Additional product information row */}
@@ -1040,10 +1069,12 @@ const AddNewSale: React.FC = () => {
                           </div>
                           <div>
                             <span className="font-medium text-gray-600">
-                              Items per Unit:
+                              Product Type:
                             </span>
                             <div className="text-gray-900">
-                              {product.selectedProduct.itemsPerUnit || 1}
+                              {product.selectedProduct.packs && product.selectedProduct.packs.length > 0 
+                                ? `Pack (${product.selectedProduct.packs[0].minimumSellingQuantity} items)` 
+                                : "Single Item"}
                             </div>
                           </div>
                           <div>
@@ -1055,6 +1086,84 @@ const AddNewSale: React.FC = () => {
                             </div>
                           </div>
                         </div>
+
+                        {/* Sale Type Selection */}
+                        {product.selectedProduct.packs && product.selectedProduct.packs.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-blue-200">
+                            <h5 className="text-sm font-semibold text-blue-900 mb-3">
+                              Sale Type Selection
+                            </h5>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                              <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
+                                <input
+                                  type="radio"
+                                  name={`saleType-${index}`}
+                                  value="single"
+                                  checked={product.saleType === 'single' || !product.saleType}
+                                  onChange={() => handleProductChange(index, 'saleType', 'single')}
+                                  className="mr-3 text-blue-600"
+                                />
+                                <div>
+                                  <div className="font-medium text-gray-900">Single Item</div>
+                                  <div className="text-sm text-gray-600">Sell individual items</div>
+                                </div>
+                              </label>
+                              <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
+                                <input
+                                  type="radio"
+                                  name={`saleType-${index}`}
+                                  value="pack"
+                                  checked={product.saleType === 'pack'}
+                                  onChange={() => handleProductChange(index, 'saleType', 'pack')}
+                                  className="mr-3 text-blue-600"
+                                />
+                                <div>
+                                  <div className="font-medium text-gray-900">Pack Sale</div>
+                                  <div className="text-sm text-gray-600">Sell as complete pack</div>
+                                </div>
+                              </label>
+                            </div>
+                            
+                            {/* Pack Details - Show when pack is selected */}
+                            {product.saleType === 'pack' && (
+                              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                                <h6 className="text-sm font-semibold text-green-900 mb-2">
+                                  Pack Details
+                                </h6>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                                  <div>
+                                    <span className="font-medium text-gray-600">Pack Size:</span>
+                                    <div className="text-gray-900 font-medium">
+                                      {product.selectedProduct.packs[0].minimumSellingQuantity} items
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-gray-600">Available Packs:</span>
+                                    <div className="text-gray-900 font-medium">
+                                      {product.selectedProduct.packs[0].totalPacksQuantity}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-gray-600">Pack Price:</span>
+                                    <div className="text-gray-900 font-medium">
+                                      ${product.selectedProduct.packs[0].orderedPacksPrice}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-gray-600">Pack Discount:</span>
+                                    <div className="text-gray-900 font-medium">
+                                      {product.selectedProduct.packs[0].percentDiscount > 0 
+                                        ? `${product.selectedProduct.packs[0].percentDiscount}%` 
+                                        : product.selectedProduct.packs[0].discountAmount > 0 
+                                          ? `$${product.selectedProduct.packs[0].discountAmount}` 
+                                          : "No discount"}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
 
                         {product.variantId && (
                           <div className="mt-3 pt-2 border-t border-blue-200">

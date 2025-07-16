@@ -55,6 +55,8 @@ interface InvoiceData {
     pluUpc?: string;
     plu?: string;
     sku?: string;
+    packType?: "BOX" | "ITEM";
+    selectedProduct?: any;
   }>;
   subtotal: number;
   discount: number;
@@ -79,7 +81,7 @@ const CreateInvoice: React.FC = () => {
 
   const invoiceData = location.state?.invoiceData as InvoiceData;
 
-  const [currentStep, setCurrentStep] = useState(1); // Start at Product Details
+  const [currentStep, setCurrentStep] = useState(1);
   const [isCreatingSale, setIsCreatingSale] = useState(false);
   const [invoiceResponse, setInvoiceResponse] = useState(null);
   const [showBusinessForm, setShowBusinessForm] = useState(false);
@@ -94,7 +96,6 @@ const CreateInvoice: React.FC = () => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-  // Invoice specific fields
   const [invoiceFields, setInvoiceFields] = useState({
     customerid: invoiceResponse?.customerId,
     invoiceNo: invoiceNumber,
@@ -112,7 +113,6 @@ const CreateInvoice: React.FC = () => {
       taxId: "",
     });
 
-  // Enhanced customer details state
   const [customerDetails, setCustomerDetails] = useState({
     name: invoiceData?.customerDetails?.name || "",
     phone: invoiceData?.customerDetails?.phone || "",
@@ -125,7 +125,6 @@ const CreateInvoice: React.FC = () => {
   });
 
   const handleBusinessDetailsSubmit = () => {
-    // Validate business details
     if (
       !businessDetails.companyName.trim() ||
       !businessDetails.companyAddress.trim() ||
@@ -135,8 +134,6 @@ const CreateInvoice: React.FC = () => {
       alert("Please fill in all required business details");
       return;
     }
-
-    // Save business details to localStorage for future use
     localStorage.setItem("businessDetails", JSON.stringify(businessDetails));
     setCurrentStep(2);
   };
@@ -146,7 +143,6 @@ const CreateInvoice: React.FC = () => {
   };
 
   const handleCustomerDetailsNext = async () => {
-    // Validate customer details
     if (!customerDetails.name.trim() || !customerDetails.phone.trim()) {
       toast.error("Customer name and phone are required");
       return;
@@ -163,7 +159,6 @@ const CreateInvoice: React.FC = () => {
   const checkBusinessDetails = async () => {
     try {
       setCheckingBusinessDetails(true);
-      // const response = await dispatch(fetchBusinessDetails()).unwrap();
       const businessResponse = await apiClient.get(
         "/invoice/get-business/details"
       );
@@ -207,12 +202,8 @@ const CreateInvoice: React.FC = () => {
       await apiClient.post("/invoice/set-business/details", businessFormData);
       toast.success("Business details saved successfully!");
       setShowBusinessForm(false);
-      // Now proceed with invoice creation
-
-      // Show invoice preview first without generating
       setCurrentStep(3);
     } catch (error) {
-      // Error is handled by the slice
       toast.error("Failed to save business details");
     }
   };
@@ -222,10 +213,9 @@ const CreateInvoice: React.FC = () => {
       toast.error("Store or user information is missing");
       return;
     }
-    if (isCreatingSale) return; // Prevent double call
+    if (isCreatingSale) return;
     setIsCreatingSale(true);
     try {
-      // Prepare sale items from invoice data
       const saleItems: SaleItem[] = invoiceData.products.map((product) => ({
         productId: product.productId,
         productName: product.name,
@@ -233,9 +223,9 @@ const CreateInvoice: React.FC = () => {
         sellingPrice: product.price,
         totalPrice: product.total,
         pluUpc: product.pluUpc || product.plu || product.sku || "",
+        packType: product.packType || "ITEM",
       }));
 
-      // Prepare sale data - ONLY sale-related fields
       const saleData: SaleRequestData = {
         customerPhone: customerDetails.phone.trim(),
         customerData: {
@@ -270,7 +260,6 @@ const CreateInvoice: React.FC = () => {
 
       const saleResponse = await dispatch(createSale(saleData)).unwrap();
 
-      // Extract sale ID from response structure
       const saleId =
         saleResponse?.sale?.id ||
         saleResponse?.data?.sale?.id ||
@@ -280,7 +269,6 @@ const CreateInvoice: React.FC = () => {
         throw new Error("Sale ID not found in response");
       }
 
-      // Generate invoice with sale ID
       const invoicePayload = {
         saleId: String(saleId),
         customFields: customFields
@@ -291,7 +279,6 @@ const CreateInvoice: React.FC = () => {
           })),
       };
 
-      // Call invoice generation API
       const response = await apiClient.post("/invoice", invoicePayload);
 
       setInvoiceResponse(response.data);
@@ -307,171 +294,8 @@ const CreateInvoice: React.FC = () => {
     }
   };
 
-  //     toast.error('Invoice content not found');
-
-  //   }
-
-  //     toast.error('Unable to open print window');
-
-  //   }
-
-  //   printWindow.document.write(`
-  //   <!DOCTYPE html>
-  //   <html>
-  //     <head>
-  //       <title>Invoice</title>
-  //       <style>
-  //         * {
-  //           margin: 0;
-  //           padding: 0;
-  //           box-sizing: border-box;
-  //           -webkit-print-color-adjust: exact !important;
-  //           color-adjust: exact !important;
-  //         }
-  //         body {
-  //           font-family: 'Courier New', Courier, monospace !important;
-  //           background: #fff !important;
-  //           color: #111827;
-  //           margin: 0;
-  //           padding: 0;
-  //           font-size: 13px;
-  //           line-height: 1.5;
-  //         }
-  //         .invoice-logo {
-  //           height: 80px !important;
-  //           width: auto !important;
-  //           margin-top: 20px !important;
-  //           margin-bottom: 20px !important;
-  //           object-fit: contain !important;
-  //           display: block !important;
-  //           max-width: 100% !important;
-  //         }
-  //         .invoice-print {
-  //           background: #fff !important;
-  //           max-width: 900px;
-  //           margin: 0 auto;
-  //           padding: 24px;
-  //           box-shadow: none;
-  //           border-radius: 0;
-  //         }
-
-  //         /* Layout */
-  //         .flex { display: flex; }
-  //         .justify-between { justify-content: space-between; }
-  //         .justify-end { justify-content: flex-end; }
-  //         .text-right { text-align: right; }
-  //         .text-center { text-align: center; }
-  //         .text-left { text-align: left; }
-
-  //         /* Colors and Borders */
-  //         .border-t-4 { border-top: 4px solid #03414C !important; }
-  //         .border-t-2 { border-top: 2px solid #03414C !important; }
-  //         .border-b-2 { border-bottom: 2px solid #03414C !important; }
-  //         .border-black { border-color: #03414C !important; }
-  //         .border-gray-200 { border-color: #e5e7eb !important; }
-  //         .border-gray-300 { border-color: #d1d5db !important; }
-  //         .border-b { border-bottom: 1px solid #d1d5db !important; }
-  //         .border-t { border-top: 1px solid #d1d5db !important; }
-  //         .bg-white { background: #fff !important; }
-  //         .text-gray-600 { color: #4b5563 !important; }
-  //         .text-gray-900 { color: #111827 !important; }
-  //         .text-blue-800 { color: #03414C !important; }
-
-  //         /* Typography */
-  //         .text-2xl { font-size: 24px !important; }
-  //         .text-lg { font-size: 18px !important; }
-  //         .text-sm { font-size: 14px !important; }
-  //         .font-medium { font-weight: 500 !important; }
-  //         .font-semibold { font-weight: 600 !important; }
-  //         .font-bold { font-weight: 700 !important; }
-
-  //         /* Spacing */
-  //         .my-6 { margin-top: 24px !important; margin-bottom: 24px !important; }
-  //         .mb-6 { margin-bottom: 24px !important; }
-  //         .mb-8 { margin-bottom: 32px !important; }
-  //         .mb-3 { margin-bottom: 12px !important; }
-  //         .mt-6 { margin-top: 24px !important; }
-  //         .pt-2\.5 { padding-top: 10px !important; }
-  //         .pt-2 { padding-top: 8px !important; }
-  //         .pb-4 { padding-bottom: 16px !important; }
-  //         .px-6 { padding-left: 24px !important; padding-right: 24px !important; }
-  //         .py-7 { padding-top: 28px !important; padding-bottom: 28px !important; }
-  //         .py-2 { padding-top: 8px !important; padding-bottom: 8px !important; }
-  //         .py-4 { padding-top: 16px !important; padding-bottom: 16px !important; }
-  //         .p-4 { padding: 16px !important; }
-
-  //         /* Width */
-  //         .w-1\/2 { width: 50% !important; }
-  //         .w-1\/6 { width: 16.666667% !important; }
-  //         .w-64 { width: 256px !important; }
-
-  //         /* Space between */
-  //         .space-y-1 > * + * { margin-top: 4px !important; }
-  //         .space-y-2 > * + * { margin-top: 8px !important; }
-
-  //         /* Shadow */
-  //         .shadow-lg { box-shadow: none !important; }
-
-  //         /* Print specific */
-  //         .print\:hidden { display: none !important; }
-  //         .bg-green-50 { background: #fff !important; }
-  //         .border-green-200 { border-color: #d1d5db !important; }
-  //         .rounded-lg { border-radius: 0 !important; }
-
-  //         /* Fix for escaped classes */
-  //         .pt-2\\.5 { padding-top: 10px !important; }
-  //         .w-1\\/2 { width: 50% !important; }
-  //         .w-1\\/6 { width: 16.666667% !important; }
-
-  //         @page {
-  //           margin: 0.5in;
-  //           size: A4;
-  //         }
-
-  //         @media print {
-  //           * {
-  //             -webkit-print-color-adjust: exact !important;
-  //             color-adjust: exact !important;
-  //           }
-  //           body {
-  //             background: #fff !important;
-  //             color: #111827 !important;
-  //             margin: 0;
-  //             padding: 0;
-  //             font-size: 13px;
-  //           }
-  //           .invoice-print {
-  //             box-shadow: none !important;
-  //             border-radius: 0 !important;
-  //             padding: 16px !important;
-  //             margin: 0 !important;
-  //             width: 100% !important;
-  //             max-width: 100% !important;
-  //           }
-  //           .print\:hidden { display: none !important; }
-  //           .shadow-lg { box-shadow: none !important; }
-  //           .bg-white { background: #fff !important; }
-  //           .bg-green-50 { background: #fff !important; }
-  //           .rounded-lg { border-radius: 0 !important; }
-  //         }
-  //       </style>
-  //     </head>
-  //     <body>
-  //       ${invoiceHTML}
-  //     </body>
-  //   </html>
-  // `);
-
-  //   printWindow.document.close();
-  //   printWindow.focus();
-
-  //     printWindow.print();
-  //     printWindow.close();
-  //   }, 250);
-  // };
-
   const handleBackToSales = () => {
-    navigate("/sales");
+    navigate(`/store/${currentStore?.id}/sales`);
   };
 
   if (!invoiceData) {
@@ -619,7 +443,6 @@ const CreateInvoice: React.FC = () => {
   const handleLogoUpload = async (
     e: React.ChangeEvent<HTMLInputElement> | React.MouseEvent
   ) => {
-    // If called from button, trigger file input click
     if (!e || !("target" in e) || e.type === "click") {
       fileInputRef.current?.click();
       return;
@@ -642,7 +465,6 @@ const CreateInvoice: React.FC = () => {
 
   const renderBusinessForm = () => (
     <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      {/* Info Message */}
       <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-start">
           <div className="flex-shrink-0">
@@ -675,7 +497,6 @@ const CreateInvoice: React.FC = () => {
       </h2>
 
       <form onSubmit={handleBusinessFormSubmit} className="space-y-4">
-        {/* Business Name */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Business Name <span className="text-red-500">*</span>
@@ -694,7 +515,6 @@ const CreateInvoice: React.FC = () => {
           />
         </div>
 
-        {/* Contact Number */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Contact Number <span className="text-red-500">*</span>
@@ -713,7 +533,6 @@ const CreateInvoice: React.FC = () => {
           />
         </div>
 
-        {/* Address */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Address <span className="text-red-500">*</span>
@@ -732,7 +551,6 @@ const CreateInvoice: React.FC = () => {
           />
         </div>
 
-        {/* Website */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Website (Optional)
@@ -751,7 +569,6 @@ const CreateInvoice: React.FC = () => {
           />
         </div>
 
-        {/* Logo Upload */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Logo (Optional)
@@ -790,11 +607,10 @@ const CreateInvoice: React.FC = () => {
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex justify-between mt-6">
           <SpecialButton
             variant="secondary"
-            onClick={() => navigate("/sales/add-new-sale")}
+            onClick={() => navigate(`/store/${currentStore?.id}/sales`)}
             className="px-6 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50"
           >
             Back to Sales
@@ -902,27 +718,36 @@ const CreateInvoice: React.FC = () => {
     </div>
   );
 
+  const hasPackProducts = invoiceData.products.some(
+    (product) => product.packType === "BOX"
+  );
+
+  console.log("🔍 Debug Pack Products:", {
+    products: invoiceData.products.map(p => ({ name: p.name, packType: p.packType })),
+    hasPackProducts
+  });
+
+  // Group products by name and packType
+  const groupedProducts = invoiceData.products.reduce((acc, product) => {
+    const key = `${product.name}-${product.packType || 'ITEM'}`;
+    
+    if (acc[key]) {
+      // Product already exists, add quantities and totals
+      acc[key].quantity += product.quantity;
+      acc[key].total += product.total;
+      // Keep the price per unit from the first occurrence
+    } else {
+      // New product group
+      acc[key] = { ...product };
+    }
+    
+    return acc;
+  }, {} as Record<string, any>);
+
+  const consolidatedProducts = Object.values(groupedProducts);
+
   const renderInvoicePreview = () => (
     <div className=" p-6">
-      {/* Preview/Success Message 
-      {!invoiceResponse ? (
-        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 print:hidden">
-          <div className="flex items-center">
-            <div className="text-blue-600 mr-2">👁️</div>
-            <span className="text-blue-800 font-medium">Invoice Preview - Review and generate your invoice</span>
-          </div>
-        </div>
-      ) : (
-        <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 print:hidden">
-          <div className="flex items-center">
-            <FaCheck className="text-green-600 mr-2" />
-            <span className="text-green-800 font-medium">Invoice generated successfully!</span>
-          </div>
-        </div>
-      )}
-        */}
-
-      {/* Action Buttons */}
       <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200 print:hidden">
         <SpecialButton
           variant="secondary"
@@ -951,7 +776,6 @@ const CreateInvoice: React.FC = () => {
         </div>
       </div>
 
-      {/* Custom Fields Input Section */}
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 print:hidden">
         <h3 className="text-lg font-semibold mb-4">Additional Information</h3>
         <div className="space-y-3">
@@ -1084,7 +908,6 @@ const CreateInvoice: React.FC = () => {
               {invoiceResponse?.data?.customerMail || customerDetails.email}
             </p>
           </div>
-          {/* Custom Fields */}
           {customFields.filter((f) => f.name && f.value).length > 0 && (
             <div className="mb-6 w-1/2">
               <div className="space-y-2">
@@ -1107,33 +930,34 @@ const CreateInvoice: React.FC = () => {
           <div className="w-1/2">Item Details</div>
           <div className="w-1/6 text-center">Qty</div>
           <div className="w-1/6 text-center">Unit</div>
-          {invoiceData.products[0].selectedProduct.packs.length > 0 && (
-            <div className="w-1/6 text-center">Pack Size</div>
+          {hasPackProducts && (
+            <div className="w-1/6 text-center">Box Size</div>
           )}
           <div className="w-1/6 text-center">Unit Price</div>
-          {/* <div className="w-1/6">Allowance</div> */}
           <div className="w-1/6 text-right">Extended Price</div>
         </div>
 
-        {invoiceData.products.map((item: any, idx: number) => (
+        {consolidatedProducts.map((item: any, idx: number) => (
           <div
             key={item.id || idx}
             className="flex py-4 border-b border-gray-200 text-sm"
           >
             <div className="w-1/2">
               <p className="font-semibold">{item.productName || item.name}</p>
-              {/* <p className="text-gray-600">Your Product Detailed Description</p> */}
             </div>
             <div className="w-1/6 text-center">{item.quantity}</div>
             <div className="w-1/6 text-center">
-              {item.selectedProduct.packs.length > 0 ? "Box" : "Item"}
+              {item.packType === "BOX" ? "Box" : "Item"}
             </div>
-            {item.selectedProduct?.packs.length > 0 && (
+            {hasPackProducts && (
               <div className="w-1/6 text-center">
-                {item.selectedProduct.packs[0].totalPacksQuantity}
+                {item.packType === "BOX"
+                  ? item.selectedProduct?.packs?.[0]?.minimumSellingQuantity ||
+                    item.selectedProduct?.packs?.[0]?.totalPacksQuantity ||
+                    "-"
+                  : "--"}
               </div>
             )}
-
             <div className="w-1/6 text-center">
               $ {(item.sellingPrice || item.price)?.toFixed(2)}
             </div>
@@ -1143,11 +967,7 @@ const CreateInvoice: React.FC = () => {
           </div>
         ))}
 
-        {/* Totals Section */}
         <div className="flex justify-end mt-6 text-sm">
-          {/* <div>
-            <img src={invoiceResponse.data.qrCode} alt="QR Code" style={{ width: 80, height: 80 }} />
-          </div> */}
           <div className="w-64 space-y-2">
             <div className="flex justify-between">
               <span className="font-medium">Subtotal:</span>
@@ -1181,6 +1001,7 @@ const CreateInvoice: React.FC = () => {
           </div>
         </div>
       </div>
+
       <h3 className="text-2xl my-6">Company Copy</h3>
       <div
         className=" bg-white px-6 py-7 shadow-lg border border-gray-200"
@@ -1259,7 +1080,6 @@ const CreateInvoice: React.FC = () => {
               {invoiceResponse?.data?.customerMail || customerDetails.email}
             </p>
           </div>
-          {/* Custom Fields */}
           {customFields.filter((f) => f.name && f.value).length > 0 && (
             <div className="mb-6 w-1/2">
               <div className="space-y-2">
@@ -1282,33 +1102,34 @@ const CreateInvoice: React.FC = () => {
           <div className="w-1/2">Item Details</div>
           <div className="w-1/6 text-center">Qty</div>
           <div className="w-1/6 text-center">Unit</div>
-          {invoiceData.products[0].selectedProduct.packs.length > 0 && (
+          {hasPackProducts && (
             <div className="w-1/6 text-center">Pack Size</div>
           )}
           <div className="w-1/6 text-center">Unit Price</div>
-          {/* <div className="w-1/6">Allowance</div> */}
           <div className="w-1/6 text-right">Extended Price</div>
         </div>
 
-        {invoiceData.products.map((item: any, idx: number) => (
+        {consolidatedProducts.map((item: any, idx: number) => (
           <div
             key={item.id || idx}
             className="flex py-4 border-b border-gray-200 text-sm"
           >
             <div className="w-1/2">
               <p className="font-semibold">{item.productName || item.name}</p>
-              {/* <p className="text-gray-600">Your Product Detailed Description</p> */}
             </div>
             <div className="w-1/6 text-center">{item.quantity}</div>
             <div className="w-1/6 text-center">
-              {item.selectedProduct.packs.length > 0 ? "Box" : "Item"}
+              {item.packType === "BOX" ? "Box" : "Item"}
             </div>
-            {item.selectedProduct?.packs.length > 0 && (
+            {hasPackProducts && (
               <div className="w-1/6 text-center">
-                {item.selectedProduct.packs[0].totalPacksQuantity}
+                {item.packType === "BOX"
+                  ? item.selectedProduct?.packs?.[0]?.minimumSellingQuantity ||
+                    item.selectedProduct?.packs?.[0]?.totalPacksQuantity ||
+                    "-"
+                  : "--"}
               </div>
             )}
-
             <div className="w-1/6 text-center">
               $ {(item.sellingPrice || item.price)?.toFixed(2)}
             </div>
@@ -1318,11 +1139,7 @@ const CreateInvoice: React.FC = () => {
           </div>
         ))}
 
-        {/* Totals Section */}
         <div className="flex justify-end mt-6 text-sm">
-          {/* <div>
-            <img src={invoiceResponse.data.qrCode} alt="QR Code" style={{ width: 80, height: 80 }} />
-          </div> */}
           <div className="w-64 space-y-2">
             <div className="flex justify-between">
               <span className="font-medium">Subtotal:</span>
@@ -1368,7 +1185,6 @@ const CreateInvoice: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 print:px-0 print:py-0">
         {currentStep < 4 && (
           <div className="print:hidden">
-            {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
                 <button
@@ -1381,18 +1197,15 @@ const CreateInvoice: React.FC = () => {
                   <h1 className="text-2xl font-bold text-gray-900">
                     Professional Invoice
                   </h1>
-                  {/* <p className="text-gray-600">Generate professional invoice</p> */}
                 </div>
               </div>
             </div>
 
-            {/* Progress Steps */}
             {renderProgressSteps()}
             {renderStepLabels()}
           </div>
         )}
 
-        {/* Step Content */}
         {showBusinessForm ? (
           renderBusinessForm()
         ) : (
