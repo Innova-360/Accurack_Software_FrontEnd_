@@ -160,13 +160,21 @@ const Navbar:  React.FC<HeaderProps> = ({ className }) => {
       {/* Mobile View */}
       <div className="flex justify-between items-center w-full h-14 px-4 lg:hidden">
         {/* Left Icon */}
-        <div className="flex items-center justify-center w-[56px]">
-          <FaHome className="text-[20px]" />
+        <div 
+          className="flex items-center justify-center w-[56px]"
+          onClick={handleNavigation}
+          style={{ cursor: "pointer" }}
+        >
+          <IconComponent className="text-[20px]" />
         </div>
 
         {/* Logo */}
         <div className="flex items-center space-x-2">
-          <div className="flex items-center gap-2.5">
+          <div 
+            className="flex items-center gap-2.5"
+            onClick={handleNavigation}
+            style={{ cursor: "pointer" }}
+          >
             <img
               src="/logo.svg"
               className="md:w-10 md:h-10 w-10 h-10"
