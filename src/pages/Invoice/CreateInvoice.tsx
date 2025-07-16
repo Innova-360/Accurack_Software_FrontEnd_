@@ -27,6 +27,11 @@ interface BusinessDetails {
   companyEmail: string;
   companyWebsite: string;
   taxId: string;
+  businessName?: string;
+  address?: string;
+  contactNo?: string;
+  website?: string;
+  logoUrl?: string;
 }
 
 interface InvoiceData {
@@ -83,25 +88,24 @@ const CreateInvoice: React.FC = () => {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isCreatingSale, setIsCreatingSale] = useState(false);
-  const [invoiceResponse, setInvoiceResponse] = useState(null);
+  const [invoiceResponse, setInvoiceResponse] = useState<any>(null);
   const [showBusinessForm, setShowBusinessForm] = useState(false);
   const [businessFormData, setBusinessFormData] = useState({
     businessName: "",
     contactNo: "",
     website: "",
     address: "",
+    streetAddress: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "",
     logoUrl: "",
   });
   const [logoUploading, setLogoUploading] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-  const [invoiceFields, setInvoiceFields] = useState({
-    customerid: invoiceResponse?.customerId,
-    invoiceNo: invoiceNumber,
-    invoiceDate: new Date().toISOString().split("T")[0],
-    deliveryDate: new Date().toISOString().split("T")[0] + "T09:00",
-  });
+
 
   const [storeBusinessDetails, setStoreBusinessDetails] =
     useState<BusinessDetails>({
@@ -118,25 +122,16 @@ const CreateInvoice: React.FC = () => {
     phone: invoiceData?.customerDetails?.phone || "",
     email: invoiceData?.customerDetails?.email || "",
     address: invoiceData?.customerDetails?.address || "",
+    streetAddress: invoiceData?.customerDetails?.street || "",
+    city: invoiceData?.customerDetails?.city || "",
+    state: invoiceData?.customerDetails?.state || "",
+    zipCode: invoiceData?.customerDetails?.postalCode || "",
+    country: invoiceData?.customerDetails?.country || "",
     companyName: "",
     companyPhone: "",
     companyEmail: "",
     companyWebsite: "",
   });
-
-  const handleBusinessDetailsSubmit = () => {
-    if (
-      !businessDetails.companyName.trim() ||
-      !businessDetails.companyAddress.trim() ||
-      !businessDetails.companyPhone.trim() ||
-      !businessDetails.companyEmail.trim()
-    ) {
-      alert("Please fill in all required business details");
-      return;
-    }
-    localStorage.setItem("businessDetails", JSON.stringify(businessDetails));
-    setCurrentStep(2);
-  };
 
   const handleProductDetailsNext = () => {
     setCurrentStep(2);
@@ -198,8 +193,32 @@ const CreateInvoice: React.FC = () => {
       return;
     }
 
+    // Merge address fields into a single address string
+    const mergedAddress = [
+      businessFormData.streetAddress,
+      businessFormData.city &&
+      businessFormData.state &&
+      businessFormData.zipCode
+        ? `${businessFormData.city}, ${businessFormData.state} ${businessFormData.zipCode}`
+        : [
+            businessFormData.city,
+            businessFormData.state,
+            businessFormData.zipCode,
+          ]
+            .filter(Boolean)
+            .join(" "),
+      businessFormData.country,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const submitData = {
+      ...businessFormData,
+      address: mergedAddress || businessFormData.address,
+    };
+
     try {
-      await apiClient.post("/invoice/set-business/details", businessFormData);
+      await apiClient.post("/invoice/set-business/details", submitData);
       toast.success("Business details saved successfully!");
       setShowBusinessForm(false);
       setCurrentStep(3);
@@ -217,7 +236,7 @@ const CreateInvoice: React.FC = () => {
     setIsCreatingSale(true);
     try {
       const saleItems: SaleItem[] = invoiceData.products.map((product) => ({
-        productId: product.productId,
+        productId: product.productId || "",
         productName: product.name,
         quantity: product.quantity,
         sellingPrice: product.price,
@@ -226,11 +245,31 @@ const CreateInvoice: React.FC = () => {
         packType: product.packType || "ITEM",
       }));
 
+      // Merge customer address fields into a single address string
+      const mergedCustomerAddress = [
+        customerDetails.streetAddress,
+        customerDetails.city && customerDetails.state && customerDetails.zipCode
+          ? `${customerDetails.city}, ${customerDetails.state} ${customerDetails.zipCode}`
+          : [
+              customerDetails.city,
+              customerDetails.state,
+              customerDetails.zipCode,
+            ]
+              .filter(Boolean)
+              .join(" "),
+        customerDetails.country,
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const finalCustomerAddress =
+        mergedCustomerAddress || customerDetails.address;
+
       const saleData: SaleRequestData = {
         customerPhone: customerDetails.phone.trim(),
         customerData: {
           customerName: customerDetails.name.trim(),
-          customerAddress: customerDetails.address.trim(),
+          customerAddress: finalCustomerAddress.trim(),
           phoneNumber: customerDetails.phone.trim(),
           telephoneNumber: customerDetails.phone.trim(),
           customerMail: customerDetails.email.trim(),
@@ -258,7 +297,9 @@ const CreateInvoice: React.FC = () => {
         saleItems,
       };
 
-      const saleResponse = await dispatch(createSale(saleData)).unwrap();
+      const saleResponse = await (dispatch as any)(
+        createSale(saleData)
+      ).unwrap();
 
       const saleId =
         saleResponse?.sale?.id ||
@@ -537,17 +578,73 @@ const CreateInvoice: React.FC = () => {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Address <span className="text-red-500">*</span>
           </label>
-          <textarea
-            value={businessFormData.address}
+
+          {/* Street Address */}
+          <input
+            type="text"
+            value={businessFormData.streetAddress}
             onChange={(e) =>
               setBusinessFormData({
                 ...businessFormData,
-                address: e.target.value,
+                streetAddress: e.target.value,
               })
             }
-            rows={3}
+            className="w-full px-3 py-2 mb-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+            placeholder="Street Address"
+          />
+
+          {/* City, State, ZIP Code in a row */}
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            <input
+              type="text"
+              value={businessFormData.city}
+              onChange={(e) =>
+                setBusinessFormData({
+                  ...businessFormData,
+                  city: e.target.value,
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+              placeholder="City"
+            />
+            <input
+              type="text"
+              value={businessFormData.state}
+              onChange={(e) =>
+                setBusinessFormData({
+                  ...businessFormData,
+                  state: e.target.value,
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+              placeholder="State"
+            />
+            <input
+              type="text"
+              value={businessFormData.zipCode}
+              onChange={(e) =>
+                setBusinessFormData({
+                  ...businessFormData,
+                  zipCode: e.target.value,
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+              placeholder="ZIP Code"
+            />
+          </div>
+
+          {/* Country */}
+          <input
+            type="text"
+            value={businessFormData.country}
+            onChange={(e) =>
+              setBusinessFormData({
+                ...businessFormData,
+                country: e.target.value,
+              })
+            }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-            placeholder="Enter business address"
+            placeholder="Country"
           />
         </div>
 
@@ -629,7 +726,7 @@ const CreateInvoice: React.FC = () => {
   const renderCustomerDetailsStep = () => (
     <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <h2 className="text-xl font-semibold text-gray-900 mb-6">
-        Customer Details
+        Customer Detail
       </h2>
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
@@ -683,17 +780,73 @@ const CreateInvoice: React.FC = () => {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Address
           </label>
-          <textarea
-            value={customerDetails.address}
+
+          {/* Street Address */}
+          <input
+            type="text"
+            value={customerDetails.streetAddress}
             onChange={(e) =>
               setCustomerDetails({
                 ...customerDetails,
-                address: e.target.value,
+                streetAddress: e.target.value,
               })
             }
-            rows={3}
+            className="w-full px-3 py-2 mb-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+            placeholder="Street Address"
+          />
+
+          {/* City, State, ZIP Code in a row */}
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            <input
+              type="text"
+              value={customerDetails.city}
+              onChange={(e) =>
+                setCustomerDetails({
+                  ...customerDetails,
+                  city: e.target.value,
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+              placeholder="City"
+            />
+            <input
+              type="text"
+              value={customerDetails.state}
+              onChange={(e) =>
+                setCustomerDetails({
+                  ...customerDetails,
+                  state: e.target.value,
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+              placeholder="State"
+            />
+            <input
+              type="text"
+              value={customerDetails.zipCode}
+              onChange={(e) =>
+                setCustomerDetails({
+                  ...customerDetails,
+                  zipCode: e.target.value,
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
+              placeholder="ZIP Code"
+            />
+          </div>
+
+          {/* Country */}
+          <input
+            type="text"
+            value={customerDetails.country}
+            onChange={(e) =>
+              setCustomerDetails({
+                ...customerDetails,
+                country: e.target.value,
+              })
+            }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent"
-            placeholder="Enter customer address"
+            placeholder="Country"
           />
         </div>
       </div>
@@ -723,26 +876,32 @@ const CreateInvoice: React.FC = () => {
   );
 
   console.log("🔍 Debug Pack Products:", {
-    products: invoiceData.products.map(p => ({ name: p.name, packType: p.packType })),
-    hasPackProducts
+    products: invoiceData.products.map((p) => ({
+      name: p.name,
+      packType: p.packType,
+    })),
+    hasPackProducts,
   });
 
   // Group products by name and packType
-  const groupedProducts = invoiceData.products.reduce((acc, product) => {
-    const key = `${product.name}-${product.packType || 'ITEM'}`;
-    
-    if (acc[key]) {
-      // Product already exists, add quantities and totals
-      acc[key].quantity += product.quantity;
-      acc[key].total += product.total;
-      // Keep the price per unit from the first occurrence
-    } else {
-      // New product group
-      acc[key] = { ...product };
-    }
-    
-    return acc;
-  }, {} as Record<string, any>);
+  const groupedProducts = invoiceData.products.reduce(
+    (acc, product) => {
+      const key = `${product.name}-${product.packType || "ITEM"}`;
+
+      if (acc[key]) {
+        // Product already exists, add quantities and totals
+        acc[key].quantity += product.quantity;
+        acc[key].total += product.total;
+        // Keep the price per unit from the first occurrence
+      } else {
+        // New product group
+        acc[key] = { ...product };
+      }
+
+      return acc;
+    },
+    {} as Record<string, any>
+  );
 
   const consolidatedProducts = Object.values(groupedProducts);
 
@@ -858,12 +1017,22 @@ const CreateInvoice: React.FC = () => {
         <div className="flex justify-between mb-6">
           <div>
             <h2 className="font-semibold">
-              {storeBusinessDetails?.businessName}
+              {storeBusinessDetails?.businessName ||
+                storeBusinessDetails?.companyName}
             </h2>
             <p></p>
-            <p>{storeBusinessDetails?.address}</p>
-            <p>{storeBusinessDetails?.contactNo}</p>
-            <p>{storeBusinessDetails?.website}</p>
+            <p>
+              {storeBusinessDetails?.address ||
+                storeBusinessDetails?.companyAddress}
+            </p>
+            <p>
+              {storeBusinessDetails?.contactNo ||
+                storeBusinessDetails?.companyPhone}
+            </p>
+            <p>
+              {storeBusinessDetails?.website ||
+                storeBusinessDetails?.companyWebsite}
+            </p>
           </div>
 
           <div className="text-right text-sm space-y-1">
@@ -899,7 +1068,26 @@ const CreateInvoice: React.FC = () => {
             <p>{invoiceResponse?.data?.customerName || customerDetails.name}</p>
             <p>
               {invoiceResponse?.data?.customerAddress ||
-                customerDetails.address}
+                (() => {
+                  const mergedAddress = [
+                    customerDetails.streetAddress,
+                    customerDetails.city &&
+                    customerDetails.state &&
+                    customerDetails.zipCode
+                      ? `${customerDetails.city}, ${customerDetails.state} ${customerDetails.zipCode}`
+                      : [
+                          customerDetails.city,
+                          customerDetails.state,
+                          customerDetails.zipCode,
+                        ]
+                          .filter(Boolean)
+                          .join(" "),
+                    customerDetails.country,
+                  ]
+                    .filter(Boolean)
+                    .join("\n");
+                  return mergedAddress || customerDetails.address;
+                })()}
             </p>
             <p>
               {invoiceResponse?.data?.customerPhone || customerDetails.phone}
@@ -930,9 +1118,7 @@ const CreateInvoice: React.FC = () => {
           <div className="w-1/2">Item Details</div>
           <div className="w-1/6 text-center">Qty</div>
           <div className="w-1/6 text-center">Unit</div>
-          {hasPackProducts && (
-            <div className="w-1/6 text-center">Box Size</div>
-          )}
+          {hasPackProducts && <div className="w-1/6 text-center">Box Size</div>}
           <div className="w-1/6 text-center">Unit Price</div>
           <div className="w-1/6 text-right">Extended Price</div>
         </div>
@@ -1030,12 +1216,22 @@ const CreateInvoice: React.FC = () => {
         <div className="flex justify-between mb-6">
           <div>
             <h2 className="font-semibold">
-              {storeBusinessDetails?.businessName}
+              {storeBusinessDetails?.businessName ||
+                storeBusinessDetails?.companyName}
             </h2>
             <p></p>
-            <p>{storeBusinessDetails?.address}</p>
-            <p>{storeBusinessDetails?.contactNo}</p>
-            <p>{storeBusinessDetails?.website}</p>
+            <p>
+              {storeBusinessDetails?.address ||
+                storeBusinessDetails?.companyAddress}
+            </p>
+            <p>
+              {storeBusinessDetails?.contactNo ||
+                storeBusinessDetails?.companyPhone}
+            </p>
+            <p>
+              {storeBusinessDetails?.website ||
+                storeBusinessDetails?.companyWebsite}
+            </p>
           </div>
 
           <div className="text-right text-sm space-y-1">
@@ -1071,7 +1267,26 @@ const CreateInvoice: React.FC = () => {
             <p>{invoiceResponse?.data?.customerName || customerDetails.name}</p>
             <p>
               {invoiceResponse?.data?.customerAddress ||
-                customerDetails.address}
+                (() => {
+                  const mergedAddress = [
+                    customerDetails.streetAddress,
+                    customerDetails.city &&
+                    customerDetails.state &&
+                    customerDetails.zipCode
+                      ? `${customerDetails.city}, ${customerDetails.state} ${customerDetails.zipCode}`
+                      : [
+                          customerDetails.city,
+                          customerDetails.state,
+                          customerDetails.zipCode,
+                        ]
+                          .filter(Boolean)
+                          .join(" "),
+                    customerDetails.country,
+                  ]
+                    .filter(Boolean)
+                    .join("\n");
+                  return mergedAddress || customerDetails.address;
+                })()}
             </p>
             <p>
               {invoiceResponse?.data?.customerPhone || customerDetails.phone}
