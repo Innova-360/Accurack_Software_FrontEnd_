@@ -644,6 +644,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                             </svg>
                           </button>
                           {/* Edit Button */}
+                          {showEditButton && (
                           <button
                             onClick={() => handleEditProduct(product)}
                             disabled={false}
@@ -664,7 +665,9 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                               />
                             </svg>
                           </button>
+                          )}
                           {/* Delete Button */}
+                          {showDeleteButton && (
                           <button
                             onClick={() => {
                               const id =
@@ -699,6 +702,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                               </svg>
                             )}
                           </button>
+                          )}
                         </div>
                       </td>
                     </tr>

@@ -540,7 +540,7 @@ const UpdateInventory: React.FC = () => {
     dispatch(updateProduct({ productId, productData: payload }) as any)
       .then((result: any) => {
         if (!result.error) {
-          navigate(`/store/${storeId}/inventory`);
+          navigate(`/store/${storeId}/inventory/update`);
         } else {
           setIsSubmitting(false);
         }
@@ -882,6 +882,7 @@ const UpdateInventory: React.FC = () => {
                         onPackDiscountsChange={(discounts) =>
                           handleFormDataChange("packDiscounts", discounts)
                         }
+                        itemSellingPrice={parseFloat(formData.itemSellingCost) || 0}
                       />
                     </div>
                   </div>

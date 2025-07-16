@@ -21,6 +21,16 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
   const calculateOrderedBoxPrice = (quantity: number, sellingPrice: number) => {
     return quantity * sellingPrice;
   };
+  // Helper to calculate discounted box price
+  const calculateDiscountedBoxPrice = (quantity: number, sellingPrice: number, discountType: "percentage" | "fixed", discountValue: number) => {
+    const basePrice = quantity * sellingPrice;
+    if (discountType === "percentage") {
+      return basePrice - (basePrice * discountValue) / 100;
+    } else if (discountType === "fixed") {
+      return basePrice - discountValue;
+    }
+    return basePrice;
+  };
   const addPackDiscount = () => {
     const newDiscount: PackDiscount = {
       id: generateId(),
@@ -59,6 +69,18 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
       packDiscounts.filter((discount) => discount.id !== id)
     );
   };
+  // Recalculate orderedPacksPrice for all packs when itemSellingPrice changes
+  React.useEffect(() => {
+    if (itemSellingPrice > 0) {
+      onPackDiscountsChange(
+        packDiscounts.map((discount) => ({
+          ...discount,
+          orderedPacksPrice: calculateOrderedBoxPrice(discount.quantity, itemSellingPrice),
+        }))
+      );
+    }
+    // eslint-disable-next-line
+  }, [itemSellingPrice]);
   return (
     <div className="w-full bg-white rounded-xl shadow-lg p-8 border border-gray-200 hover:shadow-xl transition-all duration-300">
       <div className="flex items-center justify-between mb-6">
@@ -222,19 +244,24 @@ const PackConfiguration: React.FC<PackConfigurationProps> = ({
               <div className="space-y-1 w-full md:w-1/6">
                 <label className="block text-xs font-medium text-gray-700 flex items-center gap-1">
                   Ordered Box Price
-                  <span className="text-xs text-blue-600" title="Auto-calculated: Items in Box × Item Price">
+                  <span className="text-xs text-blue-600" title="Auto-calculated: Items in Box × Item Price, minus discount">
                     (auto)
                   </span>
                 </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={discount.orderedPacksPrice?.toFixed(2) || "0.00"}
-                  readOnly
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-blue-50 text-blue-800 font-medium cursor-not-allowed"
-                  title="Auto-calculated based on items in box and item selling price"
-                />
+                <div className="flex flex-col">
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={calculateDiscountedBoxPrice(discount.quantity, itemSellingPrice, discount.discountType, discount.discountValue).toFixed(2)}
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-blue-50 text-blue-800 font-medium cursor-not-allowed mb-1"
+                    title="Auto-calculated based on items in box, item selling price, and discount"
+                  />
+                  <span className="text-xs text-gray-500">
+                    Original: ${calculateOrderedBoxPrice(discount.quantity, itemSellingPrice).toFixed(2)}
+                  </span>
+                </div>
               </div>
               <div className="flex items-end w-full md:w-1/6">
                 <button
