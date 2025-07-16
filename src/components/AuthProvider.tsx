@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { fetchUser } from "../store/slices/userSlice";
 import { logout } from "../store/slices/authSlice";
@@ -12,6 +12,7 @@ interface AuthProviderProps {
 const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const {  loading, authChecked } = useAppSelector((state) => state.user);
 
   useEffect(() => {
@@ -26,10 +27,14 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           dispatch({ type: 'auth/setAuthenticated', payload: false });
           dispatch(logout());
           updateLastUpdated();
-          navigate("/login", { replace: true });
+          // Do not redirect to login if on reset-password or other public routes
+          const publicPaths = ["/reset-password", "/signup", "/login", "/otp", "/auth/google/callback", "/term"];
+          if (!publicPaths.includes(location.pathname)) {
+            navigate("/login", { replace: true });
+          }
         });
     }
-  }, [dispatch, authChecked, loading, navigate]);
+  }, [dispatch, authChecked, loading, navigate, location.pathname]);
 
   if (loading || !authChecked) {
     return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
