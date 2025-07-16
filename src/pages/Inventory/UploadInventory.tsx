@@ -109,26 +109,45 @@ const UploadInventory: React.FC = () => {
     );
   };
 
-  // Validation function for inventory columns only
+  // Validation function for inventory columns
   const validateInventoryColumns = (headerFields: string[]): string[] => {
-    const requiredFields = [
-      "PLU",
-      "name",
-      "category",
-      "price",
-      "SellingPrice",
-      "stock",
-      "SKU",
+    const errors: string[] = [];
+
+    // Required field groups where at least one must exist
+    const requiredFieldGroups = [
+      { fields: ["PLU", "PLU/UPC"], name: "PLU or PLU/UPC" },
+      { fields: ["price", "VendorPrice"], name: "price or venderprice" },
+      {
+        fields: ["SellingPrice", "IndividualItemSellingPrice"],
+        name: "SellingPrice or IndividualItemSellingPrice",
+      },
+      {
+        fields: ["stock", "IndividualItemQuantity"],
+        name: "stock or IndividualItemQuantity",
+      },
+      { fields: ["SKU", "CustomSKU"], name: "SKU or customsku" },
+      { fields: ["name", "ProductName"], name: "name or ProductName" },
+      { fields: ["category", "Category"], name: "category or Category" },
     ];
-    const missingColumns = requiredFields.filter(
-      (field) => !headerFields.includes(field)
-    );
-    if (missingColumns.length > 0) {
-      return [
-        `File validation failed. The following required columns are missing: ${missingColumns.join(", ")}`,
-      ];
+
+    // Single required fields
+    // const singleRequiredFields = ["name", "category"];
+
+    // Check required field groups
+    for (const group of requiredFieldGroups) {
+      if (!group.fields.some((field) => headerFields.includes(field))) {
+        errors.push(`At least one of ${group.name} is required`);
+      }
     }
-    return [];
+
+    // Check single required fields
+    // for (const field of singleRequiredFields) {
+    //   if (!headerFields.includes(field)) {
+    //     errors.push(`Required column missing: ${field}`);
+    //   }
+    // }
+
+    return errors;
   };
 
   const handleUpload = async () => {
@@ -172,15 +191,7 @@ const UploadInventory: React.FC = () => {
   const handleDownloadTemplate = () => {
     // Create a sample template matching validated inventory columns
     const templateData = [
-      [
-        "PLU",
-        "name",
-        "category",
-        "price",
-        "SellingPrice",
-        "stock",
-        "SKU",
-      ],
+      ["PLU", "name", "category", "price", "SellingPrice", "stock", "SKU"],
       [
         "PLU001",
         "Premium Coffee Beans",
@@ -190,24 +201,8 @@ const UploadInventory: React.FC = () => {
         "150",
         "SKU-CF-001",
       ],
-      [
-        "PLU002",
-        "Organic Milk",
-        "DAIRY",
-        "5.49",
-        "6.49",
-        "75",
-        "SKU-ML-002",
-      ],
-      [
-        "PLU003",
-        "Artisan Bread",
-        "BAKERY",
-        "7.99",
-        "9.99",
-        "25",
-        "SKU-BR-003",
-      ],
+      ["PLU002", "Organic Milk", "DAIRY", "5.49", "6.49", "75", "SKU-ML-002"],
+      ["PLU003", "Artisan Bread", "BAKERY", "7.99", "9.99", "25", "SKU-BR-003"],
     ];
 
     // Convert to CSV for download (simple implementation)
@@ -271,7 +266,9 @@ const UploadInventory: React.FC = () => {
               {processingFile && (
                 <div className="absolute inset-0 bg-white bg-opacity-70 flex flex-col items-center justify-center z-20">
                   <FaSpinner className="animate-spin text-4xl text-blue-600 mb-2" />
-                  <span className="text-blue-700 font-medium">Processing file...</span>
+                  <span className="text-blue-700 font-medium">
+                    Processing file...
+                  </span>
                 </div>
               )}
               {/* Existing upload area code here (the drag-and-drop or file input UI) */}
@@ -313,7 +310,8 @@ const UploadInventory: React.FC = () => {
                       <button
                         onClick={() => {
                           setSelectedFile(null);
-                          if (fileInputRef.current) fileInputRef.current.value = "";
+                          if (fileInputRef.current)
+                            fileInputRef.current.value = "";
                         }}
                         className="text-sm text-red-600 hover:text-red-700 underline"
                       >
