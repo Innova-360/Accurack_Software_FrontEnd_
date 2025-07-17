@@ -269,7 +269,7 @@ const UploadInventory: React.FC = () => {
       [
         "Organic Milk",
         "DAIRY",
-        "Fresh organic whole milk, 1 gallon",
+        "Fresh organic whole milk 1 gallon",
         "4.49",
         "PLU002/234567890123",
         "2345678901234",
