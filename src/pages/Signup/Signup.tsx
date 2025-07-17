@@ -31,7 +31,7 @@ const Signup = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State to toggle confirm password visibility
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [typingTimeouts, setTypingTimeouts] = useState<Record<string, number>>(
+  const [typingTimeouts, setTypingTimeouts] = useState<Record<string, ReturnType<typeof setTimeout>>>(
     {}
   );
   const [countries, setCountries] = useState<CountryWithCities[]>([]);
@@ -667,8 +667,8 @@ const Signup = () => {
             </button>
           </form>
           {/* Social signup section */}
-          <div className="flex flex-col items-center mt-5">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col items-center mt-3">
+            {/* <div className="flex items-center gap-3">
               <span className="text-black text-sm font-semibold">
                 Continue With
               </span>{" "}
@@ -682,8 +682,8 @@ const Signup = () => {
                   className="h-6 w-6"
                 />
               </span>
-            </div>
-            <span className="flex items-center justify-center cursor-pointer mt-4">
+            </div> */}
+            <span className="flex items-center justify-center cursor-pointer mt-2">
               Already have an account?
               <button
                 className="text-[#0b5c5a] cursor-pointer ml-2.5"
