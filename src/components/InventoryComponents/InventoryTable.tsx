@@ -818,7 +818,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                         onClick={() =>
                                           handleEditQuantity(
                                             productKey,
-                                            variant.quantity || 0,
+                                            product.quantity || 0,
                                             variantIndex
                                           )
                                         }
