@@ -122,7 +122,7 @@ const UploadInventory: React.FC = () => {
         fields: ["stock", "IndividualItemQuantity"],
         name: "stock or IndividualItemQuantity",
       },
-      { fields: ["SKU", "CustomSKU"], name: "SKU or customsku" },
+      // { fields: ["SKU", "CustomSKU"], name: "SKU or customsku" },
       { fields: ["name", "ProductName"], name: "name or ProductName" },
       { fields: ["category", "Category"], name: "category or Category" },
     ];
