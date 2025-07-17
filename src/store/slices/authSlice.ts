@@ -22,15 +22,23 @@ interface AuthState {
   error: string | null;
 }
 
-const initialState: AuthState = {
-  user: null,
-  token: null,
-  isAuthenticated: false,
-  loading: false,
-  verifyLoading: false,
-  resendLoading: false,
-  error: null,
+// Lazy state initialization from localStorage
+const getInitialState = (): AuthState => {
+  const storedToken = localStorage.getItem("authToken");
+  const storedIsAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+  
+  return {
+    user: null,
+    token: storedToken,
+    isAuthenticated: storedIsAuthenticated,
+    loading: false,
+    verifyLoading: false,
+    resendLoading: false,
+    error: null,
+  };
 };
+
+const initialState: AuthState = getInitialState();
 
 // Simple async thunks using apiClient directly
 export const loginUser = createAsyncThunk(
@@ -292,9 +300,13 @@ export const authSlice = createSlice({
     setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
       state.isAuthenticated = true;
+      // Persist to localStorage
+      localStorage.setItem("isAuthenticated", "true");
     },
     setToken: (state, action: PayloadAction<string>) => {
       state.token = action.payload;
+      // Persist to localStorage
+      localStorage.setItem("authToken", action.payload);
     },
     clearError: (state) => {
       state.error = null;
@@ -304,9 +316,18 @@ export const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       state.error = null;
+      // Clear localStorage
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("isAuthenticated");
     },
     setAuthenticated: (state, action: PayloadAction<boolean>) => {
       state.isAuthenticated = action.payload;
+      // Persist to localStorage
+      if (action.payload) {
+        localStorage.setItem("isAuthenticated", "true");
+      } else {
+        localStorage.removeItem("isAuthenticated");
+      }
     },
   },
   extraReducers: (builder) => {

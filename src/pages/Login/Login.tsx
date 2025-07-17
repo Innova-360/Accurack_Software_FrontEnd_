@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import React Icons
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { loginUser, googleAuth } from "../../store/slices/authSlice";
@@ -17,8 +17,8 @@ import Loading from "../../components/Loading";
 const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
-  const [isLoading, setIsLoading] = useState(false); // State to manage loading
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
   const navigate = useNavigate();
@@ -26,7 +26,6 @@ const Login = () => {
   const dispatch = useAppDispatch();
 
   const from = location.state?.from?.pathname || "/stores";
-  // Load saved credentials on component mount
   useEffect(() => {
     const savedCredentials = loadSavedCredentials();
     if (savedCredentials) {
@@ -44,36 +43,28 @@ const Login = () => {
   };
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true); // Set loading state to true
+    setIsLoading(true);
     try {
       const resultAction = await dispatch(
         loginUser({ email: formData.email, password: formData.password })
       );
       if (loginUser.fulfilled.match(resultAction)) {
-        // Handle Remember Me functionality
         if (rememberMe) {
-          // Save credentials to localStorage
           saveCredentials({
             email: formData.email,
             password: formData.password,
             rememberMe: true,
           });
         } else {
-          // Remove saved credentials if Remember Me is unchecked
           clearSavedCredentials();
         }
-
-        // Update last updated time
         updateLastUpdated();
-
         await dispatch(fetchUser()).unwrap();
-
-        setIsLoading(false); // Reset loading state
+        setIsLoading(false);
         toast.success("Login successful!");
-        // Navigate to the intended destination or stores page
         navigate(from, { replace: true });
       } else {
-        setIsLoading(false); // Reset loading state
+        setIsLoading(false);
         console.error("Login failed", resultAction.payload);
         toast.error(
           typeof resultAction.payload === "string"
@@ -82,7 +73,7 @@ const Login = () => {
         );
       }
     } catch (error) {
-      setIsLoading(false); // Reset loading state
+      setIsLoading(false);
       console.error("Error during login", error);
       toast.error("An error occurred during login. Please try again.");
     }
@@ -90,7 +81,6 @@ const Login = () => {
   const handleRememberMeChange = () => {
     const newRememberMe = !rememberMe;
     setRememberMe(newRememberMe);
-
     if (!newRememberMe) {
       clearSavedCredentials();
     }
@@ -98,7 +88,6 @@ const Login = () => {
 
   const handleGoogleAuth = async () => {
     try {
-      // Dispatch the Google auth action which will redirect to Google
       await dispatch(googleAuth());
     } catch (error) {
       console.error("Error during Google authentication", error);
@@ -114,14 +103,12 @@ const Login = () => {
       <div className="flex flex-col items-center justify-between h-auto md:h-full w-full md:w-1/2 relative order-1 md:order-none">
         {/* Upper Image Section*/}
         <div className="flex-none md:flex-1 flex items-end w-full">
-          {/* Mobile Image */}
           <img
             src="/analysis-mobile.PNG"
             alt="Analysis Mobile"
             className="block md:hidden w-full object-cover h-80 sm:h-80"
             style={{ maxHeight: "100%", objectPosition: "left top" }}
           />
-          {/* Desktop/Tablet Image */}
           <img
             src="/analysis-desktop.png"
             alt="Analysis Desktop"
@@ -129,9 +116,7 @@ const Login = () => {
             style={{ maxHeight: "100%" }}
           />
         </div>
-        {/* Lower Text Section*/}
         <div className="hidden md:flex bg-[#181c1f] flex-col justify-end px-4 sm:px-8 w-full py-6 sm:py-8 md:flex-1 order-3 md:order-none">
-          {/* Logo */}
           <div className="flex items-center mb-6 sm:mb-8">
             <img
               src="/logo-dark.png"
@@ -139,9 +124,8 @@ const Login = () => {
               className="h-8 sm:h-10 mr-3"
             />
           </div>
-          {/* Main Text */}
           <h2 className="text-white text-2xl sm:text-3xl font-bold mb-3 sm:mb-4 max-w-lg">
-            Let’s streamline your financial task today with Accurack.
+            Let s streamline your financial task today with Accurack.
           </h2>
           <p className="text-[#bfc9d1] text-base sm:text-lg max-w-md">
             The one-stop platform for all Inventory management of small and
@@ -149,10 +133,7 @@ const Login = () => {
           </p>
         </div>
       </div>
-
-      {/* Right Section */}
       <div className="flex flex-col justify-start items-center w-full md:w-1/2 min-h-screen order-2 md:order-none relative">
-        {/* Arrow image: only visible on md and up, top left, low opacity */}
         <img
           src="/arrow.png"
           alt="Arrow"
@@ -179,7 +160,7 @@ const Login = () => {
             </label>
             <div className="relative">
               <input
-                type={showPassword ? "text" : "password"} // Toggle input type
+                type={showPassword ? "text" : "password"}
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
@@ -188,7 +169,7 @@ const Login = () => {
               />
               <span
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
-                onClick={() => setShowPassword(!showPassword)} // Toggle visibility on click
+                onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
                   <FaEyeSlash className="w-5 h-5" />
@@ -198,7 +179,6 @@ const Login = () => {
               </span>
             </div>
             <div className="flex items-center justify-between text-xs mt-1">
-              {" "}
               <div className="flex items-center">
                 <input
                   id="rememberMe"

@@ -68,7 +68,7 @@ function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
   if (loading || !authChecked) {
     return null; // Or use <Loading label="Checking authentication..." />
   }
-  if (isAuthenticated && user) return <Navigate to="/" replace />;
+  if (isAuthenticated && user) return <Navigate to="/stores" replace />;
   return <>{children}</>;
 }
 
