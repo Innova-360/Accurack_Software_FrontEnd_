@@ -133,8 +133,8 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
     onClose();
   };
 
-  const handleDownloadTemplate = () => {
-    // Create a sample template matching validated inventory columns
+  const handleDownloadBasicTemplate = () => {
+    // Create a basic template matching validated inventory columns
     const templateData = [
       [
         "PLU",
@@ -174,13 +174,127 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
       ],
     ];
 
-    // Convert to CSV for download (simple implementation)
+    // Convert to CSV for download
     const csvContent = templateData.map((row) => row.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "inventory_template.csv";
+    link.download = "inventory_basic_template.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadEnhancedTemplate = () => {
+    // Create a comprehensive template with all advanced columns
+    const templateData = [
+      [
+        "ProductName",
+        "Category", 
+        "Description",
+        "VendorPrice",
+        "PLU/UPC",
+        "EAN",
+        "CustomSKU",
+        "VendorName",
+        "VendorPhone",
+        "IndividualItemQuantity",
+        "IndividualItemSellingPrice",
+        "MinimumSellingQuantity",
+        "MinimumOrderValue",
+        "DiscountValue",
+        "DiscountPercentage",
+        "PackOf",
+        "BasePrice",
+        "PriceDiscountAmount",
+        "PercentDiscount",
+        "MatrixAttributes",
+        "Attribute1",
+        "Attribute2"
+      ],
+      [
+        "Premium Coffee Beans",
+        "BEVERAGES",
+        "High-quality arabica coffee beans sourced from premium farms",
+        "20.99",
+        "PLU001/123456789012",
+        "1234567890123",
+        "SKU-CF-001",
+        "Coffee Co. Ltd",
+        "+1-555-0123",
+        "150",
+        "29.99",
+        "1",
+        "50.00",
+        "2.00",
+        "10",
+        "12",
+        "24.99",
+        "5.00",
+        "15",
+        "Size:Large,Origin:Colombia",
+        "Large",
+        "Colombia"
+      ],
+      [
+        "Organic Milk",
+        "DAIRY",
+        "Fresh organic whole milk, 1 gallon",
+        "4.49",
+        "PLU002/234567890123",
+        "2345678901234",
+        "SKU-ML-002",
+        "Dairy Farm Inc",
+        "+1-555-0124",
+        "75",
+        "6.49",
+        "1",
+        "25.00",
+        "1.00",
+        "5",
+        "6",
+        "5.49",
+        "2.00",
+        "8",
+        "Type:Organic,Fat:Whole",
+        "Organic",
+        "Whole"
+      ],
+      [
+        "Artisan Bread",
+        "BAKERY",
+        "Freshly baked sourdough bread",
+        "6.99",
+        "PLU003/345678901234",
+        "3456789012345",
+        "SKU-BR-003",
+        "Local Bakery",
+        "+1-555-0125",
+        "25",
+        "9.99",
+        "1",
+        "30.00",
+        "1.50",
+        "8",
+        "1",
+        "7.99",
+        "2.00",
+        "12",
+        "Type:Sourdough,Size:Large",
+        "Sourdough",
+        "Large"
+      ]
+    ];
+
+    // Convert to CSV for download
+    const csvContent = templateData.map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "inventory_enhanced_template.csv";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -221,19 +335,41 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
 
         {/* Template Download */}
         <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium text-blue-900">Need a template?</h3>
-              <p className="text-sm text-blue-700">
-                Download our Excel template to get started
-              </p>
+          <h3 className="font-medium text-blue-900 mb-3">Download Templates</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Basic Template */}
+            <div className="p-3 bg-white rounded-lg border border-blue-200">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <h4 className="text-sm font-medium text-blue-900">Basic Template</h4>
+                  <p className="text-xs text-blue-700">Essential fields only</p>
+                </div>
+                <button
+                  onClick={handleDownloadBasicTemplate}
+                  className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs"
+                >
+                  Download
+                </button>
+              </div>
+              <p className="text-xs text-gray-600">PLU, Name, Category, Price, Stock, SKU</p>
             </div>
-            <button
-              onClick={handleDownloadTemplate}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-            >
-              Download
-            </button>
+
+            {/* Enhanced Template */}
+            <div className="p-3 bg-white rounded-lg border border-blue-200">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <h4 className="text-sm font-medium text-blue-900">Enhanced Template</h4>
+                  <p className="text-xs text-blue-700">Complete with all fields</p>
+                </div>
+                <button
+                  onClick={handleDownloadEnhancedTemplate}
+                  className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs"
+                >
+                  Download
+                </button>
+              </div>
+              <p className="text-xs text-gray-600">Vendor info, Discounts, Attributes, EAN, etc.</p>
+            </div>
           </div>
         </div>
 

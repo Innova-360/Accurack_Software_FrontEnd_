@@ -48,13 +48,11 @@ const UploadInventory: React.FC = () => {
       if (isValidFileType(file)) {
         setProcessingFile(true);
         try {
-          let rows: any[] = [];
           let headerFields: string[] = [];
           if (file.name.endsWith(".csv")) {
             // Parse CSV
             const text = await file.text();
             const parsed = Papa.parse(text, { header: true });
-            rows = parsed.data as any[];
             headerFields = parsed.meta.fields || [];
           } else if (
             file.name.endsWith(".xlsx") ||
@@ -65,7 +63,6 @@ const UploadInventory: React.FC = () => {
             const workbook = XLSX.read(data, { type: "array" });
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
-            rows = XLSX.utils.sheet_to_json(worksheet);
             // Get header fields from the first row of the sheet
             const headerRow = XLSX.utils.sheet_to_json(worksheet, {
               header: 1,
@@ -188,8 +185,8 @@ const UploadInventory: React.FC = () => {
     }
   };
 
-  const handleDownloadTemplate = () => {
-    // Create a sample template matching validated inventory columns
+  const handleDownloadBasicTemplate = () => {
+    // Create a basic template matching validated inventory columns
     const templateData = [
       ["PLU", "name", "category", "price", "SellingPrice", "stock", "SKU"],
       [
@@ -205,21 +202,131 @@ const UploadInventory: React.FC = () => {
       ["PLU003", "Artisan Bread", "BAKERY", "7.99", "9.99", "25", "SKU-BR-003"],
     ];
 
-    // Convert to CSV for download (simple implementation)
+    // Convert to CSV for download
     const csvContent = templateData.map((row) => row.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "inventory_template.csv";
+    link.download = "inventory_basic_template.csv";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
   };
 
-  const handleBackToInventory = () => {
-    navigate(`/store/${id}/inventory`);
+  const handleDownloadEnhancedTemplate = () => {
+    // Create a comprehensive template with all advanced columns
+    const templateData = [
+      [
+        "ProductName",
+        "Category", 
+        "Description",
+        "VendorPrice",
+        "PLU/UPC",
+        "EAN",
+        "CustomSKU",
+        "VendorName",
+        "VendorPhone",
+        "IndividualItemQuantity",
+        "IndividualItemSellingPrice",
+        "MinimumSellingQuantity",
+        "MinimumOrderValue",
+        "DiscountValue",
+        "DiscountPercentage",
+        "PackOf",
+        "BasePrice",
+        "PriceDiscountAmount",
+        "PercentDiscount",
+        "MatrixAttributes",
+        "Attribute1",
+        "Attribute2"
+      ],
+      [
+        "Premium Coffee Beans",
+        "BEVERAGES",
+        "High-quality arabica coffee beans sourced from premium farms",
+        "20.99",
+        "PLU001/123456789012",
+        "1234567890123",
+        "SKU-CF-001",
+        "Coffee Co. Ltd",
+        "+1-555-0123",
+        "150",
+        "29.99",
+        "1",
+        "50.00",
+        "2.00",
+        "10",
+        "12",
+        "24.99",
+        "5.00",
+        "15",
+        "Size:Large,Origin:Colombia",
+        "Large",
+        "Colombia"
+      ],
+      [
+        "Organic Milk",
+        "DAIRY",
+        "Fresh organic whole milk, 1 gallon",
+        "4.49",
+        "PLU002/234567890123",
+        "2345678901234",
+        "SKU-ML-002",
+        "Dairy Farm Inc",
+        "+1-555-0124",
+        "75",
+        "6.49",
+        "1",
+        "25.00",
+        "1.00",
+        "5",
+        "6",
+        "5.49",
+        "2.00",
+        "8",
+        "Type:Organic,Fat:Whole",
+        "Organic",
+        "Whole"
+      ],
+      [
+        "Artisan Bread",
+        "BAKERY",
+        "Freshly baked sourdough bread",
+        "6.99",
+        "PLU003/345678901234",
+        "3456789012345",
+        "SKU-BR-003",
+        "Local Bakery",
+        "+1-555-0125",
+        "25",
+        "9.99",
+        "1",
+        "30.00",
+        "1.50",
+        "8",
+        "1",
+        "7.99",
+        "2.00",
+        "12",
+        "Type:Sourdough,Size:Large",
+        "Sourdough",
+        "Large"
+      ]
+    ];
+
+    // Convert to CSV for download
+    const csvContent = templateData.map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "inventory_enhanced_template.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   };
 
   return (
@@ -242,21 +349,23 @@ const UploadInventory: React.FC = () => {
             {/* Template Download Section */}
             <div className="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-medium text-blue-900 mb-2">
-                    Need a template?
-                  </h3>
-                  <p className="text-blue-700">
-                    Download our Excel template to get started with the correct
-                    format
-                  </p>
+                <h3 className="text-lg font-medium text-blue-900">
+                  Download Templates
+                </h3>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleDownloadBasicTemplate}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                  >
+                    Template 1
+                  </button>
+                  <button
+                    onClick={handleDownloadEnhancedTemplate}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                  >
+                    Template 2
+                  </button>
                 </div>
-                <button
-                  onClick={handleDownloadTemplate}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                >
-                  Download Template
-                </button>
               </div>
             </div>
 
