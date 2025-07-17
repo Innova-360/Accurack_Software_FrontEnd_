@@ -275,7 +275,7 @@ const InvoicePreview = () => {
                                 </div>
                                 <div className="w-1/6 text-center">{item.quantity}</div>
                                 <div className="w-1/6 text-center">{item.packType === 'ITEM' ? 'Item' : 'Box'}</div>
-                                {item.packType === 'BOX' && <div className="w-1/6 text-center">{item.packQuantity}</div>}
+                                <div className="w-1/6 text-center">{item.packType !== 'ITEM'? item.product.packs[0].totalPacksQuantity : '-'}</div>
                                 <div className="w-1/6 text-center">{item.product.msrpPrice || '-'}</div>
                                 <div className="w-1/6 text-center">
                                     ${item.sellingPrice?.toFixed(2)}
@@ -444,7 +444,7 @@ const InvoicePreview = () => {
                                 </div>
                                 <div className="w-1/6 text-center">{item.quantity}</div>
                                 <div className="w-1/6 text-center">{item.packType === 'ITEM' ? 'Item' : 'Box'}</div>
-                                {item.packType === 'BOX' && <div className="w-1/6 text-center">{item.packQuantity}</div>}
+                                <div className="w-1/6 text-center">{item.packType !== 'ITEM' ? item.product.packs[0].totalPacksQuantity : "-"}</div>
                                 <div className="w-1/6 text-center">{item.product.msrpPrice || '-'}</div>
                                 <div className="w-1/6 text-center">
                                     ${item.sellingPrice?.toFixed(2)}
