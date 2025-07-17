@@ -795,7 +795,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                 <div className="flex items-center gap-2">
                                   <span
                                     className={
-                                      (variant.quantity || 0) < 10
+                                      (product.quantity || 0) < 10
                                         ? "text-red-600 font-bold"
                                         : ""
                                     }
@@ -805,10 +805,10 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                     ) ? (
                                       <div className="flex items-center gap-1">
                                         <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                        <span>{variant.quantity || 0}</span>
+                                        <span>{product.quantity || 0}</span>
                                       </div>
                                     ) : (
-                                      variant.quantity || 0
+                                      product.quantity || 0
                                     )}
                                   </span>
                                   {!updatingQuantity.has(
