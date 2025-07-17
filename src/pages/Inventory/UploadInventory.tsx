@@ -262,7 +262,7 @@ const UploadInventory: React.FC = () => {
         "24.99",
         "5.00",
         "15",
-        "Size:Large,Origin:Colombia",
+        "Size/Origin",
         "Large",
         "Colombia"
       ],
@@ -286,7 +286,7 @@ const UploadInventory: React.FC = () => {
         "5.49",
         "2.00",
         "8",
-        "Type:Organic,Fat:Whole",
+        "Type/Fat",
         "Organic",
         "Whole"
       ],
@@ -310,7 +310,7 @@ const UploadInventory: React.FC = () => {
         "7.99",
         "2.00",
         "12",
-        "Type:Sourdough,Size:Large",
+        "Type/Size",
         "Sourdough",
         "Large"
       ]
