@@ -334,7 +334,7 @@ const AddNewSale: React.FC = () => {
         ...updatedProducts[index],
         saleType: value as 'single' | 'pack',
       };
-      
+
       // Update price based on sale type
       if (value === 'pack' && updatedProducts[index].selectedProduct?.packs?.[0]) {
         const pack = updatedProducts[index].selectedProduct.packs[0];
@@ -345,7 +345,7 @@ const AddNewSale: React.FC = () => {
         updatedProducts[index].price = updatedProducts[index].selectedProduct?.singleItemSellingPrice || 0;
         updatedProducts[index].selectedPackId = undefined;
       }
-      
+
       // Recalculate total
       updatedProducts[index].total =
         updatedProducts[index].quantity * updatedProducts[index].price;
@@ -389,6 +389,9 @@ const AddNewSale: React.FC = () => {
     setDiscount(0);
   };
 
+
+
+  console.log("Products:", products);
   const handleCreateSale = async () => {
     // Validate form
     if (!customerName.trim()) {
@@ -453,6 +456,7 @@ const AddNewSale: React.FC = () => {
 
     try {
       // Prepare sale items
+
       const saleItems: SaleItem[] = products.map((product) => {
         let pluUpc = "";
         if (product.selectedProduct) {
@@ -483,6 +487,8 @@ const AddNewSale: React.FC = () => {
           totalPrice: product.total,
           pluUpc: pluUpc,
           packType: product.saleType === 'pack' ? 'BOX' : 'ITEM',
+          ...(product.selectedProduct?.packIds?.[0] && { packId: product.selectedProduct.packIds[0] }),
+          ...(product.selectedProduct?.packs?.[0]?.minimumSellingQuantity && { packQuantity: product.selectedProduct.packs[0].minimumSellingQuantity }),
         };
       });
 
@@ -1032,7 +1038,7 @@ const AddNewSale: React.FC = () => {
                               {product.selectedProduct.sku || "N/A"}
                             </div>
                           </div>
-                          
+
                         </div>
 
                         {/* Additional product information row */}
@@ -1043,13 +1049,13 @@ const AddNewSale: React.FC = () => {
                             </span>
                             <div className="text-gray-900">
                               {typeof product.selectedProduct.category ===
-                              "string"
+                                "string"
                                 ? product.selectedProduct.category
                                 : (
-                                    product.selectedProduct.category as {
-                                      name?: string;
-                                    }
-                                  )?.name || "Uncategorized"}
+                                  product.selectedProduct.category as {
+                                    name?: string;
+                                  }
+                                )?.name || "Uncategorized"}
                             </div>
                           </div>
                           <div>
@@ -1058,13 +1064,13 @@ const AddNewSale: React.FC = () => {
                             </span>
                             <div className="text-gray-900">
                               {typeof product.selectedProduct.supplier ===
-                              "string"
+                                "string"
                                 ? product.selectedProduct.supplier
                                 : (
-                                    product.selectedProduct.supplier as {
-                                      name?: string;
-                                    }
-                                  )?.name || "N/A"}
+                                  product.selectedProduct.supplier as {
+                                    name?: string;
+                                  }
+                                )?.name || "N/A"}
                             </div>
                           </div>
                           <div>
@@ -1072,8 +1078,8 @@ const AddNewSale: React.FC = () => {
                               Product Type:
                             </span>
                             <div className="text-gray-900">
-                              {product.selectedProduct.packs && product.selectedProduct.packs.length > 0 
-                                ? `Pack (${product.selectedProduct.packs[0].minimumSellingQuantity} items)` 
+                              {product.selectedProduct.packs && product.selectedProduct.packs.length > 0
+                                ? `Pack (${product.selectedProduct.packs[0].minimumSellingQuantity} items)`
                                 : "Single Item"}
                             </div>
                           </div>
@@ -1123,7 +1129,7 @@ const AddNewSale: React.FC = () => {
                                 </div>
                               </label>
                             </div>
-                            
+
                             {/* Pack Details - Show when pack is selected */}
                             {product.saleType === 'pack' && (
                               <div className="bg-green-50 border border-green-200 rounded-lg p-3">
@@ -1152,10 +1158,10 @@ const AddNewSale: React.FC = () => {
                                   <div>
                                     <span className="font-medium text-gray-600">Pack Discount:</span>
                                     <div className="text-gray-900 font-medium">
-                                      {product.selectedProduct.packs[0].percentDiscount > 0 
-                                        ? `${product.selectedProduct.packs[0].percentDiscount}%` 
-                                        : product.selectedProduct.packs[0].discountAmount > 0 
-                                          ? `$${product.selectedProduct.packs[0].discountAmount}` 
+                                      {product.selectedProduct.packs[0].percentDiscount > 0
+                                        ? `${product.selectedProduct.packs[0].percentDiscount}%`
+                                        : product.selectedProduct.packs[0].discountAmount > 0
+                                          ? `$${product.selectedProduct.packs[0].discountAmount}`
                                           : "No discount"}
                                     </div>
                                   </div>
@@ -1177,30 +1183,30 @@ const AddNewSale: React.FC = () => {
                             {flattenedProducts.find(
                               (fp) => fp.displayName === product.name
                             )?.variantData && (
-                              <div className="text-xs text-gray-600 mt-1">
-                                <span className="font-medium">
-                                  Variant SKU:
-                                </span>{" "}
-                                {flattenedProducts.find(
-                                  (fp) => fp.displayName === product.name
-                                )?.variantData?.sku || "N/A"}
-                                {flattenedProducts.find(
-                                  (fp) => fp.displayName === product.name
-                                )?.variantData?.pluUpc && (
-                                  <>
-                                    {" | "}
-                                    <span className="font-medium">
-                                      Variant PLU:
-                                    </span>{" "}
-                                    {
-                                      flattenedProducts.find(
-                                        (fp) => fp.displayName === product.name
-                                      )?.variantData?.pluUpc
-                                    }
-                                  </>
-                                )}
-                              </div>
-                            )}
+                                <div className="text-xs text-gray-600 mt-1">
+                                  <span className="font-medium">
+                                    Variant SKU:
+                                  </span>{" "}
+                                  {flattenedProducts.find(
+                                    (fp) => fp.displayName === product.name
+                                  )?.variantData?.sku || "N/A"}
+                                  {flattenedProducts.find(
+                                    (fp) => fp.displayName === product.name
+                                  )?.variantData?.pluUpc && (
+                                      <>
+                                        {" | "}
+                                        <span className="font-medium">
+                                          Variant PLU:
+                                        </span>{" "}
+                                        {
+                                          flattenedProducts.find(
+                                            (fp) => fp.displayName === product.name
+                                          )?.variantData?.pluUpc
+                                        }
+                                      </>
+                                    )}
+                                </div>
+                              )}
                           </div>
                         )}
                       </div>

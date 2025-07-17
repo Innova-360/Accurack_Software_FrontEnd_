@@ -35,7 +35,7 @@ const SalesPage: React.FC = () => {
 
   // Debug: Log each sale's status
   sales.forEach((sale: any, index: number) => {
-      });
+  });
 
   const transactions: any = sales.map((sale: any) => ({
     id: sale.id,
@@ -275,6 +275,7 @@ const SalesPage: React.FC = () => {
   const handleSalesReport = () => {
     toast("Sales Report functionality will be implemented");
   };
+
   const handleAnalytics = () => {
     toast("Analytics functionality will be implemented");
   };
@@ -320,6 +321,7 @@ const SalesPage: React.FC = () => {
     setSelectedTransaction(transaction);
     setIsEditModalOpen(true);
   };
+
   const handleEditSave = async (updatedTransaction: any) => {
     try {
       // TODO: Implement update transaction API call
@@ -424,7 +426,7 @@ const SalesPage: React.FC = () => {
         cashierName: transaction.cashier || "Unknown",
       };
 
-            // Dispatch the update action
+      // Dispatch the update action
       await dispatch(
         updateSale({
           saleId: transactionId,
@@ -436,6 +438,22 @@ const SalesPage: React.FC = () => {
     } catch (error) {
       console.error("Failed to update transaction status:", error);
       toast.error("Failed to update transaction status");
+    }
+  };
+
+  const getPreviewInvoice = (transaction: any) => {
+    try {
+      // Find the specific sale data that matches this transaction
+      const specificSaleData = sales.find((sale: any) => sale.id === transaction.id);
+      
+      navigate(`/store/${storeId}/sales/${transaction.id}/invoice`, { 
+        state: { 
+          saleData: specificSaleData 
+        } 
+      });
+    } catch (error) {
+      console.error("Error generating invoice preview:", error);
+      toast.error("Failed to generate invoice preview");
     }
   };
 
@@ -530,6 +548,7 @@ const SalesPage: React.FC = () => {
                 onDelete={handleDelete}
                 onStatusChange={handleStatusChange}
                 onEditNavigation={handleNavigateToEdit}
+                 onPreviewInvoice={getPreviewInvoice}
                 isUpdating={loading}
                 canEdit={false}
               />

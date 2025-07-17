@@ -1,4 +1,4 @@
-import { Eye, Edit } from "lucide-react";
+import { Eye, Edit,  ArrowUpRight } from "lucide-react";
 import React from "react";
 import EditableStatus from "./EditableStatus";
 
@@ -10,6 +10,7 @@ interface TransactionTableProps {
   onDelete: (transaction: any) => void;
   onStatusChange?: (transactionId: string, newStatus: string) => void;
   onEditNavigation?: (transaction: any) => void;
+   onPreviewInvoice: (transaction: any) => void; // Add this
   isUpdating?: boolean;
   canEdit?: boolean; 
   
@@ -20,6 +21,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   onView,
   onStatusChange,
   onEditNavigation,
+  onPreviewInvoice,
   isUpdating = false,
   canEdit = true
 }) => {
@@ -60,6 +62,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
       </span>
     );
   };
+
 
   return (
     <div className="overflow-x-auto">
@@ -154,12 +157,20 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               </td>
               <td className="px-4 py-3 text-center">
                 <div className="flex items-center justify-center space-x-2">
+                 
                   <span
                     className="text-sm text-gray-500 cursor-pointer hover:text-blue-600 transition-colors"
                     onClick={() => onView(transaction)}
                     title="View Details"
                   >
                     <Eye className="h-4 w-4" />
+                  </span>
+                   <span
+                    className="text-sm text-gray-500 cursor-pointer hover:text-blue-600 transition-colors"
+                    onClick={() => onPreviewInvoice(transaction)}
+                    title="Preview Invoice"
+                  >
+                    <ArrowUpRight  className="h-4 w-4"/>
                   </span>
                   {onEditNavigation && canEdit && (
                     <span
