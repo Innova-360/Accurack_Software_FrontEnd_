@@ -63,6 +63,41 @@ const UpdateInventory: React.FC = () => {
     error: categoriesError,
   } = useProductCategories();
 
+  // Check if store information is available
+  const isStoreLoading = !currentStore && !storeId;
+  
+  // Show loading if store information is not available
+  if (isStoreLoading) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ 
+            width: '40px', 
+            height: '40px', 
+            border: '4px solid #f3f3f3',
+            borderTop: '4px solid #3498db',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }}></div>
+          <span>Loading store information...</span>
+        </div>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   // Add explicit types for calculateDiscounts
   const calculateDiscounts = (
     discountType: "percentage" | "fixed" | undefined,

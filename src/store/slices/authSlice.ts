@@ -28,14 +28,14 @@ const getInitialState = (): AuthState => {
   const storedIsAuthenticated = localStorage.getItem("isAuthenticated") === "true";
   
   return {
-    user: null,
+  user: null,
     token: storedToken,
     isAuthenticated: storedIsAuthenticated,
-    loading: false,
-    verifyLoading: false,
-    resendLoading: false,
-    error: null,
-  };
+  loading: false,
+  verifyLoading: false,
+  resendLoading: false,
+  error: null,
+};
 };
 
 const initialState: AuthState = getInitialState();

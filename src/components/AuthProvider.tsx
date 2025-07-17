@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { fetchUser } from "../store/slices/userSlice";
 import { logout } from "../store/slices/authSlice";
 import { updateLastUpdated } from "../utils/lastUpdatedUtils";
+import { loadCurrentStoreFromStorage } from "../store/slices/storeSlice";
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -11,6 +12,14 @@ interface AuthProviderProps {
 const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const dispatch = useAppDispatch();
   const { loading, authChecked } = useAppSelector((state) => state.user);
+  const { currentStore } = useAppSelector((state) => state.stores);
+
+  useEffect(() => {
+    // Load store from localStorage on app startup
+    if (!currentStore) {
+      dispatch(loadCurrentStoreFromStorage());
+    }
+  }, [dispatch, currentStore]);
 
   useEffect(() => {
     if (!authChecked && !loading) {
