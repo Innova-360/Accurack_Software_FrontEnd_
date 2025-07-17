@@ -59,6 +59,7 @@ import ScanInventory from "../pages/Inventory/ScanInventory";
 import DeleteInventory from "../pages/Inventory/DeleteInventory";
 import SalesDashboard from "../pages/salesPage/SalesDashboard";
 import { useAppSelector } from "../store/hooks";
+import InvoicePreview from "../pages/Invoice/Invoice-preview";
 
 function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
@@ -347,6 +348,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <SalesId />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/sales/:saleid/invoice"
+        element={
+          <ProtectedRoute>
+            <InvoicePreview />
           </ProtectedRoute>
         }
       />
