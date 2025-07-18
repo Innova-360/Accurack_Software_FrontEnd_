@@ -443,6 +443,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
         <h4 className="text-sm sm:text-base font-medium text-gray-900">
           Variation {index + 1}
         </h4>
+        {/*
         <button
           type="button"
           onClick={() => onRemove(variation.id)}
@@ -450,6 +451,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
         >
           Remove
         </button>
+        */}
       </div>
 
       {/* Attribute Selection */}

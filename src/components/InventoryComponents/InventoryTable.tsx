@@ -23,6 +23,7 @@ interface InventoryTableProps {
   showDeleteButton?: boolean; // Control delete icon visibility
   showEditButton?: boolean; // Control edit icon visibility
   showActions?: boolean; // Control actions visibility
+  showVariantDeleteButton?: boolean; // Control variant delete icon visibility
 }
 
 const InventoryTable: React.FC<InventoryTableProps> = ({
@@ -42,6 +43,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
   showDeleteButton = true, // Default to true
   showEditButton = true, // Default to true
   showActions = false, // Default to false
+  showVariantDeleteButton = false, // Default to false
 }) => {
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(
     new Set()
@@ -1015,31 +1017,33 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                           </td>
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                             <div className="flex items-center gap-2">
-                              {/* Delete Variant Button */}
-                              <button
-                                onClick={() => {
-                                  const productName = typeof product.name === "string"
-                                    ? product.name
-                                    : String(product.name || "Product");
-                                  handleVariantDelete(variant, productName);
-                                }}
-                                className="text-red-600 hover:text-red-800 p-1"
-                                title="Delete variant"
-                              >
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
+                              {/* Delete Variant Button only if showVariantDeleteButton is true */}
+                              {showVariantDeleteButton && (
+                                <button
+                                  onClick={() => {
+                                    const productName = typeof product.name === "string"
+                                      ? product.name
+                                      : String(product.name || "Product");
+                                    handleVariantDelete(variant, productName);
+                                  }}
+                                  className="text-red-600 hover:text-red-800 p-1"
+                                  title="Delete variant"
                                 >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                  />
-                                </svg>
-                              </button>
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
