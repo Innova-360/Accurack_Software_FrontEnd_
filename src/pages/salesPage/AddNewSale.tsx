@@ -5,9 +5,7 @@ import { FaTrash, FaArrowLeft, FaSearch } from "react-icons/fa";
 import toast from "react-hot-toast";
 import Header from "../../components/Header";
 import { SpecialButton } from "../../components/buttons";
-import { fetchProductsPaginated } from "../../store/slices/productsSlice";
 import { createSale } from "../../store/slices/salesSlice";
-import { fetchUser } from "../../store/slices/userSlice";
 import { fetchCustomers } from "../../store/slices/customerSlice";
 import useRequireStore from "../../hooks/useRequireStore";
 import type { RootState, AppDispatch } from "../../store";
@@ -164,7 +162,7 @@ const AddNewSale: React.FC = () => {
   const discountAmount =
     discountType === "percentage" ? (subtotal * discount) / 100 : discount;
   const taxAmount = ((subtotal - discountAmount) * taxRate) / 100;
-  const finalTotal = subtotal - discountAmount + taxAmount;
+  const finalTotal = subtotal ;
 
   // Combine address fields into a single address string
   const getFullAddress = () => {

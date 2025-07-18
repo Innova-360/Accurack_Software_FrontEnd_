@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+
 /* Custom animations for inventory page */
 @keyframes fadeIn {
   from {
@@ -434,4 +435,13 @@
 .thin-scrollbar::-webkit-scrollbar-button:horizontal:start:decrement,
 .thin-scrollbar::-webkit-scrollbar-button:horizontal:end:increment {
   display: none;
+}
+
+.invoice-print p {
+  margin: 0;
+  padding: 0;
+  line-height: 1.4;
+}
+body .phone-details{
+  margin-top: 15px;
 }
