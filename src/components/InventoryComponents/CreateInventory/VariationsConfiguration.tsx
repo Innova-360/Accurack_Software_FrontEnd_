@@ -499,7 +499,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
 
   return (
     <div className="p-3 sm:p-4 border border-gray-200 rounded-lg">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 space-y-2 sm:space-y-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between sm:mb-4 space-y-2 sm:space-y-0">
         <h4 className="text-sm sm:text-base font-medium text-gray-900">
           Variation {index + 1}
         </h4>
@@ -556,31 +556,51 @@ const VariationCard: React.FC<VariationCardProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-            Brand Name (Optional)
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            PLU *
           </label>
           <input
             type="text"
-            value={variation.brandName || ""}
-            onChange={(e) =>
-              onUpdate(variation.id, "brandName", e.target.value)
-            }
-            className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
-            placeholder="Brand Name"
+            value={variation.plu || ""}
+            onChange={(e) => onUpdate(variation.id, "plu", e.target.value)}
+            className={getInputClassName(
+              "plu",
+              "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            )}
+            placeholder="PLU"
+            required
           />
         </div>
+
         <div>
-          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-            EAN (Optional)
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+            Minimum Order Value *
+            <span
+              className="text-xs text-gray-400 cursor-help"
+              title="Auto-calculated: Individual Item Selling Price × Minimum Selling Quantity"
+            >
+              (calc)
+            </span>
           </label>
           <input
-            type="text"
-            value={variation.ean || ""}
-            onChange={(e) => onUpdate(variation.id, "ean", e.target.value)}
-            className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
-            placeholder="EAN"
+            type="number"
+            value={variation.minOrderValue || 0}
+            onChange={(e) =>
+              onUpdate(
+                variation.id,
+                "minOrderValue",
+                parseFloat(e.target.value) || 0
+              )
+            }
+            className={getInputClassName(
+              "minOrderValue",
+              "w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent bg-blue-50"
+            )}
+            placeholder="Minimum Order Value"
+            title="This field is auto-calculated but can be manually edited"
           />
         </div>
+
         <div>
           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
             Individual Item Quantity *
@@ -667,6 +687,35 @@ const VariationCard: React.FC<VariationCardProps> = ({
             placeholder="Minimum Selling Quantity"
           />
         </div>
+
+        <div>
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+            EAN (Optional)
+          </label>
+          <input
+            type="text"
+            value={variation.ean || ""}
+            onChange={(e) => onUpdate(variation.id, "ean", e.target.value)}
+            className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+            placeholder="EAN"
+          />
+        </div>
+
+        <div>
+          {" "}
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Custom SKU (Optional)
+          </label>
+          <input
+            type="text"
+            value={variation.customSku}
+            onChange={(e) =>
+              onUpdate(variation.id, "customSku", e.target.value)
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+          />
+        </div>
+
         <div>
           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
             MSRP Price (Optional)
@@ -686,34 +735,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
             placeholder="MSRP Price"
           />
         </div>
-        <div>
-          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-            Minimum Order Value *
-            <span
-              className="text-xs text-gray-400 cursor-help"
-              title="Auto-calculated: Individual Item Selling Price × Minimum Selling Quantity"
-            >
-              (calc)
-            </span>
-          </label>
-          <input
-            type="number"
-            value={variation.minOrderValue || 0}
-            onChange={(e) =>
-              onUpdate(
-                variation.id,
-                "minOrderValue",
-                parseFloat(e.target.value) || 0
-              )
-            }
-            className={getInputClassName(
-              "minOrderValue",
-              "w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent bg-blue-50"
-            )}
-            placeholder="Minimum Order Value"
-            title="This field is auto-calculated but can be manually edited"
-          />
-        </div>
+
         <div>
           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
             Order Value Discount (Optional)
@@ -733,23 +755,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
             placeholder="Order Value Discount"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Description (Optional)
-          </label>
-          <input
-            type="text"
-            value={variation.description || ""}
-            onChange={(e) =>
-              onUpdate(variation.id, "description", e.target.value)
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
-            placeholder="Description"
-          />
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         <div>
           {" "}
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -820,38 +826,22 @@ const VariationCard: React.FC<VariationCardProps> = ({
                 </div>
               </div>
             )}
-        </div>{" "}
-        <div>
-          {" "}
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Custom SKU (Optional)
-          </label>
-          <input
-            type="text"
-            value={variation.customSku}
-            onChange={(e) =>
-              onUpdate(variation.id, "customSku", e.target.value)
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
-          />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            PLU *
-          </label>
-          <input
-            type="text"
-            value={variation.plu || ""}
-            onChange={(e) => onUpdate(variation.id, "plu", e.target.value)}
-            className={getInputClassName(
-              "plu",
-              "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
-            )}
-            placeholder="PLU"
-            required
-          />
-        </div>
-        
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Description (Optional)
+        </label>
+        <input
+          type="text"
+          value={variation.description || ""}
+          onChange={(e) =>
+            onUpdate(variation.id, "description", e.target.value)
+          }
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+          placeholder="Description"
+        />
       </div>
 
       {/* Pack Settings Toggle */}
