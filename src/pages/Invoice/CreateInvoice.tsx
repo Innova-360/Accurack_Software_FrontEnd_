@@ -19,6 +19,10 @@ import type { SaleRequestData, SaleItem } from "../../store/slices/salesSlice";
 import useRequireStore from "../../hooks/useRequireStore";
 import apiClient from "../../services/api";
 import { uploadImageToCloudinary } from "../../services/cloudinary";
+import html2canvas from "html2canvas-pro";
+import { jsPDF } from "jspdf";
+import { useRef } from 'react';
+import { Download } from "lucide-react";
 
 interface BusinessDetails {
   companyName: string;
@@ -87,6 +91,7 @@ interface InvoiceData {
 }
 
 const CreateInvoice: React.FC = () => {
+  const printRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
@@ -115,6 +120,45 @@ const CreateInvoice: React.FC = () => {
   });
   const [logoUploading, setLogoUploading] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleDownloadPdf = async () => {
+    const toastId = toast.loading("Generating PDF…");
+    try {
+      const element = printRef.current;
+      if (!element) {
+        return;
+      }
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+      });
+      const data = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const margin = 10;
+
+      const imgProperties = pdf.getImageProperties(data);
+      const pdfWidth = pdf.internal.pageSize.getWidth() - margin * 2;
+
+      const pdfHeight = (imgProperties.height * pdfWidth) / imgProperties.width;
+
+      pdf.addImage(data, 'PNG', margin, margin, pdfWidth, pdfHeight);
+      pdf.save("invoice.pdf");
+      toast.success("PDF downloaded!", { id: toastId });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF");
+      return;
+    }
+
+  };
 
 
 
@@ -208,16 +252,16 @@ const CreateInvoice: React.FC = () => {
     const mergedAddress = [
       businessFormData.streetAddress,
       businessFormData.city &&
-      businessFormData.state &&
-      businessFormData.zipCode
+        businessFormData.state &&
+        businessFormData.zipCode
         ? `${businessFormData.city}, ${businessFormData.state} ${businessFormData.zipCode}`
         : [
-            businessFormData.city,
-            businessFormData.state,
-            businessFormData.zipCode,
-          ]
-            .filter(Boolean)
-            .join(" "),
+          businessFormData.city,
+          businessFormData.state,
+          businessFormData.zipCode,
+        ]
+          .filter(Boolean)
+          .join(" "),
       businessFormData.country,
     ]
       .filter(Boolean)
@@ -262,12 +306,12 @@ const CreateInvoice: React.FC = () => {
         customerDetails.city && customerDetails.state && customerDetails.zipCode
           ? `${customerDetails.city}, ${customerDetails.state} ${customerDetails.zipCode}`
           : [
-              customerDetails.city,
-              customerDetails.state,
-              customerDetails.zipCode,
-            ]
-              .filter(Boolean)
-              .join(" "),
+            customerDetails.city,
+            customerDetails.state,
+            customerDetails.zipCode,
+          ]
+            .filter(Boolean)
+            .join(" "),
         customerDetails.country,
       ]
         .filter(Boolean)
@@ -334,6 +378,7 @@ const CreateInvoice: React.FC = () => {
       const response = await apiClient.post("/invoice", invoicePayload);
 
       setInvoiceResponse(response.data);
+
       toast.success("Invoice generated successfully!");
     } catch (error: any) {
       const errorMessage =
@@ -435,7 +480,7 @@ const CreateInvoice: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {invoiceData.products.map((product, idx: number) => (
+            {invoiceData.products.map((product) => (
               <tr key={product.id} className="border-b border-gray-100">
                 <td className="py-3 px-4">
                   <div>
@@ -467,8 +512,8 @@ const CreateInvoice: React.FC = () => {
                   <td className="py-3 px-4">
                     {product.packType === "BOX"
                       ? product.selectedProduct?.packs?.[0]?.minimumSellingQuantity ||
-                        product.selectedProduct?.packs?.[0]?.totalPacksQuantity ||
-                        "12"
+                      product.selectedProduct?.packs?.[0]?.totalPacksQuantity ||
+                      "12"
                       : "1"}
                   </td>
                 )}
@@ -957,6 +1002,8 @@ const CreateInvoice: React.FC = () => {
     hasPackProducts,
   });
 
+  { console.log("Invoice response", invoiceResponse) }
+
   const renderInvoicePreview = () => (
     <div className=" p-6">
       <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200 print:hidden">
@@ -969,6 +1016,14 @@ const CreateInvoice: React.FC = () => {
           Back to Edit
         </SpecialButton>
         <div className="flex gap-3">
+          <SpecialButton
+            variant="secondary"
+            onClick={handleDownloadPdf}
+            className="flex items-center gap-2  py-2 border border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            <Download size={16} />
+            Save as pdf
+          </SpecialButton>
           <SpecialButton
             variant="secondary"
             onClick={handleCreateSaleAndInvoice}
@@ -1045,11 +1100,11 @@ const CreateInvoice: React.FC = () => {
       <div
         className="invoice-print bg-white px-6 py-7 shadow-lg border border-gray-200"
         style={{
-          fontFamily: "'Courier New', Courier, monospace",
           backgroundColor: "#ffffff",
           color: "#000000",
           borderColor: "#e5e7eb",
         }}
+        ref={printRef}
       >
         <div
           className="border-t-4 border-black pb-4"
@@ -1096,19 +1151,9 @@ const CreateInvoice: React.FC = () => {
                 ?.slice(-6) || "000001"}
             </p>
             <p>
-              <strong>Account No:</strong>{" "}
-              {invoiceResponse?.data?.customerId?.slice(-8) || "00002234"}
-            </p>
-            <p>
               <strong>Issue Date:</strong>{" "}
               {new Date(
                 invoiceResponse?.data?.createdAt || Date.now()
-              ).toLocaleDateString()}
-            </p>
-            <p>
-              <strong>Due Date:</strong>{" "}
-              {new Date(
-                Date.now() + 30 * 24 * 60 * 60 * 1000
               ).toLocaleDateString()}
             </p>
           </div>
@@ -1119,33 +1164,19 @@ const CreateInvoice: React.FC = () => {
             <h3 className="font-semibold">Billed To</h3>
             <p>{invoiceResponse?.data?.customerName || customerDetails.name}</p>
             <p>
-              {invoiceResponse?.data?.customerAddress ||
-                (() => {
-                  const mergedAddress = [
-                    customerDetails.streetAddress,
-                    customerDetails.city &&
-                    customerDetails.state &&
-                    customerDetails.zipCode
-                      ? `${customerDetails.city}, ${customerDetails.state} ${customerDetails.zipCode}`
-                      : [
-                          customerDetails.city,
-                          customerDetails.state,
-                          customerDetails.zipCode,
-                        ]
-                          .filter(Boolean)
-                          .join(" "),
-                    customerDetails.country,
-                  ]
-                    .filter(Boolean)
-                    .join("\n");
-                  return mergedAddress || customerDetails.address;
-                })()}
+              {customerDetails.streetAddress}
             </p>
             <p>
-              {invoiceResponse?.data?.customerPhone || customerDetails.phone}
+              {`${customerDetails.city} , ${customerDetails.state} ${customerDetails.zipCode}`}
             </p>
             <p>
-              {invoiceResponse?.data?.customerMail || customerDetails.email}
+              {customerDetails.country}
+            </p>
+            <p className="phone-details">
+              Phone : {invoiceResponse?.data?.customerPhone || customerDetails.phone}
+            </p>
+            <p>
+              Email : {customerDetails.email}
             </p>
           </div>
           {customFields.filter((f) => f.name && f.value).length > 0 && (
@@ -1189,8 +1220,8 @@ const CreateInvoice: React.FC = () => {
             </div>
             <div className="w-1/6 text-center">
               {item.packType === "BOX" ? (
-                item.packs && item.packs.length > 0 
-                  ? item.packs[0].minimumSellingQuantity 
+                item.packs && item.packs.length > 0
+                  ? item.packs[0].minimumSellingQuantity
                   : item.selectedProduct?.packs?.[0]?.minimumSellingQuantity || "12"
               ) : (
                 "1"
@@ -1205,7 +1236,10 @@ const CreateInvoice: React.FC = () => {
           </div>
         ))}
 
-        <div className="flex justify-end mt-6 text-sm">
+        <div className="flex justify-between mt-24 text-sm items-end">
+          <div className="w-64 space-y-2 ">
+            <p className="text-center !pt-2 border-t-2 text-lg">Signature</p>
+          </div>
           <div className="w-64 space-y-2">
             <div className="flex justify-between">
               <span className="font-medium">Subtotal:</span>
@@ -1244,7 +1278,6 @@ const CreateInvoice: React.FC = () => {
       <div
         className=" bg-white px-6 py-7 shadow-lg border border-gray-200"
         style={{
-          fontFamily: "'Courier New', Courier, monospace",
           backgroundColor: "#ffffff",
           color: "#000000",
           borderColor: "#e5e7eb",
@@ -1295,19 +1328,9 @@ const CreateInvoice: React.FC = () => {
                 ?.slice(-6) || "000001"}
             </p>
             <p>
-              <strong>Account No:</strong>{" "}
-              {invoiceResponse?.data?.customerId?.slice(-8) || "00002234"}
-            </p>
-            <p>
               <strong>Issue Date:</strong>{" "}
               {new Date(
                 invoiceResponse?.data?.createdAt || Date.now()
-              ).toLocaleDateString()}
-            </p>
-            <p>
-              <strong>Due Date:</strong>{" "}
-              {new Date(
-                Date.now() + 30 * 24 * 60 * 60 * 1000
               ).toLocaleDateString()}
             </p>
           </div>
@@ -1318,33 +1341,19 @@ const CreateInvoice: React.FC = () => {
             <h3 className="font-semibold">Billed To</h3>
             <p>{invoiceResponse?.data?.customerName || customerDetails.name}</p>
             <p>
-              {invoiceResponse?.data?.customerAddress ||
-                (() => {
-                  const mergedAddress = [
-                    customerDetails.streetAddress,
-                    customerDetails.city &&
-                    customerDetails.state &&
-                    customerDetails.zipCode
-                      ? `${customerDetails.city}, ${customerDetails.state} ${customerDetails.zipCode}`
-                      : [
-                          customerDetails.city,
-                          customerDetails.state,
-                          customerDetails.zipCode,
-                        ]
-                          .filter(Boolean)
-                          .join(" "),
-                    customerDetails.country,
-                  ]
-                    .filter(Boolean)
-                    .join("\n");
-                  return mergedAddress || customerDetails.address;
-                })()}
+              {customerDetails.streetAddress}
             </p>
             <p>
-              {invoiceResponse?.data?.customerPhone || customerDetails.phone}
+              {`${customerDetails.city} , ${customerDetails.state} ${customerDetails.zipCode}`}
             </p>
             <p>
-              {invoiceResponse?.data?.customerMail || customerDetails.email}
+              {customerDetails.country}
+            </p>
+            <p className="mt-3">
+              Phone : {invoiceResponse?.data?.customerPhone || customerDetails.phone}
+            </p>
+            <p>
+              Email : {customerDetails.email}
             </p>
           </div>
           {customFields.filter((f) => f.name && f.value).length > 0 && (
@@ -1388,8 +1397,8 @@ const CreateInvoice: React.FC = () => {
             </div>
             <div className="w-1/6 text-center">
               {item.packType === "BOX" ? (
-                item.packs && item.packs.length > 0 
-                  ? item.packs[0].minimumSellingQuantity 
+                item.packs && item.packs.length > 0
+                  ? item.packs[0].minimumSellingQuantity
                   : item.selectedProduct?.packs?.[0]?.minimumSellingQuantity || "12"
               ) : (
                 "1"
@@ -1404,7 +1413,10 @@ const CreateInvoice: React.FC = () => {
           </div>
         ))}
 
-        <div className="flex justify-end mt-6 text-sm">
+        <div className="flex justify-between mt-24 text-sm items-end">
+          <div className="w-64 space-y-2 ">
+            <p className="text-center !pt-2 border-t-2 text-lg">Signature</p>
+          </div>
           <div className="w-64 space-y-2">
             <div className="flex justify-between">
               <span className="font-medium">Subtotal:</span>
