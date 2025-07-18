@@ -27,8 +27,28 @@ export const fetchInvoices = createAsyncThunk<
 >("invoices/fetchInvoices", async ({ storeId }, { rejectWithValue }) => {
   try {
     const response = await apiClient.get(`/invoice/store/${storeId}`);
-
-    return response.data;
+    
+    // Handle different API response structures
+    const data = response.data;
+    
+    // If data is directly an array
+    if (Array.isArray(data)) {
+      return data;
+    }
+    
+    // If data has a data property that contains the array
+    if (data && Array.isArray(data.data)) {
+      return data.data;
+    }
+    
+    // If data has an invoices property that contains the array
+    if (data && Array.isArray(data.invoices)) {
+      return data.invoices;
+    }
+    
+    // If none of the above, return empty array to prevent errors
+    console.warn("Unexpected API response structure for invoices:", data);
+    return [];
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message || "Failed to fetch invoices"
@@ -75,7 +95,8 @@ const invoiceSlice = createSlice({
       })
       .addCase(fetchInvoices.fulfilled, (state, action) => {
         state.loading = false;
-        state.invoices = action.payload;
+        // Ensure we always set an array
+        state.invoices = Array.isArray(action.payload) ? action.payload : [];
       })
       .addCase(fetchInvoices.rejected, (state, action) => {
         state.loading = false;

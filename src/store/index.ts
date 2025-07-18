@@ -24,6 +24,7 @@ import orderProcessingReducer from "./slices/orderProcessingSlice";
 import orderTrackingReducer from "./slices/orderTrackingSlice";
 import businessReducer from "./slices/businessSlice";
 import invoiceReducer from "./slices/invoiceSlice";
+import draftReducer from "./slices/draftSlice";
 
 export const store = configureStore({
   reducer: {
@@ -32,6 +33,7 @@ export const store = configureStore({
     ui: uiReducer,
     search: searchReducer,
     invoices: invoiceReducer,
+    drafts: draftReducer,
     stores: storeReducer,
     suppliers: supplierReducer,
     employees: employeeReducer,

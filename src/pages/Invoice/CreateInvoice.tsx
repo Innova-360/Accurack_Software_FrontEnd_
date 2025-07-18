@@ -8,17 +8,19 @@ import {
   FaCloudUploadAlt,
   FaTrash,
   FaPlus,
+  FaSave,
 } from "react-icons/fa";
 import { FiLoader } from "react-icons/fi";
 import toast from "react-hot-toast";
 import Header from "../../components/Header";
 import { SpecialButton } from "../../components/buttons";
 import { createSale } from "../../store/slices/salesSlice";
-import type { RootState } from "../../store";
+import type { RootState, AppDispatch } from "../../store";
 import type { SaleRequestData, SaleItem } from "../../store/slices/salesSlice";
 import useRequireStore from "../../hooks/useRequireStore";
 import apiClient from "../../services/api";
 import { uploadImageToCloudinary } from "../../services/cloudinary";
+import { createDraftFromSale } from "../../store/slices/draftSlice";
 
 interface BusinessDetails {
   companyName: string;
@@ -36,6 +38,8 @@ interface BusinessDetails {
 
 interface InvoiceData {
   customerDetails: {
+    zipCode: any;
+    streetAddress: any;
     name: string;
     phone: string;
     email: string;
@@ -78,7 +82,7 @@ interface InvoiceData {
 const CreateInvoice: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const currentStore = useRequireStore();
   const { user } = useSelector((state: RootState) => state.user);
   const [customFields, setCustomFields] = useState([{ name: "", value: "" }]);
@@ -88,6 +92,7 @@ const CreateInvoice: React.FC = () => {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isCreatingSale, setIsCreatingSale] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [invoiceResponse, setInvoiceResponse] = useState<any>(null);
   const [showBusinessForm, setShowBusinessForm] = useState(false);
   const [businessFormData, setBusinessFormData] = useState({
@@ -339,6 +344,148 @@ const CreateInvoice: React.FC = () => {
     navigate(`/store/${currentStore?.id}/sales`);
   };
 
+  const handleSaveAsDraft = async () => {
+    if (!currentStore?.id) {
+      toast.error("Store information is missing");
+      return;
+    }
+
+    if (!user?.clientId) {
+      toast.error("User information is missing");
+      return;
+    }
+
+    // Validate minimum required data for draft
+    if (!invoiceData.customerDetails.name.trim()) {
+      toast.error("Customer name is required to save as draft");
+      return;
+    }
+
+    if (!invoiceData.customerDetails.phone.trim()) {
+      toast.error("Customer phone is required to save as draft");
+      return;
+    }
+
+    if (invoiceData.products.length === 0) {
+      toast.error("At least one product is required to save as draft");
+      return;
+    }
+
+    setIsSavingDraft(true);
+
+    try {
+      // First, create a sale with the current form data
+      const saleItems: SaleItem[] = invoiceData.products.map((product) => ({
+        productId: product.productId || "",
+        productName: product.name,
+        quantity: product.quantity,
+        sellingPrice: product.price,
+        totalPrice: product.total,
+        pluUpc: product.pluUpc || product.plu || product.sku || "",
+        packType: product.packType || "ITEM",
+      }));
+
+      // Merge customer address fields into a single address string
+      const customerDetails = invoiceData.customerDetails;
+      const mergedCustomerAddress = [
+        customerDetails.streetAddress,
+        customerDetails.city && customerDetails.state && customerDetails.zipCode
+          ? `${customerDetails.city}, ${customerDetails.state} ${customerDetails.zipCode}`
+          : [
+              customerDetails.city,
+              customerDetails.state,
+              customerDetails.zipCode,
+            ]
+              .filter(Boolean)
+              .join(" "),
+        customerDetails.country,
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const finalCustomerAddress =
+        mergedCustomerAddress || customerDetails.address;
+
+      const saleData: SaleRequestData = {
+        customerPhone: customerDetails.phone.trim(),
+        customerData: {
+          customerName: customerDetails.name.trim(),
+          customerAddress: finalCustomerAddress.trim(),
+          phoneNumber: customerDetails.phone.trim(),
+          telephoneNumber: customerDetails.phone.trim(),
+          customerMail: customerDetails.email.trim(),
+          storeId: currentStore.id,
+          clientId: user.clientId,
+        },
+        storeId: currentStore.id,
+        clientId: user.clientId,
+        paymentMethod: (invoiceData.paymentMethod || "CASH") as
+          | "CASH"
+          | "CARD"
+          | "BANK_TRANSFER"
+          | "CHECK"
+          | "DIGITAL_WALLET",
+        totalAmount: Math.round(invoiceData.finalTotal * 100) / 100,
+        tax: Math.round(invoiceData.taxAmount * 100) / 100,
+        allowance: invoiceData.allowance || 0,
+        cashierName:
+          user.firstName && user.lastName
+            ? `${user.firstName} ${user.lastName}`
+            : user.email || "Current User",
+        generateInvoice: false,
+        source: "manual",
+        status: "DRAFT", // Set status as DRAFT for draft saves
+        saleItems,
+      };
+
+      console.log("🔄 Creating sale for draft:", saleData);
+
+      const saleResponse = await (dispatch as any)(
+        createSale(saleData)
+      ).unwrap();
+
+      const saleId =
+        saleResponse?.sale?.id ||
+        saleResponse?.data?.sale?.id ||
+        saleResponse?.id;
+
+      if (!saleId) {
+        throw new Error("Sale ID not found in response");
+      }
+
+      // Now create a draft from the sale
+      const draftData = {
+        saleId: String(saleId),
+        storeId: currentStore.id,
+        notes: `Draft saved from invoice creation for ${invoiceData.customerDetails.name}${invoiceData.notes ? `\n\nOriginal Notes: ${invoiceData.notes}` : ""}`,
+        customFields: customFields
+          .filter((f) => f.name && f.value)
+          .map((f) => ({
+            name: f.name,
+            value: f.value,
+          })),
+      };
+
+      console.log("🔄 Creating draft from sale:", draftData);
+
+      const result = await dispatch(createDraftFromSale(draftData)).unwrap();
+      
+      toast.success("Invoice saved as draft successfully!");
+
+      // Navigate to the drafts list page with refresh state
+      navigate(`/store/${currentStore.id}/drafts`, { 
+        state: { refreshDrafts: true },
+        replace: true 
+      });
+    } catch (error: unknown) {
+      console.error("Error saving invoice as draft:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(`Failed to save as draft: ${errorMessage}`);
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
   if (!invoiceData) {
     return <div>Loading...</div>;
   }
@@ -470,13 +617,18 @@ const CreateInvoice: React.FC = () => {
         >
           Previous
         </SpecialButton>
-        <SpecialButton
-          variant="primary"
-          onClick={handleProductDetailsNext}
-          className="px-6 py-2 bg-[#03414C] hover:bg-[#025561] text-white"
-        >
-          Next Step
-        </SpecialButton>
+        
+        <div className="flex gap-3">
+          
+          
+          <SpecialButton
+            variant="primary"
+            onClick={handleProductDetailsNext}
+            className="px-6 py-2 bg-[#03414C] hover:bg-[#025561] text-white"
+          >
+            Next Step
+          </SpecialButton>
+        </div>
       </div>
     </div>
   );

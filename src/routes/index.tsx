@@ -54,6 +54,9 @@ import ChangePassword from "../pages/ChangePassword/ChangePassword";
 import NotFound from "../pages/NotFound/NotFound";
 import Invoice from "../pages/Invoice/invoices";
 import InvoiceId from "../pages/Invoice/InvoiceID";
+import Drafts from "../pages/Invoice/Drafts";
+import DraftDetail from "../pages/Invoice/DraftDetail";
+import DraftEdit from "../pages/Invoice/DraftEdit";
 import InventoryDashboard from "../pages/Inventory/InventoryDashboard";
 import ScanInventory from "../pages/Inventory/ScanInventory";
 import DeleteInventory from "../pages/Inventory/DeleteInventory";
@@ -387,6 +390,30 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <InvoiceId />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/drafts"
+        element={
+          <ProtectedRoute>
+            <Drafts />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/draft/:draftId"
+        element={
+          <ProtectedRoute>
+            <DraftDetail />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/store/:id/draft/:draftId/edit"
+        element={
+          <ProtectedRoute>
+            <DraftEdit />
           </ProtectedRoute>
         }
       />

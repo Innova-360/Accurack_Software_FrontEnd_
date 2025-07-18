@@ -1,25 +1,29 @@
 import React, { useState, useEffect } from "react";
-import { Search, Filter, User, FileText, Eye } from "lucide-react";
+import { Search, Filter, User, FileText, Eye, FilePlus, Save, Building2 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import type { InvoiceResponseData } from "../../types/invoice";
 import { fetchInvoices } from "../../store/slices/invoiceSlice";
+import { createDraftFromInvoice } from "../../store/slices/draftSlice";
 import { useNavigate, useParams } from "react-router-dom";
 import Header from "../../components/Header";
 import { SpecialButton } from "../../components/buttons";
 import Loading from "../../components/Loading";
+import toast from "react-hot-toast";
+import ConvertToDraftModal from "../../components/modals/ConvertToDraftModal";
 
 const Invoices: React.FC = () => {
   const dispatch = useAppDispatch();
   const { invoices, loading } = useAppSelector((state) => state.invoices);
 
   const navigate = useNavigate();
-  const { data } = invoices;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   // const [dateFilter, setDateFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [showConvertModal, setShowConvertModal] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceResponseData | null>(null);
   const { id } = useParams();
 
   // Mock data for demonstration - replace with actual API call
@@ -59,7 +63,7 @@ const Invoices: React.FC = () => {
     }).format(amount);
   };
 
-  const filteredInvoices = (data ?? []).filter(
+  const filteredInvoices = Array.isArray(invoices) ? invoices.filter(
     (invoice: InvoiceResponseData) => {
       const matchesSearch =
         invoice.invoiceNumber
@@ -75,7 +79,7 @@ const Invoices: React.FC = () => {
 
       return matchesSearch && matchesStatus;
     }
-  );
+  ) : [];
 
   // Pagination logic
   const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage);
@@ -113,6 +117,46 @@ const Invoices: React.FC = () => {
     navigate(`/store/${id}/invoice/${invoiceId}`);
   };
 
+  const handleCreateInvoice = () => {
+    navigate(`/store/${id}/invoice/new`);
+  };
+  const handleSaveAsDraft = (invoice: InvoiceResponseData) => {
+    setSelectedInvoice(invoice);
+    setShowConvertModal(true);
+  };
+
+  const handleConfirmConvertToDraft = async (notes: string, dueDate?: string) => {
+    if (!selectedInvoice) return;
+
+    try {
+      const draftData = {
+        invoiceId: selectedInvoice.id,
+        notes: notes.trim(),
+        dueDate: dueDate,
+      };
+
+      console.log("🔄 Converting invoice to draft:", draftData);
+
+      const result = await dispatch(createDraftFromInvoice(draftData)).unwrap();
+      
+      toast.success(`Invoice ${selectedInvoice.invoiceNumber} saved as draft successfully!`);
+      
+      // Close modal and reset state
+      setShowConvertModal(false);
+      setSelectedInvoice(null);
+      
+      // Navigate to the new draft
+      navigate(`/store/${id}/draft/${result.id}`);
+    } catch (error: unknown) {
+      console.error("Error converting invoice to draft:", error);
+      toast.error(`Failed to save invoice as draft: ${error}`);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowConvertModal(false);
+    setSelectedInvoice(null);
+  };
 
   if (loading) {
     return <Loading label="Invoices" />;
@@ -141,6 +185,22 @@ const Invoices: React.FC = () => {
                   </span>
                   <span className=" ml-1">Total Invoices</span>
                 </div>
+                <SpecialButton
+                  variant="primary"
+                  onClick={handleCreateInvoice}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-[#043E49] border  rounded-lg hover:bg-[#032e36] transition-colors"
+                >
+                  <FilePlus className="w-4 h-4" />
+                  New Invoice
+                </SpecialButton>
+                <SpecialButton
+                  variant="secondary"
+                  onClick={() => navigate(`/store/${id}/drafts`)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white inline-flex items-center gap-2"
+                >
+                  <FilePlus className="w-4 h-4" />
+                  View Drafts
+                </SpecialButton>
               </div>
             </div>
           </div>
@@ -227,7 +287,7 @@ const Invoices: React.FC = () => {
                       {/* Invoice Details */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          {/* {invoice.logoUrl ? (
+                          {invoice.logoUrl ? (
                                                     <img
                                                         src={invoice.logoUrl}
                                                         alt="Business Logo"
@@ -237,7 +297,7 @@ const Invoices: React.FC = () => {
                                                     <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
                                                         <Building2 className="w-5 h-5 text-blue-600" />
                                                     </div>
-                                                )} */}
+                                                )}
                           <div>
                             <div className="text-sm font-medium text-gray-900">
                               {invoice.invoiceNumber}
@@ -308,14 +368,25 @@ const Invoices: React.FC = () => {
 
                       {/* Actions  */}
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <SpecialButton
-                          variant="secondary"
-                          onClick={() => handleViewInvoice(invoice.id)}
-                          className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-[#043E49] border  rounded-lg hover:bg-[#032e36] transition-colors"
-                        >
-                          <Eye className="w-4 h-4" />
-                          View
-                        </SpecialButton>
+                        <div className="flex items-center gap-2">
+                          <SpecialButton
+                            variant="secondary"
+                            onClick={() => handleViewInvoice(invoice.id)}
+                            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-[#043E49] border  rounded-lg hover:bg-[#032e36] transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View
+                          </SpecialButton>
+                          
+                          <SpecialButton
+                            variant="secondary"
+                            onClick={() => handleSaveAsDraft(invoice)}
+                            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-green-600 border rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            <Save className="w-4 h-4" />
+                            Save as Draft
+                          </SpecialButton>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -428,6 +499,17 @@ const Invoices: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Convert to Draft Modal */}
+      {selectedInvoice && (
+        <ConvertToDraftModal
+          isOpen={showConvertModal}
+          onClose={handleCloseModal}
+          onConfirm={handleConfirmConvertToDraft}
+          invoice={selectedInvoice}
+          loading={loading}
+        />
+      )}
     </>
   );
 };

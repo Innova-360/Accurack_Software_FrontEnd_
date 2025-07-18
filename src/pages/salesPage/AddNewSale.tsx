@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { FaTrash, FaArrowLeft, FaSearch } from "react-icons/fa";
+import { FaTrash, FaArrowLeft, FaSearch, FaSave } from "react-icons/fa";
+import { FiLoader } from "react-icons/fi";
 import toast from "react-hot-toast";
 import Header from "../../components/Header";
 import { SpecialButton } from "../../components/buttons";
 import { fetchProductsPaginated } from "../../store/slices/productsSlice";
 import { createSale } from "../../store/slices/salesSlice";
+import { createDirectDraft } from "../../store/slices/draftSlice";
 import { fetchUser } from "../../store/slices/userSlice";
 import { fetchCustomers } from "../../store/slices/customerSlice";
 import useRequireStore from "../../hooks/useRequireStore";
 import type { RootState, AppDispatch } from "../../store";
 import type { SaleRequestData, SaleItem } from "../../store/slices/salesSlice";
+import type { CreateDirectDraftRequest, DraftItem } from "../../types/draft";
 import { useDebounce } from "../../components/TaxComponents/useDebounce";
 import { useSearchProductsQuery } from "../../store/slices/productsSlice";
 
@@ -57,6 +60,7 @@ const AddNewSale: React.FC = () => {
   const { customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
 
   const [allowance, setAllowance] = useState(0);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
 
 
   // Form state
@@ -636,6 +640,127 @@ const AddNewSale: React.FC = () => {
 
   const handleCancel = () => {
     navigate(-1);
+  };
+
+  const handleSaveAsDraft = async () => {
+    // Validate minimum required fields for draft
+    if (!customerName.trim()) {
+      toast.error("Customer name is required to save as draft");
+      return;
+    }
+
+    if (!phoneNumber.trim()) {
+      toast.error("Phone number is required to save as draft");
+      return;
+    }
+
+    if (products.some((p) => !p.name.trim() || p.price <= 0)) {
+      toast.error("Please fill in all product details");
+      return;
+    }
+
+    if (!currentStore?.id) {
+      toast.error("Store information is missing");
+      return;
+    }
+
+    if (!user?.clientId) {
+      toast.error("User information is missing");
+      return;
+    }
+
+    setIsSavingDraft(true);
+
+    try {
+      // Combine country code and phone number
+      const fullPhoneNumber = countryCode.startsWith("+") 
+        ? `${countryCode}${phoneNumber}` 
+        : `+${countryCode}${phoneNumber}`;
+
+      // Create draft items according to new API structure
+      const draftItems: DraftItem[] = products
+        .filter((p) => p.name.trim() && p.price > 0)
+        .map((product) => ({
+          name: product.selectedProduct?.name || product.name,
+          description: `${product.selectedProduct?.sku ? `SKU: ${product.selectedProduct.sku}` : ''} ${product.selectedProduct?.plu ? `PLU: ${product.selectedProduct.plu}` : ''}`.trim() || undefined,
+          quantity: product.quantity,
+          unitPrice: product.price,
+          totalAmount: product.total,
+          productId: product.productId || product.selectedProduct?.id,
+        }));
+
+      // For now, we'll use a placeholder customer ID or create one
+      // In a real implementation, you might need to create the customer first
+      const customerId = await getOrCreateCustomerId();
+
+      // Prepare direct draft data according to new API structure
+      const draftData: CreateDirectDraftRequest = {
+        customerId,
+        storeId: currentStore.id,
+        items: draftItems,
+        paymentMethod,
+        tax: taxAmount,
+        allowance,
+        notes: `Draft created from sales page for ${customerName.trim()}${notes ? `\n\nSale Notes: ${notes}` : ""}`,
+        customFields: [
+          {
+            name: "customerName",
+            value: customerName.trim()
+          },
+          {
+            name: "phoneNumber", 
+            value: fullPhoneNumber
+          },
+          {
+            name: "email",
+            value: email.trim()
+          },
+          {
+            name: "address",
+            value: getFullAddress()
+          },
+          {
+            name: "subtotal",
+            value: subtotal.toString()
+          },
+          {
+            name: "discount",
+            value: discountAmount.toString()
+          },
+          {
+            name: "discountType",
+            value: discountType
+          }
+        ].filter(field => field.value.trim() !== "")
+      };
+
+      console.log("🔄 Saving as direct draft:", draftData);
+
+      const result = await dispatch(createDirectDraft(draftData)).unwrap();
+      
+      toast.success("Draft saved successfully!");
+
+      // Navigate to the drafts list page
+      navigate(`/store/${currentStore.id}/drafts`);
+    } catch (error: unknown) {
+      console.error("Error saving as draft:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(`Failed to save as draft: ${errorMessage}`);
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
+  // Helper function to create customer if needed
+  const getOrCreateCustomerId = async (): Promise<string> => {
+    if (selectedCustomerId && selectedCustomerId !== "new" && selectedCustomerId !== "") {
+      return selectedCustomerId;
+    }
+    
+    // If no existing customer selected, we'll use a placeholder approach
+    // In a real implementation, you might want to create the customer first
+    // For now, we'll encode customer info in the custom fields
+    return "direct-draft-customer";
   };
 
   useEffect(() => {
@@ -1427,20 +1552,26 @@ const AddNewSale: React.FC = () => {
                 </SpecialButton>
 
                 <SpecialButton
+                  variant="secondary"
+                  onClick={handleSaveAsDraft}
+                  disabled={isSavingDraft}
+                  className="w-full border border-blue-300 text-blue-700 hover:bg-blue-50 py-3 flex items-center justify-center gap-2"
+                >
+                  {isSavingDraft ? (
+                    <FiLoader className="animate-spin" size={16} />
+                  ) : (
+                    <FaSave size={16} />
+                  )}
+                  {isSavingDraft ? "Saving Draft..." : "Save as Draft"}
+                </SpecialButton>
+
+                <SpecialButton
                   variant="primary"
                   onClick={handleCreateInvoice}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
                 >
                   Create Sale and make Invoice
                 </SpecialButton>
-
-                {/* <SpecialButton
-                  variant="secondary"
-                  onClick={handleSaveDraft}
-                  className="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 py-3"
-                >
-                  Save as Draft
-                </SpecialButton> */}
 
                 <SpecialButton
                   variant="modal-cancel"

@@ -9,6 +9,7 @@ export interface SaleItem {
   sellingPrice: number;
   totalPrice: number;
   pluUpc: string;
+  packType?: "ITEM" | "BOX";
 }
 
 export interface SaleRequestData {
