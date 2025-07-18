@@ -99,7 +99,9 @@ const CreateInvoice: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.user);
   const [customFields, setCustomFields] = useState([{ name: "", value: "" }]);
   const [checkingBusinessDetails, setCheckingBusinessDetails] = useState(false);
+  const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
+  
   const invoiceData = location.state?.invoiceData as InvoiceData;
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -367,6 +369,7 @@ const CreateInvoice: React.FC = () => {
 
       const invoicePayload = {
         saleId: String(saleId),
+        invoiceNumber,
         customFields: customFields
           .filter((f) => f.name && f.value)
           .map((f) => ({
@@ -374,11 +377,8 @@ const CreateInvoice: React.FC = () => {
             value: f.value,
           })),
       };
-
       const response = await apiClient.post("/invoice", invoicePayload);
-
       setInvoiceResponse(response.data);
-
       toast.success("Invoice generated successfully!");
     } catch (error: any) {
       const errorMessage =
@@ -1004,6 +1004,8 @@ const CreateInvoice: React.FC = () => {
 
   { console.log("Invoice response", invoiceResponse) }
 
+  
+
   const renderInvoicePreview = () => (
     <div className=" p-6">
       <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200 print:hidden">
@@ -1145,10 +1147,7 @@ const CreateInvoice: React.FC = () => {
           <div className="text-right text-sm space-y-1">
             <p>
               <strong>Invoice No:</strong>{" "}
-              {invoiceResponse?.data?.invoiceNumber
-                ?.split("-")
-                .pop()
-                ?.slice(-6) || "000001"}
+              {invoiceNumber.slice(0, 9)}
             </p>
             <p>
               <strong>Issue Date:</strong>{" "}
@@ -1322,10 +1321,7 @@ const CreateInvoice: React.FC = () => {
           <div className="text-right text-sm space-y-1">
             <p>
               <strong>Invoice No:</strong>{" "}
-              {invoiceResponse?.data?.invoiceNumber
-                ?.split("-")
-                .pop()
-                ?.slice(-6) || "000001"}
+              {invoiceNumber.slice(0, 9)}
             </p>
             <p>
               <strong>Issue Date:</strong>{" "}
