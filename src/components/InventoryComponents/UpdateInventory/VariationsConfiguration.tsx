@@ -524,17 +524,23 @@ const VariationCard: React.FC<VariationCardProps> = ({
             Individual Item Quantity *
           </label>
           <input
-            type="number"
-            value={variation.individualItemQuantity || 1}
-            onChange={(e) =>
-              onUpdate(
-                variation.id,
-                "individualItemQuantity",
-                parseInt(e.target.value) || 1
-              )
-            }
+            type="text"
+            value={variation.individualItemQuantity || ""}
+            onChange={(e) => {
+              // Only allow integer input
+              const numericValue = e.target.value.replace(/[^0-9]/g, "");
+              onUpdate(variation.id, "individualItemQuantity", numericValue ? parseInt(numericValue) : "");
+            }}
+            onKeyPress={(e) => {
+              if (!/[0-9]/.test(e.key)) {
+                e.preventDefault();
+              }
+            }}
             className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
             placeholder="Individual Item Quantity"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={10}
           />
         </div>
         <div>
@@ -542,18 +548,28 @@ const VariationCard: React.FC<VariationCardProps> = ({
             Individual Item Cost *
           </label>
           <input
-            type="number"
-            step="0.01"
-            value={variation.itemCost || 0}
-            onChange={(e) =>
-              onUpdate(
-                variation.id,
-                "itemCost",
-                parseFloat(e.target.value) || 0
-              )
-            }
+            type="text"
+            value={variation.itemCost || ""}
+            onChange={(e) => {
+              // Allow decimals: only digits and one dot
+              let value = e.target.value.replace(/[^0-9.]/g, "");
+              value = value.replace(/(\..*)\./g, '$1'); // Only one dot
+              onUpdate(variation.id, "itemCost", value ? parseFloat(value) : "");
+            }}
+            onKeyPress={(e) => {
+              if (!/[0-9.]/.test(e.key)) {
+                e.preventDefault();
+              }
+              // Prevent more than one dot
+              if (e.key === '.' && e.currentTarget.value.includes('.')) {
+                e.preventDefault();
+              }
+            }}
             className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
             placeholder="Individual Item Cost"
+            inputMode="decimal"
+            pattern="[0-9.]*"
+            maxLength={12}
           />
         </div>
         <div>
@@ -561,18 +577,26 @@ const VariationCard: React.FC<VariationCardProps> = ({
             Individual Item Selling Price *
           </label>
           <input
-            type="number"
-            step="0.01"
-            value={variation.itemSellingCost || 0}
-            onChange={(e) =>
-              onUpdate(
-                variation.id,
-                "itemSellingCost",
-                parseFloat(e.target.value) || 0
-              )
-            }
+            type="text"
+            value={variation.itemSellingCost || ""}
+            onChange={(e) => {
+              let value = e.target.value.replace(/[^0-9.]/g, "");
+              value = value.replace(/(\..*)\./g, '$1');
+              onUpdate(variation.id, "itemSellingCost", value ? parseFloat(value) : "");
+            }}
+            onKeyPress={(e) => {
+              if (!/[0-9.]/.test(e.key)) {
+                e.preventDefault();
+              }
+              if (e.key === '.' && e.currentTarget.value.includes('.')) {
+                e.preventDefault();
+              }
+            }}
             className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
             placeholder="Individual Item Selling Price"
+            inputMode="decimal"
+            pattern="[0-9.]*"
+            maxLength={12}
           />
         </div>
         <div>
@@ -580,36 +604,49 @@ const VariationCard: React.FC<VariationCardProps> = ({
             Minimum Selling Quantity *
           </label>
           <input
-            type="number"
-            value={variation.minSellingQuantity || 1}
-            onChange={(e) =>
-              onUpdate(
-                variation.id,
-                "minSellingQuantity",
-                parseInt(e.target.value) || 1
-              )
-            }
+            type="text"
+            value={variation.minSellingQuantity || ""}
+            onChange={(e) => {
+              const numericValue = e.target.value.replace(/[^0-9]/g, "");
+              onUpdate(variation.id, "minSellingQuantity", numericValue ? parseInt(numericValue) : "");
+            }}
+            onKeyPress={(e) => {
+              if (!/[0-9]/.test(e.key)) {
+                e.preventDefault();
+              }
+            }}
             className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
             placeholder="Minimum Selling Quantity"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={10}
           />
         </div>
         <div>
           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-            MSRP Price
+            MSRP Price (Optional)
           </label>
           <input
-            type="number"
-            step="0.01"
-            value={variation.msrpPrice || 0}
-            onChange={(e) =>
-              onUpdate(
-                variation.id,
-                "msrpPrice",
-                parseFloat(e.target.value) || 0
-              )
-            }
+            type="text"
+            value={variation.msrpPrice || ""}
+            onChange={(e) => {
+              let value = e.target.value.replace(/[^0-9.]/g, "");
+              value = value.replace(/(\..*)\./g, '$1');
+              onUpdate(variation.id, "msrpPrice", value ? parseFloat(value) : "");
+            }}
+            onKeyPress={(e) => {
+              if (!/[0-9.]/.test(e.key)) {
+                e.preventDefault();
+              }
+              if (e.key === '.' && e.currentTarget.value.includes('.')) {
+                e.preventDefault();
+              }
+            }}
             className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
             placeholder="MSRP Price"
+            inputMode="decimal"
+            pattern="[0-9.]*"
+            maxLength={12}
           />
         </div>
         <div>
@@ -623,17 +660,26 @@ const VariationCard: React.FC<VariationCardProps> = ({
             </span>
           </label>
           <input
-            type="number"
-            value={variation.minOrderValue || 0}
-            onChange={(e) =>
-              onUpdate(
-                variation.id,
-                "minOrderValue",
-                parseFloat(e.target.value) || 0
-              )
-            }
+            type="text"
+            value={variation.minOrderValue || ""}
+            onChange={(e) => {
+              let value = e.target.value.replace(/[^0-9.]/g, "");
+              value = value.replace(/(\..*)\./g, '$1');
+              onUpdate(variation.id, "minOrderValue", value ? parseFloat(value) : "");
+            }}
+            onKeyPress={(e) => {
+              if (!/[0-9.]/.test(e.key)) {
+                e.preventDefault();
+              }
+              if (e.key === '.' && e.currentTarget.value.includes('.')) {
+                e.preventDefault();
+              }
+            }}
             className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent bg-blue-50"
             placeholder="Minimum Order Value"
+            inputMode="decimal"
+            pattern="[0-9.]*"
+            maxLength={12}
             title="This field is auto-calculated but can be manually edited"
           />
         </div>
@@ -642,18 +688,26 @@ const VariationCard: React.FC<VariationCardProps> = ({
             Order Value Discount (Optional)
           </label>
           <input
-            type="number"
-            step="0.01"
-            value={variation.orderValueDiscount || 0}
-            onChange={(e) =>
-              onUpdate(
-                variation.id,
-                "orderValueDiscount",
-                parseFloat(e.target.value) || 0
-              )
-            }
+            type="text"
+            value={variation.orderValueDiscount || ""}
+            onChange={(e) => {
+              let value = e.target.value.replace(/[^0-9.]/g, "");
+              value = value.replace(/(\..*)\./g, '$1');
+              onUpdate(variation.id, "orderValueDiscount", value ? parseFloat(value) : "");
+            }}
+            onKeyPress={(e) => {
+              if (!/[0-9.]/.test(e.key)) {
+                e.preventDefault();
+              }
+              if (e.key === '.' && e.currentTarget.value.includes('.')) {
+                e.preventDefault();
+              }
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
             placeholder="Order Value Discount"
+            inputMode="decimal"
+            pattern="[0-9.]*"
+            maxLength={12}
           />
         </div>
         <div>
@@ -765,9 +819,22 @@ const VariationCard: React.FC<VariationCardProps> = ({
           <input
             type="text"
             value={variation.plu || ""}
-            onChange={(e) => onUpdate(variation.id, "plu", e.target.value)}
+            onChange={(e) => {
+              // Only allow numeric input
+              const numericValue = e.target.value.replace(/[^0-9]/g, "");
+              onUpdate(variation.id, "plu", numericValue);
+            }}
+            onKeyPress={(e) => {
+              // Prevent non-numeric key presses
+              if (!/[0-9]/.test(e.key)) {
+                e.preventDefault();
+              }
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
             placeholder="PLU"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={20} // Optional: set a reasonable max length
           />
         </div>
         
@@ -822,7 +889,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
                       Pack Qty<span className="text-red-500">*</span>
                     </label>
                     <input
-                      type="number"
+                      type="text"
                       min={1}
                       placeholder="Qty"
                       value={discount.quantity}
@@ -834,6 +901,11 @@ const VariationCard: React.FC<VariationCardProps> = ({
                           Math.max(1, parseInt(e.target.value) || 1)
                         )
                       }
+                      onKeyPress={(e) => {
+                        if (!/[0-9]/.test(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
                       className="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
                       required
                     />
@@ -864,7 +936,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
                     </label>
                     <div className="relative flex items-center">
                       <input
-                        type="number"
+                        type="text"
                         min={0.01}
                         step="0.01"
                         placeholder="Value"
@@ -877,6 +949,14 @@ const VariationCard: React.FC<VariationCardProps> = ({
                             Math.max(0, parseFloat(e.target.value) || 0)
                           )
                         }
+                        onKeyPress={(e) => {
+                          if (!/[0-9.]/.test(e.key)) {
+                            e.preventDefault();
+                          }
+                          if (e.key === '.' && e.currentTarget.value.includes('.')) {
+                            e.preventDefault();
+                          }
+                        }}
                         className="px-2 py-1 text-sm border border-gray-300 rounded w-full focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent pr-8"
                         required
                       />
@@ -890,7 +970,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
                       Total Packs
                     </label>
                     <input
-                      type="number"
+                      type="text"
                       min={0}
                       placeholder="Total"
                       value={discount.totalPacksQuantity || ""}
@@ -902,6 +982,11 @@ const VariationCard: React.FC<VariationCardProps> = ({
                           parseInt(e.target.value) || 0
                         )
                       }
+                      onKeyPress={(e) => {
+                        if (!/[0-9]/.test(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
                       className="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
                     />
                   </div>
@@ -913,7 +998,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
                       </span>
                     </label>
                     <input
-                      type="number"
+                      type="text"
                       min={0}
                       step="0.01"
                       placeholder="Price"
