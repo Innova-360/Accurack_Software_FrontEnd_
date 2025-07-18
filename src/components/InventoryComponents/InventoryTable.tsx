@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import type { Product } from "../../data/inventoryData";
 import { productAPI } from "../../services/productAPI";
+import VariantDeleteModal from "./VariantDeleteModal";
+import ToastConfirmation, { showConfirmationToast } from "../reusablecomponents/ToastConfirmation";
+import toast from "react-hot-toast";
 // import { debugVariantQuantityUpdate } from "../../utils/variantQuantityUpdateTest";
 
 interface InventoryTableProps {
@@ -55,25 +58,67 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
     new Set()
   );
   const [quantityError, setQuantityError] = useState<boolean>(false);
+  const [variantDeleteModal, setVariantDeleteModal] = useState<{
+    isOpen: boolean;
+    product: Product | null;
+  }>({
+    isOpen: false,
+    product: null,
+  });
+  const [isDeletingVariants, setIsDeletingVariants] = useState<boolean>(false);
+  
+  // Handle individual variant deletion with toast confirmation
+  const handleVariantDelete = (variant: any, productName: string) => {
+    const variantDisplayName = variant.name || `Variant ${variant.id?.slice(0, 8) || 'Unknown'}`;
+    
+    showConfirmationToast(
+      `Are you sure to delete this variant "${variantDisplayName}" from "${productName}"?`,
+      async () => {
+        try {
+          const pluUpc = variant.pluUpc;
+          console.log('Deleting variant with PLU/UPC:', pluUpc);
+          
+          // Call the API to delete the variant
+          await productAPI.deleteVariant(pluUpc);
+          
+          // Show success toast
+          toast.success(`Variant "${variantDisplayName}" deleted successfully!`);
+          
+          // Call parent refresh callback to reload the data
+          onProductDeleted?.();
+          
+        } catch (error) {
+          console.error("Failed to delete variant:", error);
+          // Show error toast
+          toast.error("Failed to delete variant. Please try again.");
+        }
+      }
+    );
+  };
   const handleDeleteProduct = async (
     productId: string,
     productName: string
   ) => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete "${productName}"? This action cannot be undone.`
-      )
-    ) {
-      try {
-        setDeletingProductId(productId);
-        await productAPI.deleteProduct(productId);
-        onProductDeleted?.();
-      } catch (error) {
-        console.error("Failed to delete product:", error);
-      } finally {
-        setDeletingProductId(null);
+    showConfirmationToast(
+      `Are you sure you want to delete "${productName}"? This action cannot be undone.`,
+      async () => {
+        try {
+          setDeletingProductId(productId);
+          await productAPI.deleteProduct(productId);
+          
+          // Show success toast
+          toast.success(`Product "${productName}" deleted successfully!`);
+          
+          onProductDeleted?.();
+        } catch (error) {
+          console.error("Failed to delete product:", error);
+          // Show error toast
+          toast.error("Failed to delete product. Please try again.");
+        } finally {
+          setDeletingProductId(null);
+        }
       }
-    }
+    );
   };
 
   const handleEditProduct = (product: Product) => {
@@ -256,11 +301,54 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
     }
   };
 
+  const handleVariantDeleteModalOpen = (product: Product) => {
+    setVariantDeleteModal({
+      isOpen: true,
+      product: product,
+    });
+  };
+
+  const handleVariantDeleteModalClose = () => {
+    setVariantDeleteModal({
+      isOpen: false,
+      product: null,
+    });
+  };
+
+  const handleVariantBulkDelete = async (selectedPluUpcs: string[]) => {
+    if (selectedPluUpcs.length === 0) return;
+
+    try {
+      setIsDeletingVariants(true);
+      
+      console.log('🗑️ Bulk deleting variants with PLU/UPCs:', selectedPluUpcs);
+      
+      // Call the API to bulk delete variants
+      await productAPI.bulkDeleteVariants(selectedPluUpcs);
+      
+      // Show success toast
+      toast.success(`Successfully deleted ${selectedPluUpcs.length} variant${selectedPluUpcs.length !== 1 ? 's' : ''}!`);
+      
+      // Close modal and refresh data
+      handleVariantDeleteModalClose();
+      onProductDeleted?.(); // Refresh the product list
+      
+      console.log('✅ Successfully deleted variants');
+    } catch (error) {
+      console.error('❌ Failed to delete variants:', error);
+      // Show error toast
+      toast.error("Failed to delete variants. Please try again.");
+    } finally {
+      setIsDeletingVariants(false);
+    }
+  };
+
   console.log("Greate product", products);
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="table-auto w-full min-w-max bg-white">
+    <>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="table-auto w-full min-w-max bg-white">
           <thead className="bg-gray-50">
             <tr className="text-left">
               <th className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-normal text-gray-500 border-b border-gray-300">
@@ -368,9 +456,12 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                   product.variants &&
                   product.variants.length > 0;
 
+                // Get the first variant as base product data when product has variants
+                const baseVariant = hasVariantsToShow && product.variants?.[0] ? product.variants[0] : null;
+                
                 return (
                   <React.Fragment key={productKey}>
-                    {/* Main product row */}
+                    {/* Main product row - shows first variant data if variants exist */}
                     <tr className="hover:bg-gray-50 group">
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <input
@@ -405,17 +496,22 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                           )}
                           <div className="min-w-0 flex-1">
                             <div className="font-medium truncate">
-                              {typeof product.name === "string"
-                                ? product.name
-                                : String(product.name || "Unknown Product")}
+                              {hasVariantsToShow && baseVariant
+                                ? (typeof baseVariant.name === "string"
+                                    ? baseVariant.name
+                                    : String(baseVariant.name || "Base Variant"))
+                                : (typeof product.name === "string"
+                                    ? product.name
+                                    : String(product.name || "Unknown Product"))}
                             </div>
                             {hasVariantsToShow && (
                               <div className="text-xs text-gray-500">
-                                {product.variants?.length || 0} variants
+                                Base Product • {(product.variants?.length || 0) - 1} additional variants
                               </div>
                             )}
                           </div>
-                          {!hasVariantsToShow && product.quantity < 10 && (
+                          {((hasVariantsToShow && baseVariant && (baseVariant.quantity || 0) < 10) || 
+                            (!hasVariantsToShow && product.quantity < 10)) && (
                             <svg
                               className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 flex-shrink-0"
                               fill="currentColor"
@@ -431,57 +527,33 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                         </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                        {!hasVariantsToShow && (
-                          <div className="flex items-center gap-2">
-                            {editingQuantity?.productId === productKey &&
-                              editingQuantity.variantIndex === undefined ? (
-                              <div className="flex items-center gap-1">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={editingQuantity.value}
-                                  onChange={(e) =>
-                                    handleQuantityChange(e.target.value)
-                                  }
-                                  onKeyDown={handleQuantityKeyPress}
-                                  onBlur={handleQuantitySave}
-                                  className={`w-16 px-1 py-1 text-xs border ${quantityError ? 'border-red-500' : 'border-blue-300 focus:ring-1 focus:ring-blue-500'} rounded focus:outline-none `}
-                                  autoFocus
-                                />
-                                {/* {quantityError && (
-                                  <div className="text-xs text-red-600 mt-1">{quantityError}</div>
-                                )} */}
-                                <button
-                                  onClick={handleQuantitySave}
-                                  className="text-green-600 hover:text-green-800 p-1"
-                                  title="Save quantity"
-                                  disabled={updatingQuantity.has(productKey)}
-                                >
-                                  {updatingQuantity.has(productKey) ? (
-                                    <div className="w-3 h-3 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
-                                  ) : (
-                                    <svg
-                                      className="w-3 h-3"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M5 13l4 4L19 7"
-                                      />
-                                    </svg>
-                                  )}
-                                </button>
-                                <button
-                                  onClick={handleQuantityCancel}
-                                  className="text-red-600 hover:text-red-800 p-1"
-                                  title="Cancel editing"
-                                >
+                        <div className="flex items-center gap-2">
+                          {editingQuantity?.productId === productKey &&
+                            editingQuantity.variantIndex === (hasVariantsToShow ? 0 : undefined) ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                min="0"
+                                value={editingQuantity.value}
+                                onChange={(e) =>
+                                  handleQuantityChange(e.target.value)
+                                }
+                                onKeyDown={handleQuantityKeyPress}
+                                onBlur={handleQuantitySave}
+                                className={`w-16 px-1 py-1 text-xs border ${quantityError ? 'border-red-500' : 'border-blue-300 focus:ring-1 focus:ring-blue-500'} rounded focus:outline-none `}
+                                autoFocus
+                              />
+                              <button
+                                onClick={handleQuantitySave}
+                                className="text-green-600 hover:text-green-800 p-1"
+                                title="Save quantity"
+                                disabled={updatingQuantity.has(hasVariantsToShow ? `${productKey}-variant-0` : productKey)}
+                              >
+                                {updatingQuantity.has(hasVariantsToShow ? `${productKey}-variant-0` : productKey) ? (
+                                  <div className="w-3 h-3 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
                                   <svg
-                                    className="w-5 h-5"
+                                    className="w-3 h-3"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -490,102 +562,127 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
                                       strokeWidth={2}
-                                      d="M6 18L18 6M6 6l12 12"
+                                      d="M5 13l4 4L19 7"
+                                    />
+                                  </svg>
+                                )}
+                              </button>
+                              <button
+                                onClick={handleQuantityCancel}
+                                className="text-red-600 hover:text-red-800 p-1"
+                                title="Cancel editing"
+                              >
+                                <svg
+                                  className="w-5 h-5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={
+                                  (hasVariantsToShow && baseVariant 
+                                    ? (baseVariant.quantity || 0) 
+                                    : (product.quantity || 0)) < 10
+                                    ? "text-red-600 font-bold"
+                                    : ""
+                                }
+                              >
+                                {updatingQuantity.has(hasVariantsToShow ? `${productKey}-variant-0` : productKey) ? (
+                                  <div className="flex items-center gap-1">
+                                    <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                    <span>{hasVariantsToShow && baseVariant ? baseVariant.quantity || 0 : product.quantity}</span>
+                                  </div>
+                                ) : (
+                                  hasVariantsToShow && baseVariant ? baseVariant.quantity || 0 : product.quantity
+                                )}
+                              </span>
+                              {!updatingQuantity.has(hasVariantsToShow ? `${productKey}-variant-0` : productKey) && showUpdateQuantity && (
+                                <button
+                                  onClick={() =>
+                                    handleEditQuantity(
+                                      productKey,
+                                      hasVariantsToShow && baseVariant ? baseVariant.quantity || 0 : product.quantity,
+                                      hasVariantsToShow ? 0 : undefined
+                                    )
+                                  }
+                                  className={`text-gray-400 hover:text-blue-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity ${
+                                    isAnyQuantityEditing ? 'opacity-50 cursor-not-allowed' : ''
+                                  }`}
+                                  title="Edit quantity"
+                                  disabled={isAnyQuantityEditing}
+                                >
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                                     />
                                   </svg>
                                 </button>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <span
-                                  className={
-                                    (product.quantity || 0) < 10
-                                      ? "text-red-600 font-bold"
-                                      : ""
-                                  }
-                                >
-                                  {updatingQuantity.has(productKey) ? (
-                                    <div className="flex items-center gap-1">
-                                      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                      <span>{product.quantity}</span>
-                                    </div>
-                                  ) : (
-                                    product.quantity
-                                  )}
-                                </span>
-                                {!updatingQuantity.has(productKey) && showUpdateQuantity && (
-                                  <button
-                                    onClick={() =>
-                                      handleEditQuantity(
-                                        productKey,
-                                        product.quantity
-                                      )
-                                    }
-                                    className={`text-gray-400 hover:text-blue-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity ${
-                                      isAnyQuantityEditing ? 'opacity-50 cursor-not-allowed' : ''
-                                    }`}
-                                    title="Edit quantity"
-                                    disabled={isAnyQuantityEditing}
-                                  >
-                                    <svg
-                                      className="w-3 h-3"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                      />
-                                    </svg>
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-blue-600 border-b border-gray-300">
-                        {!hasVariantsToShow && (
-                          <div className="truncate">
-                            {typeof product.plu === "string"
-                              ? product.plu.split("/")[0]
-                              : String(product.plu || "N/A")}
-                          </div>
-                        )}
+                        <div className="truncate">
+                          {hasVariantsToShow && baseVariant
+                            ? (baseVariant.pluUpc ? baseVariant.pluUpc.split("/")[0] : "-")
+                            : (typeof product.plu === "string"
+                                ? product.plu.split("/")[0]
+                                : String(product.plu || "N/A"))}
+                        </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-blue-600 border-b border-gray-300">
-                        {!hasVariantsToShow && (
-                          <div className="truncate">
-                            {typeof product.sku === "string"
-                              ? product.sku
-                              : String(product.sku || "N/A")}
-                          </div>
-                        )}
+                        <div className="truncate">
+                          {hasVariantsToShow && baseVariant
+                            ? (baseVariant.sku || baseVariant.id?.slice(0, 8) || "-")
+                            : (typeof product.sku === "string"
+                                ? product.sku
+                                : String(product.sku || "N/A"))}
+                        </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <div
                           className="truncate max-w-[120px] sm:max-w-none"
                           title={
-                            typeof product.description === "string"
-                              ? product.description
-                              : ""
+                            hasVariantsToShow && baseVariant
+                              ? `Base variant of ${typeof product.name === "string" ? product.name : String(product.name || "Product")}`
+                              : (typeof product.description === "string" ? product.description : "")
                           }
                         >
-                          {typeof product.description === "string"
-                            ? product.description
-                            : String(product.description || "No description")}
+                          {hasVariantsToShow && baseVariant
+                            ? `Base variant of ${typeof product.name === "string" ? product.name : String(product.name || "Product")}`
+                            : (typeof product.description === "string"
+                                ? product.description
+                                : String(product.description || "No description"))}
                         </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                        {!hasVariantsToShow &&
-                          (typeof product.price === "string"
-                            ? product.price
-                            : typeof product.price === "number"
-                              ? `$${(product.price as number).toFixed(2)}`
-                              : "$0.00")}
+                        {hasVariantsToShow && baseVariant
+                          ? `$${baseVariant.price.toFixed(2)}`
+                          : (typeof product.price === "string"
+                              ? product.price
+                              : typeof product.price === "number"
+                                ? `$${(product.price as number).toFixed(2)}`
+                                : "$0.00")}
                       </td>
 
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
@@ -610,10 +707,9 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                         </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                        {!hasVariantsToShow &&
-                          (typeof product.minimumSellingQuantity === "number"
-                            ? product.minimumSellingQuantity
-                            : String(product.minimumSellingQuantity || "1"))}
+                        {typeof product.minimumSellingQuantity === "number"
+                          ? product.minimumSellingQuantity
+                          : String(product.minimumSellingQuantity || "1")}
                       </td>
                       <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                         <div className="flex items-center gap-2">
@@ -670,19 +766,25 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                           {showDeleteButton && (
                           <button
                             onClick={() => {
-                              const id =
-                                product.id || product.sku || product.plu;
-                              if (id) {
-                                handleDeleteProduct(id, product.name);
+                              if (hasVariantsToShow && product.variants && product.variants.length > 0) {
+                                // Open variant deletion modal for products with variants
+                                handleVariantDeleteModalOpen(product);
+                              } else {
+                                // Delete entire product (no variants)
+                                const id = product.id || product.sku || product.plu;
+                                if (id) {
+                                  handleDeleteProduct(id, product.name);
+                                }
                               }
                             }}
                             disabled={
-                              (!product.id && !product.sku && !product.plu) ||
-                              deletingProductId ===
-                              (product.id || product.sku || product.plu)
+                              (hasVariantsToShow 
+                                ? false // Always allow modal to open for variant products
+                                : (!product.id && !product.sku && !product.plu)) ||
+                              deletingProductId === (product.id || product.sku || product.plu)
                             }
                             className="text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed p-1 rounded transition-colors"
-                            title="Delete product"
+                            title={hasVariantsToShow ? "Delete variants" : "Delete product"}
                           >
                             {deletingProductId === product.id ? (
                               <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
@@ -706,13 +808,15 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                         </div>
                       </td>
                     </tr>
-                    {/* Variant rows */}
+                    {/* Variant rows - skip first variant (index 0) as it's shown as base product */}
                     {hasVariantsToShow &&
                       isExpanded &&
-                      product.variants?.map((variant, variantIndex) => (
+                      product.variants?.slice(1).map((variant, variantIndex) => {
+                        const actualVariantIndex = variantIndex + 1; // Adjust for skipped first variant
+                        return (
                         <tr
-                          key={`${productKey}-variant-${variantIndex}`}
-                          className="bg-gray-50 hover:bg-gray-100 group"
+                          key={`${productKey}-variant-${actualVariantIndex}`}
+                          className="bg-gray-50 hover:bg-gray-100"
                         >
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
                             {/* Empty checkbox column for variants */}
@@ -730,7 +834,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300 text-gray-600">
                             <div className="flex items-center gap-2">
                               {editingQuantity?.productId === productKey &&
-                                editingQuantity.variantIndex === variantIndex ? (
+                                editingQuantity.variantIndex === actualVariantIndex ? (
                                 <div className="flex items-center gap-1">
                                   <input
                                     type="number"
@@ -751,9 +855,9 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                     onClick={handleQuantitySave}
                                     className="text-green-600 hover:text-green-800 p-1"
                                     title="Save quantity"
-                                    disabled={updatingQuantity.has(`${productKey}-variant-${variantIndex}`)}
+                                    disabled={updatingQuantity.has(`${productKey}-variant-${actualVariantIndex}`)}
                                   >
-                                    {updatingQuantity.has(`${productKey}-variant-${variantIndex}`) ? (
+                                    {updatingQuantity.has(`${productKey}-variant-${actualVariantIndex}`) ? (
                                       <div className="w-3 h-3 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
                                     ) : (
                                       <svg
@@ -801,7 +905,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                     }
                                   >
                                     {updatingQuantity.has(
-                                      `${productKey}-variant-${variantIndex}`
+                                      `${productKey}-variant-${actualVariantIndex}`
                                     ) ? (
                                       <div className="flex items-center gap-1">
                                         <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -812,14 +916,14 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                                     )}
                                   </span>
                                   {!updatingQuantity.has(
-                                    `${productKey}-variant-${variantIndex}`
+                                    `${productKey}-variant-${actualVariantIndex}`
                                   ) && showUpdateQuantity && (
                                       <button
                                         onClick={() =>
                                           handleEditQuantity(
                                             productKey,
                                             variant.quantity || 0,
-                                            variantIndex
+                                            actualVariantIndex
                                           )
                                         }
                                         className={`text-gray-400 hover:text-blue-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity ${
@@ -910,10 +1014,37 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
                             </span>
                           </td>
                           <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm border-b border-gray-300">
-                            {/* Empty actions cell for variants */}
+                            <div className="flex items-center gap-2">
+                              {/* Delete Variant Button */}
+                              <button
+                                onClick={() => {
+                                  const productName = typeof product.name === "string"
+                                    ? product.name
+                                    : String(product.name || "Product");
+                                  handleVariantDelete(variant, productName);
+                                }}
+                                className="text-red-600 hover:text-red-800 p-1"
+                                title="Delete variant"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
                           </td>
                         </tr>
-                      ))}
+                      );
+                      })}
                   </React.Fragment>
                 );
               })
@@ -931,7 +1062,18 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
         </table>
       </div>
     </div>
-  );
-};
 
+    {/* Variant Delete Modal */}
+    <VariantDeleteModal
+      isOpen={variantDeleteModal.isOpen}
+      onClose={handleVariantDeleteModalClose}
+      product={variantDeleteModal.product}
+      onConfirmDelete={handleVariantBulkDelete}
+      isDeleting={isDeletingVariants}
+    />
+  </>
+  );
+
+};
 export default InventoryTable;
+

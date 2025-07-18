@@ -234,6 +234,40 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
     onFormDataChange("category", "");
   };
 
+  // Helper functions for managing attributes
+  const addAttribute = () => {
+    const newAttribute = {
+      id: `attr_${Date.now()}`,
+      name: "",
+      options: [{ id: `opt_${Date.now()}`, value: "" }]
+    };
+    const updatedAttributes = [...(formData.attributes || []), newAttribute];
+    onFormDataChange("attributes", updatedAttributes);
+  };
+
+  const removeAttribute = (index: number) => {
+    const updatedAttributes = (formData.attributes || []).filter((_, i) => i !== index);
+    onFormDataChange("attributes", updatedAttributes);
+  };
+
+  const handleAttributeNameChange = (index: number, name: string) => {
+    const updatedAttributes = [...(formData.attributes || [])];
+    updatedAttributes[index] = {
+      ...updatedAttributes[index],
+      name
+    };
+    onFormDataChange("attributes", updatedAttributes);
+  };
+
+  const handleAttributeValueChange = (index: number, value: string) => {
+    const updatedAttributes = [...(formData.attributes || [])];
+    updatedAttributes[index] = {
+      ...updatedAttributes[index],
+      options: [{ id: updatedAttributes[index].options[0]?.id || `opt_${Date.now()}`, value }]
+    };
+    onFormDataChange("attributes", updatedAttributes);
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 border border-gray-200 hover:shadow-xl transition-all duration-300">
       <div className="flex items-center space-x-3 mb-6 sm:mb-8">
@@ -491,7 +525,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
             </div>
           )}
         </div>
-        {/* <div className="space-y-2">
+        <div className="space-y-2">
           <label className="block text-sm font-semibold text-gray-700">
             Brand Name{" "}
             <span className="text-gray-400 text-xs font-normal">
@@ -505,7 +539,22 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
             placeholder="Enter brand name"
           />
-        </div> */}
+        </div>
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-gray-700">
+            Location{" "}
+            <span className="text-gray-400 text-xs font-normal">
+              (Optional)
+            </span>
+          </label>
+          <input
+            type="text"
+            value={formData.location || ""}
+            onChange={(e) => onFormDataChange("location", e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+            placeholder="Enter location (e.g., Aisle 3, Shelf B)"
+          />
+        </div>
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-gray-700">
             Price *
@@ -1124,6 +1173,97 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                 placeholder="Enter product description..."
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Simple Attributes Section for Non-Variant Products */}
+      {!isVariantMode && showOptionalFields && (
+        <div className="bg-purple-50 rounded-lg p-6 border border-purple-200 mt-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <svg
+              className="w-5 h-5 mr-2 text-purple-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 7h.01M7 3h5c1.1045695 0 2 .8954305 2 2v1M7 7v3a4 4 0 004 4h.01M7 7H3m4 0L3.5 3.5m0 0L7 0M3.5 3.5L0 7"
+              />
+            </svg>
+            Product Attributes (Optional)
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Add a simple attribute to describe your product characteristic (e.g., color: red, size: medium). Only one attribute is allowed for simple products.
+          </p>
+          
+          <div className="space-y-4">
+            {(formData.attributes || []).map((attribute, index) => (
+              <div key={attribute.id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Attribute Name
+                    </label>
+                    <input
+                      type="text"
+                      value={attribute.name}
+                      onChange={(e) => handleAttributeNameChange(index, e.target.value)}
+                      placeholder="e.g., Color, Size, Material"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Attribute Value
+                    </label>
+                    <input
+                      type="text"
+                      value={attribute.options[0]?.value || ""}
+                      onChange={(e) => handleAttributeValueChange(index, e.target.value)}
+                      placeholder="e.g., Red, Large, Cotton"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      type="button"
+                      onClick={() => removeAttribute(index)}
+                      className="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 flex items-center justify-center space-x-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      <span>Remove</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            <button
+              type="button"
+              onClick={addAttribute}
+              disabled={formData.attributes && formData.attributes.length >= 1}
+              className={`w-full px-4 py-3 border-2 border-dashed rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 ${
+                formData.attributes && formData.attributes.length >= 1
+                  ? "border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed"
+                  : "border-purple-300 text-purple-600 hover:border-purple-400 hover:bg-purple-50"
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              <span>
+                {formData.attributes && formData.attributes.length >= 1 
+                  ? "Only one attribute allowed for simple products" 
+                  : "Add Attribute"
+                }
+              </span>
+            </button>
           </div>
         </div>
       )}

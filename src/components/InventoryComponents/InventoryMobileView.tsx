@@ -174,11 +174,39 @@ const InventoryMobileView: React.FC<InventoryMobileViewProps> = ({
                               key={`${productKey}-variant-${variantIndex}`}
                               className="bg-gray-50 border border-gray-200 rounded-lg p-3 shadow-sm"
                             >
-                              <div className="flex items-center gap-2 mb-2">
-                                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                                <h4 className="font-medium text-gray-800 text-sm">
-                                  {variant.name}
-                                </h4>
+                              <div className="flex items-center justify-between gap-2 mb-2">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                  <h4 className="font-medium text-gray-800 text-sm">
+                                    {variant.name}
+                                  </h4>
+                                </div>
+                                {/* Delete Variant Button */}
+                                <button
+                                  onClick={() => {
+                                    // TODO: Implement variant deletion API call
+                                    // For now, just log the PLU/UPC that would be sent
+                                    const pluUpc = variant.pluUpc || variant.plu;
+                                    console.log('Delete variant with PLU/UPC:', pluUpc);
+                                    // Future API call: deleteVariant(pluUpc)
+                                  }}
+                                  className="text-gray-400 hover:text-red-600 p-1 transition-colors"
+                                  title="Delete variant"
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                </button>
                               </div>
                               <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
                                 <div>
@@ -419,11 +447,39 @@ const InventoryMobileView: React.FC<InventoryMobileViewProps> = ({
                       key={`${productKey}-variant-${variantIndex}`}
                       className="bg-gray-50 border border-gray-200 rounded-lg p-3 shadow-sm"
                     >
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                        <h4 className="font-medium text-gray-800 text-sm">
-                          {variant.name}
-                        </h4>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                          <h4 className="font-medium text-gray-800 text-sm">
+                            {variant.name}
+                          </h4>
+                        </div>
+                        {/* Delete Variant Button */}
+                        <button
+                          onClick={() => {
+                            // TODO: Implement variant deletion API call
+                            // For now, just log the PLU/UPC that would be sent
+                            const pluUpc = variant.pluUpc || variant.plu;
+                            console.log('Delete variant with PLU/UPC:', pluUpc);
+                            // Future API call: deleteVariant(pluUpc)
+                          }}
+                          className="text-gray-400 hover:text-red-600 p-1 transition-colors"
+                          title="Delete variant"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
                         <div>
