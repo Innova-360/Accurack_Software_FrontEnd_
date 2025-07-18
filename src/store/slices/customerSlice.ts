@@ -182,7 +182,7 @@ export const updateCustomer = createAsyncThunk(
 );
 
 export const deleteCustomer = createAsyncThunk(
-  "customers/deleteCustomer",
+  "customers",
   async (
     { id, storeId }: { id: string; storeId: string },
     { rejectWithValue, dispatch }
@@ -197,9 +197,10 @@ export const deleteCustomer = createAsyncThunk(
         throw new Error("Store ID is required");
       }
 
+      // Actually delete the customer from the backend
+      await apiClient.delete(`/sales/customers/${id}`);
 
       // Refresh customers list after deletion
-
       await dispatch(fetchCustomers({ storeId }));
 
       return { id, success: true, message: "Customer deleted successfully" };
