@@ -43,6 +43,37 @@ const Signup = () => {
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [showStateDropdown, setShowStateDropdown] = useState(false);
 
+  // Add getCookie function
+  function getCookie(name: string) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift();
+  }
+
+  // Pre-fill form fields from googleSignup cookie
+  useEffect(() => {
+    const googleSignup = getCookie('googleSignup');
+    console.log('googleSignup cookie value:', googleSignup);
+    if (googleSignup) {
+      try {
+        const decoded = decodeURIComponent(googleSignup);
+        const profile = JSON.parse(decoded);
+        console.log('signup data', profile);
+        setFormData((prev) => ({
+          ...prev,
+          email: profile.email || '',
+          firstName: profile.firstName || '',
+          lastName: profile.lastName || '',
+        }));
+        // Clear the cookie after use
+        document.cookie = 'googleSignup=; Max-Age=0; path=/;';
+      } catch (e) {
+        // Optionally handle error
+        console.error('Failed to parse googleSignup cookie:', e);
+      }
+    }
+  }, []);
+
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { loading } = useAppSelector((state) => state.auth);
@@ -424,6 +455,7 @@ const Signup = () => {
                         onChange={handleChange}
                         onBlur={handleBlur}
                         className={getInputClasses("password", "pr-10")}
+                        autoComplete="new-password"
                       />
                       <span
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
@@ -452,6 +484,7 @@ const Signup = () => {
                         onChange={handleChange}
                         onBlur={handleBlur}
                         className={getInputClasses("confirmPassword", "pr-10")}
+                        autoComplete="new-password"
                       />
                       <span
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
