@@ -36,26 +36,25 @@ const UpdateProduct: React.FC = () => {
 
   // State for main inventory pagination and filters
   const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
-    const [sortConfig, setSortConfig] = useState<{
+  const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "asc" | "desc";
   }>({
     key: "createdAt",
     direction: "desc",
   });
+  const [searchResults, setSearchResults] = useState<Product[] | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [groupBy, setGroupBy] = useState("");
-  const [selectedItems, setSelectedItems] = useState<number[]>([]);
-
-  // Fixed rows per page for UpdateProduct
-  const rowsPerPage = 10;
-
-  // Fetch products from API with pagination and filters
+  const [selectedItems, setSelectedItems] = useState<number[]>([]);  // Fetch products from API with pagination and filters
   const { products, loading, error, pagination, fetchWithParams, refetch } =
     useProducts({
       page: currentPage,
       limit: rowsPerPage,
-      search: searchTerm,
+      search: "", // Remove searchTerm to prevent page reload on search
       sortBy: sortConfig?.key,
       sortOrder: sortConfig?.direction,
       storeId: currentStore?.id,
@@ -85,34 +84,57 @@ const UpdateProduct: React.FC = () => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
     }, 500);
-
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Fetch data when search term changes
+  // --- Search API integration ---
   useEffect(() => {
-    if (debouncedSearchTerm !== searchTerm) return;
-
-    fetchWithParams({
-      page: 1, // Reset to first page on search
-      limit: rowsPerPage,
-      search: debouncedSearchTerm,
-      sortBy: sortConfig?.key,
-      sortOrder: sortConfig?.direction,
-      storeId: currentStore?.id,
-    });
-    setCurrentPage(1);
-  }, [
-    debouncedSearchTerm,
-    rowsPerPage,
-    sortConfig?.key,
-    sortConfig?.direction,
-    fetchWithParams,
-    currentStore?.id,
-  ]);
+    if (!debouncedSearchTerm) {
+      setSearchResults(null);
+      setSearchLoading(false);
+      setSearchError(null);
+      return;
+    }
+    setSearchLoading(true);
+    setSearchError(null);
+    productAPI
+      .searchProducts(debouncedSearchTerm, currentStore?.id)
+      .then((results) => {
+        setSearchResults(results);
+        setSearchLoading(false);
+      })
+      .catch((err) => {
+        setSearchError(extractErrorMessage(err));
+        setSearchLoading(false);
+      });
+  }, [debouncedSearchTerm, currentStore?.id]);
 
   // Show loading state only for initial load (when we have no products and no search term)
-  if (loading && products.length === 0 && !searchTerm && !debouncedSearchTerm) {
+  const isInitialLoading =
+    loading && products.length === 0 && !searchTerm && !debouncedSearchTerm;
+
+  // Show error state only for initial load
+  const isInitialError = (error && !searchTerm) || searchError;
+
+  const isSearching = searchResults !== null;
+  const allProducts = isSearching ? searchResults : products;
+
+  // Pagination logic for both normal and search results
+  const paginatedProducts = isSearching
+    ? allProducts.slice(
+        (currentPage - 1) * rowsPerPage,
+        currentPage * rowsPerPage
+      )
+    : products;
+
+  const totalItems = isSearching ? allProducts.length : pagination.total;
+  const totalPages = isSearching
+    ? Math.ceil(allProducts.length / rowsPerPage)
+    : pagination.totalPages;
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = Math.min(startIndex + rowsPerPage, totalItems);
+
+  if (isInitialLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -128,9 +150,8 @@ const UpdateProduct: React.FC = () => {
     );
   }
 
-  // Show error state
-  if (error) {
-    const errorMessage = extractErrorMessage(error);
+  if (isInitialError) {
+    const errorMessage = extractErrorMessage(error || searchError);
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -143,10 +164,10 @@ const UpdateProduct: React.FC = () => {
               </h2>
               <p className="text-gray-600 mb-4">{errorMessage}</p>
               <button
-                onClick={() => window.location.reload()}
-                className="bg-[#0f4d57] text-white px-6 py-2 rounded-lg hover:bg-[#0d3f47] transition-colors"
+                onClick={refetch}
+                className="bg-[#0f4d57] hover:bg-[#083540] text-white px-4 py-2 rounded-lg transition-colors"
               >
-                Try Again
+                Retry
               </button>
             </div>
           </div>
@@ -154,13 +175,6 @@ const UpdateProduct: React.FC = () => {
       </div>
     );
   }
-
-  // Server-side pagination - use pagination data from API
-  const totalItems = pagination.total;
-  const totalPages = pagination.totalPages;
-  const startIndex = (pagination.page - 1) * pagination.limit;
-  const endIndex = Math.min(startIndex + pagination.limit, totalItems);
-  const currentProducts = products; // All products returned from API for current page
 
   // Calculate pagination for low stock products (client-side for now)
   const totalLowStockItems = lowStockProducts.length;
@@ -174,18 +188,25 @@ const UpdateProduct: React.FC = () => {
     lowStockEndIndex
   );
 
-  // Pagination handlers for main inventory - now triggers server-side fetch
+  // Pagination handlers for main inventory
   const handlePageChange = async (newPage: number) => {
     if (newPage === currentPage || isPageChanging) return;
 
     setIsPageChanging(true);
     setCurrentPage(newPage);
 
+    // For search results, pagination is handled client-side
+    if (isSearching) {
+      setTimeout(() => setIsPageChanging(false), 300);
+      return;
+    }
+
+    // For normal pagination, fetch from server
     try {
       await fetchWithParams({
         page: newPage,
         limit: rowsPerPage,
-        search: debouncedSearchTerm,
+        search: "", // Don't include searchTerm for normal pagination
         sortBy: sortConfig?.key,
         sortOrder: sortConfig?.direction,
         storeId: currentStore?.id,
@@ -194,10 +215,7 @@ const UpdateProduct: React.FC = () => {
       toast.error("Failed to load page");
       console.error("Pagination error:", error);
     } finally {
-      // Add delay for smooth transition
-      setTimeout(() => {
-        setIsPageChanging(false);
-      }, 300);
+      setTimeout(() => setIsPageChanging(false), 300);
     }
   };
 
@@ -221,14 +239,30 @@ const UpdateProduct: React.FC = () => {
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
+    setCurrentPage(1); // Reset to first page when searching
+    // Search will be triggered by the useEffect with debounced search term
   };
 
   const handleGroupByChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setGroupBy(event.target.value);
   };
 
-  const handleRowsPerPageChange = (newRowsPerPage: number) => {
-    // Handle rows per page change if needed
+  const handleRowsPerPageChange = async (newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
+    setCurrentPage(1); // Reset to first page when changing rows per page
+
+    try {
+      await fetchWithParams({
+        page: 1,
+        limit: newRowsPerPage,
+        search: "", // Don't include searchTerm for normal pagination
+        sortBy: sortConfig?.key,
+        sortOrder: sortConfig?.direction,
+        storeId: currentStore?.id,
+      });
+    } catch (error) {
+      console.error("Error changing rows per page:", error);
+    }
   };
 
   // Server-side sorting function
@@ -247,7 +281,7 @@ const UpdateProduct: React.FC = () => {
   // Checkbox handlers
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const allIds = currentProducts.map((_, index: number) => index);
+      const allIds = paginatedProducts.map((_, index: number) => index);
       setSelectedItems(allIds);
     } else {
       setSelectedItems([]);
@@ -297,7 +331,7 @@ const UpdateProduct: React.FC = () => {
   };
 
   // View product handler
-  const handleViewProduct = (product: Product) => {
+  const handleViewProduct = (_product: Product) => {
     // Handle view product if needed
   };
 
@@ -338,23 +372,63 @@ const UpdateProduct: React.FC = () => {
 
         {/* Inventory Table/View Container */}
         <div
-          className={`border border-gray-300 px-4 sm:px-6 lg:px-10 py-4 sm:py-5 rounded-lg rounded-t-none transition-all duration-300 animate-slideUp ${isPageChanging ? "opacity-75" : "opacity-100"}`}
+          className={`border border-gray-300 px-4 sm:px-6 lg:px-10 py-4 sm:py-5 rounded-lg rounded-t-none transition-all duration-300 animate-slideUp relative ${isPageChanging ? "opacity-75" : "opacity-100"}`}
           style={{ animationDelay: "300ms" }}
         >
+          {/* Loading overlay for search/pagination */}
+          {(loading || searchLoading) && !isInitialLoading && (
+            <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0f4d57] mx-auto mb-2"></div>
+                <p className="text-gray-600 text-sm">
+                  {searchLoading ? "Searching..." : "Loading..."}
+                </p>
+              </div>
+            </div>
+          )}
+          {/* Error overlay for search */}
+          {searchError && !isInitialError && (
+            <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-10 rounded-lg">
+              <div className="text-center">
+                <div className="text-red-500 mb-2">
+                  <svg
+                    className="w-8 h-8 mx-auto"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <p className="text-gray-600 text-sm mb-2">
+                  Search Error: {searchError}
+                </p>
+                <button
+                  onClick={() => setSearchError(null)}
+                  className="text-[#0f4d57] hover:underline text-sm"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
           {/* Loading indicator for search and table updates */}
           {loading &&
             (products.length > 0 || searchTerm || debouncedSearchTerm) && (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-center">
-                  <div className="inline-block rounded-full h-8 w-8 border-b-2 border-[#0f4d57] animate-spin mb-2"></div>
-                  <p className="text-gray-600 text-sm">
-                    {searchTerm || debouncedSearchTerm
-                      ? "Searching products..."
-                      : "Loading..."}
-                  </p>
-                </div>
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <div className="inline-block rounded-full h-8 w-8 border-b-2 border-[#0f4d57] animate-spin mb-2"></div>
+                <p className="text-gray-600 text-sm">
+                  {searchTerm || debouncedSearchTerm
+                    ? "Searching products..."
+                    : "Loading..."}
+                </p>
               </div>
-            )}
+            </div>
+          )}
 
           {/* Content - Show even when loading for search to prevent flicker */}
           <div
@@ -397,7 +471,7 @@ const UpdateProduct: React.FC = () => {
 
               {mobileViewType === "cards" ? (
                 <InventoryMobileView
-                  products={currentProducts}
+                  products={paginatedProducts}
                   groupedProducts={null}
                   groupBy=""
                   expandedCategories={[]}
@@ -407,7 +481,7 @@ const UpdateProduct: React.FC = () => {
               ) : (
                 <div className="overflow-x-auto">
                   <InventoryTable
-                    products={currentProducts}
+                    products={paginatedProducts}
                     selectedItems={selectedItems}
                     startIndex={startIndex}
                     sortConfig={sortConfig}
@@ -428,7 +502,7 @@ const UpdateProduct: React.FC = () => {
             {/* Desktop View */}
             <div className="hidden md:block overflow-x-auto">
               <InventoryTable
-                products={currentProducts}
+                products={paginatedProducts}
                 selectedItems={selectedItems}
                 startIndex={startIndex}
                 sortConfig={sortConfig}
