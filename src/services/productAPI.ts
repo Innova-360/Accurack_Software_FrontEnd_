@@ -546,4 +546,36 @@ export const productAPI = {
       throw error;
     }
   },
+
+  // Delete a product variant by PLU/UPC
+  async deleteVariant(
+    pluUpc: string
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await apiClient.delete(
+        `/product/variants/${encodeURIComponent(pluUpc)}`,
+        { data: { pluUpc } }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting variant:", error);
+      throw error;
+    }
+  },
+
+  // Bulk delete product variants by PLU/UPCs
+  async bulkDeleteVariants(
+    pluUpcs: string[]
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await apiClient.delete(
+        `/product/variants/selected`,
+        { data: { pluUpcs } }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error bulk deleting variants:", error);
+      throw error;
+    }
+  },
 };

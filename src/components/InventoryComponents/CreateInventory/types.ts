@@ -32,6 +32,7 @@ export interface Variation {
   category: string;
   customCategory?: string;
   brandName?: string;
+  location?: string;
   ean: string;
   individualItemQuantity: number;
   itemCost: number;
@@ -60,6 +61,7 @@ export interface ProductFormData {
   category: string;
   customCategory?: string;
   brandName?: string;
+  location?: string;
   price: string;
   customSku: string;
   ean: string;

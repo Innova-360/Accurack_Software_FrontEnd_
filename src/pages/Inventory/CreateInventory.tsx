@@ -84,6 +84,9 @@ const CreateInventory: React.FC = () => {
     const basePayload: any = {
       name: formData.productName,
       categoryId: formData.category, // Now using categoryId instead of category
+      description: formData.description || "",
+      brandName: formData.brandName || "",
+      location: formData.location || "",
       ean: hasVariants ? "" : formData.ean, // Clear EAN for variants as each variant will have its own
       pluUpc: hasVariants ? "" : formData.pluUpc, // Clear PLU for variants as each variant will have its own
       supplierId: formData.supplierId, // Supplier is now always optional
@@ -97,6 +100,13 @@ const CreateInventory: React.FC = () => {
       clientId: clientId, // Use clientId from Redux store
       storeId: storeId,
       hasVariants: hasVariants,
+      // Include attributes array in the format expected by the API
+      attributes: hasVariants 
+        ? [] // For variants, attributes are handled differently
+        : (formData.attributes || []).map(attr => ({
+            name: attr.name,
+            value: attr.options[0]?.value || "" // Use first option value as default
+          })),
       packs: hasVariants
         ? []
         : (formData.packDiscounts || []).map((pack: any) => {
@@ -146,6 +156,9 @@ const CreateInventory: React.FC = () => {
           const mappedVariant = {
             name: variant.name || `Variant ${index + 1}`,
             categoryId: variant.category || "", // Include category for variants
+            description: variant.description || "",
+            brandName: variant.brandName || "",
+            location: variant.location || "",
             price,
             costPrice: costPrice, // Include cost price for variants
             sku: variant.customSku || "",
@@ -204,6 +217,8 @@ const CreateInventory: React.FC = () => {
   const [formData, setFormData] = useState<ProductFormData>({
     productName: "",
     category: "",
+    brandName: "",
+    location: "",
     price: "",
     // vendor: "",
     customSku: "",
