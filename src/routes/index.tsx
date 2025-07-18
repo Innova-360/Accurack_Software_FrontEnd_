@@ -99,14 +99,14 @@ const AppRoutes = () => {
       <Route path="/term" element={<Terms />} />
 
       {/* Protected Routes - Authentication required */}
-      <Route
+      {/* <Route
         path="/"
         element={
           <ProtectedRoute>
             <Home />
           </ProtectedRoute>
         }
-      />
+      /> */}
       <Route
         path="/stores"
         element={

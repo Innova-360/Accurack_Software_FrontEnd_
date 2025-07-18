@@ -39,24 +39,18 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   if (loading || !authChecked) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'column'
       }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ 
-            width: '40px', 
-            height: '40px', 
-            border: '4px solid #f3f3f3',
-            borderTop: '4px solid #3498db',
-            borderRadius: '50%', 
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 16px'
-          }}></div>
-          <span>Initializing application...</span>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0f4d57] mx-auto mb-4"></div>
+            <p className="text-gray-600">Initializing Application</p>
+          </div>
         </div>
         <style>{`
           @keyframes spin {
