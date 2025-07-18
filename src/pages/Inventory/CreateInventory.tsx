@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import type { ProductFormData } from "../../components/InventoryComponents/CreateInventory/types";
 import {
   needsVariations,
@@ -192,6 +193,13 @@ const CreateInventory: React.FC = () => {
   const [showVariations, setShowVariations] = useState(false);
   const [hasVariants, setHasVariants] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Validation state for variants
+  const [variantValidation, setVariantValidation] = useState({
+    isValid: true,
+    errors: {} as Record<string, string>,
+    hasVariations: false,
+  });
   // Main form data
   const [formData, setFormData] = useState<ProductFormData>({
     productName: "",
@@ -324,22 +332,205 @@ const CreateInventory: React.FC = () => {
     formData.attributes
   );
 
+  // Validation function for variants
+  const validateVariants = (): { isValid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+
+    if (hasVariants) {
+      // Check if at least one variant exists
+      if (!formData.variations || formData.variations.length === 0) {
+        errors.push(
+          "At least one variant is required when variants are enabled"
+        );
+        return { isValid: false, errors };
+      }
+
+      // Validate each variant's required fields
+      formData.variations.forEach((variant, index) => {
+        const variantErrors: string[] = [];
+
+        // Required fields validation
+        if (!variant.name || variant.name.trim() === "") {
+          variantErrors.push("Variant Name is required");
+        }
+        if (
+          !variant.individualItemQuantity ||
+          variant.individualItemQuantity <= 0
+        ) {
+          variantErrors.push("Individual Item Quantity must be greater than 0");
+        }
+        if (!variant.itemCost || variant.itemCost <= 0) {
+          variantErrors.push("Individual Item Cost must be greater than 0");
+        }
+        if (!variant.itemSellingCost || variant.itemSellingCost <= 0) {
+          variantErrors.push(
+            "Individual Item Selling Price must be greater than 0"
+          );
+        }
+        if (!variant.minSellingQuantity || variant.minSellingQuantity <= 0) {
+          variantErrors.push("Minimum Selling Quantity must be greater than 0");
+        }
+        if (!variant.minOrderValue || variant.minOrderValue <= 0) {
+          variantErrors.push("Minimum Order Value must be greater than 0");
+        }
+        if (!variant.quantity || variant.quantity <= 0) {
+          variantErrors.push("Stock Quantity must be greater than 0");
+        }
+        // PLU is now required for variants
+        if (!variant.plu || variant.plu.trim() === "") {
+          variantErrors.push("PLU is required");
+        }
+
+        if (variantErrors.length > 0) {
+          errors.push(`Variant ${index + 1}: ${variantErrors.join(", ")}`);
+        }
+      });
+    }
+
+    return { isValid: errors.length === 0, errors };
+  };
+
+  // Validation function for basic required fields
+  const validateBasicFields = (): { isValid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+
+    // Basic required fields
+    if (!formData.productName || formData.productName.trim() === "") {
+      errors.push("Product Name is required");
+    }
+    if (!formData.category || formData.category.trim() === "") {
+      errors.push("Category is required");
+    }
+    if (
+      !formData.price ||
+      formData.price.trim() === "" ||
+      parseFloat(formData.price) <= 0
+    ) {
+      errors.push("Price must be greater than 0");
+    }
+
+    // If not using variants, validate basic product fields
+    if (!hasVariants) {
+      if (!formData.pluUpc || formData.pluUpc.trim() === "") {
+        errors.push("PLU/UPC is required");
+      }
+      if (
+        !formData.individualItemQuantity ||
+        formData.individualItemQuantity.trim() === "" ||
+        parseInt(formData.individualItemQuantity) <= 0
+      ) {
+        errors.push("Individual Item Quantity must be greater than 0");
+      }
+      if (
+        !formData.itemCost ||
+        formData.itemCost.trim() === "" ||
+        parseFloat(formData.itemCost) <= 0
+      ) {
+        errors.push("Individual Item Cost must be greater than 0");
+      }
+      if (
+        !formData.itemSellingCost ||
+        formData.itemSellingCost.trim() === "" ||
+        parseFloat(formData.itemSellingCost) <= 0
+      ) {
+        errors.push("Individual Item Selling Price must be greater than 0");
+      }
+      if (
+        !formData.minSellingQuantity ||
+        formData.minSellingQuantity.trim() === "" ||
+        parseInt(formData.minSellingQuantity) <= 0
+      ) {
+        errors.push("Minimum Selling Quantity must be greater than 0");
+      }
+      if (
+        !formData.minOrderValue ||
+        formData.minOrderValue.trim() === "" ||
+        parseFloat(formData.minOrderValue) <= 0
+      ) {
+        errors.push("Minimum Order Value must be greater than 0");
+      }
+      if (
+        !formData.quantity ||
+        formData.quantity.trim() === "" ||
+        parseInt(formData.quantity) <= 0
+      ) {
+        errors.push("Stock Quantity must be greater than 0");
+      }
+    }
+
+    return { isValid: errors.length === 0, errors };
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate basic fields
+    const basicValidation = validateBasicFields();
+    if (!basicValidation.isValid) {
+      toast.error(
+        "Please fill in all required fields: " +
+          basicValidation.errors.join(", ")
+      );
+      return;
+    }
+
+    // For variants mode, check variant validation state
+    if (
+      hasVariants &&
+      (!variantValidation.isValid || !variantValidation.hasVariations)
+    ) {
+      if (!variantValidation.hasVariations) {
+        toast.error(
+          "Please create at least one variant before submitting the product."
+        );
+        return;
+      }
+
+      const errorMessages = Object.values(variantValidation.errors);
+      if (errorMessages.length > 0) {
+        toast.error(
+          "Please fix the following variant issues: " + errorMessages.join(", ")
+        );
+        return;
+      }
+    }
+
+    // For non-variant mode, use legacy validation
+    if (!hasVariants) {
+      const variantValidation = validateVariants();
+      if (!variantValidation.isValid) {
+        toast.error(
+          "Please fix the following issues: " +
+            variantValidation.errors.join(", ")
+        );
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     const payload = buildApiPayload();
 
+    // Show loading toast
+    const loadingToast = toast.loading("Creating product...");
+
     dispatch(createProduct(payload) as any)
       .then((result: any) => {
+        toast.dismiss(loadingToast);
         setIsSubmitting(false);
         if (!result.error) {
+          toast.success("Product created successfully!");
           // Navigate to the correct inventory page using the actual storeId
           navigate(`/store/${storeId}/inventory/dashboard`);
+          // navigate(-1);
+        } else {
+          toast.error("Failed to create product. Please try again.");
         }
       })
       .catch((error: any) => {
+        toast.dismiss(loadingToast);
         setIsSubmitting(false);
         console.error("Error creating product:", error);
+        toast.error("An error occurred while creating the product.");
       });
   };
 
@@ -349,6 +540,15 @@ const CreateInventory: React.FC = () => {
 
   const handleBack = () => {
     setShowVariations(false);
+  };
+
+  // Handle validation changes from VariationsConfiguration
+  const handleVariationValidationChange = (validation: {
+    isValid: boolean;
+    errors: Record<string, string>;
+    hasVariations: boolean;
+  }) => {
+    setVariantValidation(validation);
   }; // Calculate progress percentage based on whether variants are enabled
   const calculateProgress = () => {
     if (hasVariants) {
@@ -960,11 +1160,10 @@ const CreateInventory: React.FC = () => {
                     suppliers={suppliers}
                     suppliersLoading={suppliersLoading}
                     suppliersError={suppliersError}
-                    categories={productCategories}
-                    categoriesLoading={categoriesLoading}
-                    categoriesError={categoriesError}
+                    onValidationChange={handleVariationValidationChange}
                   />
                 </div>
+
                 {/* Enhanced Action Buttons for Variations */}
                 <div className="flex flex-col sm:flex-row items-center justify-between pt-6 sm:pt-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200/50 space-y-4 sm:space-y-0">
                   <button
@@ -1000,9 +1199,17 @@ const CreateInventory: React.FC = () => {
                     </button>
                     <button
                       type="submit"
-                      disabled={isSubmitting}
+                      disabled={
+                        isSubmitting ||
+                        (hasVariants &&
+                          (!variantValidation.isValid ||
+                            !variantValidation.hasVariations))
+                      }
                       className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg flex items-center justify-center space-x-2 ${
-                        isSubmitting
+                        isSubmitting ||
+                        (hasVariants &&
+                          (!variantValidation.isValid ||
+                            !variantValidation.hasVariations))
                           ? "bg-gray-400 text-white cursor-not-allowed"
                           : "bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90"
                       }`}
