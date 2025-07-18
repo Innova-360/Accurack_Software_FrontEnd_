@@ -770,29 +770,7 @@ const VariationCard: React.FC<VariationCardProps> = ({
             placeholder="PLU"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-            Stock Quantity *
-            <span
-              className="text-xs text-gray-400 cursor-help"
-              title="Auto-calculated: Individual Item Quantity ÷ Minimum Selling Quantity"
-            >
-              (calc)
-            </span>
-          </label>
-          <input
-            type="number"
-            min="0"
-            value={variation.quantity || 0}
-            onChange={(e) =>
-              onUpdate(variation.id, "quantity", parseInt(e.target.value) || 0)
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent bg-blue-50"
-            placeholder="Stock quantity"
-            required
-            title="This field is auto-calculated but can be manually edited"
-          />
-        </div>
+        
       </div>
 
       {/* Pack Settings Toggle */}
