@@ -65,27 +65,31 @@ const UpdateInventory: React.FC = () => {
 
   // Check if store information is available
   const isStoreLoading = !currentStore && !storeId;
-  
+
   // Show loading if store information is not available
   if (isStoreLoading) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ 
-            width: '40px', 
-            height: '40px', 
-            border: '4px solid #f3f3f3',
-            borderTop: '4px solid #3498db',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 16px'
-          }}></div>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "column",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              border: "4px solid #f3f3f3",
+              borderTop: "4px solid #3498db",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              margin: "0 auto 16px",
+            }}
+          ></div>
           <span>Loading store information...</span>
         </div>
         <style>{`
@@ -171,7 +175,7 @@ const UpdateInventory: React.FC = () => {
       variants: [],
     };
 
-    if (hasVariants && formData.variations && formData.variations.length > 0) {      
+    if (hasVariants && formData.variations && formData.variations.length > 0) {
       basePayload.variants = formData.variations.map(
         (variant: any, index: number) => {
           const price = parseFloat(variant.itemSellingCost) || 0;
@@ -376,14 +380,15 @@ const UpdateInventory: React.FC = () => {
       };
 
       // Debug: Check variant categories from API
-      console.log("Loading variants from API:", 
+      console.log(
+        "Loading variants from API:",
         (product.variants || []).map((v: any) => ({
           id: v.id,
           name: v.name,
-          categoryId: v.categoryId
+          categoryId: v.categoryId,
         }))
       );
-      
+
       // Map product data to form data
       setFormData({
         productName: product.name || "",
@@ -451,7 +456,11 @@ const UpdateInventory: React.FC = () => {
           orderValueDiscount: (variant.percentDiscount || "").toString(),
           description: variant.description || "",
           quantity: (variant.quantity || variant.itemQuantity || "").toString(),
-          price: (variant.price || variant.singleItemSellingPrice || "").toString(),
+          price: (
+            variant.price ||
+            variant.singleItemSellingPrice ||
+            ""
+          ).toString(),
           discount: (variant.discountAmount || "").toString(),
           supplierId: variant.supplierId || "",
           packDiscounts: variant.packs || variant.packDiscounts || [],
@@ -638,7 +647,6 @@ const UpdateInventory: React.FC = () => {
   };
 
   const progress = calculateProgress();
-
 
   // Handle barcode data from navigation state
   useEffect(() => {
@@ -917,29 +925,28 @@ const UpdateInventory: React.FC = () => {
                         onPackDiscountsChange={(discounts) =>
                           handleFormDataChange("packDiscounts", discounts)
                         }
-                        itemSellingPrice={parseFloat(formData.itemSellingCost) || 0}
+                        itemSellingPrice={
+                          parseFloat(formData.itemSellingCost) || 0
+                        }
                       />
                     </div>
                   </div>
                 )}
 
-                {/* Attributes Configuration */}
-                <div className="">
-                  <AttributesConfiguration
-                    hasAttributes={hasVariants ? true : formData.hasAttributes}
-                    onToggle={
-                      hasVariants
-                        ? () => {}
-                        : (value) =>
-                            handleFormDataChange("hasAttributes", value)
-                    }
-                    attributes={formData.attributes}
-                    onAttributesChange={(attributes) =>
-                      handleFormDataChange("attributes", attributes)
-                    }
-                    isVariantMode={hasVariants}
-                  />
-                </div>
+                {/* Attributes Configuration - Only show when variants are enabled */}
+                {hasVariants && (
+                  <div className="">
+                    <AttributesConfiguration
+                      hasAttributes={true}
+                      onToggle={() => {}}
+                      attributes={formData.attributes}
+                      onAttributesChange={(attributes) =>
+                        handleFormDataChange("attributes", attributes)
+                      }
+                      isVariantMode={hasVariants}
+                    />
+                  </div>
+                )}
 
                 {/* Enhanced Action Buttons */}
                 <div className="flex flex-col sm:flex-row items-center justify-between pt-6 sm:pt-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200/50 space-y-4 sm:space-y-0">
