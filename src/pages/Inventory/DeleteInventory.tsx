@@ -20,24 +20,24 @@ const DeleteInventory: React.FC = () => {
 
   // Check if store information is available
   const isStoreLoading = !currentStore;
-  
+
   // Show loading if store information is not available
   if (isStoreLoading) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'column'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ 
-            width: '40px', 
-            height: '40px', 
+          <div style={{
+            width: '40px',
+            height: '40px',
             border: '4px solid #f3f3f3',
             borderTop: '4px solid #3498db',
-            borderRadius: '50%', 
+            borderRadius: '50%',
             animation: 'spin 1s linear infinite',
             margin: '0 auto 16px'
           }}></div>
@@ -64,7 +64,7 @@ const DeleteInventory: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
 
   // Fixed rows per page for DeleteInventory
-  const rowsPerPage = 10;
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Fetch products from API with pagination and filters
   const { products, loading, error, pagination, fetchWithParams, refetch } =
@@ -274,9 +274,24 @@ const DeleteInventory: React.FC = () => {
     setGroupBy(event.target.value);
   };
 
-  const handleRowsPerPageChange = (newRowsPerPage: number) => {
-    // Handle rows per page change if needed
+  const handleRowsPerPageChange = async (newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
+    setCurrentPage(1);
+    try {
+      await fetchWithParams({
+        page: 1,
+        limit: newRowsPerPage,
+        search: debouncedSearchTerm,
+        sortBy: sortConfig?.key,
+        sortOrder: sortConfig?.direction,
+        storeId: currentStore?.id,
+      });
+    } catch (error) {
+      toast.error("Failed to change rows per page");
+      console.error("RowsPerPage error:", error);
+    }
   };
+
 
   // Server-side sorting function
   const handleSort = (key: string) => {
@@ -408,21 +423,19 @@ const DeleteInventory: React.FC = () => {
                 <div className="flex bg-gray-100 rounded-lg p-1">
                   <button
                     onClick={() => setMobileViewType("cards")}
-                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                      mobileViewType === "cards"
-                        ? "bg-white text-[#0f4d57] shadow-sm"
-                        : "text-gray-600"
-                    }`}
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${mobileViewType === "cards"
+                      ? "bg-white text-[#0f4d57] shadow-sm"
+                      : "text-gray-600"
+                      }`}
                   >
                     Cards
                   </button>
                   <button
                     onClick={() => setMobileViewType("table")}
-                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                      mobileViewType === "table"
-                        ? "bg-white text-[#0f4d57] shadow-sm"
-                        : "text-gray-600"
-                    }`}
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${mobileViewType === "table"
+                      ? "bg-white text-[#0f4d57] shadow-sm"
+                      : "text-gray-600"
+                      }`}
                   >
                     Table
                   </button>
@@ -435,7 +448,7 @@ const DeleteInventory: React.FC = () => {
                   groupedProducts={null}
                   groupBy=""
                   expandedCategories={[]}
-                  onToggleCategory={() => {}}
+                  onToggleCategory={() => { }}
                   onProductViewed={handleViewProduct}
                 />
               ) : (
