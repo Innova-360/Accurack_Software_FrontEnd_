@@ -71,9 +71,11 @@ export const updateStore = createAsyncThunk(
 
 export const deleteStore = createAsyncThunk(
   "stores/deleteStore",
-  async (storeId: string, { rejectWithValue }) => {
+  async (storeId: string, { rejectWithValue, dispatch }) => {
     try {
       await apiClient.delete(`/store/${storeId}`);
+      // Refetch the stores list after deletion
+      await dispatch(fetchStores());
       return storeId;
     } catch (error: any) {
       return rejectWithValue(
@@ -140,7 +142,10 @@ export const storeSlice = createSlice({
       })
       .addCase(fetchStores.fulfilled, (state, action) => {
         state.loading = false;
-        state.stores = action.payload;
+        // Only show stores that are not inactive
+        state.stores = Array.isArray(action.payload)
+          ? action.payload.filter((store) => store.status !== 'inactive')
+          : [];
       })
       .addCase(fetchStores.rejected, (state, action) => {
         state.loading = false;
