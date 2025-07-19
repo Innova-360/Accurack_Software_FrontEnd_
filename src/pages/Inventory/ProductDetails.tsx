@@ -591,27 +591,43 @@ const ProductDetails: React.FC = () => {
                     </div>
                   </div>
 
-                  <div>
+                  
+
+                  {/* Packs History Table Placeholder */}
+                  {/* <div className="mt-8">
                     <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Product Packs
+                      Packs History
                     </label>
-                    <div className="flex gap-2 flex-wrap">
-                      {product.packs && product.packs.length > 0 ? (
-                        product.packs.map((_, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-small bg-blue-100 text-blue-700"
-                          >
-                            Pack {index + 1}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-sm text-gray-500">
-                          No packs configured
-                        </span>
-                      )}
+                    <div className="overflow-x-auto bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100 rounded-xl p-4">
+                      <table className="min-w-full divide-y divide-orange-200">
+                        <thead>
+                          <tr>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Date</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Action</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Pack #</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">Quantity</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-orange-700 uppercase tracking-wider">User</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-orange-100">
+                          <tr>
+                            <td className="px-4 py-2">2024-01-01</td>
+                            <td className="px-4 py-2">Created</td>
+                            <td className="px-4 py-2">1</td>
+                            <td className="px-4 py-2">100</td>
+                            <td className="px-4 py-2">Admin</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-2">2024-01-02</td>
+                            <td className="px-4 py-2">Updated</td>
+                            <td className="px-4 py-2">1</td>
+                            <td className="px-4 py-2">90</td>
+                            <td className="px-4 py-2">Admin</td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
-                  </div>
+                  </div> */}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -959,152 +975,68 @@ const ProductDetails: React.FC = () => {
                 </div>
               </div>
 
-              {/* History Section */}
-              <div className="bg-white rounded-lg">
-                <div className="flex justify-between items-center border-b border-gray-200 pb-5 p-5">
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    History
-                  </h2>
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                    View All
-                  </button>
-                </div>
-
-                <div className="overflow-x-auto p-6">
-                  <table className="min-w-full">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
-                          Date & Time
-                        </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
-                          Type
-                        </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
-                          Quantity
-                        </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
-                          Amount
-                        </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
-                          Status
-                        </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
-                          Reference
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {/* Always show product creation entry */}
-                      <tr className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-3 px-4 text-sm text-gray-900">
-                          {new Date(product.createdAt).toLocaleDateString()}{" "}
-                          {new Date(product.createdAt).toLocaleTimeString()}
-                        </td>
-                        <td className="py-3 px-4 text-sm">
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                            Product Created
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
-                          +{product.itemQuantity || 0}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
-                          $
-                          {(
-                            (product.singleItemCostPrice || 0) *
-                            (product.itemQuantity || 0)
-                          ).toFixed(2)}
-                        </td>
-                        <td className="py-3 px-4 text-sm">
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Active
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-900 font-mono">
-                          PROD-{product.id?.substring(0, 8)}
-                        </td>
-                      </tr>
-
-                      {/* Purchase Orders */}
-                      {product.purchaseOrders &&
-                      product.purchaseOrders.length > 0 ? (
-                        product.purchaseOrders.map((po, index) => (
-                          <tr
-                            key={po.id || index}
-                            className="border-b border-gray-100 hover:bg-gray-50"
-                          >
-                            <td className="py-3 px-4 text-sm text-gray-900">
-                              {po.createdAt
-                                ? new Date(po.createdAt).toLocaleDateString()
-                                : new Date(
-                                    product.createdAt
-                                  ).toLocaleDateString()}
-                            </td>
-                            <td className="py-3 px-4 text-sm">
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                                Purchase Order
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
-                              +{po.quantity || 0}
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
-                              ${po.total?.toFixed(2) || "0.00"}
-                            </td>
-                            <td className="py-3 px-4 text-sm">
-                              <span
-                                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                  po.status === "active"
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-gray-100 text-gray-800"
-                                }`}
-                              >
-                                {po.status || "Unknown"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900 font-mono">
-                              PO-{po.id?.substring(0, 8) || `${index + 1}`}
-                            </td>
-                          </tr>
-                        ))
+              {/* History Section - moved below packs */}
+               <div className="bg-white rounded-lg p-4">
+                    
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Product Packs
+                    </label>
+                    <div className=" border border-gray-300 rounded-xl p-1">
+                      {product.packs && product.packs.length > 0 ? (
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-gray-300">
+                            <thead>
+                              <tr>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Pack #</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Total Quantity</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Min. Selling Qty</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Pack Price</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Percent Discount %</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Fixed Discount</th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-100">
+                              {product.packs.map((pack, index) => (
+                                <tr key={pack.id || index}>
+                                  <td className="px-4 py-2 font-semibold text-black">{index + 1}</td>
+                                  <td className="px-4 py-2">{pack.totalPacksQuantity || 0}</td>
+                                  <td className="px-4 py-2">{pack.minimumSellingQuantity || 0}</td>
+                                  <td className="px-4 py-2">${pack.orderedPacksPrice?.toFixed(2) || "0.00"}</td>
+                                                                     <td className="px-4 py-2">{pack.percentDiscount !== null && pack.percentDiscount !== undefined ? `${pack.percentDiscount}%` : "0%"}</td>
+                                  <td className="px-4 py-2">${pack.discountAmount?.toFixed(2) || "0.00"}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       ) : (
-                        <tr className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-3 px-4 text-sm text-gray-900">
-                            Today 10:21 AM
-                          </td>
-                          <td className="py-3 px-4 text-sm">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                              {isVariantProduct
-                                ? "Variant Sale (Sample)"
-                                : "Sale (Sample)"}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
-                            -1
-                          </td>
-                          <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
-                            $
-                            {isVariantProduct && selectedVariant
-                              ? selectedVariant.price?.toFixed(2) || "0.00"
-                              : product.singleItemSellingPrice || "0.00"}
-                          </td>
-                          <td className="py-3 px-4 text-sm">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              Completed
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-sm text-gray-900 font-mono">
-                            {isVariantProduct && selectedVariant
-                              ? `VAR-${selectedVariant.name.substring(0, 3).toUpperCase()}-001`
-                              : "SAMPLE-001"}
-                          </td>
-                        </tr>
+                        <div className="flex items-center justify-center py-8 text-center">
+                          <div className="flex flex-col items-center gap-3">
+                            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                              <svg 
+                                className="w-6 h-6 text-gray-400" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                              >
+                                <path 
+                                  strokeLinecap="round" 
+                                  strokeLinejoin="round" 
+                                  strokeWidth={1.5} 
+                                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" 
+                                />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-700">No packs configured</p>
+                              <p className="text-xs text-gray-500 mt-1">This product has no pack configurations</p>
+                            </div>
+                          </div>
+                        </div>
                       )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                    </div>
+                  </div>
+
 
               {/* Suppliers */}
               <div className="bg-white rounded-lg">
