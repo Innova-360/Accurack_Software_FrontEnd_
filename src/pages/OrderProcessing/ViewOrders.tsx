@@ -214,7 +214,7 @@ const ViewOrdersPage: React.FC = () => {
 
   useEffect(() => {
     if (!currentStore?.id) {
-      navigate("/stores");
+      navigate("/");
     }
   }, [currentStore, navigate]);
 

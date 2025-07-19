@@ -25,7 +25,7 @@ const Login = () => {
   const location = useLocation();
   const dispatch = useAppDispatch();
 
-  const from = location.state?.from?.pathname || "/stores";
+  const from = location.state?.from?.pathname || "/";
   useEffect(() => {
     const savedCredentials = loadSavedCredentials();
     if (savedCredentials) {

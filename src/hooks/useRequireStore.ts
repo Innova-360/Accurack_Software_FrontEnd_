@@ -6,7 +6,7 @@ import type { Store } from "../types/store";
 
 /**
  * Custom hook that ensures a store is selected
- * Redirects to /stores if no store is available
+ * Redirects to / if no store is available
  * Returns the current store or null if none is selected
  */
 const useRequireStore = (): Store | null => {
@@ -23,7 +23,7 @@ const useRequireStore = (): Store | null => {
 
   useEffect(() => {
     if (!currentStore && stores.length === 0) {
-      // navigate("/stores");
+      // navigate("/");
       return;
     }
   }, [currentStore, stores, navigate]);

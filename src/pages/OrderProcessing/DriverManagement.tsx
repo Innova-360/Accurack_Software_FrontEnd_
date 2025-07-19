@@ -166,7 +166,7 @@ const DriverManagementPage: React.FC = () => {
 
   useEffect(() => {
     if (!currentStore?.id) {
-      navigate("/stores");
+      navigate("/");
     }
   }, [currentStore, navigate]);
 

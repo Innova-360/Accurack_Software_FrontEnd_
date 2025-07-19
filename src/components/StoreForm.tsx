@@ -148,7 +148,7 @@ const StoreForm: React.FC = () => {
       }
 
       // Navigate to stores page after successful submission
-      navigate("/stores");
+      navigate("/");
     } catch (error) {
       console.error("Error saving store:", error);
       toast.error(
@@ -158,7 +158,7 @@ const StoreForm: React.FC = () => {
   };
 
   const handleCancel = () => {
-    navigate("/stores");
+    navigate("/");
   };
 
   return (

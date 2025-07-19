@@ -159,7 +159,7 @@ const OtpPage = () => {
 
         // Check if user is now authenticated (has token)
         if (resultAction.payload.token) {
-          navigate("/stores");
+          navigate("/");
         } else {
           navigate("/login");
         }

@@ -5,7 +5,7 @@ import { setCurrentStore, fetchStores } from "../store/slices/storeSlice";
 
 /**
  * Custom hook to handle store selection from URL parameters
- * Automatically redirects to /stores if no valid store is found
+ * Automatically redirects to / if no valid store is found
  */
 export const useStoreFromUrl = () => {
   const { id: storeId } = useParams<{ id: string }>();
@@ -27,12 +27,12 @@ export const useStoreFromUrl = () => {
       if (store && (!currentStore || currentStore.id !== storeId)) {
         dispatch(setCurrentStore(store));
       } else if (!store) {
-        // Store not found, redirect to stores page
-        navigate("/stores");
+        // Store not found, redirect to home page
+        navigate("/");
       }
     } else if (!storeId && !currentStore) {
-      // No store ID in URL and no current store, redirect to stores page
-      navigate("/stores");
+      // No store ID in URL and no current store, redirect to home page
+      navigate("/");
     }
   }, [storeId, stores, currentStore, dispatch, navigate]);
 

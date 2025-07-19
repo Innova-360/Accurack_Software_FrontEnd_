@@ -247,7 +247,7 @@ const StoreDetails = () => {
   };
 
   const handleBack = () => {
-    navigate("/stores");
+    navigate("/");
   };
 
   if (loading) {

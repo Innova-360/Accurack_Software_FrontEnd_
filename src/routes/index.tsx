@@ -69,7 +69,7 @@ function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
   if (loading || !authChecked) {
     return null; // Or use <Loading label="Checking authentication..." />
   }
-  if (isAuthenticated && user) return <Navigate to="/stores" replace />;
+  if (isAuthenticated && user) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -108,7 +108,7 @@ const AppRoutes = () => {
         }
       /> */}
       <Route
-        path="/stores"
+        path="/"
         element={
           <ProtectedRoute>
             <StoresPage />

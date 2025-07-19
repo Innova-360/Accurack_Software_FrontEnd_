@@ -20,7 +20,7 @@ const Navbar:  React.FC<HeaderProps> = ({ className }) => {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
 
   // Check if we're on main stores page or exact store page
-  const isOnMainStoresPage = location.pathname === "/stores";
+  const isOnMainStoresPage = location.pathname === "/";
   const isOnExactStorePage = location.pathname === `/store/${id}`;
   const shouldShowHomeIcon = isOnMainStoresPage || isOnExactStorePage;
 
@@ -30,7 +30,7 @@ const Navbar:  React.FC<HeaderProps> = ({ className }) => {
     if (isOnMainStoresPage) {
       navigate(`/store/${id}`);
     } else if (isOnExactStorePage) {
-      navigate("/stores");
+      navigate("/");
     } else {
       navigate(`/store/${id}`);
     }
