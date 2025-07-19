@@ -24,6 +24,7 @@ import {
 } from "../../store/slices/storeSlice";
 import type { Store, StoreFormData } from "../../types/store";
 import Loading from "../../components/Loading";
+import { StoreDeleteConfirmModal } from "../../components/StoreComponents";
 
 const StoresPage: React.FC = () => {
   const navigate = useNavigate();
@@ -36,6 +37,8 @@ const StoresPage: React.FC = () => {
   } = storeState || { stores: [], loading: false, error: null };
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [storeToDelete, setStoreToDelete] = useState<Store | null>(null);
 
   // Debug logging
 
@@ -55,15 +58,24 @@ const StoresPage: React.FC = () => {
     navigate(`/store/details/${store.id}`);
   };
 
-  const handleDeleteStore = async (storeId: string) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this store? This action cannot be undone."
-      )
-    ) {
-      await dispatch(deleteStore(storeId));
+  const handleDeleteStoreClick = (store: Store) => {
+    setStoreToDelete(store);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDeleteStore = async () => {
+    if (storeToDelete) {
+      await dispatch(deleteStore(storeToDelete.id));
+      setIsDeleteModalOpen(false);
+      setStoreToDelete(null);
     }
   };
+
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setStoreToDelete(null);
+  };
+
   const handleSelectStore = (store: Store) => {
     dispatch(setCurrentStore(store));
     // Navigate to store-specific dashboard
@@ -220,7 +232,7 @@ const StoresPage: React.FC = () => {
                       />
                       <IconButton
                         icon={<FaTrash />}
-                        onClick={() => handleDeleteStore(store.id)}
+                        onClick={() => handleDeleteStoreClick(store)}
                         variant="danger"
                         size="sm"
                         title="Delete Store"
@@ -279,6 +291,17 @@ const StoresPage: React.FC = () => {
         onClose={() => setIsCreateModalOpen(false)}
         onSave={handleCreateStoreSubmit}
         loading={isCreating}
+      />
+      <StoreDeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        title="Delete Store"
+        message={
+          storeToDelete
+            ? `Are you sure you want to delete the store "${storeToDelete.name}"? This action cannot be undone.`
+            : "Are you sure you want to delete this store? This action cannot be undone."
+        }
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDeleteStore}
       />
     </div>
   );
