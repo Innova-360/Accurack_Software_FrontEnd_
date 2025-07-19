@@ -15,6 +15,7 @@ import type { EditProductFormData } from "../../components/InventoryComponents/E
 import { useLowStockProducts } from "../../hooks/useInventory";
 import { extractErrorMessage } from "../../utils/lastUpdatedUtils";
 import useRequireStore from "../../hooks/useRequireStore";
+import { useGetCategoriesQuery } from '../../store/slices/categorySlice';
 
 // Utility function for safe product ID extraction
 const getProductId = (product: Product): string | null => {
@@ -50,6 +51,8 @@ const UpdateProduct: React.FC = () => {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [groupBy, setGroupBy] = useState("");
   const [selectedItems, setSelectedItems] = useState<number[]>([]);  // Fetch products from API with pagination and filters
+  const { data } = useGetCategoriesQuery();
+  const categories = data?.data || [];
   const { products, loading, error, pagination, fetchWithParams, refetch } =
     useProducts({
       page: currentPage,
@@ -122,9 +125,9 @@ const UpdateProduct: React.FC = () => {
   // Pagination logic for both normal and search results
   const paginatedProducts = isSearching
     ? allProducts.slice(
-        (currentPage - 1) * rowsPerPage,
-        currentPage * rowsPerPage
-      )
+      (currentPage - 1) * rowsPerPage,
+      currentPage * rowsPerPage
+    )
     : products;
 
   const totalItems = isSearching ? allProducts.length : pagination.total;
@@ -243,8 +246,23 @@ const UpdateProduct: React.FC = () => {
     // Search will be triggered by the useEffect with debounced search term
   };
 
-  const handleGroupByChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleGroupByChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
     setGroupBy(event.target.value);
+    setCurrentPage(1);
+    try {
+      await fetchWithParams({
+        page: 1,
+        limit: rowsPerPage,
+        search: debouncedSearchTerm,
+        sortBy: sortConfig?.key,
+        sortOrder: sortConfig?.direction,
+        storeId: currentStore?.id,
+        categoryId: event.target.value,
+      });
+    } catch (error) {
+      toast.error("Failed to change rows per page");
+      console.error("RowsPerPage error:", error);
+    }
   };
 
   const handleRowsPerPageChange = async (newRowsPerPage: number) => {
@@ -367,6 +385,7 @@ const UpdateProduct: React.FC = () => {
               (searchTerm !== debouncedSearchTerm ||
                 Boolean(debouncedSearchTerm))
             }
+            categories={categories}
           />
         </div>
 
@@ -418,17 +437,17 @@ const UpdateProduct: React.FC = () => {
           {/* Loading indicator for search and table updates */}
           {loading &&
             (products.length > 0 || searchTerm || debouncedSearchTerm) && (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-center">
-                <div className="inline-block rounded-full h-8 w-8 border-b-2 border-[#0f4d57] animate-spin mb-2"></div>
-                <p className="text-gray-600 text-sm">
-                  {searchTerm || debouncedSearchTerm
-                    ? "Searching products..."
-                    : "Loading..."}
-                </p>
+              <div className="flex items-center justify-center py-8">
+                <div className="text-center">
+                  <div className="inline-block rounded-full h-8 w-8 border-b-2 border-[#0f4d57] animate-spin mb-2"></div>
+                  <p className="text-gray-600 text-sm">
+                    {searchTerm || debouncedSearchTerm
+                      ? "Searching products..."
+                      : "Loading..."}
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Content - Show even when loading for search to prevent flicker */}
           <div
@@ -448,21 +467,19 @@ const UpdateProduct: React.FC = () => {
                 <div className="flex bg-gray-100 rounded-lg p-1">
                   <button
                     onClick={() => setMobileViewType("cards")}
-                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                      mobileViewType === "cards"
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${mobileViewType === "cards"
                         ? "bg-white text-[#0f4d57] shadow-sm"
                         : "text-gray-600"
-                    }`}
+                      }`}
                   >
                     Cards
                   </button>
                   <button
                     onClick={() => setMobileViewType("table")}
-                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                      mobileViewType === "table"
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${mobileViewType === "table"
                         ? "bg-white text-[#0f4d57] shadow-sm"
                         : "text-gray-600"
-                    }`}
+                      }`}
                   >
                     Table
                   </button>
@@ -475,7 +492,7 @@ const UpdateProduct: React.FC = () => {
                   groupedProducts={null}
                   groupBy=""
                   expandedCategories={[]}
-                  onToggleCategory={() => {}}
+                  onToggleCategory={() => { }}
                   onProductViewed={handleEditProduct}
                 />
               ) : (

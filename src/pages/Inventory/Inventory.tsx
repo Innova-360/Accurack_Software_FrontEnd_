@@ -18,6 +18,7 @@ import {
   useLowStockProducts,
 } from "../../hooks/useInventory";
 import { extractErrorMessage } from "../../utils/lastUpdatedUtils";
+import { useGetCategoriesQuery } from '../../store/slices/categorySlice';
 
 
 
@@ -39,6 +40,10 @@ const Inventory: React.FC = () => {
   const [searchResults, setSearchResults] = useState<Product[] | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+
+  const { data } = useGetCategoriesQuery();
+  const categories = data?.data || [];
+
 
   // Fetch products from API with pagination and filters
   const { products, loading, error, pagination, fetchWithParams, refetch } =
@@ -114,9 +119,9 @@ const Inventory: React.FC = () => {
   // Pagination logic for both normal and search results
   const paginatedProducts = isSearching
     ? allProducts.slice(
-        (currentPage - 1) * rowsPerPage,
-        currentPage * rowsPerPage
-      )
+      (currentPage - 1) * rowsPerPage,
+      currentPage * rowsPerPage
+    )
     : allProducts;
 
   const totalItems = isSearching ? allProducts.length : pagination.total;
@@ -276,16 +281,22 @@ const Inventory: React.FC = () => {
   };
 
 
-  const handleGroupByChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = event.target.value;
-    setGroupBy(value);
-    setCurrentPage(1); // Reset to first page when changing group by
-
-    // When grouping by category, keep categories collapsed by default
-    if (value === "category") {
-      setExpandedCategories([]); // Start with all categories closed
-    } else {
-      setExpandedCategories([]);
+  const handleGroupByChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setGroupBy(event.target.value);
+    setCurrentPage(1);
+    try {
+      await fetchWithParams({
+        page: 1,
+        limit: rowsPerPage,
+        search: debouncedSearchTerm,
+        sortBy: sortConfig?.key,
+        sortOrder: sortConfig?.direction,
+        storeId,
+        categoryId: event.target.value,
+      });
+    } catch (error) {
+      toast.error("Failed to change rows per page");
+      console.error("RowsPerPage error:", error);
     }
   };
 
@@ -377,6 +388,7 @@ const Inventory: React.FC = () => {
             rowsPerPage={rowsPerPage}
             onRowsPerPageChange={handleRowsPerPageChange}
             isSearching={isSearching}
+            categories={categories}
           />
         </div>
         {/* Inventory Table/View Container */}
@@ -431,21 +443,19 @@ const Inventory: React.FC = () => {
               <div className="flex bg-gray-100 rounded-lg p-1">
                 <button
                   onClick={() => setMobileViewType("cards")}
-                  className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                    mobileViewType === "cards"
-                      ? "bg-white text-[#0f4d57] shadow-sm"
-                      : "text-gray-600"
-                  }`}
+                  className={`px-3 py-1 text-xs rounded-md transition-colors ${mobileViewType === "cards"
+                    ? "bg-white text-[#0f4d57] shadow-sm"
+                    : "text-gray-600"
+                    }`}
                 >
                   Cards
                 </button>
                 <button
                   onClick={() => setMobileViewType("table")}
-                  className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                    mobileViewType === "table"
-                      ? "bg-white text-[#0f4d57] shadow-sm"
-                      : "text-gray-600"
-                  }`}
+                  className={`px-3 py-1 text-xs rounded-md transition-colors ${mobileViewType === "table"
+                    ? "bg-white text-[#0f4d57] shadow-sm"
+                    : "text-gray-600"
+                    }`}
                 >
                   Table
                 </button>
