@@ -51,11 +51,13 @@ const InventoryControls: React.FC<InventoryControlsProps> = ({
                 onChange={onGroupByChange}
               >
                 <option value="">All</option>
-                {categories.map((category) => (
+                {categories && categories.length > 0 ? categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
-                ))}
+                )) : (
+                  <option disabled>No categories available</option>
+                )}
               </select>
             </div>
             {/* Rows per page */}
