@@ -711,7 +711,7 @@ const CreateInventory: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl"></div>
@@ -725,13 +725,13 @@ const CreateInventory: React.FC = () => {
         ></div>
       </div>
       {/* Enhanced Header with Milestone Progress */}
-      <div className="relative z-10 bg-white/80 backdrop-blur-sm shadow-xl border-b border-gray-200/50">
+      <div className="relative z-10 bg-[#0f4d57] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between h-auto sm:h-24 py-4 sm:py-0 gap-4 sm:gap-0">
             <div className="flex items-center space-x-3 sm:space-x-6">
               <button
                 onClick={() => (showVariations ? handleBack() : navigate(-1))}
-                className="group p-2 sm:p-3 text-gray-600 hover:text-[#0f4d57] hover:bg-gray-100/80 rounded-full transition-all duration-300 transform hover:scale-110 hover:shadow-lg"
+                className="group p-2 sm:p-3 text-white"
               >
                 <svg
                   className="w-5 h-5 sm:w-6 sm:h-6 transform group-hover:-translate-x-1 transition-transform duration-200"
@@ -748,12 +748,12 @@ const CreateInventory: React.FC = () => {
                 </svg>
               </button>
               <div className="flex flex-col">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-[#0f4d57] to-[#16a085] bg-clip-text text-transparent transition-all duration-300">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl text-white font-bold">
                   {showVariations
                     ? "Configure Product Variations"
                     : "Create New Product"}
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-600 mt-1 font-medium">
+                <p className="text-xs sm:text-sm text-white mt-1 font-medium">
                   {showVariations
                     ? "Set up different variations of your product with unique attributes"
                     : "Add a new product to your inventory with detailed information"}
@@ -767,12 +767,12 @@ const CreateInventory: React.FC = () => {
                 <div
                   className={`flex items-center space-x-2 sm:space-x-3 px-3 py-2 sm:px-4 rounded-full transition-all duration-500 transform ${
                     !showVariations
-                      ? "bg-[#0f4d57] text-white shadow-lg scale-105 shadow-[#0f4d57]/20"
-                      : "bg-green-100 text-green-700 border border-green-200 shadow-green-100/50 shadow-md"
+                      ? "bg-[#0f4d57] text-white scale-105 border border-gray-200"
+                      : "bg-green-100 text-green-700 border border-green-200"
                   }`}
                 >
                   <div
-                    className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${
+                    className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full  ${
                       !showVariations ? "bg-white" : "bg-green-500"
                     }`}
                   ></div>
@@ -785,14 +785,14 @@ const CreateInventory: React.FC = () => {
                 <div
                   className={`w-4 sm:w-8 h-0.5 ${
                     showVariations
-                      ? "bg-gradient-to-r from-[#0f4d57] to-green-500 shadow-md"
+                      ? "bg-gradient-to-r from-[#0f4d57] to-green-500"
                       : "bg-gray-300"
                   }`}
                 ></div>
                 <div
                   className={`flex items-center space-x-2 sm:space-x-3 px-3 py-2 sm:px-4 rounded-full transition-all duration-500 transform ${
                     showVariations
-                      ? "bg-[#0f4d57] text-white shadow-lg scale-105 shadow-[#0f4d57]/20"
+                      ? "bg-[#0f4d57] text-white scale-105"
                       : "bg-gray-100 text-gray-500 border border-gray-200"
                   }`}
                 >
@@ -815,11 +815,11 @@ const CreateInventory: React.FC = () => {
       <div className="relative z-10">
         {/* Product Variants Toggle Section */}
         {!showVariations && (
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6">
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200/50 mb-4 sm:mb-6">
+          <div className="max-w-6xl mx-auto pt-4 sm:pt-6">
+            <div className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
                 <div className="flex items-center space-x-3 sm:space-x-4">
-                  <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+                  <div className="p-2 sm:p-3 bg-[#0f4d57] rounded-lg">
                     <svg
                       className="w-5 h-5 sm:w-6 sm:h-6 text-white"
                       fill="none"
@@ -866,7 +866,7 @@ const CreateInventory: React.FC = () => {
                       }}
                       className="sr-only peer"
                     />
-                    <div className="w-12 h-6 sm:w-14 sm:h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 sm:after:h-6 sm:after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-blue-500 peer-checked:to-indigo-600 shadow-lg"></div>
+                    <div className="w-12 h-6 sm:w-14 sm:h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 sm:after:h-6 sm:after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-blue-500 peer-checked:to-indigo-600"></div>
                   </label>
                   <span
                     className={`text-xs sm:text-sm font-medium transition-colors duration-200 ${hasVariants ? "text-gray-900" : "text-gray-500"}`}
@@ -982,11 +982,11 @@ const CreateInventory: React.FC = () => {
                   </div>
                 )}
                 {/* Enhanced Action Buttons */}
-                <div className="flex flex-col sm:flex-row items-center justify-between pt-6 sm:pt-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200/50 space-y-4 sm:space-y-0">
+                <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 border-t border-gray-200 pt-6 mt-6">
                   <button
                     type="button"
                     onClick={() => navigate(-1)}
-                    className="group w-full sm:w-auto px-6 sm:px-8 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 transform hover:scale-105 hover:shadow-md flex items-center justify-center space-x-2"
+                    className="group w-full sm:w-auto px-6 sm:px-8 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-medium flex items-center justify-center space-x-2"
                   >
                     <svg
                       className="w-4 h-4 transform group-hover:-translate-x-1 transition-transform duration-200"
@@ -1040,7 +1040,7 @@ const CreateInventory: React.FC = () => {
                           }
                           handleNext();
                         }}
-                        className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md transition-all duration-200 transform hover:scale-105"
+                        className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 bg-[#0f4d57] text-white"
                       >
                         <span className="text-sm sm:text-base">
                           Next: Configure Variations
@@ -1071,7 +1071,7 @@ const CreateInventory: React.FC = () => {
                           }
                           handleNext();
                         }}
-                        className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md transition-all duration-200 transform hover:scale-105"
+                        className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90"
                       >
                         <span className="text-sm sm:text-base">
                           Next: Configure Variations
@@ -1105,10 +1105,10 @@ const CreateInventory: React.FC = () => {
                           }
                         }}
                         disabled={isSubmitting}
-                        className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-200 transform hover:scale-105 hover:shadow-lg ${
+                        className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 ${
                           isSubmitting
                             ? "bg-gray-400 text-white cursor-not-allowed"
-                            : "bg-[#0f4d57] text-white hover:bg-[#0f4d57]/90 shadow-md"
+                            : "bg-[#0f4d57] text-white"
                         }`}
                       >
                         {isSubmitting ? (
@@ -1180,11 +1180,11 @@ const CreateInventory: React.FC = () => {
                 </div>
 
                 {/* Enhanced Action Buttons for Variations */}
-                <div className="flex flex-col sm:flex-row items-center justify-between pt-6 sm:pt-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200/50 space-y-4 sm:space-y-0">
+                <div className="flex flex-col sm:flex-row items-center justify-between pt-6 sm:pt-8 bg-white/80 backdrop-blur-sm p-4 sm:p-6 border border-gray-200/50 space-y-4 sm:space-y-0">
                   <button
                     type="button"
                     onClick={handleBack}
-                    className="group w-full sm:w-auto px-6 sm:px-8 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 transform hover:scale-105 hover:shadow-md flex items-center justify-center space-x-2"
+                    className="group w-full sm:w-auto px-6 sm:px-8 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-medium flex items-center justify-center space-x-2"
                   >
                     <svg
                       className="w-4 h-4 transform group-hover:-translate-x-1 transition-transform duration-200"
@@ -1208,7 +1208,7 @@ const CreateInventory: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => navigate(-1)}
-                      className="w-full sm:w-auto px-6 sm:px-8 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 transform hover:scale-105 hover:shadow-md"
+                      className="w-full sm:w-auto px-6 sm:px-8 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-medium"
                     >
                       <span className="text-sm sm:text-base">Cancel</span>
                     </button>
@@ -1220,7 +1220,7 @@ const CreateInventory: React.FC = () => {
                           (!variantValidation.isValid ||
                             !variantValidation.hasVariations))
                       }
-                      className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg flex items-center justify-center space-x-2 ${
+                      className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 ${
                         isSubmitting ||
                         (hasVariants &&
                           (!variantValidation.isValid ||

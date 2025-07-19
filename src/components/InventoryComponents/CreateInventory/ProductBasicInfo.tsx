@@ -8,6 +8,7 @@ import {
   type ProductCategory,
   createProductCategory,
 } from "../../../store/slices/productCategoriesSlice";
+import { AiOutlineInfoCircle } from "react-icons/ai";
 
 interface ProductBasicInfoProps {
   formData: ProductFormData;
@@ -234,42 +235,8 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
     onFormDataChange("category", "");
   };
 
-  // Helper functions for managing attributes
-  const addAttribute = () => {
-    const newAttribute = {
-      id: `attr_${Date.now()}`,
-      name: "",
-      options: [{ id: `opt_${Date.now()}`, value: "" }]
-    };
-    const updatedAttributes = [...(formData.attributes || []), newAttribute];
-    onFormDataChange("attributes", updatedAttributes);
-  };
-
-  const removeAttribute = (index: number) => {
-    const updatedAttributes = (formData.attributes || []).filter((_, i) => i !== index);
-    onFormDataChange("attributes", updatedAttributes);
-  };
-
-  const handleAttributeNameChange = (index: number, name: string) => {
-    const updatedAttributes = [...(formData.attributes || [])];
-    updatedAttributes[index] = {
-      ...updatedAttributes[index],
-      name
-    };
-    onFormDataChange("attributes", updatedAttributes);
-  };
-
-  const handleAttributeValueChange = (index: number, value: string) => {
-    const updatedAttributes = [...(formData.attributes || [])];
-    updatedAttributes[index] = {
-      ...updatedAttributes[index],
-      options: [{ id: updatedAttributes[index].options[0]?.id || `opt_${Date.now()}`, value }]
-    };
-    onFormDataChange("attributes", updatedAttributes);
-  };
-
   return (
-    <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 border border-gray-200 hover:shadow-xl transition-all duration-300">
+    <div className="bg-white border-b border-gray-200/50 pb-5 transition-all duration-300">
       <div className="flex items-center space-x-3 mb-6 sm:mb-8">
         <div className="p-2 bg-[#0f4d57] rounded-lg">
           <svg
@@ -299,7 +266,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <div className="space-y-2">
           <label className="block text-xs sm:text-sm font-semibold text-gray-700">
-            Product Name *
+            Product Name <span className="text-red-600">*</span>
           </label>
           <input
             type="text"
@@ -314,8 +281,15 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
           />
         </div>
         <div className="space-y-2">
-          <label className="block text-xs sm:text-sm font-semibold text-gray-700">
-            Category *
+          <label className="block text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-1">
+            <span>Category</span>
+            <span className="text-red-600">*</span>
+            <span
+              className="text-blue-600 cursor-pointer"
+              title="Don't see your category? Select '+ Create New Category' from the dropdown above."
+            >
+              <AiOutlineInfoCircle className="text-lg" />
+            </span>
           </label>
           <select
             value={isCreatingCategory ? "create_new" : formData.category}
@@ -388,7 +362,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
               </div>
             )}
 
-          {/* Helper text when categories exist */}
+          {/* Helper text when categories exist
           {!effectiveCategoriesLoading &&
             categories &&
             categories.length > 0 &&
@@ -397,7 +371,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                 Don't see your category? Select "+ Create New Category" from the
                 dropdown above.
               </div>
-            )}
+            )} */}
 
           {/* Show loading timeout warning */}
           {loadingTimeout && categoriesLoading && (
@@ -525,7 +499,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
             </div>
           )}
         </div>
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <label className="block text-sm font-semibold text-gray-700">
             Brand Name{" "}
             <span className="text-gray-400 text-xs font-normal">
@@ -539,25 +513,10 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
             placeholder="Enter brand name"
           />
-        </div>
+        </div> */}
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-gray-700">
-            Location{" "}
-            <span className="text-gray-400 text-xs font-normal">
-              (Optional)
-            </span>
-          </label>
-          <input
-            type="text"
-            value={formData.location || ""}
-            onChange={(e) => onFormDataChange("location", e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
-            placeholder="Enter location (e.g., Aisle 3, Shelf B)"
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-700">
-            Price *
+            Price <span className="text-red-600">*</span>
           </label>
           <div className="relative">
             <span className="absolute left-3 top-3 text-gray-500">$</span>
@@ -584,14 +543,51 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
               ref={fieldRefs?.price}
             />
           </div>
-        </div>{" "}
-      </div>{" "}
+        </div>
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-gray-700">
+            PLU/UPC <span className="text-red-600">*</span>
+          </label>
+          <input
+            type="number"
+            min="0"
+            value={formData.pluUpc}
+            ref={fieldRefs?.pluUpc}
+            onChange={(e) => onHandleNumericInput("pluUpc", e.target.value)}
+            onKeyDown={(e) => {
+              if (
+                e.key === "-" ||
+                e.key === "e" ||
+                e.key === "+" ||
+                e.key === "."
+              ) {
+                e.preventDefault();
+              }
+            }}
+            className={`w-full px-4 py-3 border rounded-lg
+    ${missingFields.includes("pluUpc") ? "border-red-500" : "border-gray-300"}
+    focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400`}
+            placeholder="PLU/UPC Code"
+            required
+          />
+        </div>
+      </div>
       {!isVariantMode && (
-        <div className="bg-gray-50 rounded-lg p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div className="mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Vendor
+              <label className="block text-sm font-semibold text-gray-700 flex items-center gap-1">
+                <span>Vendor</span>
+                <span className="text-gray-400 text-xs font-normal">
+                  (Optional)
+                </span>
+                <span
+                  className="text-blue-600 cursor-pointer"
+                  title="Selecting a supplier is optional. You can add or assign a
+                supplier later."
+                >
+                  <AiOutlineInfoCircle className="text-base" />
+                </span>
               </label>
               <select
                 value={formData.supplierId}
@@ -639,11 +635,6 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                   {suppliersError}
                 </div>
               )}
-              {/* Note: Supplier selection is optional */}
-              <div className="mt-1 text-xs text-gray-500 italic">
-                Selecting a supplier is optional. You can add or assign a
-                supplier later.
-              </div>
             </div>
 
             <div className="space-y-2">
@@ -671,7 +662,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                   }
                 }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
-                placeholder="Optional custom SKU"
+                placeholder="Custom SKU"
               />
             </div>
             <div className="space-y-2">
@@ -700,36 +691,10 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                 placeholder="EAN barcode"
               />
             </div>
+
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">
-                PLU/UPC *
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={formData.pluUpc}
-                ref={fieldRefs?.pluUpc}
-                onChange={(e) => onHandleNumericInput("pluUpc", e.target.value)}
-                onKeyDown={(e) => {
-                  if (
-                    e.key === "-" ||
-                    e.key === "e" ||
-                    e.key === "+" ||
-                    e.key === "."
-                  ) {
-                    e.preventDefault();
-                  }
-                }}
-                className={`w-full px-4 py-3 border rounded-lg
-    ${missingFields.includes("pluUpc") ? "border-red-500" : "border-gray-300"}
-    focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400`}
-                placeholder="PLU or UPC code"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Individual Item Quantity *
+                Individual Item Quantity <span className="text-red-600">*</span>
               </label>
               <input
                 type="number"
@@ -761,8 +726,8 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
       )}
       {/* Cost and Pricing Information - Hidden in variant mode */}
       {!isVariantMode && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-8 border border-blue-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <div className="mb-8">
+          {/* <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <svg
               className="w-5 h-5 mr-2 text-[#0f4d57]"
               fill="none"
@@ -777,11 +742,11 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
               />
             </svg>
             Cost & Pricing
-          </h3>
+          </h3> */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">
-                Individual Item Cost *
+                Individual Item Cost <span className="text-red-600">*</span>
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-3 text-gray-500">$</span>
@@ -812,7 +777,8 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
 
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">
-                Individual Item Selling Price *
+                Individual Item Selling Price{" "}
+                <span className="text-red-600">*</span>
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-3 text-gray-500">$</span>
@@ -867,7 +833,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
 
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">
-                Minimum Selling Quantity *
+                Minimum Selling Quantity <span className="text-red-600">*</span>
               </label>
               <input
                 type="number"
@@ -925,10 +891,14 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Minimum Order Value *
-                <span className="text-gray-400 text-xs font-normal ml-1">
-                  (Auto-calculated: Selling Price × Min Quantity)
+              <label className="block text-sm font-semibold text-gray-700 flex items-center gap-1">
+                <span>Minimum Order Value</span>
+                <span className="text-red-600">*</span>
+                <span
+                  className="text-blue-600 cursor-pointer"
+                  title="Auto-calculated: Selling Price × Min Quantity"
+                >
+                  <AiOutlineInfoCircle className="text-base" />
                 </span>
               </label>
               <div className="relative">
@@ -980,47 +950,37 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                   ).toFixed(2)}
                 </p>
               )}
-              <p className="text-blue-600 text-xs mt-1 flex items-center">
-                <svg
-                  className="w-4 h-4 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                Automatically updates when selling price or quantity changes
-              </p>{" "}
             </div>
-          </div>
-        </div>
-      )}
-      {/* Order Value Discount - Hidden in variant mode */}
-      {!isVariantMode && (
-        <div className="bg-green-50 rounded-lg p-6 mb-8 border border-green-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <svg
-              className="w-5 h-5 mr-2 text-green-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            Order Value Discount (Optional)
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
             <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                Quantity <span className="text-red-600">*</span>
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={formData.quantity}
+                onChange={(e) =>
+                  onHandleNumericInput("quantity", e.target.value)
+                }
+                onKeyDown={(e) => {
+                  if (
+                    e.key === "-" ||
+                    e.key === "e" ||
+                    e.key === "+" ||
+                    e.key === "."
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                placeholder="Stock quantity"
+                required
+                ref={fieldRefs?.quantity}
+              />
+            </div>
+
+            <div className="space-y-2 col-span-2">
               <label className="block text-sm font-semibold text-gray-700">
                 Discount Type & Value
               </label>
@@ -1074,92 +1034,65 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                   />
                   {formData.orderValueDiscountType === "percentage" && (
                     <span className="absolute right-3 top-3 text-gray-500">
-                      %
+                      %x
                     </span>
                   )}
                 </div>
               </div>
+              
             </div>
-            {formData.orderValueDiscountType &&
-              formData.orderValueDiscountValue && (
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Discounted Value
-                  </label>
-                  <div className="bg-white p-4 rounded-lg border-2 border-green-300">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Original:</span>
-                      <span className="font-medium">
-                        ${parseFloat(formData.minOrderValue || "0").toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-green-600 font-bold text-lg">
-                      <span>Final Price:</span>
-                      <span>${discountedOrderValue.toFixed(2)}</span>
-                    </div>
-                    <div className="text-sm text-green-600 mt-1">
-                      You save: $
-                      {(
-                        parseFloat(formData.minOrderValue || "0") -
-                        discountedOrderValue
-                      ).toFixed(2)}
-                    </div>
+          </div>
+
+
+
+          {formData.orderValueDiscountType &&
+          formData.orderValueDiscountValue ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              {/* Description on the left */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
+                  Description
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) =>
+                    onFormDataChange("description", e.target.value)
+                  }
+                  rows={4}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400 resize-none"
+                  placeholder="Enter product description..."
+                />
+              </div>
+
+              {/* Discount Summary Box stays here (right side) */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
+                  Final Discount Summary
+                </label>
+                <div className="bg-white p-4 rounded-lg border-2 border-green-300">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Original:</span>
+                    <span className="font-medium">
+                      ${parseFloat(formData.minOrderValue || "0").toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-green-600 font-bold text-lg">
+                    <span>Final Price:</span>
+                    <span>${discountedOrderValue.toFixed(2)}</span>
+                  </div>
+                  <div className="text-sm text-green-600 mt-1">
+                    You save: $
+                    {(
+                      parseFloat(formData.minOrderValue || "0") -
+                      discountedOrderValue
+                    ).toFixed(2)}
                   </div>
                 </div>
-              )}{" "}
-          </div>
-        </div>
-      )}
-      {/* Secondary Fields - Conditionally Hidden */}
-      {showOptionalFields && (
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <svg
-              className="w-5 h-5 mr-2 text-[#0f4d57]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-            Additional Information
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Quantity *
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={formData.quantity}
-                onChange={(e) =>
-                  onHandleNumericInput("quantity", e.target.value)
-                }
-                onKeyDown={(e) => {
-                  if (
-                    e.key === "-" ||
-                    e.key === "e" ||
-                    e.key === "+" ||
-                    e.key === "."
-                  ) {
-                    e.preventDefault();
-                  }
-                }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
-                placeholder="Stock quantity"
-                required
-                ref={fieldRefs?.quantity}
-              />
+              </div>
             </div>
-
-            <div className="space-y-2">
+          ) : (
+            // If no discount, show description in full width
+            <div className="space-y-2 mt-6">
               <label className="block text-sm font-semibold text-gray-700">
                 Description
               </label>
@@ -1173,98 +1106,7 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
                 placeholder="Enter product description..."
               />
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Simple Attributes Section for Non-Variant Products */}
-      {!isVariantMode && showOptionalFields && (
-        <div className="bg-purple-50 rounded-lg p-6 border border-purple-200 mt-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <svg
-              className="w-5 h-5 mr-2 text-purple-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 7h.01M7 3h5c1.1045695 0 2 .8954305 2 2v1M7 7v3a4 4 0 004 4h.01M7 7H3m4 0L3.5 3.5m0 0L7 0M3.5 3.5L0 7"
-              />
-            </svg>
-            Product Attributes (Optional)
-          </h3>
-          <p className="text-sm text-gray-600 mb-4">
-            Add a simple attribute to describe your product characteristic (e.g., color: red, size: medium). Only one attribute is allowed for simple products.
-          </p>
-          
-          <div className="space-y-4">
-            {(formData.attributes || []).map((attribute, index) => (
-              <div key={attribute.id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Attribute Name
-                    </label>
-                    <input
-                      type="text"
-                      value={attribute.name}
-                      onChange={(e) => handleAttributeNameChange(index, e.target.value)}
-                      placeholder="e.g., Color, Size, Material"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Attribute Value
-                    </label>
-                    <input
-                      type="text"
-                      value={attribute.options[0]?.value || ""}
-                      onChange={(e) => handleAttributeValueChange(index, e.target.value)}
-                      placeholder="e.g., Red, Large, Cotton"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <button
-                      type="button"
-                      onClick={() => removeAttribute(index)}
-                      className="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 flex items-center justify-center space-x-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      <span>Remove</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-            
-            <button
-              type="button"
-              onClick={addAttribute}
-              disabled={formData.attributes && formData.attributes.length >= 1}
-              className={`w-full px-4 py-3 border-2 border-dashed rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 ${
-                formData.attributes && formData.attributes.length >= 1
-                  ? "border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed"
-                  : "border-purple-300 text-purple-600 hover:border-purple-400 hover:bg-purple-50"
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              <span>
-                {formData.attributes && formData.attributes.length >= 1 
-                  ? "Only one attribute allowed for simple products" 
-                  : "Add Attribute"
-                }
-              </span>
-            </button>
-          </div>
+          )}
         </div>
       )}
     </div>
