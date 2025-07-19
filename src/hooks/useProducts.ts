@@ -13,6 +13,8 @@ interface PaginationParams {
   sortOrder?: "asc" | "desc";
   category?: string;
   storeId?: string;
+  categoryId?: string; // Added categoryId for filtering by category
+
 }
 
 interface UseProductsResult {

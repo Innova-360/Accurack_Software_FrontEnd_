@@ -1,4 +1,6 @@
 import React from "react";
+import type { Category } from '../../store/slices/categorySlice';
+
 
 interface InventoryControlsProps {
   searchTerm: string;
@@ -8,6 +10,7 @@ interface InventoryControlsProps {
   rowsPerPage: number;
   onRowsPerPageChange: (newRowsPerPage: number) => void;
   isSearching?: boolean; // Add prop to indicate search loading state
+  categories: Category[]; // Add prop for categories
 }
 
 const InventoryControls: React.FC<InventoryControlsProps> = ({
@@ -18,6 +21,7 @@ const InventoryControls: React.FC<InventoryControlsProps> = ({
   rowsPerPage,
   onRowsPerPageChange,
   isSearching = false,
+  categories
 }) => {
   return (
     <div className="border border-gray-300 px-4 sm:px-6 lg:px-10 py-4 sm:py-5 rounded-lg rounded-b-none border-b-0">
@@ -35,33 +39,41 @@ const InventoryControls: React.FC<InventoryControlsProps> = ({
           />
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 lg:space-x-6 w-full lg:w-auto">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm sm:text-base whitespace-nowrap">
-              Group By:
-            </span>
-            <select
-              className="border border-gray-300 rounded px-2 py-1 text-sm sm:text-base"
-              value={groupBy}
-              onChange={onGroupByChange}
-            >
-              <option value="">None</option>
-              <option value="category">Category</option>
-            </select>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm sm:text-base whitespace-nowrap">
-              Rows per page:
-            </span>
-            <select
-              className="border border-gray-300 rounded px-2 py-1 text-sm sm:text-base"
-              value={rowsPerPage}
-              onChange={(e) => onRowsPerPageChange(Number(e.target.value))}
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-            </select>
+          <div className="flex flex-wrap gap-4 w-full lg:w-auto">
+            {/* Group by Categories */}
+            <div className="flex items-center rounded px-3 py-1 ">
+              <span className="text-sm sm:text-base font-medium mr-2 text-gray-700">
+                Group by:
+              </span>
+              <select
+                className="border border-gray-300 rounded px-2 py-1 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-200"
+                value={groupBy}
+                onChange={onGroupByChange}
+              >
+                <option value="">All</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {/* Rows per page */}
+            <div className="flex items-center rounded px-3 py-1 ">
+              <span className="text-sm sm:text-base font-medium mr-2 text-gray-700">
+                Rows:
+              </span>
+              <select
+                className="border border-gray-300 rounded px-2 py-1 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-200"
+                value={rowsPerPage}
+                onChange={(e) => onRowsPerPageChange(Number(e.target.value))}
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>

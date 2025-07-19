@@ -20,6 +20,10 @@ export interface ApiProduct {
   pluUpc: string;
   supplierId: string;
   sku: string;
+  description?: string;
+  brandName?: string;
+  location?: string;
+  attributes?: Array<{ name: string; value: string }>;
   singleItemCostPrice: number;
   itemQuantity: number;
   msrpPrice: number;
@@ -137,6 +141,9 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
       sku: apiProduct.sku || "-",
       ean: apiProduct.ean || "-",
       description: apiProduct.description || "-",
+      brandName: apiProduct.brandName || "",
+      location: apiProduct.location || "",
+      attributes: apiProduct.attributes || [],
       price: `$${(apiProduct.singleItemSellingPrice ?? 0).toFixed(2)}`,
       category:
         typeof apiProduct.category === "object"
@@ -202,6 +209,9 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
       plu: "",
       sku: "",
       description: "Error loading product details",
+      brandName: "",
+      location: "",
+      attributes: [],
       price: "$0.00",
       category: "Uncategorized",
       minimumSellingQuantity: 69,
@@ -244,6 +254,7 @@ interface PaginationParams {
   sortOrder?: "asc" | "desc";
   category?: string;
   storeId?: string;
+  categoryId?: string;
 }
 
 // Pagination and search parameters interface
@@ -269,6 +280,9 @@ export const productAPI = {
       searchParams.append("limit", limit.toString());
       if (params.storeId !== undefined) {
         searchParams.append("storeId", params.storeId.toString());
+      }
+      if (params.categoryId !== undefined) {
+        searchParams.append("categoryId", params.categoryId.toString());
       }
 
       // Add search parameter if provided

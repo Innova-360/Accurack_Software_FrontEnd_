@@ -32,6 +32,9 @@ export interface Product {
   sku: string;
   ean?: string; // Add EAN field
   description: string;
+  brandName?: string; // Brand name field
+  location?: string; // Location field
+  attributes?: Array<{ name: string; value: string }>; // Product attributes
   price: string;
   category: string | { name: string; id?: string; code?: string }; // Allow both string and object with code
   minimumSellingQuantity: number;

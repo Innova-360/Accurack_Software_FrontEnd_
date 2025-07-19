@@ -18,6 +18,13 @@ export interface EditProductFormData {
   }>;
   name: string;
   category: string;
+  description?: string;
+  brandName?: string;
+  location?: string;
+  attributes?: Array<{
+    name: string;
+    value: string;
+  }>;
   ean: string;
   pluUpc: string;
   productSuppliers: Array<{
@@ -36,7 +43,6 @@ export interface EditProductFormData {
   clientId: string;
   storeId: string;
   hasVariants: boolean;
-  description?: string;
   packs: Array<{
     minimumSellingQuantity: number;
     totalPacksQuantity: number;
@@ -67,6 +73,10 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   const [formData, setFormData] = useState<EditProductFormData>({
     name: "",
     category: "",
+    description: "",
+    brandName: "",
+    location: "",
+    attributes: [],
     ean: "",
     pluUpc: "",
     productSuppliers: [],
@@ -80,7 +90,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     clientId: "",
     storeId: "",
     hasVariants: false,
-    description: "",
     packs: [],
     variants: [],
   });
@@ -96,54 +105,69 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           typeof product.category === "string"
             ? product.category
             : product.category?.name || "",
-        ean: "",
-        pluUpc: product.plu || "",
-        productSuppliers: [
-          {
-            supplierId: "uuid-supplier-id", // This should be dynamic based on actual supplier
-            costPrice: parseFloat(product.price.replace("$", "")) || 0,
-            category:
-              typeof product.category === "string"
-                ? product.category
-                : product.category?.name || "",
-            state: "primary",
-          },
-        ],
-        sku: product.sku || "",
-        singleItemCostPrice: parseFloat(product.price.replace("$", "")) || 0,
-        itemQuantity: product.quantity || 0,
-        msrpPrice: parseFloat(product.price.replace("$", "")) || 0,
-        singleItemSellingPrice: parseFloat(product.price.replace("$", "")) || 0,
-        discountAmount: 0,
-        percentDiscount: 0,
-        clientId: "uuid-client-id", // This should be dynamic
-        storeId: "uuid-store-id", // This should be dynamic
-        hasVariants: product.hasVariants || false,
         description: product.description || "",
-        packs: [
-          {
-            minimumSellingQuantity: 10,
-            totalPacksQuantity: 50,
-            orderedPacksPrice:
-              parseFloat(product.price.replace("$", "")) - 1 || 0,
-            discountAmount: 0,
-            percentDiscount: 5,
-          },
-        ],
+        brandName: product.brandName || "",
+        location: product.location || "",
+        attributes: product.attributes || [],
+        ean: product.ean || "",
+        pluUpc: product.pluUpc || product.plu || "",
+        productSuppliers: product.productSuppliers?.map(supplier => ({
+          supplierId: supplier.supplierId || supplier.supplier?.id || "uuid-supplier-id",
+          costPrice: supplier.costPrice || product.singleItemCostPrice || 0,
+          category: supplier.categoryId || 
+            (typeof product.category === "string"
+              ? product.category
+              : product.category?.name || ""),
+          state: supplier.state || "primary",
+        })) || [{
+          supplierId: "uuid-supplier-id",
+          costPrice: product.singleItemCostPrice || 0,
+          category: typeof product.category === "string"
+            ? product.category
+            : product.category?.name || "",
+          state: "primary",
+        }],
+        sku: product.sku || "",
+        singleItemCostPrice: product.singleItemCostPrice || 0,
+        itemQuantity: product.itemQuantity || product.quantity || 0,
+        msrpPrice: product.msrpPrice || 0,
+        singleItemSellingPrice: product.singleItemSellingPrice || 0,
+        discountAmount: product.discountAmount || 0,
+        percentDiscount: product.percentDiscount || 0,
+        clientId: product.clientId || "uuid-client-id",
+        storeId: product.storeId || product.store?.id || "uuid-store-id",
+        hasVariants: product.hasVariants || false,
+        packs: product.packs?.map(pack => ({
+          minimumSellingQuantity: pack.minimumSellingQuantity || 1,
+          totalPacksQuantity: pack.totalPacksQuantity || 1,
+          orderedPacksPrice: pack.orderedPacksPrice || 0,
+          discountAmount: pack.discountAmount || 0,
+          percentDiscount: pack.percentDiscount || 0,
+        })) || [{
+          minimumSellingQuantity: 1,
+          totalPacksQuantity: 1,
+          orderedPacksPrice: product.singleItemSellingPrice || 0,
+          discountAmount: 0,
+          percentDiscount: 0,
+        }],
         variants:
           product.variants?.map((variant) => ({
             name: variant.name || "",
             price: variant.price || 0,
             sku: variant.sku || "",
-            packs: [
-              {
-                minimumSellingQuantity: 10,
-                totalPacksQuantity: 50,
-                orderedPacksPrice: (variant.price || 0) - 1,
-                discountAmount: 0,
-                percentDiscount: 5,
-              },
-            ],
+            packs: variant.packs?.map(pack => ({
+              minimumSellingQuantity: pack.minimumSellingQuantity || 1,
+              totalPacksQuantity: pack.totalPacksQuantity || 1,
+              orderedPacksPrice: pack.orderedPacksPrice || variant.price || 0,
+              discountAmount: pack.discountAmount || 0,
+              percentDiscount: pack.percentDiscount || 0,
+            })) || [{
+              minimumSellingQuantity: 1,
+              totalPacksQuantity: 1,
+              orderedPacksPrice: variant.price || 0,
+              discountAmount: 0,
+              percentDiscount: 0,
+            }],
           })) || [],
       });
     }
@@ -329,9 +353,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                       <option value="Home & Garden">🏠 Home & Garden</option>
                       <option value="Sports">⚽ Sports</option>
                       <option value="Books">📚 Books</option>
-                      <option value="Food & Beverages">
-                        🍕 Food & Beverages
-                      </option>
+                      <option value="BEVERAGES">🍕 Food & Beverages</option>
                       <option value="Health & Beauty">
                         💄 Health & Beauty
                       </option>
@@ -369,7 +391,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                     )}
                   </div>
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* SKU */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -417,6 +441,21 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f4d57]/20 focus:border-[#0f4d57] transition-all duration-200"
                     placeholder="Enter PLU/UPC"
+                  />
+                </div>
+
+                {/* EAN */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    EAN/Barcode
+                  </label>
+                  <input
+                    type="text"
+                    name="ean"
+                    value={formData.ean}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f4d57]/20 focus:border-[#0f4d57] transition-all duration-200"
+                    placeholder="Enter EAN/Barcode"
                   />
                 </div>
               </div>
@@ -629,6 +668,148 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   placeholder="Enter detailed product description..."
                 />
               </div>
+
+              {/* Brand Name and Location in grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Brand Name */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Brand Name
+                  </label>
+                  <input
+                    type="text"
+                    name="brandName"
+                    value={formData.brandName || ""}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f4d57]/20 focus:border-[#0f4d57] transition-all duration-200"
+                    placeholder="Enter brand name (e.g., Nike, Apple, Samsung)"
+                  />
+                </div>
+
+                {/* Location */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    name="location"
+                    value={formData.location || ""}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f4d57]/20 focus:border-[#0f4d57] transition-all duration-200"
+                    placeholder="Enter storage location (e.g., Aisle 3, Shelf B)"
+                  />
+                </div>
+              </div>
+
+              {/* Attributes Display */}
+              {formData.attributes && formData.attributes.length > 0 ? (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Product Attributes
+                  </label>
+                  <div className="space-y-2">
+                    {formData.attributes.map((attribute, index) => (
+                      <div key={index} className="bg-white p-3 rounded-lg border border-gray-200">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              Attribute Name
+                            </label>
+                            <input
+                              type="text"
+                              value={attribute.name}
+                              onChange={(e) => {
+                                const updatedAttributes = [...(formData.attributes || [])];
+                                updatedAttributes[index] = { ...updatedAttributes[index], name: e.target.value };
+                                setFormData(prev => ({ ...prev, attributes: updatedAttributes }));
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57]/20 focus:border-[#0f4d57] transition-all duration-200"
+                              placeholder="e.g., Color, Size"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              Attribute Value
+                            </label>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={attribute.value}
+                                onChange={(e) => {
+                                  const updatedAttributes = [...(formData.attributes || [])];
+                                  updatedAttributes[index] = { ...updatedAttributes[index], value: e.target.value };
+                                  setFormData(prev => ({ ...prev, attributes: updatedAttributes }));
+                                }}
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57]/20 focus:border-[#0f4d57] transition-all duration-200"
+                                placeholder="e.g., Red, Large"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updatedAttributes = formData.attributes?.filter((_, i) => i !== index) || [];
+                                  setFormData(prev => ({ ...prev, attributes: updatedAttributes }));
+                                }}
+                                className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newAttribute = { name: "", value: "" };
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        attributes: [...(prev.attributes || []), newAttribute] 
+                      }));
+                    }}
+                    disabled={formData.attributes && formData.attributes.length >= 1}
+                    className={`mt-2 px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2 ${
+                      formData.attributes && formData.attributes.length >= 1
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-[#0f4d57] text-white hover:bg-[#083540]"
+                    }`}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    {formData.attributes && formData.attributes.length >= 1 ? "Only one attribute allowed" : "Add Attribute"}
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Product Attributes
+                  </label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <p className="text-gray-500 mb-3">No attributes added yet</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newAttribute = { name: "", value: "" };
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          attributes: [...(prev.attributes || []), newAttribute] 
+                        }));
+                      }}
+                      className="px-4 py-2 bg-[#0f4d57] text-white rounded-lg hover:bg-[#083540] transition-colors duration-200 flex items-center gap-2 mx-auto"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      Add Attribute
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </form>
         </div>

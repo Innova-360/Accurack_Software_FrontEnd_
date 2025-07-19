@@ -20,7 +20,6 @@ import {
 import { useAppSelector } from "../../store/hooks";
 import { selectCurrentStore } from "../../store/selectors";
 import useSuppliers from "../../hooks/useSuppliers";
-import { fetchUser } from "../../store/slices/userSlice";
 import { useProductCategories } from "../../hooks/useProductCategories";
 
 const UpdateInventory: React.FC = () => {
@@ -130,6 +129,9 @@ const UpdateInventory: React.FC = () => {
       id: productId, // Include product ID for update
       name: formData.productName,
       categoryId: formData.category,
+      description: formData.description || "",
+      brandName: formData.brandName || "",
+      location: formData.location || "",
       ean: hasVariants ? "" : formData.ean,
       pluUpc: hasVariants ? "" : formData.pluUpc,
       supplierId: (!hasVariants && formData.supplierId) || "",
@@ -143,6 +145,10 @@ const UpdateInventory: React.FC = () => {
       clientId: clientId,
       storeId: storeId,
       hasVariants: hasVariants,
+      // Add attributes for simple products (when there are no variants)
+      attributes: !hasVariants && formData.simpleAttributes 
+        ? formData.simpleAttributes.filter(attr => attr.name && attr.value)
+        : [],
       packs: hasVariants
         ? []
         : (formData.packDiscounts || []).map((pack: any) => {
@@ -238,6 +244,8 @@ const UpdateInventory: React.FC = () => {
   const [formData, setFormData] = useState<ProductFormData>({
     productName: "",
     category: "",
+    brandName: "",
+    location: "",
     price: "",
     customSku: "",
     ean: "",
@@ -261,6 +269,7 @@ const UpdateInventory: React.FC = () => {
     discountTiers: [],
     hasAttributes: false,
     attributes: [],
+    simpleAttributes: [],
     variations: [],
   });
 
@@ -394,6 +403,7 @@ const UpdateInventory: React.FC = () => {
         productName: product.name || "",
         category: product.categoryId || "",
         brandName: getBrandName(),
+        location: product.location || "",
         price: getSellingPrice().toString(),
         customSku: product.sku || "",
         ean: product.ean || "",
@@ -429,6 +439,12 @@ const UpdateInventory: React.FC = () => {
         discountTiers: [],
         hasAttributes: product.attributes && product.attributes.length > 0,
         attributes: product.attributes || [],
+        simpleAttributes: product.attributes && product.attributes.length > 0 
+          ? product.attributes.map((attr: any) => ({ 
+              name: attr.name || "", 
+              value: attr.value || "" 
+            }))
+          : [],
         variations: (product.variants || []).map((variant: any) => ({
           id: variant.id,
           name: variant.name || `Variant ${variant.id}`,
