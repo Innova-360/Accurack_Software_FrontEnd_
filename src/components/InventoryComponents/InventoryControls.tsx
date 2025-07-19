@@ -1,7 +1,5 @@
 import React from "react";
 import type { Category } from '../../store/slices/categorySlice';
-
-
 interface InventoryControlsProps {
   searchTerm: string;
   onSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -12,7 +10,6 @@ interface InventoryControlsProps {
   isSearching?: boolean; // Add prop to indicate search loading state
   categories: Category[]; // Add prop for categories
 }
-
 const InventoryControls: React.FC<InventoryControlsProps> = ({
   searchTerm,
   onSearchChange,
@@ -51,11 +48,13 @@ const InventoryControls: React.FC<InventoryControlsProps> = ({
                 onChange={onGroupByChange}
               >
                 <option value="">All</option>
-                {categories && categories.length > 0 && categories.map((category) => (
+                {categories && categories.length > 0 ? categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
-                ))}
+                )) : (
+                  <option disabled>No categories available</option>
+                )}
               </select>
             </div>
             {/* Rows per page */}
@@ -80,5 +79,4 @@ const InventoryControls: React.FC<InventoryControlsProps> = ({
     </div>
   );
 };
-
 export default InventoryControls;

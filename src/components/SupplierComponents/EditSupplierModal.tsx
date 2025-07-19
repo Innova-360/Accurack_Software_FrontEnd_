@@ -62,7 +62,15 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
   };
 
   // Helper function to parse address into components
-  const parseAddress = (address: string) => {
+  const parseAddress = (address: string | null | undefined) => {
+    if (!address || typeof address !== "string") {
+      return {
+        streetAddress: "",
+        city: "",
+        state: "",
+        zipCode: "",
+      };
+    }
     const parts = address.split(",").map((part) => part.trim());
     if (parts.length >= 4) {
       return {
@@ -130,21 +138,7 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
       newErrors.phone = "Phone number is required";
     }
 
-    if (!formData.streetAddress.trim()) {
-      newErrors.streetAddress = "Street address is required";
-    }
-
-    if (!formData.city.trim()) {
-      newErrors.city = "City is required";
-    }
-
-    if (!formData.state.trim()) {
-      newErrors.state = "State/Province is required";
-    }
-
-    if (!formData.zipCode.toString().trim()) {
-      newErrors.zipCode = "ZIP/Postal code is required";
-    }
+    // Address fields are now optional, so no validation for streetAddress, city, state, zipCode
 
     if (!formData.storeId) {
       newErrors.storeId = "Store ID is required";
@@ -320,7 +314,7 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
           {/* Address */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              Address *
+              Address
             </label>
 
             {/* Street Address */}
@@ -334,14 +328,10 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
                   errors.streetAddress ? "border-red-500" : "border-gray-300"
                 }`}
-                placeholder="Street Address"
+                placeholder="Street Address (optional)"
                 disabled={loading}
               />
-              {errors.streetAddress && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.streetAddress}
-                </p>
-              )}
+              {/* No error display for streetAddress */}
             </div>
 
             {/* City and State */}
@@ -354,12 +344,10 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
                     errors.city ? "border-red-500" : "border-gray-300"
                   }`}
-                  placeholder="City"
+                  placeholder="City (optional)"
                   disabled={loading}
                 />
-                {errors.city && (
-                  <p className="mt-1 text-sm text-red-600">{errors.city}</p>
-                )}
+                {/* No error display for city */}
               </div>
               <div>
                 <input
@@ -369,12 +357,10 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
                     errors.state ? "border-red-500" : "border-gray-300"
                   }`}
-                  placeholder="State / Province / Region"
+                  placeholder="State / Province / Region (optional)"
                   disabled={loading}
                 />
-                {errors.state && (
-                  <p className="mt-1 text-sm text-red-600">{errors.state}</p>
-                )}
+                {/* No error display for state */}
               </div>
             </div>
 
@@ -387,12 +373,10 @@ const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03414C] focus:border-transparent ${
                   errors.zipCode ? "border-red-500" : "border-gray-300"
                 }`}
-                placeholder="ZIP / Postal Code"
+                placeholder="ZIP / Postal Code (optional)"
                 disabled={loading}
               />
-              {errors.zipCode && (
-                <p className="mt-1 text-sm text-red-600">{errors.zipCode}</p>
-              )}
+              {/* No error display for zipCode */}
             </div>
           </div>
 

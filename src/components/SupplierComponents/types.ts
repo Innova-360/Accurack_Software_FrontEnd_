@@ -8,7 +8,7 @@ export interface Supplier {
   name: string;
   email: string;
   phone: string;
-  address: string;
+  address?: string;
   storeId: string;
   status?: "active" | "inactive";
   createdAt?: Date;
