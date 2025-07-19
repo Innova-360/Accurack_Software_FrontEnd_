@@ -41,19 +41,10 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
   const [loading, setLoading] = useState(false);
 
   // Fetch categories for mapping categoryId to category name
-  const fetchCategories = async () => {
-    try {
-      await apiClient.get("/categories");
-      // Categories are now mapped directly in the product data
-      // This function kept for potential future use
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-    }
-  };
+ 
 
   useEffect(() => {
     if (supplier) {
-      fetchCategories(); // Fetch categories first
       fetchAssignedProducts();
     }
   }, [supplier]);
