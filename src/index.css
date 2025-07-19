@@ -445,3 +445,26 @@
 body .phone-details{
   margin-top: 15px;
 }
+
+/* Remove spinner controls from number input fields */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+/* For Firefox */
+input[type="number"]::-moz-number-spin-box {
+  display: none;
+}
+
+/* For Edge */
+input[type="number"]::-ms-clear,
+input[type="number"]::-ms-expand {
+  display: none;
+}
+
