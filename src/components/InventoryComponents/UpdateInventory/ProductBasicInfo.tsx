@@ -753,18 +753,19 @@ const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
               />
             </div>
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
+              <div className="flex items-center space-x-2 mb-3">
+               
+                <label className="block text-sm font-semibold text-gray-700">
                 Individual Item Quantity *
-              </label>
+
+                </label>
+              </div>
               <input
                 type="number"
-                min="1"
-                value={formData.individualItemQuantity}
-                onChange={(e) =>
-                  onFormDataChange("individualItemQuantity", e.target.value)
-                }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent transition-all duration-200 hover:border-gray-400"
-                placeholder="1"
+                value={formData.quantity}
+                onChange={(e) => onFormDataChange("quantity", e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57]/20 focus:border-[#0f4d57] transition-all duration-200 hover:border-gray-400"
+                placeholder="Enter stock quantity"
                 required
               />
             </div>

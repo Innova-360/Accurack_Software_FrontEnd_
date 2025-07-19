@@ -521,30 +521,23 @@ const VariationCard: React.FC<VariationCardProps> = ({
             placeholder="EAN"
           />
         </div>
-        <div>
-          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-            Individual Item Quantity *
-          </label>
-          <input
-            type="text"
-            value={variation.individualItemQuantity || ""}
-            onChange={(e) => {
-              // Only allow integer input
-              const numericValue = e.target.value.replace(/[^0-9]/g, "");
-              onUpdate(variation.id, "individualItemQuantity", numericValue ? parseInt(numericValue) : "");
-            }}
-            onKeyPress={(e) => {
-              if (!/[0-9]/.test(e.key)) {
-                e.preventDefault();
-              }
-            }}
-            className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0f4d57] focus:border-transparent"
-            placeholder="Individual Item Quantity"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={10}
-          />
-        </div>
+        <div className="space-y-2">
+              <div className="flex items-center space-x-2 mb-3">
+               
+                <label className="block text-sm font-semibold text-gray-700">
+                Individual Item Quantity *
+
+                </label>
+              </div>
+              <input
+                type="number"
+                value={variation.quantity}
+                onChange={(e) => onUpdate(variation.id, "quantity", e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f4d57]/20 focus:border-[#0f4d57] transition-all duration-200 hover:border-gray-400"
+                placeholder="Enter Item quantity"
+                required
+              />
+            </div>
         <div>
           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
             Individual Item Cost *
