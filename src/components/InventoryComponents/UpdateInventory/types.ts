@@ -60,6 +60,7 @@ export interface ProductFormData {
   category: string;
   customCategory?: string;
   brandName?: string;
+  location?: string;
   price: string;
   customSku: string;
   ean: string;
@@ -82,6 +83,7 @@ export interface ProductFormData {
   discountTiers: DiscountTier[];
   hasAttributes: boolean;
   attributes: Attribute[];
+  simpleAttributes?: Array<{ name: string; value: string }>; // For simple products
   variations: Variation[];
   supplierId: string; // Added for API payload compatibility
 }

@@ -20,6 +20,10 @@ export interface ApiProduct {
   pluUpc: string;
   supplierId: string;
   sku: string;
+  description?: string;
+  brandName?: string;
+  location?: string;
+  attributes?: Array<{ name: string; value: string }>;
   singleItemCostPrice: number;
   itemQuantity: number;
   msrpPrice: number;
@@ -137,6 +141,9 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
       sku: apiProduct.sku || "-",
       ean: apiProduct.ean || "-",
       description: apiProduct.description || "-",
+      brandName: apiProduct.brandName || "",
+      location: apiProduct.location || "",
+      attributes: apiProduct.attributes || [],
       price: `$${(apiProduct.singleItemSellingPrice ?? 0).toFixed(2)}`,
       category:
         typeof apiProduct.category === "object"
@@ -202,6 +209,9 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
       plu: "",
       sku: "",
       description: "Error loading product details",
+      brandName: "",
+      location: "",
+      attributes: [],
       price: "$0.00",
       category: "Uncategorized",
       minimumSellingQuantity: 69,

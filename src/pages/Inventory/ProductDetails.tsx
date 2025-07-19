@@ -401,10 +401,49 @@ const ProductDetails: React.FC = () => {
                       <label className="block text-md font-medium text-gray-500 mb-2">
                         Category
                       </label>
-                      <div className="text-md text-gray-800 font-semibold">
+                      <div className="text-md text-gray-800 font-semibold flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                         {typeof product.category === "string"
                           ? product.category
                           : product.category?.name || "Not specified"}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-md font-medium text-gray-500 mb-2">
+                        Brand Name
+                      </label>
+                      <div className="flex items-center gap-2">
+                        {product.brandName ? (
+                          <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200">
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
+                            {product.brandName}
+                          </span>
+                        ) : (
+                          <span className="text-md text-gray-400 italic">Not specified</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-md font-medium text-gray-500 mb-2">
+                        Location
+                      </label>
+                      <div className="flex items-center gap-2">
+                        {product.location ? (
+                          <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200">
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            {product.location}
+                          </span>
+                        ) : (
+                          <span className="text-md text-gray-400 italic">Not specified</span>
+                        )}
                       </div>
                     </div>
                     {/* Show variant-specific attributes if available */}
@@ -435,13 +474,86 @@ const ProductDetails: React.FC = () => {
                   )}
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
                       Product Description
                     </label>
-                    <div className="text-sm text-gray-800 bg-gray-50 p-3 rounded-lg">
-                      {product.description || "No description available"}
+                    <div className="bg-gradient-to-r from-slate-50 to-gray-50 border border-gray-200 rounded-xl p-4">
+                      {product.description ? (
+                        <p className="text-sm text-gray-800 leading-relaxed">
+                          {product.description}
+                        </p>
+                      ) : (
+                        <div className="flex items-center justify-center py-4 text-center">
+                          <div className="flex flex-col items-center gap-2">
+                            <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <p className="text-sm text-gray-500">No description available</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
+
+                  {/* Product Attributes - Show only for simple products (no variants) */}
+                  {!isVariantProduct && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                        Product Attributes
+                      </label>
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4">
+                        {product.attributes && product.attributes.length > 0 ? (
+                          <div className="space-y-3">
+                            {product.attributes.map((attribute, index) => (
+                              <div 
+                                key={index} 
+                                className="flex items-center justify-between bg-white rounded-lg px-4 py-3 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                  <span className="text-sm font-semibold text-gray-800">
+                                    {attribute.name}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                    {attribute.value}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center py-8 text-center">
+                            <div className="flex flex-col items-center gap-3">
+                              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                                <svg 
+                                  className="w-6 h-6 text-gray-400" 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round" 
+                                    strokeWidth={1.5} 
+                                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" 
+                                  />
+                                </svg>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-700">No attributes defined</p>
+                                <p className="text-xs text-gray-500 mt-1">Add attributes to provide more product details</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-3">
