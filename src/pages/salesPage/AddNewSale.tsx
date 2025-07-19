@@ -21,7 +21,7 @@ interface ProductItem {
   total: number;
   productId?: string; // Add this to reference the actual product
   variantId?: string; // Add this to reference the variant if it's a variant
-  selectedProduct?: unknown | null; // Store the full product/variant details
+  selectedProduct?: any | null; // Store the full product/variant details
   saleType?: 'single' | 'pack'; // Track whether selling as single item or pack
   selectedPackId?: string; // Track which pack is selected
 }
@@ -56,6 +56,7 @@ const AddNewSale: React.FC = () => {
 
   const [allowance, setAllowance] = useState(0);
 
+  console.log("Customers:", customers);
 
   // Form state
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
@@ -159,8 +160,7 @@ const AddNewSale: React.FC = () => {
 
   // Calculated values
   const subtotal = products.reduce((sum, product) => sum + product.total, 0);
-  const discountAmount =
-    discountType === "percentage" ? (subtotal * discount) / 100 : discount;
+  const discountAmount = discountType === "percentage" ? (subtotal * discount) / 100 : discount;
   const taxAmount = ((subtotal - discountAmount) * taxRate) / 100;
   const finalTotal = subtotal ;
 
@@ -175,6 +175,8 @@ const AddNewSale: React.FC = () => {
   // Handle customer selection from dropdown
   const handleCustomerSelect = (customerId: string) => {
     setSelectedCustomerId(customerId);
+
+    console.log("Customer ID selected:", customerId);
 
     if (customerId === "new") {
       // Clear all fields for a new customer
@@ -209,16 +211,18 @@ const AddNewSale: React.FC = () => {
       (customer) => customer.id === customerId
     );
     if (selectedCustomer) {
+      console.log("Selected customer data:", selectedCustomer);
+      
       setCustomerName(selectedCustomer.customerName || "");
 
       // Extract country code from phone number or set default
       const phoneStr = selectedCustomer.phoneNumber || "";
-      const phoneRegex = /^(\+\d+)(.*)$/;
+      const phoneRegex = /^(\+\d{1,3})(.*)$/;
       const match = phoneStr.match(phoneRegex);
 
       if (match) {
         setCountryCode(match[1]);
-        setPhoneNumber(match[2]);
+        setPhoneNumber(match[2].trim());
       } else {
         setCountryCode("+1");
         setPhoneNumber(phoneStr);
@@ -226,19 +230,14 @@ const AddNewSale: React.FC = () => {
 
       setEmail(selectedCustomer.customerMail || "");
 
-      if (selectedCustomer.customerAddress) {
-        // Split address into components if available
-        const addressParts = selectedCustomer.customerAddress.split(", ");
-        if (addressParts.length >= 5) {
-          setStreet(addressParts[0]);
-          setCity(addressParts[1]);
-          setState(addressParts[2]);
-          setPostalCode(addressParts[3]);
-          setCountry(addressParts.slice(4).join(", "));
-        } else {
-          setStreet(selectedCustomer.customerAddress);
-        }
-      }
+      // Set address fields using the correct property names from customer object
+      // Using type assertion since the Customer type might not include all these properties
+      const customerData = selectedCustomer as any;
+      setStreet(customerData.customerStreetAddress || "");
+      setCity(customerData.city || "");
+      setState(customerData.state || "");
+      setPostalCode(customerData.zipCode || "");
+      setCountry(customerData.country || "");
     }
   };
 
@@ -249,7 +248,7 @@ const AddNewSale: React.FC = () => {
       name: string;
       displayName: string;
       price: number;
-      originalProduct: Product;
+      originalProduct: any;
       isVariant: boolean;
       variantData?: any;
     }> = [];
@@ -388,8 +387,6 @@ const AddNewSale: React.FC = () => {
   };
 
 
-
-  console.log("Products:", products);
   const handleCreateSale = async () => {
     // Validate form
     if (!customerName.trim()) {
@@ -460,7 +457,7 @@ const AddNewSale: React.FC = () => {
         if (product.selectedProduct) {
           if (product.variantId && product.selectedProduct.variants) {
             const variant = product.selectedProduct.variants.find(
-              (v) => v.id === product.variantId
+              (v: any) => v.id === product.variantId
             );
             pluUpc =
               variant?.pluUpc ||
@@ -495,7 +492,11 @@ const AddNewSale: React.FC = () => {
         customerPhone: fullPhoneNumber,
         customerData: {
           customerName: customerName.trim(),
-          customerAddress: getFullAddress(),
+          customerStreetAddress: street.trim(),
+          country: country.trim(),
+          state: state.trim(),
+          city: city.trim(),
+          zipCode: postalCode.trim(),
           phoneNumber: fullPhoneNumber,
           telephoneNumber: fullPhoneNumber,
           customerMail: email.trim(),
@@ -596,7 +597,7 @@ const AddNewSale: React.FC = () => {
           if (product.selectedProduct) {
             if (product.variantId && product.selectedProduct.variants) {
               const variant = product.selectedProduct.variants.find(
-                (v) => v.id === product.variantId
+                (v: any) => v.id === product.variantId
               );
               pluUpc =
                 variant?.pluUpc ||

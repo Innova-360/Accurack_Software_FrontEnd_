@@ -13,7 +13,7 @@ export interface Customer {
 
 export interface CustomerFormData {
   customerName: string;
-  customerAddress: string;
+  customerStreetAddress: string;
   phoneNumber: string;
   telephoneNumber: string;
   customerMail: string;

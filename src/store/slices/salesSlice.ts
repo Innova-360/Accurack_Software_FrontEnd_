@@ -15,7 +15,11 @@ export interface SaleRequestData {
   customerPhone: string;
   customerData: {
     customerName: string;
-    customerAddress: string;
+    customerStreetAddress: string;
+    country: string;
+    state: string;
+    city: string;
+    zipCode: string;
     phoneNumber: string;
     telephoneNumber: string;
     customerMail: string;

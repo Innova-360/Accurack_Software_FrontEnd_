@@ -1,11 +1,15 @@
 import { FaPlus, FaPrint, FaTrash } from "react-icons/fa";
 import { SpecialButton } from "../../components/buttons";
 import Header from "../../components/Header";
-import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import apiClient from "../../services/api";
 import toast from "react-hot-toast";
 import { QRCodeSVG } from "qrcode.react";
+import { Download } from "lucide-react";
+import html2canvas from "html2canvas-pro";
+import jsPDF from "jspdf";
+import useRequireStore from "../../hooks/useRequireStore";
 
 // QR Code wrapper component to handle errors gracefully
 const SafeQRCode = ({ value, ...props }: any) => {
@@ -24,8 +28,11 @@ const InvoicePreview = () => {
     const [loadingBusinessDetails, setLoadingBusinessDetails] = useState(true);
     const location = useLocation();
     const { saleData } = location.state || {};
+    const printRef = useRef(null);
+    const navigate = useNavigate();
+    const currentStore = useRequireStore();
 
-    console.log('Sale Data:', saleData);
+    console.log("Sale Data:", saleData);
 
     // Fetch business details
     useEffect(() => {
@@ -46,6 +53,44 @@ const InvoicePreview = () => {
 
         fetchBusinessDetails();
     }, []);
+
+    const handleDownloadPdf = async () => {
+        const toastId = toast.loading("Generating PDF…");
+        try {
+            const element = printRef.current;
+            if (!element) {
+                return;
+            }
+
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+            });
+            const data = canvas.toDataURL("image/png");
+
+            const pdf = new jsPDF({
+                orientation: "portrait",
+                unit: "mm",
+                format: "a4",
+            });
+
+            const margin = 10;
+
+            const imgProperties = pdf.getImageProperties(data);
+            const pdfWidth = pdf.internal.pageSize.getWidth() - margin * 2;
+
+            const pdfHeight = (imgProperties.height * pdfWidth) / imgProperties.width;
+
+            pdf.addImage(data, 'PNG', margin, margin, pdfWidth, pdfHeight);
+            pdf.save("invoice.pdf");
+            toast.success("PDF downloaded!", { id: toastId });
+        } catch (error) {
+            console.error("Error generating PDF:", error);
+            toast.error("Failed to generate PDF");
+            return;
+        }
+    };
 
     if (!saleData) {
         return (
@@ -86,11 +131,26 @@ const InvoicePreview = () => {
                         <div className="flex gap-3">
                             <SpecialButton
                                 variant="secondary"
+                                onClick={handleDownloadPdf}
+                                className="flex items-center gap-2  py-2 border border-gray-300 text-gray-700 hover:bg-gray-50"
+                            >
+                                <Download size={16} />
+                                Save as pdf
+                            </SpecialButton>
+                            <SpecialButton
+                                variant="secondary"
                                 // onClick={handleCreateSaleAndInvoice}
                                 className="flex items-center gap-2  py-2 border border-gray-300 text-gray-700 hover:bg-gray-50"
                             >
                                 <FaPrint size={16} />
                                 Generate Invoice
+                            </SpecialButton>
+                            <SpecialButton
+                                variant="primary"
+                                onClick={() => navigate(`/store/${currentStore?.id}/sales`)}
+                                className="px-4 py-2 bg-[#03414C] hover:bg-[#025561] text-white"
+                            >
+                                Back to Sales
                             </SpecialButton>
                         </div>
                     </div>
@@ -153,11 +213,11 @@ const InvoicePreview = () => {
                     <div
                         className="invoice-print bg-white px-6 py-7 shadow-lg border border-gray-200"
                         style={{
-                            fontFamily: "'Courier New', Courier, monospace",
                             backgroundColor: "#ffffff",
                             color: "#000000",
                             borderColor: "#e5e7eb",
                         }}
+                        ref={printRef}
                     >
                         <div
                             className="border-t-4 border-black pb-4"
@@ -192,16 +252,8 @@ const InvoicePreview = () => {
                                     {saleData.id?.slice(-6) || "000001"}
                                 </p>
                                 <p>
-                                    <strong>Account No:</strong>{" "}
-                                    {saleData.customerId?.slice(-8) || "00002234"}
-                                </p>
-                                <p>
                                     <strong>Issue Date:</strong>{" "}
                                     {new Date(saleData.createdAt).toLocaleDateString()}
-                                </p>
-                                <p>
-                                    <strong>Due Date:</strong>{" "}
-                                    {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}
                                 </p>
                             </div>
                         </div>
@@ -210,13 +262,11 @@ const InvoicePreview = () => {
                             <div className="mb-6 w-1/2">
                                 <h3 className="font-semibold">Billed To</h3>
                                 <p>{saleData.customer?.customerName || "Customer Name"}</p>
-                                <p>{saleData.customer?.phoneNumber || "Phone Number"}</p>
-                                {saleData.customer?.customerAddress && (
-                                    <p>{saleData.customer.customerAddress}</p>
-                                )}
-                                {saleData.customer?.customerMail && (
-                                    <p>{saleData.customer.customerMail}</p>
-                                )}
+                                <p>{saleData.customer?.customerStreetAddress || "Street Address"}</p>
+                                <p>{`${saleData.customer?.city} , ${saleData.customer?.state} ${saleData.customer?.zipCode}`}</p>
+                                <p>{saleData.customer?.country || "Country"}</p>
+                               <p className="phone-details">Phone : {saleData.customer?.phoneNumber || "Phone Number"}</p>
+                               <p>Email : {saleData.customer?.customerMail || "Email"}</p>
                             </div>
                             {customFields.filter((f) => f.name && f.value).length > 0 && (
                                 <div className="mb-6 w-1/2">
@@ -275,7 +325,8 @@ const InvoicePreview = () => {
                                 </div>
                                 <div className="w-1/6 text-center">{item.quantity}</div>
                                 <div className="w-1/6 text-center">{item.packType === 'ITEM' ? 'Item' : 'Box'}</div>
-                                <div className="w-1/6 text-center">{item.packType !== 'ITEM'? item.product.packs[0].totalPacksQuantity : '-'}</div>
+                                {/* <div className="w-1/6 text-center">{item.product.msrpPrice}</div> */}
+                                <div className="w-1/6 text-center">{item.packType !== 'ITEM' ? item.product.packs[0].totalPacksQuantity : '-'}</div>
                                 <div className="w-1/6 text-center">{item.product.msrpPrice || '-'}</div>
                                 <div className="w-1/6 text-center">
                                     ${item.sellingPrice?.toFixed(2)}
@@ -286,7 +337,10 @@ const InvoicePreview = () => {
                             </div>
                         ))}
 
-                        <div className="flex justify-end mt-6 text-sm">
+                        <div className="flex justify-between mt-24 items-end text-sm">
+                            <div className="w-64 space-y-2 ">
+                                <p className="text-center !pt-2 border-t-2 text-lg">Signature</p>
+                            </div>
                             <div className="w-64 space-y-2">
                                 <div className="flex justify-between">
                                     <span className="font-medium">Subtotal:</span>
@@ -322,7 +376,6 @@ const InvoicePreview = () => {
                     <div
                         className="invoice-print bg-white px-6 py-7 shadow-lg border border-gray-200"
                         style={{
-                            fontFamily: "'Courier New', Courier, monospace",
                             backgroundColor: "#ffffff",
                             color: "#000000",
                             borderColor: "#e5e7eb",
@@ -361,16 +414,8 @@ const InvoicePreview = () => {
                                     {saleData.id?.slice(-6) || "000001"}
                                 </p>
                                 <p>
-                                    <strong>Account No:</strong>{" "}
-                                    {saleData.customerId?.slice(-8) || "00002234"}
-                                </p>
-                                <p>
                                     <strong>Issue Date:</strong>{" "}
                                     {new Date(saleData.createdAt).toLocaleDateString()}
-                                </p>
-                                <p>
-                                    <strong>Due Date:</strong>{" "}
-                                    {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}
                                 </p>
                             </div>
                         </div>
@@ -455,7 +500,10 @@ const InvoicePreview = () => {
                             </div>
                         ))}
 
-                        <div className="flex justify-end mt-6 text-sm">
+                        <div className="flex justify-between mt-24 items-end text-sm">
+                            <div className="w-64 space-y-2 ">
+                                <p className="text-center !pt-2 border-t-2 text-lg">Signature</p>
+                            </div>
                             <div className="w-64 space-y-2">
                                 <div className="flex justify-between">
                                     <span className="font-medium">Subtotal:</span>

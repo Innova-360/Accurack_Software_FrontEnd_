@@ -41,7 +41,7 @@ const CreateCustomer: React.FC = () => {
 
   const [formData, setFormData] = useState<CustomerFormData>({
     customerName: "",
-    customerAddress: "",
+    customerStreetAddress: "",
     phoneNumber: "",
     telephoneNumber: "",
     customerMail: "",
@@ -60,16 +60,6 @@ const CreateCustomer: React.FC = () => {
 
   const [formErrors, setFormErrors] = useState<Partial<CustomerFormData>>({});
 
-  const getFullAddress = () => {
-    const addressParts = [
-      addressFields.street,
-      addressFields.city,
-      addressFields.state,
-      addressFields.postalCode,
-      addressFields.country,
-    ].filter((part) => part.trim() !== "");
-    return addressParts.join(", ");
-  };
 
   const parseAddress = (fullAddress: string) => {
     if (!fullAddress || fullAddress.trim() === "") {
@@ -212,14 +202,18 @@ const CreateCustomer: React.FC = () => {
     }
 
     try {
-      // Combine address fields into customerAddress
-      const fullAddress = getFullAddress();
       const customerData = {
         ...formData,
-        customerAddress: fullAddress,
+        customerStreetAddress: addressFields.street,
+        country: addressFields.country,
+        city: addressFields.city,
+        state: addressFields.state,
+        zipCode: addressFields.postalCode,
         storeId: id,
         clientId: clientId,
       };
+
+      console.log("Customer data to submit:", customerData);
 
       if (isEditing && existingCustomer) {
         await dispatch(

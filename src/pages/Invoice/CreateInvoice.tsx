@@ -23,6 +23,7 @@ import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
 import { useRef } from 'react';
 import { Download } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 
 interface BusinessDetails {
   companyName: string;
@@ -90,6 +91,17 @@ interface InvoiceData {
   notes: string;
 }
 
+// QR Code wrapper component to handle errors gracefully
+const SafeQRCode = ({ value, ...props }: any) => {
+  try {
+    if (!value || value.trim() === '') return null;
+    return <QRCodeSVG value={value} {...props} />;
+  } catch (error) {
+    console.warn('QR Code generation failed for value:', value);
+    return <span className="text-xs text-gray-500">Invalid QR code</span>;
+  }
+};
+
 const CreateInvoice: React.FC = () => {
   const printRef = useRef(null);
   const navigate = useNavigate();
@@ -101,7 +113,7 @@ const CreateInvoice: React.FC = () => {
   const [checkingBusinessDetails, setCheckingBusinessDetails] = useState(false);
   const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-  
+
   const invoiceData = location.state?.invoiceData as InvoiceData;
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -326,7 +338,11 @@ const CreateInvoice: React.FC = () => {
         customerPhone: customerDetails.phone.trim(),
         customerData: {
           customerName: customerDetails.name.trim(),
-          customerAddress: finalCustomerAddress.trim(),
+          customerStreetAddress: finalCustomerAddress.trim(),
+          country: customerDetails.country.trim(),
+          state: customerDetails.state.trim(),
+          city: customerDetails.city.trim(),
+          zipCode: customerDetails.zipCode.trim(),
           phoneNumber: customerDetails.phone.trim(),
           telephoneNumber: customerDetails.phone.trim(),
           customerMail: customerDetails.email.trim(),
@@ -466,6 +482,7 @@ const CreateInvoice: React.FC = () => {
               <th className="text-left py-3 px-4 font-medium text-gray-700">
                 Unit Type
               </th>
+              
               {hasPackProducts && (
                 <th className="text-left py-3 px-4 font-medium text-gray-700">
                   Box Size
@@ -503,6 +520,22 @@ const CreateInvoice: React.FC = () => {
                     <div className="text-xs text-gray-500">
                       {product.packType === "BOX" ? "Box(es)" : "Item(s)"}
                     </div>
+                  </div>
+                </td>
+                <td className="py-3 px-4">
+                  <div className="flex justify-center">
+                    {product.pluUpc && (
+                      <SafeQRCode
+                        value={`Name:${product.name}|PLU:${product.pluUpc}`}
+                        size={60}
+                        bgColor="transparent"
+                        fgColor="#000000"
+                        level="M"
+                      />
+                    )}
+                    {!product.pluUpc && (
+                      <span className="text-xs text-gray-400">No PLU</span>
+                    )}
                   </div>
                 </td>
                 <td className="py-3 px-4">
@@ -1004,7 +1037,7 @@ const CreateInvoice: React.FC = () => {
 
   { console.log("Invoice response", invoiceResponse) }
 
-  
+
 
   const renderInvoicePreview = () => (
     <div className=" p-6">
@@ -1198,6 +1231,7 @@ const CreateInvoice: React.FC = () => {
 
         <div className="border-t-2 border-b-2 border-black py-2 font-semibold flex text-sm">
           <div className="w-1/2">Item Details</div>
+          <div className="w-1/6 text-center">QR Code</div>
           <div className="w-1/6 text-center">Qty</div>
           <div className="w-1/6 text-center">Unit</div>
           <div className="w-1/6 text-center">Box Size</div>
@@ -1212,6 +1246,19 @@ const CreateInvoice: React.FC = () => {
           >
             <div className="w-1/2">
               <p className="font-semibold">{item.productName || item.name}</p>
+            </div>
+            <div className="w-1/6 text-center">
+              {item.pluUpc && (
+                <div className="flex justify-center">
+                  <SafeQRCode
+                    value={`Name:${item.name || item.productName}|PLU:${item.pluUpc}`}
+                    size={40}
+                    bgColor="transparent"
+                    fgColor="#000000"
+                    level="M"
+                  />
+                </div>
+              )}
             </div>
             <div className="w-1/6 text-center">{item.quantity}</div>
             <div className="w-1/6 text-center">
@@ -1372,6 +1419,7 @@ const CreateInvoice: React.FC = () => {
 
         <div className="border-t-2 border-b-2 border-black py-2 font-semibold flex text-sm">
           <div className="w-1/2">Item Details</div>
+          <div className="w-1/6 text-center">QR Code</div>
           <div className="w-1/6 text-center">Qty</div>
           <div className="w-1/6 text-center">Unit</div>
           <div className="w-1/6 text-center">Box Size</div>
@@ -1386,6 +1434,19 @@ const CreateInvoice: React.FC = () => {
           >
             <div className="w-1/2">
               <p className="font-semibold">{item.productName || item.name}</p>
+            </div>
+            <div className="w-1/6 text-center">
+              {item.pluUpc && (
+                <div className="flex justify-center">
+                  <SafeQRCode
+                    value={`Name:${item.name || item.productName}|PLU:${item.pluUpc}`}
+                    size={40}
+                    bgColor="transparent"
+                    fgColor="#000000"
+                    level="M"
+                  />
+                </div>
+              )}
             </div>
             <div className="w-1/6 text-center">{item.quantity}</div>
             <div className="w-1/6 text-center">
