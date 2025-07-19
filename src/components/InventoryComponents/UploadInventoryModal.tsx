@@ -1,5 +1,3 @@
-// only for backup, not used
-
 import axios from "axios";
 import React, { useState, useRef } from "react";
 import toast from "react-hot-toast";
@@ -68,7 +66,9 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
           setProcessingFile(false);
         }
       } else {
-        toast.error("Please upload only Excel files (.xlsx, .xls) or CSV files.");
+        toast.error(
+          "Please upload only Excel files (.xlsx, .xls) or CSV files."
+        );
       }
     }
   };
@@ -136,15 +136,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
   const handleDownloadBasicTemplate = () => {
     // Create a basic template matching validated inventory columns
     const templateData = [
-      [
-        "PLU",
-        "name",
-        "category",
-        "price",
-        "SellingPrice",
-        "stock",
-        "SKU",
-      ],
+      ["PLU", "name", "category", "price", "SellingPrice", "stock", "SKU"],
       [
         "PLU001",
         "Premium Coffee Beans",
@@ -154,24 +146,8 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
         "150",
         "SKU-CF-001",
       ],
-      [
-        "PLU002",
-        "Organic Milk",
-        "DAIRY",
-        "5.49",
-        "6.49",
-        "75",
-        "SKU-ML-002",
-      ],
-      [
-        "PLU003",
-        "Artisan Bread",
-        "BAKERY",
-        "7.99",
-        "9.99",
-        "25",
-        "SKU-BR-003",
-      ],
+      ["PLU002", "Organic Milk", "DAIRY", "5.49", "6.49", "75", "SKU-ML-002"],
+      ["PLU003", "Artisan Bread", "BAKERY", "7.99", "9.99", "25", "SKU-BR-003"],
     ];
 
     // Convert to CSV for download
@@ -192,7 +168,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
     const templateData = [
       [
         "ProductName",
-        "Category", 
+        "Category",
         "Description",
         "VendorPrice",
         "PLU/UPC",
@@ -212,7 +188,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
         "PercentDiscount",
         "MatrixAttributes",
         "Attribute1",
-        "Attribute2"
+        "Attribute2",
       ],
       [
         "Premium Coffee Beans",
@@ -236,7 +212,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
         "15",
         "Size:Large,Origin:Colombia",
         "Large",
-        "Colombia"
+        "Colombia",
       ],
       [
         "Organic Milk",
@@ -260,7 +236,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
         "8",
         "Type:Organic,Fat:Whole",
         "Organic",
-        "Whole"
+        "Whole",
       ],
       [
         "Artisan Bread",
@@ -284,8 +260,8 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
         "12",
         "Type:Sourdough,Size:Large",
         "Sourdough",
-        "Large"
-      ]
+        "Large",
+      ],
     ];
 
     // Convert to CSV for download
@@ -334,43 +310,20 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
         </div>
 
         {/* Template Download */}
-        <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-          <h3 className="font-medium text-blue-900 mb-3">Download Templates</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Basic Template */}
-            <div className="p-3 bg-white rounded-lg border border-blue-200">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <h4 className="text-sm font-medium text-blue-900">Basic Template</h4>
-                  <p className="text-xs text-blue-700">Essential fields only</p>
-                </div>
-                <button
-                  onClick={handleDownloadBasicTemplate}
-                  className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs"
-                >
-                  Download
-                </button>
-              </div>
-              <p className="text-xs text-gray-600">PLU, Name, Category, Price, Stock, SKU</p>
-            </div>
+        <div className="mb-6 flex items-center justify-center gap-2">
+          <button
+            onClick={handleDownloadBasicTemplate}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 "
+          >
+            Download Template 1
+          </button>
 
-            {/* Enhanced Template */}
-            <div className="p-3 bg-white rounded-lg border border-blue-200">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <h4 className="text-sm font-medium text-blue-900">Enhanced Template</h4>
-                  <p className="text-xs text-blue-700">Complete with all fields</p>
-                </div>
-                <button
-                  onClick={handleDownloadEnhancedTemplate}
-                  className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs"
-                >
-                  Download
-                </button>
-              </div>
-              <p className="text-xs text-gray-600">Vendor info, Discounts, Attributes, EAN, etc.</p>
-            </div>
-          </div>
+          <button
+            onClick={handleDownloadEnhancedTemplate}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            Download Template 2
+          </button>
         </div>
 
         {/* File Upload Area */}
@@ -379,7 +332,9 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
           {processingFile && (
             <div className="absolute inset-0 bg-white bg-opacity-70 flex flex-col items-center justify-center z-20">
               <FaSpinner className="animate-spin text-4xl text-blue-600 mb-2" />
-              <span className="text-blue-700 font-medium">Processing file...</span>
+              <span className="text-blue-700 font-medium">
+                Processing file...
+              </span>
             </div>
           )}
           {/* Existing upload area code here (the drag-and-drop or file input UI) */}
@@ -411,7 +366,9 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <p className="font-medium text-green-700">{selectedFile.name}</p>
+                <p className="font-medium text-green-700">
+                  {selectedFile.name}
+                </p>
                 <p className="text-sm text-green-600">
                   {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
@@ -444,7 +401,9 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
                   <p className="text-lg font-medium text-gray-700">
                     Drop your Excel file here
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">or click to browse</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    or click to browse
+                  </p>
                 </div>
                 <button
                   onClick={() => fileInputRef.current?.click()}
@@ -464,7 +423,7 @@ const UploadInventoryModal: React.FC<UploadInventoryModalProps> = ({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".xlsx,.xls"
+          accept="*"
           onChange={handleFileSelect}
           className="hidden"
         />
