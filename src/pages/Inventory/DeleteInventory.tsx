@@ -14,6 +14,7 @@ import type { EditProductFormData } from "../../components/InventoryComponents/E
 import { useLowStockProducts } from "../../hooks/useInventory";
 import { extractErrorMessage } from "../../utils/lastUpdatedUtils";
 import useRequireStore from "../../hooks/useRequireStore";
+import { useGetCategoriesQuery } from '../../store/slices/categorySlice';
 
 const DeleteInventory: React.FC = () => {
   const currentStore = useRequireStore();
@@ -62,6 +63,9 @@ const DeleteInventory: React.FC = () => {
   } | null>(null);
   const [groupBy, setGroupBy] = useState("");
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const { data } = useGetCategoriesQuery();
+  const categories = data?.data || [];
+  
 
   // Fixed rows per page for DeleteInventory
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -100,6 +104,8 @@ const DeleteInventory: React.FC = () => {
 
   // Debounced search state
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+
 
   // Debounce search term
   useEffect(() => {
@@ -270,8 +276,23 @@ const DeleteInventory: React.FC = () => {
     setSearchTerm(event.target.value);
   };
 
-  const handleGroupByChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleGroupByChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
     setGroupBy(event.target.value);
+    setCurrentPage(1);
+    try {
+      await fetchWithParams({
+        page: 1,
+        limit: rowsPerPage,
+        search: debouncedSearchTerm,
+        sortBy: sortConfig?.key,
+        sortOrder: sortConfig?.direction,
+        storeId: currentStore?.id,
+        categoryId: event.target.value,
+      });
+    } catch (error) {
+      toast.error("Failed to change rows per page");
+      console.error("RowsPerPage error:", error);
+    }
   };
 
   const handleRowsPerPageChange = async (newRowsPerPage: number) => {
@@ -379,6 +400,7 @@ const DeleteInventory: React.FC = () => {
               (searchTerm !== debouncedSearchTerm ||
                 Boolean(debouncedSearchTerm))
             }
+            categories={categories}  // Pass categories to InventoryControls
           />
         </div>
 
